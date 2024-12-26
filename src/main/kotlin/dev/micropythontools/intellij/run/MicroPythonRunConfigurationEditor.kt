@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2024 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.util.ui.FormBuilder
 import javax.swing.JComponent
 
 class MicroPythonRunConfigurationEditor(config: MicroPythonRunConfiguration) : SettingsEditor<MicroPythonRunConfiguration>() {
-  private val pathField = TextFieldWithBrowseButton()
+    private val pathField = TextFieldWithBrowseButton()
     private val resetOnSuccess = CheckBox("Reset on Success", selected = true)
     private val runReplOnSuccess = CheckBox("Open MicroPython REPL on Success", selected = true)
 
@@ -41,22 +41,22 @@ class MicroPythonRunConfigurationEditor(config: MicroPythonRunConfiguration) : S
         pathField.addActionListener(listener)
     }
 
-  override fun createEditor(): JComponent =
-      FormBuilder.createFormBuilder()
-          .addLabeledComponent("Path:", pathField)
-          .addComponent(resetOnSuccess)
-          .addComponent(runReplOnSuccess)
-          .panel
+    override fun createEditor(): JComponent =
+        FormBuilder.createFormBuilder()
+            .addLabeledComponent("Path:", pathField)
+            .addComponent(resetOnSuccess)
+            .addComponent(runReplOnSuccess)
+            .panel
 
-  override fun applyEditorTo(s: MicroPythonRunConfiguration) {
-    s.path = pathField.text
-    s.runReplOnSuccess = runReplOnSuccess.isSelected
-    s.resetOnSuccess = resetOnSuccess.isSelected
-  }
+    override fun applyEditorTo(s: MicroPythonRunConfiguration) {
+        s.path = pathField.text
+        s.runReplOnSuccess = runReplOnSuccess.isSelected
+        s.resetOnSuccess = resetOnSuccess.isSelected
+    }
 
-  override fun resetEditorFrom(s: MicroPythonRunConfiguration) {
-    pathField.text = s.path
-    runReplOnSuccess.isSelected = s.runReplOnSuccess
-    resetOnSuccess.isSelected = s.resetOnSuccess
-  }
+    override fun resetEditorFrom(s: MicroPythonRunConfiguration) {
+        pathField.text = s.path
+        runReplOnSuccess.isSelected = s.runReplOnSuccess
+        resetOnSuccess.isSelected = s.resetOnSuccess
+    }
 }

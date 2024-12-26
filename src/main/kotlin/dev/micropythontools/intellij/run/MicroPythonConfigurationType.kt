@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2024 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,33 +21,33 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
-import dev.micropythontools.intellij.settings.MicroPythonFacetType
 import com.jetbrains.python.run.PythonConfigurationFactoryBase
+import dev.micropythontools.intellij.settings.MicroPythonFacetType
 import javax.swing.Icon
 
 /**
  * @author Mikhail Golubev
  */
 class MicroPythonConfigurationType : ConfigurationType {
-  companion object {
-    fun getInstance(): MicroPythonConfigurationType =
-        ConfigurationTypeUtil.findConfigurationType(MicroPythonConfigurationType::class.java)
-  }
-  
-  internal val factory = object : PythonConfigurationFactoryBase(this) {
-    override fun createTemplateConfiguration(project: Project): RunConfiguration =
-        MicroPythonRunConfiguration(project, this)
+    companion object {
+        fun getInstance(): MicroPythonConfigurationType =
+            ConfigurationTypeUtil.findConfigurationType(MicroPythonConfigurationType::class.java)
+    }
 
-    override fun getId(): String = "MicroPython"
-  }
+    internal val factory = object : PythonConfigurationFactoryBase(this) {
+        override fun createTemplateConfiguration(project: Project): RunConfiguration =
+            MicroPythonRunConfiguration(project, this)
 
-  override fun getIcon(): Icon = MicroPythonFacetType.LOGO
+        override fun getId(): String = "MicroPython"
+    }
 
-  override fun getConfigurationTypeDescription(): String = "MicroPython run configuration"
+    override fun getIcon(): Icon = MicroPythonFacetType.LOGO
 
-  override fun getId(): String = "MicroPythonConfigurationType"
+    override fun getConfigurationTypeDescription(): String = "MicroPython run configuration"
 
-  override fun getDisplayName(): String = "MicroPython"
+    override fun getId(): String = "MicroPythonConfigurationType"
 
-  override fun getConfigurationFactories(): Array<ConfigurationFactory> = arrayOf(factory)
+    override fun getDisplayName(): String = "MicroPython"
+
+    override fun getConfigurationFactories(): Array<ConfigurationFactory> = arrayOf(factory)
 }

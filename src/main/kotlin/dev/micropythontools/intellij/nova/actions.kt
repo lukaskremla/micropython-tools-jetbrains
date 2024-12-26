@@ -1,3 +1,19 @@
+/*
+ * Copyright 2000-2024 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package dev.micropythontools.intellij.nova
 
 import com.intellij.icons.AllIcons
@@ -43,6 +59,9 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import kotlin.coroutines.cancellation.CancellationException
 
+/**
+ * @author elmot
+ */
 fun fileSystemWidget(project: Project?): FileSystemWidget? {
     return ToolWindowManager.getInstance(project ?: return null)
         .getToolWindow(TOOL_WINDOW_ID)
@@ -186,7 +205,7 @@ class InstantRun : DumbAwareAction() {
         val project = e.project ?: return
         FileDocumentManager.getInstance().saveAllDocuments()
         val code = e.getData(CommonDataKeys.VIRTUAL_FILE)?.readText() ?: return
-        performReplAction(project,true,"Run code") {
+        performReplAction(project, true, "Run code") {
             it.instantRun(code, false)
         }
     }
@@ -285,7 +304,7 @@ open class UploadFile() : DumbAwareAction("Upload File(s) to MicroPython Device"
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-            FileDocumentManager.getInstance().saveAllDocuments()
+        FileDocumentManager.getInstance().saveAllDocuments()
         val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
         if (file != null) {
             MicroPythonRunConfiguration.uploadFileOrFolder(e.project ?: return, file)
@@ -302,7 +321,7 @@ class OpenSettingsAction : DumbAwareAction("Settings") {
 
 class InterruptAction : ReplAction("Interrupt", true, false) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
-    override fun update(e: AnActionEvent)  = enableIfConnected(e)
+    override fun update(e: AnActionEvent) = enableIfConnected(e)
     override val actionDescription: @NlsContexts.DialogMessage String = "Interrupt..."
 
     override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
@@ -312,7 +331,7 @@ class InterruptAction : ReplAction("Interrupt", true, false) {
 
 class SoftResetAction : ReplAction("Reset", true, false) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
-    override fun update(e: AnActionEvent)  = enableIfConnected(e)
+    override fun update(e: AnActionEvent) = enableIfConnected(e)
     override val actionDescription: @NlsContexts.DialogMessage String = "Reset..."
 
     override suspend fun performAction(fileSystemWidget: FileSystemWidget) {

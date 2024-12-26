@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2024 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,74 +39,74 @@ import com.jetbrains.python.sdk.sdkSeemsValid
 /**
  * @author vlan
  */
-class MicroPythonFacet(facetType: FacetType<out Facet<*>, *>, module: Module, name: String,
-                       configuration: MicroPythonFacetConfiguration, underlyingFacet: Facet<*>?)
-  : LibraryContributingFacet<MicroPythonFacetConfiguration>(facetType, module, name, configuration, underlyingFacet) {
+class MicroPythonFacet(
+    facetType: FacetType<out Facet<*>, *>, module: Module, name: String,
+    configuration: MicroPythonFacetConfiguration, underlyingFacet: Facet<*>?
+) : LibraryContributingFacet<MicroPythonFacetConfiguration>(facetType, module, name, configuration, underlyingFacet) {
 
-  companion object {
-    private const val PLUGIN_ID = "intellij-micropython"
+    companion object {
+        private const val PLUGIN_ID = "intellij-micropython"
 
-    val scriptsPath: String
-      get() = "${pluginDescriptor.pluginPath}/scripts"
+        val scriptsPath: String
+            get() = "${pluginDescriptor.pluginPath}/scripts"
 
-    private val pluginDescriptor: IdeaPluginDescriptor
-      get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID)) ?:
-          throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
-  }
-
-  override fun initFacet() {
-    updateLibrary()
-  }
-
-  override fun updateLibrary() {
-    val plugin = pluginDescriptor
-    val boardHintsPaths = configuration.deviceProvider.typeHints?.paths?.map {
-      "${plugin.pluginPath}/typehints/$it"
-    } ?: emptyList()
-    ApplicationManager.getApplication().invokeLater {
-      FacetLibraryConfigurator.attachPythonLibrary(module, null, "MicroPython", boardHintsPaths)
-      removeLegacyLibraries()
+        private val pluginDescriptor: IdeaPluginDescriptor
+            get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID)) ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
     }
-  }
 
-  override fun removeLibrary() {
-    FacetLibraryConfigurator.detachPythonLibrary(module, "MicroPython")
-  }
-
-  fun checkValid(): ValidationResult {
-    val provider = configuration.deviceProvider
-    val sdk = PythonSdkUtil.findPythonSdk(module)
-    if (sdk == null || (!sdk.sdkSeemsValid) || PySdkUtil.getLanguageLevelForSdk(sdk).isOlderThan(LanguageLevel.PYTHON35)) {
-      return ValidationResult("${provider.presentableName} support requires valid Python 3.5+ SDK")
+    override fun initFacet() {
+        updateLibrary()
     }
-    return ValidationResult.OK
-  }
 
-  private fun findSerialPorts(deviceProvider: MicroPythonDeviceProvider, indicator: ProgressIndicator): List<String> {
-    val timeout = 1_000
-    val pythonPath = pythonPath ?: return emptyList()
-    val command = listOf(pythonPath, "$scriptsPath/findusb.py")
-    val process = CapturingProcessHandler(GeneralCommandLine(command))
-    val output = process.runProcessWithProgressIndicator(indicator, timeout)
-    return when {
-      output.isCancelled -> emptyList()
-      output.isTimeout -> emptyList()
-      output.exitCode != 0 -> emptyList()
-      else -> {
-        output.stdoutLines.associate {
-          Pair(MicroPythonUsbId.parse(it.substringBefore(' ')), it.substringAfter(' '))
-        }.filterKeys { deviceProvider.checkUsbId(it) }.values.toList()
-      }
+    override fun updateLibrary() {
+        val plugin = pluginDescriptor
+        val boardHintsPaths = configuration.deviceProvider.typeHints?.paths?.map {
+            "${plugin.pluginPath}/typehints/$it"
+        } ?: emptyList()
+        ApplicationManager.getApplication().invokeLater {
+            FacetLibraryConfigurator.attachPythonLibrary(module, null, "MicroPython", boardHintsPaths)
+            removeLegacyLibraries()
+        }
     }
-  }
 
-  val pythonPath: String?
-    get() = PythonSdkUtil.findPythonSdk(module)?.homePath
+    override fun removeLibrary() {
+        FacetLibraryConfigurator.detachPythonLibrary(module, "MicroPython")
+    }
 
-  private fun removeLegacyLibraries() {
-    FacetLibraryConfigurator.detachPythonLibrary(module, "Micro:bit")
-  }
+    fun checkValid(): ValidationResult {
+        val provider = configuration.deviceProvider
+        val sdk = PythonSdkUtil.findPythonSdk(module)
+        if (sdk == null || (!sdk.sdkSeemsValid) || PySdkUtil.getLanguageLevelForSdk(sdk).isOlderThan(LanguageLevel.PYTHON35)) {
+            return ValidationResult("${provider.presentableName} support requires valid Python 3.5+ SDK")
+        }
+        return ValidationResult.OK
+    }
+
+    private fun findSerialPorts(deviceProvider: MicroPythonDeviceProvider, indicator: ProgressIndicator): List<String> {
+        val timeout = 1_000
+        val pythonPath = pythonPath ?: return emptyList()
+        val command = listOf(pythonPath, "$scriptsPath/findusb.py")
+        val process = CapturingProcessHandler(GeneralCommandLine(command))
+        val output = process.runProcessWithProgressIndicator(indicator, timeout)
+        return when {
+            output.isCancelled -> emptyList()
+            output.isTimeout -> emptyList()
+            output.exitCode != 0 -> emptyList()
+            else -> {
+                output.stdoutLines.associate {
+                    Pair(MicroPythonUsbId.parse(it.substringBefore(' ')), it.substringAfter(' '))
+                }.filterKeys { deviceProvider.checkUsbId(it) }.values.toList()
+            }
+        }
+    }
+
+    val pythonPath: String?
+        get() = PythonSdkUtil.findPythonSdk(module)?.homePath
+
+    private fun removeLegacyLibraries() {
+        FacetLibraryConfigurator.detachPythonLibrary(module, "Micro:bit")
+    }
 }
 
 val Module.microPythonFacet: MicroPythonFacet?
-  get() = FacetManager.getInstance(this).getFacetByType(MicroPythonFacetType.ID)
+    get() = FacetManager.getInstance(this).getFacetByType(MicroPythonFacetType.ID)
