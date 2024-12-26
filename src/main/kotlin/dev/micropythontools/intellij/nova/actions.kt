@@ -49,6 +49,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PathUtilRt.Platform
 import com.intellij.util.asSafely
+import com.jetbrains.python.PythonFileType
 import dev.micropythontools.intellij.run.MicroPythonRunConfiguration
 import dev.micropythontools.intellij.settings.MicroPythonProjectConfigurable
 import dev.micropythontools.intellij.settings.microPythonFacet
@@ -197,8 +198,13 @@ class InstantRun : DumbAwareAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = e.getData(CommonDataKeys.VIRTUAL_FILE) != null
-
+        val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+        e.presentation.isEnabled = file != null &&
+                !file.isDirectory &&
+                files?.size == 1 &&
+                (file.fileType == PythonFileType.INSTANCE ||
+                        file.extension == "mpy")
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -286,18 +292,47 @@ class OpenMpyFile : ReplAction("Open file", true, false) {
     }
 }
 
-open class UploadFile() : DumbAwareAction("Upload File(s) to MicroPython Device") {
+open class UploadFile() : DumbAwareAction("Upload Items(s) to MicroPython Device") {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
         val project = e.project
-        val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
-        if (project != null
-            && file?.isInLocalFileSystem == true
-            && ModuleUtil.findModuleForFile(file, project)?.microPythonFacet != null
-        ) {
-            e.presentation.text =
-                if (file.isDirectory) "Upload Directory to MicroPython Device" else "Upload File to MicroPython Device"
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+        if (project != null && files != null) {
+            var directoryCount = 0
+            var fileCount = 0
+
+            for (file in files.iterator()) {
+                if (file == null || !file.isInLocalFileSystem || ModuleUtil.findModuleForFile(
+                        file,
+                        project
+                    )?.microPythonFacet == null
+                ) {
+                    return
+                }
+
+                if (file.isDirectory) {
+                    directoryCount++
+                } else {
+                    fileCount++
+                }
+            }
+
+            if (fileCount == 0) {
+                if (directoryCount == 1) {
+                    e.presentation.text = "Upload Directory to MicroPython Device"
+                } else {
+                    e.presentation.text = "Upload Directories to MicroPython Device"
+                }
+            } else if (directoryCount == 0) {
+                if (fileCount == 1) {
+                    e.presentation.text = "Upload File to MicroPython Device"
+                } else {
+                    e.presentation.text = "Upload Files to MicroPython Device"
+                }
+            } else {
+                e.presentation.text = "Upload Items to MicroPython Device"
+            }
         } else {
             e.presentation.isEnabledAndVisible = false
         }
@@ -305,9 +340,9 @@ open class UploadFile() : DumbAwareAction("Upload File(s) to MicroPython Device"
 
     override fun actionPerformed(e: AnActionEvent) {
         FileDocumentManager.getInstance().saveAllDocuments()
-        val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
-        if (file != null) {
-            MicroPythonRunConfiguration.uploadFileOrFolder(e.project ?: return, file)
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+        if (files != null) {
+            MicroPythonRunConfiguration.uploadItems(e.project ?: return, files.toSet())
         }
     }
 }
@@ -353,7 +388,7 @@ class CreateDeviceFolderAction : ReplAction("New Folder", true, false) {
         }
     }
 
-    override val actionDescription: @NlsContexts.DialogMessage String = "Creating new folder..."
+    override val actionDescription: @NlsContexts.DialogMessage String = "Creating New Folder..."
 
     override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
 
@@ -381,6 +416,5 @@ class CreateDeviceFolderAction : ReplAction("New Folder", true, false) {
                 .extractSingleResponse()
             fileSystemWidget.refresh()
         }
-
     }
 }

@@ -39,6 +39,7 @@ dependencies {
     implementation("io.github.java-native:jssc:2.9.6") {
         exclude("org.slf4j", "slf4j-api")
     }
+    implementation("commons-net:commons-net:3.9.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -69,14 +70,13 @@ tasks {
             apiVersion = KotlinVersion.KOTLIN_2_0
         }
     }
-    prepareSandbox {
+    /*prepareSandbox {
         from("$rootDir") {
             into("micropython-tools-jetbrains")
             include("typehints/")
             include("scripts/")
         }
-    }
-
+    }*/
     test {
         testLogging.showExceptions = true
         useJUnitPlatform()

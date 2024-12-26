@@ -39,24 +39,29 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 
 /**
- * @author vlan
+ * @author vlan, elmot
  */
 class MicroPythonSettingsPanel(private val module: Module, disposable: Disposable) : JPanel(BorderLayout()) {
     private val parameters = module.microPythonFacet?.let { facet ->
         ConnectionParameters(
             uart = facet.configuration.uart,
             url = facet.configuration.webReplUrl,
-            password = "",
+            webReplPassword = "",
             portName = facet.configuration.portName,
+            ssid = facet.configuration.ssid,
+            wifiPassword = "",
         )
     } ?: ConnectionParameters("")
 
-    val connectionPanel: DialogPanel
+    private val connectionPanel: DialogPanel
 
     init {
         border = IdeBorderFactory.createEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
-        runWithModalProgressBlocking(module.project, "Save password") {
-            parameters.password = module.project.service<MpySupportService>().retrievePassword(parameters.url)
+        runWithModalProgressBlocking(module.project, "Retrieving WebREPL Password...") {
+            parameters.webReplPassword = module.project.service<MpySupportService>().retrieveWebReplPassword(parameters.url)
+        }
+        runWithModalProgressBlocking(module.project, "Retrieving Wi-Fi Password...") {
+            parameters.wifiPassword = module.project.service<MpySupportService>().retrieveWifiPassword()
         }
         val portSelectModel = MutableCollectionComboBoxModel<String>()
         if (parameters.portName.isNotBlank()) {
@@ -108,7 +113,7 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
                                 }
                         }.layout(RowLayout.LABEL_ALIGNED)
                         row {
-                            passwordField().bindText(parameters::password).label("Password: ")
+                            passwordField().bindText(parameters::webReplPassword).label("Password: ")
                                 .comment("(4-9 symbols)")
                                 .columns(40)
                                 .validationInfo { field ->
@@ -117,12 +122,28 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
                         }.layout(RowLayout.LABEL_ALIGNED)
                     }
                 }
-            }.topGap(TopGap.MEDIUM)
+            }
+
+            group("FTP Upload Wi-Fi credentials") {
+                indent {
+                    row {
+                        textField()
+                            .bindText(parameters::ssid.toMutableProperty())
+                            .label("SSID: ")
+                            .columns(40)
+                    }.layout(RowLayout.LABEL_ALIGNED)
+                    row {
+                        passwordField()
+                            .bindText(parameters::wifiPassword.toMutableProperty())
+                            .label("Password: ")
+                            .columns(40)
+                    }.layout(RowLayout.LABEL_ALIGNED)
+                }
+            }
 
         }.apply {
             registerValidators(disposable)
             validateAll()
-
         }
         add(connectionPanel, BorderLayout.CENTER)
     }
@@ -136,9 +157,14 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
         configuration.webReplUrl = parameters.url
         configuration.uart = parameters.uart
         configuration.portName = parameters.portName
-        runWithModalProgressBlocking(facet.module.project, "Save password") {
+        configuration.ssid = parameters.ssid
+        runWithModalProgressBlocking(facet.module.project, "Saving WebREPL Password") {
             facet.module.project.service<MpySupportService>()
-                .savePassword(configuration.webReplUrl, parameters.password)
+                .saveWebReplPassword(configuration.webReplUrl, parameters.webReplPassword)
+        }
+        runWithModalProgressBlocking(facet.module.project, "Saving Wi-Fi Password") {
+            facet.module.project.service<MpySupportService>()
+                .saveWifiPassword(parameters.wifiPassword)
         }
     }
 

@@ -29,10 +29,9 @@ import javax.swing.Icon
  * @author vlan
  */
 class MicroPythonFacetType : FacetType<MicroPythonFacet, MicroPythonFacetConfiguration>(ID, STRING_ID, PRESENTABLE_NAME) {
-
     companion object {
-        const val STRING_ID = "MicroPython"
-        const val PRESENTABLE_NAME = "MicroPython"
+        const val STRING_ID = "MicroPython Tools"
+        const val PRESENTABLE_NAME = "MicroPython Tools"
         val ID = FacetTypeId<MicroPythonFacet>(STRING_ID)
         val LOGO = IconLoader.getIcon("/icons/micropython.svg", MicroPythonFacetType::class.java)
 

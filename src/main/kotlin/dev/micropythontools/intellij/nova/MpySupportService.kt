@@ -32,9 +32,10 @@ import java.net.URISyntaxException
 /**
  * @author elmot
  */
+private const val WIFI_CREDENTIALS_KEY = "MicroPython_Tools_wifi_key"
+
 @Service(Service.Level.PROJECT)
 class MpySupportService(val cs: CoroutineScope) {
-
     private fun createCredentialAttributes(key: String): CredentialAttributes {
         return CredentialAttributes(
             generateServiceName("MySystem", key)
@@ -43,7 +44,7 @@ class MpySupportService(val cs: CoroutineScope) {
 
     private fun key(url: String) = "${this::class.java.name}/$url"
 
-    suspend fun retrievePassword(url: String): String {
+    suspend fun retrieveWebReplPassword(url: String): String {
         return withContext(Dispatchers.IO) {
             val attributes = createCredentialAttributes(key(url))
             val passwordSafe = PasswordSafe.instance
@@ -51,9 +52,24 @@ class MpySupportService(val cs: CoroutineScope) {
         }
     }
 
-    suspend fun savePassword(url: String, password: String) {
+    suspend fun saveWebReplPassword(url: String, password: String) {
         val attributes = createCredentialAttributes(key(url))
         val credentials = Credentials(null, password)
+        withContext(Dispatchers.IO) {
+            PasswordSafe.instance.set(attributes, credentials)
+        }
+    }
+
+    suspend fun retrieveWifiPassword(): String {
+        return withContext(Dispatchers.IO) {
+            val attributes = createCredentialAttributes(WIFI_CREDENTIALS_KEY)
+            PasswordSafe.instance.getPassword(attributes) ?: ""
+        }
+    }
+
+    suspend fun saveWifiPassword(password: String) {
+        val attributes = createCredentialAttributes(WIFI_CREDENTIALS_KEY)
+        val credentials = Credentials("", password)
         withContext(Dispatchers.IO) {
             PasswordSafe.instance.set(attributes, credentials)
         }

@@ -1,6 +1,6 @@
-<idea-plugin url="https://github.com/JetBrains/intellij-micropython">
-    <name>MicroPython</name>
-    <id>intellij-micropython</id>
+<idea-plugin url="https://github.com/lukaskremla/micropython-tools-jetbrains">
+    <name>MicroPython Tools</name>
+    <id>micropython-tools-jetbrains</id>
     <change-notes><![CDATA[
       <p>See <a href="https://github.com/JetBrains/intellij-micropython/blob/master/CHANGES.md">CHANGES.md</a> on GitHub.</p>
     ]]></change-notes>
@@ -32,18 +32,13 @@
 
     <idea-version since-build="243" until-build="243.*"/>
 
-    <extensionPoints>
-        <extensionPoint qualifiedName="com.jetbrains.micropython.deviceProvider"
-                        interface="com.jetbrains.micropython.devices.MicroPythonDeviceProvider" dynamic="true"/>
-    </extensionPoints>
-
     <extensions defaultExtensionNs="com.intellij">
         <facetType implementation="dev.micropythontools.intellij.settings.MicroPythonFacetType"/>
-        <framework.detector implementation="dev.micropythontools.intellij.settings.MicroPythonFacetDetector"/>
         <configurationType implementation="dev.micropythontools.intellij.run.MicroPythonConfigurationType"/>
-        <runConfigurationProducer implementation="dev.micropythontools.intellij.run.MicroPythonRunConfigurationProducer"/>
+        <runConfigurationProducer
+                implementation="dev.micropythontools.intellij.run.MicroPythonRunConfigurationProducer"/>
         <projectConfigurable groupId="language"
-                             id="com.jetbrains.micropython.configurable"
+                             id="dev.micropythontools.intellij.configurable"
                              displayName="MicroPython"
                              instance="dev.micropythontools.intellij.settings.MicroPythonProjectConfigurable"/>
         <localInspection language="Python"
@@ -54,17 +49,9 @@
         <notificationGroup displayType="BALLOON" id="Micropython"/>
     </extensions>
 
-    <extensions defaultExtensionNs="com.jetbrains.micropython">
-        <deviceProvider implementation="com.jetbrains.micropython.devices.MicroBitDeviceProvider"/>
-        <deviceProvider implementation="com.jetbrains.micropython.devices.MicroBitV2DeviceProvider"/>
-        <deviceProvider implementation="com.jetbrains.micropython.devices.Esp8266DeviceProvider"/>
-        <deviceProvider implementation="com.jetbrains.micropython.devices.PyboardDeviceProvider"/>
-        <deviceProvider implementation="com.jetbrains.micropython.devices.RPiPicoDeviceProvider"/>
-    </extensions>
-
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="dev.micropythontools.intellij.nova.MicroPythonToolWindow"
-                    id="dev.micropythontools.intellij.nova.MicroPythonToolWindow"
+                    id="MicroPython Tools"
                     anchor="bottom"
                     icon="/icons/micropython_tw.svg"
                     canCloseContents="false"/>
@@ -88,7 +75,8 @@
                     icon="AllIcons.Actions.Download"/>
             <action id="micropython.fs.Delete" class="dev.micropythontools.intellij.nova.DeleteFiles"
                     use-shortcut-of="$Delete" icon="AllIcons.Actions.GC"/>
-            <action id="micropython.repl.ConnectionParameters" class="dev.micropythontools.intellij.nova.OpenSettingsAction"
+            <action id="micropython.repl.ConnectionParameters"
+                    class="dev.micropythontools.intellij.nova.OpenSettingsAction"
                     icon="AllIcons.General.GearPlain"/>
             <action id="micropython.repl.AutoClear" class="dev.micropythontools.intellij.nova.AutoClearAction"/>
         </group>
