@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2024 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,25 @@ import dev.micropythontools.intellij.settings.microPythonFacet
  * @author vlan
  */
 class MicroPythonRequirementsInspection : LocalInspectionTool() {
-  override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
-    val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
-    val facet = module.microPythonFacet ?: return null
-    val result = facet.checkValid()
-    if (result.isOk) return null
-    val facetFix: FacetConfigurationQuickFix? = result.quickFix
-    val fix = if (facetFix != null) object : LocalQuickFix {
-      override fun getFamilyName() = "Missing required MicroPython packages"
+    override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+        val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
+        val facet = module.microPythonFacet ?: return null
+        val result = facet.checkValid()
+        if (result.isOk) return null
+        val facetFix: FacetConfigurationQuickFix? = result.quickFix
+        val fix = if (facetFix != null) object : LocalQuickFix {
+            override fun getFamilyName() = "Missing required MicroPython packages"
 
-      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        facetFix.run(null)
-      }
-    } else null
-    val fixes = if (fix != null) arrayOf(fix) else emptyArray()
-    return arrayOf(manager.createProblemDescriptor(file, result.errorMessage, true, fixes,
-                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
-  }
+            override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+                facetFix.run(null)
+            }
+        } else null
+        val fixes = if (fix != null) arrayOf(fix) else emptyArray()
+        return arrayOf(
+            manager.createProblemDescriptor(
+                file, result.errorMessage, true, fixes,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+            )
+        )
+    }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2000-2024 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package dev.micropythontools.intellij.nova
 
 import com.intellij.notification.Notification
@@ -24,9 +40,10 @@ import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.properties.Delegates
 
-
+/**
+ * @author elmot
+ */
 private const val BOUNDARY = "*********FSOP************"
-
 
 internal const val TIMEOUT = 2000L
 internal const val LONG_TIMEOUT = 20000L
@@ -109,7 +126,7 @@ open class MpyComm() : Disposable, Closeable {
             if (slashIdx > 0) {
                 val folderName = fullName.substring(0, slashIdx)
                 commands.add(
-"""try: os.mkdir('$folderName');
+                    """try: os.mkdir('$folderName');
 except OSError as e:
     if e.errno != errno.EEXIST: raise """
                 )
@@ -188,67 +205,66 @@ except OSError as e:
     }
 
     @Throws(IOException::class)
-    private suspend fun doBlindExecute(commandTimeout:Long, vararg commands: String): ExecResponse {
+    private suspend fun doBlindExecute(commandTimeout: Long, vararg commands: String): ExecResponse {
         state = State.TTY_DETACHED
         return try {
-                withTimeout(LONG_TIMEOUT) {
-                    do {
-                        var promptNotReady = true
-                        client?.send("\u0003")
-                        client?.send("\u0003")
-                        client?.send("\u0003")
-                        delay(SHORT_DELAY)
-                        client?.send("\u0001")
-                        withTimeoutOrNull(TIMEOUT) {
-                            while (!offTtyBuffer.endsWith("\n>")) {
-                                delay(SHORT_DELAY)
-                            }
-                            promptNotReady = false
+            withTimeout(LONG_TIMEOUT) {
+                do {
+                    var promptNotReady = true
+                    client?.send("\u0003")
+                    client?.send("\u0003")
+                    client?.send("\u0003")
+                    delay(SHORT_DELAY)
+                    client?.send("\u0001")
+                    withTimeoutOrNull(TIMEOUT) {
+                        while (!offTtyBuffer.endsWith("\n>")) {
+                            delay(SHORT_DELAY)
                         }
-                    } while (promptNotReady)
-                }
-                delay(SHORT_DELAY)
-                offTtyBuffer.clear()
-                val result = mutableListOf<SingleExecResponse>()
-                for (command in commands) {
-                    try {
-                        withTimeout(commandTimeout) {
-                            command.lines().forEachIndexed { index, s ->
-                                if (index > 0) {
-                                    delay(SHORT_DELAY)
-                                }
-                                client?.send("$s\n")
-                            }
-                            client?.send("\u0004")
-                            while (!(offTtyBuffer.startsWith("OK") && offTtyBuffer.endsWith("\u0004>") && offTtyBuffer.count { it == '\u0004' } == 2)) {
-                                delay(SHORT_DELAY)
-                            }
-                            val eotPos = offTtyBuffer.indexOf('\u0004')
-                            val stdout = offTtyBuffer.substring(2, eotPos).trim()
-                            val stderr = offTtyBuffer.substring(eotPos + 1, offTtyBuffer.length - 2).trim()
-                            result.add(SingleExecResponse(stdout, stderr))
-                            offTtyBuffer.clear()
-                        }
-                    } catch (e: TimeoutCancellationException) {
-                        throw IOException("Timeout during command execution:$command", e)
+                        promptNotReady = false
                     }
-                }
-                return result
-            } catch (e: CancellationException) {
-                throw e
+                } while (promptNotReady)
             }
-            catch (e: Throwable) {
-                state = State.DISCONNECTED
-                client?.close()
-                client = null
-                throw e
-            } finally {
-                client?.send("\u0002")
-                offTtyBuffer.clear()
-                if (state == State.TTY_DETACHED) {
-                    state = State.CONNECTED
+            delay(SHORT_DELAY)
+            offTtyBuffer.clear()
+            val result = mutableListOf<SingleExecResponse>()
+            for (command in commands) {
+                try {
+                    withTimeout(commandTimeout) {
+                        command.lines().forEachIndexed { index, s ->
+                            if (index > 0) {
+                                delay(SHORT_DELAY)
+                            }
+                            client?.send("$s\n")
+                        }
+                        client?.send("\u0004")
+                        while (!(offTtyBuffer.startsWith("OK") && offTtyBuffer.endsWith("\u0004>") && offTtyBuffer.count { it == '\u0004' } == 2)) {
+                            delay(SHORT_DELAY)
+                        }
+                        val eotPos = offTtyBuffer.indexOf('\u0004')
+                        val stdout = offTtyBuffer.substring(2, eotPos).trim()
+                        val stderr = offTtyBuffer.substring(eotPos + 1, offTtyBuffer.length - 2).trim()
+                        result.add(SingleExecResponse(stdout, stderr))
+                        offTtyBuffer.clear()
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    throw IOException("Timeout during command execution:$command", e)
                 }
             }
+            return result
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            state = State.DISCONNECTED
+            client?.close()
+            client = null
+            throw e
+        } finally {
+            client?.send("\u0002")
+            offTtyBuffer.clear()
+            if (state == State.TTY_DETACHED) {
+                state = State.CONNECTED
+            }
+        }
     }
 
     fun checkConnected() {
@@ -260,7 +276,7 @@ except OSError as e:
     }
 
     @Throws(IOException::class)
-    suspend fun blindExecute(commandTimeout:Long, vararg commands: String): ExecResponse {
+    suspend fun blindExecute(commandTimeout: Long, vararg commands: String): ExecResponse {
         checkConnected()
         webSocketMutex.withLock {
             return doBlindExecute(commandTimeout, *commands)

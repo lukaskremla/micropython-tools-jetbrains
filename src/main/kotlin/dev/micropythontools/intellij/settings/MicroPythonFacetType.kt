@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2024 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,22 +30,24 @@ import javax.swing.Icon
  */
 class MicroPythonFacetType : FacetType<MicroPythonFacet, MicroPythonFacetConfiguration>(ID, STRING_ID, PRESENTABLE_NAME) {
 
-  companion object {
-    const val STRING_ID = "MicroPython"
-    const val PRESENTABLE_NAME = "MicroPython"
-    val ID = FacetTypeId<MicroPythonFacet>(STRING_ID)
-    val LOGO = IconLoader.getIcon("/icons/micropython.svg", MicroPythonFacetType::class.java)
+    companion object {
+        const val STRING_ID = "MicroPython"
+        const val PRESENTABLE_NAME = "MicroPython"
+        val ID = FacetTypeId<MicroPythonFacet>(STRING_ID)
+        val LOGO = IconLoader.getIcon("/icons/micropython.svg", MicroPythonFacetType::class.java)
 
-    fun getInstance() = findInstance(MicroPythonFacetType::class.java)!!
-  }
+        fun getInstance() = findInstance(MicroPythonFacetType::class.java)!!
+    }
 
-  override fun createDefaultConfiguration() = MicroPythonFacetConfiguration()
+    override fun createDefaultConfiguration() = MicroPythonFacetConfiguration()
 
-  override fun createFacet(module: Module, name: String, configuration: MicroPythonFacetConfiguration,
-                           underlyingFacet: Facet<*>?) =
-      MicroPythonFacet(this, module, name, configuration, underlyingFacet)
+    override fun createFacet(
+        module: Module, name: String, configuration: MicroPythonFacetConfiguration,
+        underlyingFacet: Facet<*>?
+    ) =
+        MicroPythonFacet(this, module, name, configuration, underlyingFacet)
 
-  override fun isSuitableModuleType(moduleType: ModuleType<*>?) = moduleType is PythonModuleTypeBase
+    override fun isSuitableModuleType(moduleType: ModuleType<*>?) = moduleType is PythonModuleTypeBase
 
-  override fun getIcon(): Icon = LOGO
+    override fun getIcon(): Icon = LOGO
 }

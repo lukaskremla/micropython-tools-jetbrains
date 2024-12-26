@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2024 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,40 +27,42 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightVirtualFile
-import dev.micropythontools.intellij.settings.MicroPythonFacetType
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import dev.micropythontools.intellij.settings.MicroPythonFacetType
 
 /**
  * @author Mikhail Golubev
  */
 class MicroPythonRunConfigurationProducer : LazyRunConfigurationProducer<MicroPythonRunConfiguration>() {
-  override fun getConfigurationFactory(): ConfigurationFactory {
-    return MicroPythonConfigurationType.getInstance().factory
-  }
+    override fun getConfigurationFactory(): ConfigurationFactory {
+        return MicroPythonConfigurationType.getInstance().factory
+    }
 
-  override fun isConfigurationFromContext(configuration: MicroPythonRunConfiguration, context: ConfigurationContext): Boolean {
-    val file = context.location?.virtualFile ?: return false
-    if (!facetEnabledForElement(file, context.project)) return false
-    if (file is LightVirtualFile) return false
-    return configuration.path == file.path
-  }
+    override fun isConfigurationFromContext(configuration: MicroPythonRunConfiguration, context: ConfigurationContext): Boolean {
+        val file = context.location?.virtualFile ?: return false
+        if (!facetEnabledForElement(file, context.project)) return false
+        if (file is LightVirtualFile) return false
+        return configuration.path == file.path
+    }
 
-  override fun setupConfigurationFromContext(configuration: MicroPythonRunConfiguration,
-                                             context: ConfigurationContext,
-                                             sourceElement: Ref<PsiElement>): Boolean {
-    val file = context.location?.virtualFile ?: return false
-    if (!facetEnabledForElement(file, context.project)) return false
-    configuration.path = file.path
-    configuration.setGeneratedName()
-    configuration.setModule(ModuleUtilCore.findModuleForFile(file, context.project))
-    return true
-  }
+    override fun setupConfigurationFromContext(
+        configuration: MicroPythonRunConfiguration,
+        context: ConfigurationContext,
+        sourceElement: Ref<PsiElement>
+    ): Boolean {
+        val file = context.location?.virtualFile ?: return false
+        if (!facetEnabledForElement(file, context.project)) return false
+        configuration.path = file.path
+        configuration.setGeneratedName()
+        configuration.setModule(ModuleUtilCore.findModuleForFile(file, context.project))
+        return true
+    }
 
-  private fun facetEnabledForElement(virtualFile: VirtualFile, project: Project): Boolean {
-    val module = ModuleUtilCore.findModuleForFile(virtualFile, project) ?: return false
-    return FacetManager.getInstance(module)?.getFacetByType(MicroPythonFacetType.ID) != null
-  }
+    private fun facetEnabledForElement(virtualFile: VirtualFile, project: Project): Boolean {
+        val module = ModuleUtilCore.findModuleForFile(virtualFile, project) ?: return false
+        return FacetManager.getInstance(module)?.getFacetByType(MicroPythonFacetType.ID) != null
+    }
 
-  override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext) =
-      other.configuration is AbstractPythonRunConfiguration<*>
+    override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext) =
+        other.configuration is AbstractPythonRunConfiguration<*>
 }

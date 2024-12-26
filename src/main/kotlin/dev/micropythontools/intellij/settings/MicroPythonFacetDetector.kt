@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2024 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,33 +33,34 @@ import com.jetbrains.python.psi.PyImportStatement
  * @author Mikhail Golubev
  */
 class MicroPythonFacetDetector : FacetBasedFrameworkDetector<MicroPythonFacet, MicroPythonFacetConfiguration>("MicroPython") {
-  override fun getFacetType() = MicroPythonFacetType.getInstance()
+    override fun getFacetType() = MicroPythonFacetType.getInstance()
 
-  override fun createSuitableFilePattern() =
-      FileContentPattern.fileContent().with(object : PatternCondition<FileContent>("Contains MicroPython imports") {
-        override fun accepts(fileContent: FileContent, context: ProcessingContext?): Boolean {
-          val fileIndex = ProjectRootManager.getInstance(fileContent.project).fileIndex
-          if (!fileIndex.isInContent(fileContent.file) || fileIndex.isInLibraryClasses(fileContent.file)) {
-            return false
-          }
-          val detected = MicroPythonDeviceProvider.providers
-              .asSequence()
-              .flatMap { it.detectedModuleNames.asSequence() }
-              .toSet()
-          return when (val psiFile = fileContent.psiFile) {
-            is PyFile -> {
-              return psiFile.importBlock.any { imp ->
-                when (imp) {
-                  is PyFromImportStatement -> imp.importSourceQName?.firstComponent in detected
-                  is PyImportStatement -> imp.importElements.any { it.importedQName?.firstComponent in detected }
-                  else -> false
+    override fun createSuitableFilePattern() =
+        FileContentPattern.fileContent().with(object : PatternCondition<FileContent>("Contains MicroPython imports") {
+            override fun accepts(fileContent: FileContent, context: ProcessingContext?): Boolean {
+                val fileIndex = ProjectRootManager.getInstance(fileContent.project).fileIndex
+                if (!fileIndex.isInContent(fileContent.file) || fileIndex.isInLibraryClasses(fileContent.file)) {
+                    return false
                 }
-              }
-            }
-            else -> false
-          }
-        }
-      })
+                val detected = MicroPythonDeviceProvider.providers
+                    .asSequence()
+                    .flatMap { it.detectedModuleNames.asSequence() }
+                    .toSet()
+                return when (val psiFile = fileContent.psiFile) {
+                    is PyFile -> {
+                        return psiFile.importBlock.any { imp ->
+                            when (imp) {
+                                is PyFromImportStatement -> imp.importSourceQName?.firstComponent in detected
+                                is PyImportStatement -> imp.importElements.any { it.importedQName?.firstComponent in detected }
+                                else -> false
+                            }
+                        }
+                    }
 
-  override fun getFileType(): FileType = PythonFileType.INSTANCE
+                    else -> false
+                }
+            }
+        })
+
+    override fun getFileType(): FileType = PythonFileType.INSTANCE
 }
