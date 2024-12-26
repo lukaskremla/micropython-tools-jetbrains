@@ -71,7 +71,7 @@ tasks {
     }
     prepareSandbox {
         from("$rootDir") {
-            into("intellij-micropython")
+            into("micropython-tools-jetbrains")
             include("typehints/")
             include("scripts/")
         }
