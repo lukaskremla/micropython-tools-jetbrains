@@ -4,11 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-docopt = "*"
-adafruit-ampy = "*"
-pyserial = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.7"
+python_version = "3.10"

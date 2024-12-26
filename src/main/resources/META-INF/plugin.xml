@@ -38,19 +38,19 @@
     </extensionPoints>
 
     <extensions defaultExtensionNs="com.intellij">
-        <facetType implementation="com.jetbrains.micropython.settings.MicroPythonFacetType"/>
-        <framework.detector implementation="com.jetbrains.micropython.settings.MicroPythonFacetDetector"/>
-        <configurationType implementation="com.jetbrains.micropython.run.MicroPythonConfigurationType"/>
-        <runConfigurationProducer implementation="com.jetbrains.micropython.run.MicroPythonRunConfigurationProducer"/>
+        <facetType implementation="dev.micropythontools.intellij.settings.MicroPythonFacetType"/>
+        <framework.detector implementation="dev.micropythontools.intellij.settings.MicroPythonFacetDetector"/>
+        <configurationType implementation="dev.micropythontools.intellij.run.MicroPythonConfigurationType"/>
+        <runConfigurationProducer implementation="dev.micropythontools.intellij.run.MicroPythonRunConfigurationProducer"/>
         <projectConfigurable groupId="language"
                              id="com.jetbrains.micropython.configurable"
                              displayName="MicroPython"
-                             instance="com.jetbrains.micropython.settings.MicroPythonProjectConfigurable"/>
+                             instance="dev.micropythontools.intellij.settings.MicroPythonProjectConfigurable"/>
         <localInspection language="Python"
                          displayName="MicroPython requirements inspection"
                          groupName="MicroPython"
                          enabledByDefault="true"
-                         implementationClass="com.jetbrains.micropython.inspections.MicroPythonRequirementsInspection"/>
+                         implementationClass="dev.micropythontools.intellij.inspections.MicroPythonRequirementsInspection"/>
         <notificationGroup displayType="BALLOON" id="Micropython"/>
     </extensions>
 
@@ -63,8 +63,8 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.jetbrains.micropython.nova.MicroPythonToolWindow"
-                    id="com.jetbrains.micropython.nova.MicroPythonToolWindow"
+        <toolWindow factoryClass="dev.micropythontools.intellij.nova.MicroPythonToolWindow"
+                    id="dev.micropythontools.intellij.nova.MicroPythonToolWindow"
                     anchor="bottom"
                     icon="/icons/micropython_tw.svg"
                     canCloseContents="false"/>
@@ -72,28 +72,28 @@
 
     <actions>
         <group id="micropython.repl.FSToolbar">
-            <action id="micropython.repl.Disconnect" class="com.jetbrains.micropython.nova.Disconnect"
+            <action id="micropython.repl.Disconnect" class="dev.micropythontools.intellij.nova.Disconnect"
                     icon="/icons/connectActive.svg">
                 <keyboard-shortcut first-keystroke="control CLOSE_BRACKET" keymap="$default"/>
             </action>
-            <action id="micropython.repl.Connect" class="com.jetbrains.micropython.nova.ConnectAction"
+            <action id="micropython.repl.Connect" class="dev.micropythontools.intellij.nova.ConnectAction"
                     icon="/icons/connectActive.svg"/>
-            <action id="micropython.fs.Refresh" class="com.jetbrains.micropython.nova.Refresh"
+            <action id="micropython.fs.Refresh" class="dev.micropythontools.intellij.nova.Refresh"
                     icon="AllIcons.Actions.StopRefresh">
                 <keyboard-shortcut first-keystroke="control R" keymap="$default"/>
             </action>
-            <action id="micropython.fs.CreateFolder" class="com.jetbrains.micropython.nova.CreateDeviceFolderAction"
+            <action id="micropython.fs.CreateFolder" class="dev.micropythontools.intellij.nova.CreateDeviceFolderAction"
                     icon="AllIcons.Actions.AddDirectory"/>
-            <action id="micropython.fs.Download" class="com.jetbrains.micropython.nova.DownloadFromDeviceAction"
+            <action id="micropython.fs.Download" class="dev.micropythontools.intellij.nova.DownloadFromDeviceAction"
                     icon="AllIcons.Actions.Download"/>
-            <action id="micropython.fs.Delete" class="com.jetbrains.micropython.nova.DeleteFiles"
+            <action id="micropython.fs.Delete" class="dev.micropythontools.intellij.nova.DeleteFiles"
                     use-shortcut-of="$Delete" icon="AllIcons.Actions.GC"/>
-            <action id="micropython.repl.ConnectionParameters" class="com.jetbrains.micropython.nova.OpenSettingsAction"
+            <action id="micropython.repl.ConnectionParameters" class="dev.micropythontools.intellij.nova.OpenSettingsAction"
                     icon="AllIcons.General.GearPlain"/>
-            <action id="micropython.repl.AutoClear" class="com.jetbrains.micropython.nova.AutoClearAction"/>
+            <action id="micropython.repl.AutoClear" class="dev.micropythontools.intellij.nova.AutoClearAction"/>
         </group>
         <group id="micropython.repl.FSContextMenu">
-            <action class="com.jetbrains.micropython.nova.OpenMpyFile" id="micropython.repl.OpenFile"
+            <action class="dev.micropythontools.intellij.nova.OpenMpyFile" id="micropython.repl.OpenFile"
                     icon="AllIcons.Actions.MenuOpen"/>
             <reference ref="micropython.fs.Refresh"/>
             <reference ref="micropython.fs.Download"/>
@@ -105,24 +105,24 @@
         <group id="micropython.repl.ReplToolbar">
             <reference ref="micropython.repl.Connect"/>
             <reference ref="micropython.repl.Disconnect"/>
-            <action id="micropython.repl.SoftReset" class="com.jetbrains.micropython.nova.SoftResetAction"
+            <action id="micropython.repl.SoftReset" class="dev.micropythontools.intellij.nova.SoftResetAction"
                     icon="AllIcons.Actions.StopAndRestart" description="Soft reset the board">
                 <keyboard-shortcut first-keystroke="control D" keymap="$default"/>
             </action>
-            <action id="micropython.repl.Interrupt" class="com.jetbrains.micropython.nova.InterruptAction"
+            <action id="micropython.repl.Interrupt" class="dev.micropythontools.intellij.nova.InterruptAction"
                     icon="AllIcons.Actions.Suspend" description="Interrupt a running program">
             </action>
             <reference ref="micropython.repl.ConnectionParameters"/>
             <reference ref="micropython.repl.AutoClear"/>
         </group>
 
-        <action id="micropython.repl.UploadFile" class="com.jetbrains.micropython.nova.UploadFile"
+        <action id="micropython.repl.UploadFile" class="dev.micropythontools.intellij.nova.UploadFile"
                 icon="AllIcons.Actions.Upload">
             <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ExecuteInPyConsoleAction"/>
             <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>
         </action>
 
-        <action id="micropython.repl.InstantRun" class="com.jetbrains.micropython.nova.InstantRun"
+        <action id="micropython.repl.InstantRun" class="dev.micropythontools.intellij.nova.InstantRun"
                 text="Execute File in Micropython REPL"
                 icon="AllIcons.Actions.Rerun">
             <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="micropython.repl.UploadFile"/>
@@ -130,7 +130,7 @@
                           relative-to-action="micropython.repl.UploadFile"/>
         </action>
 
-        <action id="micropython.repl.InstantFragmentRun" class="com.jetbrains.micropython.nova.InstantFragmentRun"
+        <action id="micropython.repl.InstantFragmentRun" class="dev.micropythontools.intellij.nova.InstantFragmentRun"
                 text="Execute Fragment" icon="AllIcons.Actions.Run_anything">
             <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="micropython.repl.InstantRun"/>
         </action>
