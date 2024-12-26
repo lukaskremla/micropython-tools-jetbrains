@@ -1,5 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
+ * Copyright 2024 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +34,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.PopupHandler
@@ -84,14 +86,126 @@ except Exception:
   
 """
 
+private const val MPY_SYNCHRONIZE_AND_CHECK_MATCHES = """
+    
+try:
+    import os
+
+    try:
+        import binascii
+
+        imported_successfully = True
+    except ImportError:
+        imported_successfully = False
+
+    should_synchronize = %s
+
+    files_to_upload = [
+        %s
+    ]
+
+    paths_to_exclude = [
+        %s
+    ]
+
+    local_files = set()
+    local_directories = set()
+
+    def save_all_items_on_path(dir_path) -> None:
+        for entry in os.ilistdir(dir_path):
+            name, kind = entry[0], entry[1]
+
+            file_path = f"{dir_path}/{name}" if dir_path != "/" else f"/{name}"
+
+            if any(file_path == excluded_path or file_path.startswith(excluded_path + '/') for excluded_path in paths_to_exclude):
+                continue
+
+            if kind == 0x8000:  # file
+                local_files.add(file_path)
+            elif kind == 0x4000:  # dir
+                local_directories.add(file_path)
+                save_all_items_on_path(file_path)
+
+    if should_synchronize:
+        save_all_items_on_path("/")
+
+    try:
+        chunk_size = 1024
+        buffer = bytearray(chunk_size)
+        already_uploaded_paths = []
+
+        if not imported_successfully and not should_synchronize:
+            raise Exception
+
+        for remote_file_tuple in files_to_upload:
+            path, remote_size, remote_hash = remote_file_tuple
+
+            if not path.startswith("/"):
+                path = "/" + path
+
+            try:
+                local_size = os.stat(path)[6]
+
+                if should_synchronize:
+                    local_files.remove(path)
+            except OSError:
+                continue
+
+            if not imported_successfully or remote_size != local_size:
+                continue
+
+            crc = 0
+            with open(path, 'rb') as f:
+                while True:
+                    n = f.readinto(buffer)
+                    if n == 0:
+                        break
+
+                    if n < chunk_size:
+                        crc = binascii.crc32(buffer[:n], crc)
+                    else:
+                        crc = binascii.crc32(buffer, crc)
+
+                calculated_hash = "%%08x" %% (crc & 0xffffffff)
+
+                if calculated_hash == remote_hash:
+                    already_uploaded_paths.append(path)
+
+        if should_synchronize:
+            for file in local_files:
+                os.remove(file)
+
+        if should_synchronize:
+            for directory in local_directories:
+                try:
+                    os.rmdir(directory)
+                except OSError:
+                    pass
+
+        if not already_uploaded_paths:
+            raise Exception
+
+        output = "&".join(already_uploaded_paths)
+        print(output)
+
+    except Exception:
+        print("NO MATCHES")
+
+except Exception as e:
+    print(f"ERROR: {e}")
+
+"""
+
 data class ConnectionParameters(
     var uart: Boolean = true,
     var url: String,
-    var password: String,
-    var portName: String
+    var webReplPassword: String,
+    var portName: String,
+    var ssid: String,
+    var wifiPassword: String
 ) {
-    constructor(portName: String) : this(uart = true, url = DEFAULT_WEBREPL_URL, password = "", portName = portName)
-    constructor(url: String, password: String) : this(uart = false, url = url, password = password, portName = "")
+    constructor(portName: String) : this(uart = true, url = DEFAULT_WEBREPL_URL, webReplPassword = "", portName = portName, ssid = "", wifiPassword = "")
+    constructor(url: String, webReplPassword: String) : this(uart = false, url = url, webReplPassword = webReplPassword, portName = "", ssid = "", wifiPassword = "")
 }
 
 class FileSystemWidget(val project: Project, newDisposable: Disposable) :
@@ -162,6 +276,66 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         tree.model = null
     }
 
+    private fun calculateCRC32(file: VirtualFile): String {
+        val localFileBytes = file.contentsToByteArray()
+        val crc = java.util.zip.CRC32()
+        crc.update(localFileBytes)
+        return String.format("%08x", crc.value)
+    }
+
+    suspend fun synchronizeAndGetAlreadyUploadedFiles(uploadFilesToTargetPath: MutableMap<VirtualFile, String>, excludedPaths: List<String>, shouldSynchronize: Boolean, shouldExcludePaths: Boolean): MutableList<VirtualFile> {
+        val alreadyUploadedFiles = mutableListOf<VirtualFile>()
+        val fileToUploadListing = mutableListOf<String>()
+        val targetPathToFile = uploadFilesToTargetPath.entries.associate { (file, path) -> path to file }
+
+        for (file in uploadFilesToTargetPath.keys) {
+            val path = uploadFilesToTargetPath[file]
+            val size = file.length
+            val hash = calculateCRC32(file)
+
+            fileToUploadListing.add("""("$path", $size, "$hash")""")
+        }
+
+        println(excludedPaths)
+        println(shouldExcludePaths)
+
+        val formattedScript = MPY_SYNCHRONIZE_AND_CHECK_MATCHES.format(
+            if (shouldSynchronize) "True" else "False",
+            fileToUploadListing.joinToString(",\n        "),
+            if (excludedPaths.isNotEmpty() && shouldExcludePaths) excludedPaths.joinToString(",\n        ") { "\"$it\"" } else ""
+        )
+
+        println(formattedScript)
+
+        val scriptResponse = blindExecute(30000L, formattedScript).extractSingleResponse().trim()
+
+        val matchingTargetPaths = when {
+            !scriptResponse.contains("NO MATCHES") && !scriptResponse.contains("ERROR") -> scriptResponse
+                .split("&")
+                .filter { it.isNotEmpty() }
+
+            else -> emptyList()
+        }
+
+        if (scriptResponse.contains("ERROR")) {
+            Notifications.Bus.notify(
+                Notification(
+                    NOTIFICATION_GROUP,
+                    "Failed to execute synchronize and check matches script: $scriptResponse",
+                    NotificationType.ERROR
+                ), project
+            )
+        }
+
+        for (path in matchingTargetPaths) {
+            targetPathToFile[path]?.let {
+                alreadyUploadedFiles.add(it)
+            }
+        }
+
+        return alreadyUploadedFiles
+    }
+
     suspend fun refresh() {
         comm.checkConnected()
         val newModel = newTreeModel()
@@ -170,7 +344,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             dirList = blindExecute(LONG_TIMEOUT, MPY_FS_SCAN).extractSingleResponse()
         } catch (e: CancellationException) {
             disconnect()
-            throw IOException("Micropython filesystem scan cancelled, the board is disconnected", e)
+            throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
         } catch (e: Throwable) {
             disconnect()
             throw IOException("Micropython filesystem scan failed, ${e.localizedMessage}", e)
@@ -257,10 +431,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             try {
                 blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
                     .extractResponse()
-            } catch (e: IOException) {
-                if (e.message?.contains("ENOENT") != true) { //todo fix NOENT python exception and remove this hack
-                    throw e
-                }
             } catch (_: CancellationException) {
                 Notifications.Bus.notify(
                     Notification(
@@ -328,7 +498,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     suspend fun blindExecute(commandTimeout: Long, vararg commands: String): ExecResponse {
         clearTerminalIfNeeded()
         return comm.blindExecute(commandTimeout, *commands)
-
     }
 
     internal suspend fun clearTerminalIfNeeded() {
@@ -352,7 +521,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 }
 
 sealed class FileSystemNode(@NonNls val fullName: String, @NonNls val name: String) : DefaultMutableTreeNode() {
-
     override fun toString(): String = name
 
     override fun equals(other: Any?): Boolean {
@@ -365,7 +533,6 @@ sealed class FileSystemNode(@NonNls val fullName: String, @NonNls val name: Stri
     override fun hashCode(): Int {
         return fullName.hashCode()
     }
-
 }
 
 class FileNode(fullName: String, name: String, val size: Int) : FileSystemNode(fullName, name) {

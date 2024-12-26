@@ -119,7 +119,7 @@ open class MpyWebSocketClient(private val comm: MpyComm) : Client {
                     }
                 }
                 loginBuffer.setLength(0)
-                send("${comm.connectionParameters.password}\n")
+                send("${comm.connectionParameters.webReplPassword}\n")
                 while (connectInProcess && isConnected) {
                     when {
                         loginBuffer.contains(LOGIN_SUCCESS) -> break

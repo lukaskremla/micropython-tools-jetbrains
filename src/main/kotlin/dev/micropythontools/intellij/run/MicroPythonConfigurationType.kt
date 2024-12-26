@@ -38,7 +38,7 @@ class MicroPythonConfigurationType : ConfigurationType {
         override fun createTemplateConfiguration(project: Project): RunConfiguration =
             MicroPythonRunConfiguration(project, this)
 
-        override fun getId(): String = "MicroPython"
+        override fun getId(): String = "MicroPython Tools"
     }
 
     override fun getIcon(): Icon = MicroPythonFacetType.LOGO
@@ -47,7 +47,7 @@ class MicroPythonConfigurationType : ConfigurationType {
 
     override fun getId(): String = "MicroPythonConfigurationType"
 
-    override fun getDisplayName(): String = "MicroPython"
+    override fun getDisplayName(): String = "MicroPython Tools"
 
     override fun getConfigurationFactories(): Array<ConfigurationFactory> = arrayOf(factory)
 }

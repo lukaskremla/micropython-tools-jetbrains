@@ -67,7 +67,7 @@ suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
 
     } else {
         val url = facet.configuration.webReplUrl
-        val password = fileSystemWidget.project.service<MpySupportService>().retrievePassword(url)
+        val password = fileSystemWidget.project.service<MpySupportService>().retrieveWebReplPassword(url)
         msg = messageForBrokenUrl(url)
         if (password.isBlank()) {
             msg = "Empty password"

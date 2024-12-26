@@ -31,7 +31,6 @@ import javax.swing.JPanel
  * @author vlan
  */
 class MicroPythonModuleConfigurable(private val module: Module) : Configurable {
-
     private val disposable = Disposer.newDisposable()
 
     override fun disposeUIResources() {
@@ -56,8 +55,7 @@ class MicroPythonModuleConfigurable(private val module: Module) : Configurable {
         val enabled = facet != null
 
         if (enabledCheckbox.isSelected != enabled) return true
-        val c = facet?.configuration ?: return false
-        return panel.isModified(c)
+        return panel.isModified()
     }
 
     override fun getDisplayName() = "MicroPython"
@@ -108,7 +106,7 @@ class MicroPythonModuleConfigurable(private val module: Module) : Configurable {
         update()
 
         if (facet != null) {
-            panel.reset(facet.configuration)
+            panel.reset()
         }
     }
 

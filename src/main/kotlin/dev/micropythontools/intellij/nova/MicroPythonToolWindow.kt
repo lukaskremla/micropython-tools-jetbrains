@@ -36,11 +36,10 @@ import javax.swing.JComponent
 /**
  * @author elmot
  */
-internal const val NOTIFICATION_GROUP = "Micropython"
-internal const val TOOL_WINDOW_ID = "com.jetbrains.micropython.nova.MicroPythonToolWindow"
+internal const val NOTIFICATION_GROUP = "MicroPython Tools"
+internal const val TOOL_WINDOW_ID = "MicroPython Tools"
 
 class MicroPythonToolWindow : ToolWindowFactory, DumbAware {
-
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val newDisposable = Disposer.newDisposable(toolWindow.disposable, "Webrepl")
 
@@ -75,9 +74,7 @@ class MicroPythonToolWindow : ToolWindowFactory, DumbAware {
         actionToolbar.targetComponent = terminal
         widget.addToTop(actionToolbar.component)
         return widget
-
     }
-
 }
 
 class AutoClearAction : CheckboxAction("Auto Clear REPL", "Automatically clear REPL console on device reset/upload", null),
@@ -95,7 +92,6 @@ class AutoClearAction : CheckboxAction("Auto Clear REPL", "Automatically clear R
         private const val DEFAULT = true
         val isAutoClearEnabled: Boolean
             get() = PropertiesComponent.getInstance().getBoolean(PROPERTY_NAME, DEFAULT)
-
     }
 }
 
