@@ -52,7 +52,7 @@ java {
 
 intellijPlatform {
     pluginConfiguration {
-        name = "MicroPython"
+        name = "MicroPython Tools"
     }
 
     instrumentCode = false
