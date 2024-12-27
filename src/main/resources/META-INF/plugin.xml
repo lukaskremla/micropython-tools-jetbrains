@@ -20,7 +20,7 @@
        See <a href="https://github.com/JetBrains/intellij-micropython">the project page</a> on GitHub.</p>
     ]]></description>
     <version>SNAPSHOT</version>
-    <vendor>JetBrains</vendor>
+    <vendor>Lukas Kremla</vendor>
 
     <dependencies>
         <plugin id="com.intellij.modules.lang"/>
