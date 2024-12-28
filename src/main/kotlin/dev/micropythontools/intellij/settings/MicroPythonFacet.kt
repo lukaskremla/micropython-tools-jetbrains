@@ -22,6 +22,7 @@ import com.intellij.facet.FacetType
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.jetbrains.python.facet.FacetLibraryConfigurator
@@ -45,6 +46,9 @@ class MicroPythonFacet(
         val scriptsPath: String
             get() = "${pluginDescriptor.pluginPath}/scripts"
 
+        val stubsPath: String
+            get() = "${pluginDescriptor.pluginPath}/stubs"
+
         private val pluginDescriptor: IdeaPluginDescriptor
             get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID)) ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
     }
@@ -54,7 +58,15 @@ class MicroPythonFacet(
     }
 
     override fun updateLibrary() {
-        //
+        val stubsPath = configuration.activeStubsPath
+
+        if (stubsPath == "") {
+            return
+        }
+
+        ApplicationManager.getApplication().invokeLater {
+            FacetLibraryConfigurator.attachPythonLibrary(module, null, "MicroPython Tools", listOf(stubsPath))
+        }
     }
 
     override fun removeLibrary() {
@@ -64,14 +76,13 @@ class MicroPythonFacet(
     fun checkValid(): ValidationResult {
         val sdk = PythonSdkUtil.findPythonSdk(module)
         if (sdk == null || (!sdk.sdkSeemsValid) || PySdkUtil.getLanguageLevelForSdk(sdk).isOlderThan(LanguageLevel.PYTHON310)) {
-            return ValidationResult("MicroPython tools plugin requires valid Python 3.10+ SDK")
+            return ValidationResult("MicroPython tools plugin requires a valid Python 3.10+ SDK")
         }
         return ValidationResult.OK
     }
 
     val pythonPath: String?
         get() = PythonSdkUtil.findPythonSdk(module)?.homePath
-
 }
 
 val Module.microPythonFacet: MicroPythonFacet?
