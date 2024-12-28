@@ -1,0 +1,24 @@
+{
+    "name": "micropython-samd-minisam_m4-stubs",
+    "mpy_version": "1.20.0",
+    "publish": true,
+    "pkg_version": "1.20.0.post5",
+    "path": "micropython-v1_20_0-samd-minisam_m4-stubs",
+    "stub_sources": [
+        [
+            "Merged stubs",
+            "micropython-v1_20_0-samd-MINISAM_M4-merged"
+        ],
+        [
+            "Frozen stubs",
+            "micropython-v1_20_0-frozen/samd/GENERIC"
+        ],
+        [
+            "Core stubs",
+            "micropython-core"
+        ]
+    ],
+    "description": "MicroPython stubs",
+    "hash": null,
+    "stub_hash": null
+}

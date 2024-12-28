@@ -1,0 +1,24 @@
+{
+    "name": "micropython-rp2-rpi_pico_w-stubs",
+    "mpy_version": "1.21.0",
+    "publish": true,
+    "pkg_version": "1.21.0.post1",
+    "path": "micropython-v1_21_0-rp2-rpi_pico_w-stubs",
+    "stub_sources": [
+        [
+            "Merged stubs",
+            "micropython-v1_21_0-rp2-RPI_PICO_W-merged"
+        ],
+        [
+            "Frozen stubs",
+            "micropython-v1_21_0-frozen/rp2/RPI_PICO_W"
+        ],
+        [
+            "Core stubs",
+            "micropython-core"
+        ]
+    ],
+    "description": "MicroPython stubs",
+    "hash": null,
+    "stub_hash": null
+}
