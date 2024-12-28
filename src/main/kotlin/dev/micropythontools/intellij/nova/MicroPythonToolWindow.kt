@@ -16,10 +16,14 @@
 
 package dev.micropythontools.intellij.nova
 
+import com.intellij.facet.FacetManager
+import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CheckboxAction
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -30,6 +34,7 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TtyConnector
+import dev.micropythontools.intellij.settings.microPythonFacet
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import javax.swing.JComponent
 
@@ -95,3 +100,60 @@ class AutoClearAction : CheckboxAction("Auto Clear REPL", "Automatically clear R
     }
 }
 
+class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+        super.update(e)
+
+        val project = e.project
+
+        val module = project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+
+        val configuration = module?.microPythonFacet?.configuration
+
+        val portName = configuration?.portName
+        val uart = configuration?.uart
+        val url = configuration?.webReplUrl
+
+        if (!portName.isNullOrBlank()) {
+            e.presentation.text = portName
+        }
+
+        if (uart == true) {
+            e.presentation.text = portName ?: "No port selected"
+        } else {
+            e.presentation.text = url ?: "No url selected"
+        }
+
+        e.presentation.isEnabled = fileSystemWidget(project)?.state == State.DISCONNECTED || fileSystemWidget(project)?.state == State.DISCONNECTING
+    }
+
+    override fun createPopupActionGroup(button: JComponent, dataContext: DataContext): DefaultActionGroup {
+        val group = DefaultActionGroup()
+
+        val project = DataManager.getInstance().getDataContext(button).getData(CommonDataKeys.PROJECT)
+
+        val module = project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+
+        val portListing = module?.microPythonFacet?.listSerialPorts(project)
+
+        portListing?.forEach { portName ->
+            val action = object : AnAction(portName) {
+                override fun actionPerformed(e: AnActionEvent) {
+                    module.microPythonFacet?.let {
+                        it.configuration.uart = true
+                        it.configuration.portName = portName
+
+                        FacetManager.getInstance(module).facetConfigurationChanged(it)
+
+                        project.save()
+                    }
+                }
+            }
+            group.add(action)
+        }
+
+        return group
+    }
+}

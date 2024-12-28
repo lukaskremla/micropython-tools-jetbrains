@@ -17,9 +17,6 @@
 package dev.micropythontools.intellij.settings
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.ui.DialogPanel
@@ -33,10 +30,10 @@ import com.intellij.util.ui.UIUtil
 import dev.micropythontools.intellij.nova.ConnectionParameters
 import dev.micropythontools.intellij.nova.MpySupportService
 import dev.micropythontools.intellij.nova.messageForBrokenUrl
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import javax.swing.JPanel
+import javax.swing.event.PopupMenuEvent
+import javax.swing.event.PopupMenuListener
 
 /**
  * @author vlan, elmot
@@ -68,14 +65,8 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
             portSelectModel.add(parameters.portName)
         }
 
-        module.project.service<MpySupportService>().listSerialPorts { ports ->
-            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-                portSelectModel.addAll(portSelectModel.size, ports.filter { !portSelectModel.contains(it) })
-                if (portSelectModel.selectedItem.asSafely<String>().isNullOrBlank() && !portSelectModel.isEmpty) {
-                    portSelectModel.selectedItem = portSelectModel.items.firstOrNull()
-                }
-            }
-        }
+        refreshAPortSelectModel(module, portSelectModel)
+
         connectionPanel = panel {
             group("Connection") {
                 buttonsGroup {
@@ -83,6 +74,7 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
                         radioButton("Serial").bindSelected(parameters::uart)
                         comboBox(portSelectModel)
                             .label("Port:")
+                            .columns(20)
                             .bind(
                                 { it.editor.item.toString() },
                                 { component, text -> component.selectedItem = text },
@@ -97,8 +89,15 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
                             }
                             .applyToComponent {
                                 isEditable = true
-                            }
+                                addPopupMenuListener(object : PopupMenuListener {
+                                    override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
+                                        refreshAPortSelectModel(module, portSelectModel)
+                                    }
 
+                                    override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
+                                    override fun popupMenuCanceled(e: PopupMenuEvent?) {}
+                                })
+                            }
                     }
                     separator()
                     row {
@@ -170,6 +169,29 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
 
     fun reset() {
         connectionPanel.reset()
+    }
+
+    fun refreshAPortSelectModel(module: Module, portSelectModel: MutableCollectionComboBoxModel<String>) {
+        val ports = module.microPythonFacet?.listSerialPorts(module.project) ?: emptyList()
+
+        var i = 0
+        while (i < portSelectModel.size) {
+            val item = portSelectModel.items[i]
+
+            if (item !in ports) {
+                if (item != portSelectModel.selectedItem) {
+                    portSelectModel.remove(item)
+                }
+            }
+
+            i += 1
+        }
+
+        portSelectModel.addAll(portSelectModel.size, ports.filter { !portSelectModel.contains(it) })
+
+        if (portSelectModel.selectedItem.asSafely<String>().isNullOrBlank() && !portSelectModel.isEmpty) {
+            portSelectModel.selectedItem = portSelectModel.items.firstOrNull()
+        }
     }
 }
 
