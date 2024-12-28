@@ -34,6 +34,7 @@ class MicroPythonFacetConfiguration : FacetConfiguration {
     var uart: Boolean = true
     var portName: String = "COM1"
     var ssid: String = ""
+    var activeStubsPath: String = ""
 
     override fun createEditorTabs(editorContext: FacetEditorContext, validatorsManager: FacetValidatorsManager): Array<FacetEditorTab> {
         val facet = editorContext.facet as MicroPythonFacet
@@ -50,6 +51,7 @@ class MicroPythonFacetConfiguration : FacetConfiguration {
         uart = deviceElement?.getAttributeBooleanValue("uart-connection") ?: true
         portName = deviceElement?.getAttributeValue("port") ?: "COM1"
         ssid = deviceElement?.getAttributeValue("ssid") ?: ""
+        activeStubsPath = deviceElement?.getAttributeValue("active-stubs-path") ?: ""
     }
 
     @Deprecated("Deprecated in Java")
@@ -59,6 +61,7 @@ class MicroPythonFacetConfiguration : FacetConfiguration {
         deviceElement.setAttribute("uart-connection", uart.toString())
         deviceElement.setAttribute("port", portName)
         deviceElement.setAttribute("ssid", ssid)
+        deviceElement.setAttribute("active-stubs-path", activeStubsPath)
         element?.addContent(deviceElement)
     }
 }
