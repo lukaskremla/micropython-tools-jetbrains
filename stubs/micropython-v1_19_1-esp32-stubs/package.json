@@ -1,0 +1,24 @@
+{
+    "name": "micropython-esp32-stubs",
+    "mpy_version": "1.19.1",
+    "publish": true,
+    "pkg_version": "1.19.1.post16",
+    "path": "micropython-v1_19_1-esp32-stubs",
+    "stub_sources": [
+        [
+            "Merged stubs",
+            "micropython-v1_19_1-esp32-GENERIC-merged"
+        ],
+        [
+            "Frozen stubs",
+            "micropython-v1_19_1-frozen/esp32/GENERIC"
+        ],
+        [
+            "Core Stubs",
+            "micropython-core"
+        ]
+    ],
+    "description": "MicroPython stubs",
+    "hash": null,
+    "stub_hash": null
+}

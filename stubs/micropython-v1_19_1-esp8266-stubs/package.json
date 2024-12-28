@@ -1,0 +1,24 @@
+{
+    "name": "micropython-esp8266-stubs",
+    "mpy_version": "1.19.1",
+    "publish": true,
+    "pkg_version": "1.19.1.post13",
+    "path": "micropython-v1_19_1-esp8266-stubs",
+    "stub_sources": [
+        [
+            "Merged stubs",
+            "micropython-v1_19_1-esp8266-merged"
+        ],
+        [
+            "Frozen stubs",
+            "micropython-v1_19_1-frozen/esp8266/GENERIC"
+        ],
+        [
+            "Core Stubs",
+            "micropython-core"
+        ]
+    ],
+    "description": "MicroPython stubs",
+    "hash": null,
+    "stub_hash": null
+}
