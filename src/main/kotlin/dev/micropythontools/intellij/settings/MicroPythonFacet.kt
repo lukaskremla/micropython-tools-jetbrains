@@ -138,7 +138,6 @@ class MicroPythonFacet(
             val output = process.runProcess(5000)
             result = output.stdout.trim() == "OK"
         }.get()
-        println(result)
         return result
     }
 }

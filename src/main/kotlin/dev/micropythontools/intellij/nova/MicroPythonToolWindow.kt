@@ -116,14 +116,10 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
         val uart = configuration?.uart
         val url = configuration?.webReplUrl
 
-        if (!portName.isNullOrBlank()) {
-            e.presentation.text = portName
-        }
-
         if (uart == true) {
-            e.presentation.text = portName ?: "No port selected"
+            e.presentation.text = if (portName == "") "No Port Selected" else portName
         } else {
-            e.presentation.text = url ?: "No url selected"
+            e.presentation.text = if (url == "") "No URL Selected" else url
         }
 
         e.presentation.isEnabled = fileSystemWidget(project)?.state == State.DISCONNECTED || fileSystemWidget(project)?.state == State.DISCONNECTING
