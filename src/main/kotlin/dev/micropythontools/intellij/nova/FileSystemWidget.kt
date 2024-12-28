@@ -58,13 +58,31 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.io.IOException
+import java.util.*
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
 /**
- * @author elmot
+ * @authors elmot, Lukas Kremla (synchronization and initialization script)
  */
+
+private const val MPY_INITIALIZATION_SCRIP = """
+    
+import machine, os
+
+datetime = %s
+
+try:
+    rtc = machine.RTC()
+    rtc.datetime(datetime)
+except Exception as e:
+    pass
+
+print(os.uname())
+
+"""
+
 private const val MPY_FS_SCAN = """
 
 import os
@@ -334,6 +352,27 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         }
 
         return alreadyUploadedFiles
+    }
+
+    suspend fun initializeDevice() {
+        val calendar = Calendar.getInstance()
+
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        val second = calendar.get(Calendar.SECOND)
+
+        val formattedScript = MPY_INITIALIZATION_SCRIP.format(
+            "($year, $month, $day, $hour, $minute, $second, 0, 0)"
+        )
+
+        //println(formattedScript)
+
+        val scriptResponse = blindExecute(TIMEOUT, formattedScript).extractSingleResponse().trim()
+
+        //println(scriptResponse)
     }
 
     suspend fun refresh() {

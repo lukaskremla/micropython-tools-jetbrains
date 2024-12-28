@@ -99,6 +99,7 @@ suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
             fileSystemWidget.connect()
             try {
                 if (fileSystemWidget.state == State.CONNECTED) {
+                    fileSystemWidget.initializeDevice()
                     fileSystemWidget.refresh()
                 }
             } finally {

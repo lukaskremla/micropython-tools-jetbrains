@@ -70,13 +70,13 @@ tasks {
             apiVersion = KotlinVersion.KOTLIN_2_0
         }
     }
-    /*prepareSandbox {
+    prepareSandbox {
         from("$rootDir") {
             into("micropython-tools-jetbrains")
-            include("typehints/")
+            include("stubs/")
             include("scripts/")
         }
-    }*/
+    }
     test {
         testLogging.showExceptions = true
         useJUnitPlatform()

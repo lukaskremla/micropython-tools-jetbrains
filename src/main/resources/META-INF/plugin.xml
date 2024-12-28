@@ -65,6 +65,8 @@
             </action>
             <action id="micropython.repl.Connect" class="dev.micropythontools.intellij.nova.ConnectAction"
                     icon="/icons/connectActive.svg"/>
+            <action id="micropython.repl.connectionSelector"
+                    class="dev.micropythontools.intellij.nova.ConnectionSelectorAction"/>
             <action id="micropython.fs.Refresh" class="dev.micropythontools.intellij.nova.Refresh"
                     icon="AllIcons.Actions.StopRefresh">
                 <keyboard-shortcut first-keystroke="control R" keymap="$default"/>
@@ -92,6 +94,7 @@
 
         <group id="micropython.repl.ReplToolbar">
             <reference ref="micropython.repl.Connect"/>
+            <reference ref="micropython.repl.connectionSelector"/>
             <reference ref="micropython.repl.Disconnect"/>
             <action id="micropython.repl.SoftReset" class="dev.micropythontools.intellij.nova.SoftResetAction"
                     icon="AllIcons.Actions.StopAndRestart" description="Soft reset the board">
