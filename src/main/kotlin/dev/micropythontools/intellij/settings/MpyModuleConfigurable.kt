@@ -58,7 +58,7 @@ class MpyModuleConfigurable(private val module: Module) : Configurable {
         return panel.isModified()
     }
 
-    override fun getDisplayName() = "MicroPython"
+    override fun getDisplayName() = "MicroPython Tools"
 
     override fun apply() {
         val facet = module.mpyFacet
