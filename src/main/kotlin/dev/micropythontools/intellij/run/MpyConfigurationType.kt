@@ -22,32 +22,30 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.run.PythonConfigurationFactoryBase
-import dev.micropythontools.intellij.settings.MicroPythonFacetType
+import dev.micropythontools.intellij.settings.LOGO
 import javax.swing.Icon
 
 /**
  * @author Mikhail Golubev
  */
-class MicroPythonConfigurationType : ConfigurationType {
-    companion object {
-        fun getInstance(): MicroPythonConfigurationType =
-            ConfigurationTypeUtil.findConfigurationType(MicroPythonConfigurationType::class.java)
-    }
-
+class MpyConfigurationType : ConfigurationType {
     internal val factory = object : PythonConfigurationFactoryBase(this) {
         override fun createTemplateConfiguration(project: Project): RunConfiguration =
-            MicroPythonRunConfiguration(project, this)
+            MpyRunConfiguration(project, this)
 
         override fun getId(): String = "MicroPython Tools"
     }
 
-    override fun getIcon(): Icon = MicroPythonFacetType.LOGO
+    override fun getIcon(): Icon = LOGO
 
     override fun getConfigurationTypeDescription(): String = "MicroPython run configuration"
 
-    override fun getId(): String = "MicroPythonConfigurationType"
+    override fun getId(): String = "MpyConfigurationType"
 
     override fun getDisplayName(): String = "MicroPython Tools"
 
     override fun getConfigurationFactories(): Array<ConfigurationFactory> = arrayOf(factory)
 }
+
+fun getInstance(): MpyConfigurationType =
+    ConfigurationTypeUtil.findConfigurationType(MpyConfigurationType::class.java)

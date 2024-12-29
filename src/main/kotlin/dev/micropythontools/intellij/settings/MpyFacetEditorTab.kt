@@ -23,9 +23,9 @@ import javax.swing.JComponent
 /**
  * @author vlan
  */
-class MicroPythonFacetEditorTab(
-    val configuration: MicroPythonFacetConfiguration,
-    private val facet: MicroPythonFacet
+class MpyFacetEditorTab(
+    val configuration: MpyFacetConfiguration,
+    private val facet: MpyFacet
 ) : FacetEditorTab() {
     private val disposable = Disposer.newDisposable()
     override fun disposeUIResources() {
@@ -33,8 +33,8 @@ class MicroPythonFacetEditorTab(
         Disposer.dispose(disposable)
     }
 
-    private val panel: MicroPythonSettingsPanel by lazy {
-        MicroPythonSettingsPanel(facet.module, disposable)
+    private val panel: MpySettingsPanel by lazy {
+        MpySettingsPanel(facet.module, disposable)
     }
 
     override fun isModified(): Boolean = panel.isModified()

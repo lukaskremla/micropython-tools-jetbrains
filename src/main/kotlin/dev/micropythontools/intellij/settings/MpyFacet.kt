@@ -43,10 +43,10 @@ import javax.swing.JComponent
 /**
  * @author vlan
  */
-class MicroPythonFacet(
+class MpyFacet(
     facetType: FacetType<out Facet<*>, *>, module: Module, name: String,
-    configuration: MicroPythonFacetConfiguration, underlyingFacet: Facet<*>?
-) : LibraryContributingFacet<MicroPythonFacetConfiguration>(facetType, module, name, configuration, underlyingFacet) {
+    configuration: MpyFacetConfiguration, underlyingFacet: Facet<*>?
+) : LibraryContributingFacet<MpyFacetConfiguration>(facetType, module, name, configuration, underlyingFacet) {
 
     companion object {
         private const val PLUGIN_ID = "micropython-tools-jetbrains"
@@ -90,7 +90,7 @@ class MicroPythonFacet(
 
         val requirements = PyRequirementParser.fromText("pyserial==3.5")
 
-        if (!isPyserialInstalled(module.project)) {
+        if (!isPyserialInstalled()) {
             return ValidationResult(
                 "Packages required for MicroPython support not found: pyserial",
                 object : FacetConfigurationQuickFix("Install Requirements") {
@@ -128,7 +128,7 @@ class MicroPythonFacet(
         return result
     }
 
-    private fun isPyserialInstalled(project: Project): Boolean {
+    private fun isPyserialInstalled(): Boolean {
         var result = false
         // A very improvised way of checking if pyserial is installed
         // An alternative to the deprecated PyPackageManager
@@ -142,5 +142,5 @@ class MicroPythonFacet(
     }
 }
 
-val Module.microPythonFacet: MicroPythonFacet?
-    get() = FacetManager.getInstance(this).getFacetByType(MicroPythonFacetType.ID)
+val Module.mpyFacet: MpyFacet?
+    get() = FacetManager.getInstance(this).getFacetByType(ID)

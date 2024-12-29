@@ -21,20 +21,20 @@ import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import dev.micropythontools.intellij.settings.microPythonFacet
+import dev.micropythontools.intellij.settings.mpyFacet
 
 /**
  * @author vlan
  */
-class MicroPythonRequirementsInspection : LocalInspectionTool() {
+class MpyRequirementsInspection : LocalInspectionTool() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
-        val facet = module.microPythonFacet ?: return null
+        val facet = module.mpyFacet ?: return null
         val result = facet.checkValid()
         if (result.isOk) return null
         val facetFix: FacetConfigurationQuickFix? = result.quickFix
         val fix = if (facetFix != null) object : LocalQuickFix {
-            override fun getFamilyName() = "Missing required MicroPython packages"
+            override fun getFamilyName() = "Install missing packages"
 
             override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                 facetFix.run(null)

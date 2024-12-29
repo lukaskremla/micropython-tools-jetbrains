@@ -14,6 +14,7 @@ private fun logMessage(direction: String, s: String): String {
     println("$direction $text")
     return s
 }
+
 class WebSocketTestServer(tcpPort: Int) :
     WebSocketServer(InetSocketAddress("localhost", tcpPort)), Closeable {
 
@@ -25,6 +26,7 @@ class WebSocketTestServer(tcpPort: Int) :
     fun expect(vararg sentences: Pair<String, String?>) {
         this.sentences = sentences
     }
+
     override fun onError(conn: WebSocket?, ex: Exception) {
         exceptions.add(ex)
     }
@@ -58,9 +60,10 @@ class WebSocketTestServer(tcpPort: Int) :
     @Volatile
     var started = false
 
-    override fun onStart(){
+    override fun onStart() {
         started = true
     }
+
     override fun close() {
         stop()
         exceptions.forEach { it.printStackTrace() }
@@ -89,8 +92,8 @@ class WebSocketTestServer(tcpPort: Int) :
 }
 
 
-open class WebSocketCommTest() : MpyCommForTest() {
-    inner class MpyWebSocketClientTest() : MpyWebSocketClient(this) {
+open class WebSocketCommTest : MpyCommForTest() {
+    inner class MpyWebSocketClientTest : MpyWebSocketClient(this) {
         override fun error(ex: Exception) {
             println("== ON ERROR ==")
         }

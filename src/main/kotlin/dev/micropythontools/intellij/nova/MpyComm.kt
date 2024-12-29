@@ -80,12 +80,11 @@ fun ExecResponse.extractResponse(): String {
 
 }
 
-open class MpyComm() : Disposable, Closeable {
-
+open class MpyComm : Disposable, Closeable {
     val stateListeners = mutableListOf<StateListener>()
 
     @Volatile
-    private var client: Client? = null
+    private var mpyClient: MpyClient? = null
 
     protected open fun isTtySuspended(): Boolean = state == State.TTY_DETACHED
 
@@ -119,7 +118,7 @@ open class MpyComm() : Disposable, Closeable {
     @Throws(IOException::class, CancellationException::class, TimeoutCancellationException::class)
     suspend fun upload(fullName: @NonNls String, content: ByteArray) {
         checkConnected()
-        val commands = mutableListOf<String>("import os,errno")
+        val commands = mutableListOf("import os,errno")
         var slashIdx = 0
         while (slashIdx >= 0) {
             slashIdx = fullName.indexOf('/', slashIdx + 1)
@@ -207,15 +206,15 @@ except OSError as e:
     @Throws(IOException::class)
     private suspend fun doBlindExecute(commandTimeout: Long, vararg commands: String): ExecResponse {
         state = State.TTY_DETACHED
-        return try {
+        try {
             withTimeout(LONG_TIMEOUT) {
                 do {
                     var promptNotReady = true
-                    client?.send("\u0003")
-                    client?.send("\u0003")
-                    client?.send("\u0003")
+                    mpyClient?.send("\u0003")
+                    mpyClient?.send("\u0003")
+                    mpyClient?.send("\u0003")
                     delay(SHORT_DELAY)
-                    client?.send("\u0001")
+                    mpyClient?.send("\u0001")
                     withTimeoutOrNull(TIMEOUT) {
                         while (!offTtyBuffer.endsWith("\n>")) {
                             delay(SHORT_DELAY)
@@ -234,9 +233,9 @@ except OSError as e:
                             if (index > 0) {
                                 delay(SHORT_DELAY)
                             }
-                            client?.send("$s\n")
+                            mpyClient?.send("$s\n")
                         }
-                        client?.send("\u0004")
+                        mpyClient?.send("\u0004")
                         while (!(offTtyBuffer.startsWith("OK") && offTtyBuffer.endsWith("\u0004>") && offTtyBuffer.count { it == '\u0004' } == 2)) {
                             delay(SHORT_DELAY)
                         }
@@ -255,11 +254,11 @@ except OSError as e:
             throw e
         } catch (e: Throwable) {
             state = State.DISCONNECTED
-            client?.close()
-            client = null
+            mpyClient?.close()
+            mpyClient = null
             throw e
         } finally {
-            client?.send("\u0002")
+            mpyClient?.send("\u0002")
             offTtyBuffer.clear()
             if (state == State.TTY_DETACHED) {
                 state = State.CONNECTED
@@ -289,20 +288,20 @@ except OSError as e:
         webSocketMutex.withLock {
             state = State.TTY_DETACHED
             try {
-                client?.send("\u0003")
-                client?.send("\u0003")
-                client?.send("\u0003")
-                client?.send("\u0005")
+                mpyClient?.send("\u0003")
+                mpyClient?.send("\u0003")
+                mpyClient?.send("\u0003")
+                mpyClient?.send("\u0005")
                 while (!offTtyBuffer.contains("===")) {
                     delay(SHORT_DELAY)
                 }
                 command.lines().forEach {
                     offTtyBuffer.clear()
-                    client?.send("$it\n")
+                    mpyClient?.send("$it\n")
                     offTtyBuffer.clear()
                     delay(SHORT_DELAY)
                 }
-                client?.send("#$BOUNDARY\n")
+                mpyClient?.send("#$BOUNDARY\n")
                 while (!offTtyBuffer.contains(BOUNDARY)) {
                     delay(SHORT_DELAY)
                 }
@@ -311,7 +310,7 @@ except OSError as e:
                 if (state == State.TTY_DETACHED) {
                     state = State.CONNECTED
                 }
-                client?.send("\u0004")
+                mpyClient?.send("\u0004")
             }
         }
     }
@@ -326,7 +325,7 @@ except OSError as e:
         override fun close() = Disposer.dispose(this@MpyComm)
         override fun isConnected(): Boolean = true
         override fun ready(): Boolean {
-            return inPipe.ready() || client?.hasPendingData() == true
+            return inPipe.ready() || mpyClient?.hasPendingData() == true
         }
 
         override fun resize(termSize: TermSize) = Unit
@@ -337,7 +336,7 @@ except OSError as e:
 
         override fun write(text: String) {
             if (state == State.CONNECTED) {
-                client?.send(text)
+                mpyClient?.send(text)
             }
         }
 
@@ -358,8 +357,8 @@ except OSError as e:
 
     override fun close() {
         try {
-            client?.close()
-            client = null
+            mpyClient?.close()
+            mpyClient = null
         } catch (_: IOException) {
         }
         try {
@@ -371,14 +370,14 @@ except OSError as e:
         } catch (_: IOException) {
         }
         try {
-            client?.close()
+            mpyClient?.close()
         } catch (_: IOException) {
         }
         state = State.DISCONNECTED
     }
 
-    protected open fun createClient(): Client {
-        return if (connectionParameters.uart) SerialClient(this) else MpyWebSocketClient(this)
+    protected open fun createClient(): MpyClient {
+        return if (connectionParameters.uart) MpySerialMpyClient(this) else MpyWebSocketClient(this)
     }
 
     @Throws(IOException::class)
@@ -390,7 +389,7 @@ except OSError as e:
         offTtyBuffer.clear()
         webSocketMutex.withLock {
             try {
-                client = createClient().connect("Connecting to $name")
+                mpyClient = createClient().connect("Connecting to $name")
             } catch (e: Exception) {
                 state = State.DISCONNECTED
                 throw e
@@ -401,14 +400,14 @@ except OSError as e:
     suspend fun disconnect() {
         webSocketMutex.withLock {
             state = State.DISCONNECTING
-            client?.closeBlocking()
-            client = null
+            mpyClient?.closeBlocking()
+            mpyClient = null
         }
     }
 
     fun ping() {
         if (state == State.CONNECTED) {
-            client?.sendPing()
+            mpyClient?.sendPing()
         }
     }
 
@@ -429,13 +428,13 @@ except OSError as e:
     }
 
     fun reset() {
-        client?.send("\u0003")
-        client?.send("\u0003")
-        client?.send("\u0004")
+        mpyClient?.send("\u0003")
+        mpyClient?.send("\u0003")
+        mpyClient?.send("\u0004")
     }
 
     fun interrupt() {
-        client?.send("\u0003")
+        mpyClient?.send("\u0003")
     }
 
     suspend fun download(fileName: @NonNls String): ByteArray {
@@ -447,7 +446,8 @@ with open('$fileName','rb') as f:
           print(b.hex())
 """
         val result = blindExecute(LONG_LONG_TIMEOUT, command).extractSingleResponse()
-        return result.filter { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }.chunked(2).map { it.toInt(16).toByte() }
+        return result.filter { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }.chunked(2)
+            .map { it.toInt(16).toByte() }
             .toByteArray()
     }
 

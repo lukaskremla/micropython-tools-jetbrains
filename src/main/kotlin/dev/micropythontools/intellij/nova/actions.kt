@@ -50,9 +50,9 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.PathUtilRt.Platform
 import com.intellij.util.asSafely
 import com.jetbrains.python.PythonFileType
-import dev.micropythontools.intellij.run.MicroPythonRunConfiguration
-import dev.micropythontools.intellij.settings.MicroPythonProjectConfigurable
-import dev.micropythontools.intellij.settings.microPythonFacet
+import dev.micropythontools.intellij.run.MpyRunConfiguration
+import dev.micropythontools.intellij.settings.MpyProjectConfigurable
+import dev.micropythontools.intellij.settings.mpyFacet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
@@ -148,7 +148,6 @@ fun <T> performReplAction(
 }
 
 class Refresh : ReplAction("Refresh", false, false) { //todo optimize
-
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override val actionDescription: String = "Refresh"
@@ -159,7 +158,6 @@ class Refresh : ReplAction("Refresh", false, false) { //todo optimize
 }
 
 class Disconnect(text: String = "Disconnect") : ReplAction(text, false, false), Toggleable {
-
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override val actionDescription: String = "Disconnect"
@@ -257,7 +255,6 @@ class InstantFragmentRun : ReplAction("Instant Run", true, false) {
 }
 
 class OpenMpyFile : ReplAction("Open file", true, false) {
-
     override val actionDescription: String = "Open file"
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -284,15 +281,15 @@ class OpenMpyFile : ReplAction("Open file", true, false) {
                     //hack for LightVirtualFile and line endings
                     text = StringUtilRt.convertLineSeparators(text)
                 }
-                val file = LightVirtualFile("micropython: ${file.fullName}", fileType, text)
-                file.isWritable = false
-                FileEditorManager.getInstance(fileSystemWidget.project).openFile(file, true, true)
+                val selectedFile = LightVirtualFile("micropython: ${file.fullName}", fileType, text)
+                selectedFile.isWritable = false
+                FileEditorManager.getInstance(fileSystemWidget.project).openFile(selectedFile, true, true)
             }
         }
     }
 }
 
-open class UploadFile() : DumbAwareAction("Upload Items(s) to MicroPython Device") {
+open class UploadFile : DumbAwareAction("Upload Selected to MicroPython Device") {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
@@ -306,7 +303,7 @@ open class UploadFile() : DumbAwareAction("Upload Items(s) to MicroPython Device
                 if (file == null || !file.isInLocalFileSystem || ModuleUtil.findModuleForFile(
                         file,
                         project
-                    )?.microPythonFacet == null
+                    )?.mpyFacet == null
                 ) {
                     return
                 }
@@ -342,7 +339,7 @@ open class UploadFile() : DumbAwareAction("Upload Items(s) to MicroPython Device
         FileDocumentManager.getInstance().saveAllDocuments()
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         if (files != null) {
-            MicroPythonRunConfiguration.uploadItems(e.project ?: return, files.toSet())
+            MpyRunConfiguration.uploadItems(e.project ?: return, files.toSet())
         }
     }
 }
@@ -350,7 +347,7 @@ open class UploadFile() : DumbAwareAction("Upload Items(s) to MicroPython Device
 class OpenSettingsAction : DumbAwareAction("Settings") {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, MicroPythonProjectConfigurable::class.java)
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyProjectConfigurable::class.java)
     }
 }
 
@@ -388,7 +385,7 @@ class CreateDeviceFolderAction : ReplAction("New Folder", true, false) {
         }
     }
 
-    override val actionDescription: @NlsContexts.DialogMessage String = "Creating New Folder..."
+    override val actionDescription: @NlsContexts.DialogMessage String = "Creating new folder..."
 
     override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
 

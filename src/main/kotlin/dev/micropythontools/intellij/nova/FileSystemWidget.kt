@@ -26,9 +26,9 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionPlaces.TOOLWINDOW_CONTENT
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
@@ -265,14 +265,14 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         })
         val actionManager = ActionManager.getInstance()
         EditSourceOnDoubleClickHandler.install(tree) {
-            val action = actionManager.getAction("micropython.repl.OpenFile")
+            val action = actionManager.getAction("micropythontools.repl.OpenFile")
             actionManager.tryToExecute(action, null, tree, TOOLWINDOW_CONTENT, true)
         }
-        val popupActions = actionManager.getAction("micropython.repl.FSContextMenu") as ActionGroup
+        val popupActions = actionManager.getAction("micropythontools.repl.FSContextMenu") as ActionGroup
         PopupHandler.installFollowingSelectionTreePopup(tree, popupActions, ActionPlaces.POPUP)
         TreeUtil.installActions(tree)
 
-        val actions = actionManager.getAction("micropython.repl.FSToolbar") as ActionGroup
+        val actions = actionManager.getAction("micropythontools.repl.FSToolbar") as ActionGroup
         val actionToolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR, actions, true)
         actionToolbar.targetComponent = this
 
@@ -285,9 +285,9 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
                 State.DISCONNECTING,
                 State.DISCONNECTED, State.CONNECTING -> {
-                    project.service<MpySupportService>().cs.launch(Dispatchers.EDT + ModalityState.any().asContextElement(), start = CoroutineStart.ATOMIC) {
+                    ApplicationManager.getApplication().invokeLater({
                         tree.model = null
-                    }
+                    }, ModalityState.any())
                 }
             }
         }

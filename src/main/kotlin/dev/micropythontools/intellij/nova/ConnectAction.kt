@@ -25,8 +25,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.Messages
-import dev.micropythontools.intellij.settings.MicroPythonProjectConfigurable
-import dev.micropythontools.intellij.settings.microPythonFacet
+import dev.micropythontools.intellij.settings.MpyPasswordSafe
+import dev.micropythontools.intellij.settings.MpyProjectConfigurable
+import dev.micropythontools.intellij.settings.messageForBrokenUrl
+import dev.micropythontools.intellij.settings.mpyFacet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -34,7 +36,6 @@ import kotlinx.coroutines.withContext
  * @author elmot
  */
 class ConnectAction(text: String = "Connect") : ReplAction(text, false, false) {
-
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override val actionDescription: String = "Connect"
@@ -53,7 +54,7 @@ class ConnectAction(text: String = "Connect") : ReplAction(text, false, false) {
 
 suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
     if (fileSystemWidget.state == State.CONNECTED) return
-    val facet = fileSystemWidget.project.modules.firstNotNullOfOrNull { it.microPythonFacet } ?: return
+    val facet = fileSystemWidget.project.modules.firstNotNullOfOrNull { it.mpyFacet } ?: return
     var msg: String? = null
     val connectionParameters: ConnectionParameters?
     if (facet.configuration.uart) {
@@ -67,7 +68,7 @@ suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
 
     } else {
         val url = facet.configuration.webReplUrl
-        val password = fileSystemWidget.project.service<MpySupportService>().retrieveWebReplPassword(url)
+        val password = fileSystemWidget.project.service<MpyPasswordSafe>().retrieveWebReplPassword(url)
         msg = messageForBrokenUrl(url)
         if (password.isBlank()) {
             msg = "Empty password"
@@ -90,7 +91,7 @@ suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
             )
             if (result == 1) {
                 ShowSettingsUtil.getInstance()
-                    .showSettingsDialog(fileSystemWidget.project, MicroPythonProjectConfigurable::class.java)
+                    .showSettingsDialog(fileSystemWidget.project, MpyProjectConfigurable::class.java)
             }
         }
     } else {
