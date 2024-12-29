@@ -82,7 +82,8 @@ class MicroPythonToolWindow : ToolWindowFactory, DumbAware {
     }
 }
 
-class AutoClearAction : CheckboxAction("Auto Clear REPL", "Automatically clear REPL console on device reset/upload", null),
+class AutoClearAction :
+    CheckboxAction("Auto Clear REPL", "Automatically clear REPL console on device reset/upload", null),
     DumbAware {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -116,13 +117,14 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
         val uart = configuration?.uart
         val url = configuration?.webReplUrl
 
-        if (uart == true) {
-            e.presentation.text = if (portName == "") "No Port Selected" else portName
+        if (uart == true || uart == null) {
+            e.presentation.text = if (portName == "" || portName == null) "No Port Selected" else portName
         } else {
             e.presentation.text = if (url == "") "No URL Selected" else url
         }
 
-        e.presentation.isEnabled = fileSystemWidget(project)?.state == State.DISCONNECTED || fileSystemWidget(project)?.state == State.DISCONNECTING
+        e.presentation.isEnabled =
+            fileSystemWidget(project)?.state == State.DISCONNECTED || fileSystemWidget(project)?.state == State.DISCONNECTING
     }
 
     override fun createPopupActionGroup(button: JComponent, dataContext: DataContext): DefaultActionGroup {
