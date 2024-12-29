@@ -475,7 +475,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     }
 
     suspend fun deleteCurrent() {
-
         comm.checkConnected()
         val confirmedFileSystemNodes = withContext(Dispatchers.EDT) {
             val fileSystemNodes = tree.selectionPaths?.mapNotNull { it.lastPathComponent.asSafely<FileSystemNode>() }

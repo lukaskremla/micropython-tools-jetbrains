@@ -11,10 +11,9 @@
       <ul>
         <li>Efficiently upload files to MPY boards (Serial, WebREPL, FTP)</li>
         <li>Comfortably view and interact with the board's file system</li>
-        <li>Built-in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">MicroPython typehint</a> support</li>
         <li>Observe code execution through REPL</li>
       </ul>
-      <p>All MicroPython devices are supported. However, typehint packages might not be available for all boards and MicroPython versions.</p>
+      <p>All MicroPython devices are supported. However, built-in typehint support isn't yet implemented. In the meantime I recommend <a href="https://micropython-stubs.readthedocs.io/en/main/">installing the stubs manually.</a></p>
        <p>Feedback and bug reports are welcome!</p>
        <p>Check this plugin out <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">on GitHub!</a></p>
     ]]></description>
