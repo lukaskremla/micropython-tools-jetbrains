@@ -39,26 +39,27 @@ import javax.swing.event.PopupMenuListener
  * @author vlan, elmot
  */
 class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPanel(BorderLayout()) {
-    private val parameters = module.mpyFacet?.let { facet ->
+    private val parameters = MpySettingsService.getInstance(module.project).let { settings ->
         ConnectionParameters(
-            uart = facet.configuration.uart,
-            url = facet.configuration.webReplUrl,
+            uart = settings.state.uart,
+            url = settings.state.webReplUrl ?: "",
             webReplPassword = "",
-            portName = facet.configuration.portName,
-            ssid = facet.configuration.ssid,
+            portName = settings.state.portName ?: "",
+            ssid = settings.state.ssid ?: "",
             wifiPassword = "",
         )
-    } ?: ConnectionParameters("")
+    }
 
     private val connectionPanel: DialogPanel
 
     init {
         border = IdeBorderFactory.createEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
         runWithModalProgressBlocking(module.project, "Retrieving WebREPL Password...") {
-            parameters.webReplPassword = module.project.service<MpyPasswordSafe>().retrieveWebReplPassword(parameters.url)
+            parameters.webReplPassword =
+                module.project.service<MpySettingsService>().retrieveWebReplPassword(parameters.url)
         }
         runWithModalProgressBlocking(module.project, "Retrieving Wi-Fi Password...") {
-            parameters.wifiPassword = module.project.service<MpyPasswordSafe>().retrieveWifiPassword()
+            parameters.wifiPassword = module.project.service<MpySettingsService>().retrieveWifiPassword()
         }
         val portSelectModel = MutableCollectionComboBoxModel<String>()
         if (parameters.portName.isNotBlank()) {
@@ -151,18 +152,20 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
         return connectionPanel.isModified()
     }
 
-    fun apply(configuration: MpyFacetConfiguration, facet: MpyFacet) {
+    fun apply(facet: MpyFacet) {
         connectionPanel.apply()
-        configuration.webReplUrl = parameters.url
-        configuration.uart = parameters.uart
-        configuration.portName = parameters.portName
-        configuration.ssid = parameters.ssid
+        val settings = MpySettingsService.getInstance(module.project)
+
+        settings.state.webReplUrl = parameters.url
+        settings.state.uart = parameters.uart
+        settings.state.portName = parameters.portName
+        settings.state.ssid = parameters.ssid
         runWithModalProgressBlocking(facet.module.project, "Saving WebREPL Password") {
-            facet.module.project.service<MpyPasswordSafe>()
-                .saveWebReplPassword(configuration.webReplUrl, parameters.webReplPassword)
+            facet.module.project.service<MpySettingsService>()
+                .saveWebReplPassword(settings.state.webReplUrl ?: "", parameters.webReplPassword)
         }
         runWithModalProgressBlocking(facet.module.project, "Saving Wi-Fi Password") {
-            facet.module.project.service<MpyPasswordSafe>()
+            facet.module.project.service<MpySettingsService>()
                 .saveWifiPassword(parameters.wifiPassword)
         }
     }

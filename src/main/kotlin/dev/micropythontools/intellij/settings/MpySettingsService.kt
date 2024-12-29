@@ -20,7 +20,8 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.*
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
@@ -32,8 +33,20 @@ import java.net.URISyntaxException
  */
 private const val WIFI_CREDENTIALS_KEY = "MicroPython_Tools_wifi_key"
 
+const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
+
 @Service(Service.Level.PROJECT)
-class MpyPasswordSafe {
+@State(
+    name = "MicroPythonTools",
+    storages = [Storage("micropython-tools-settings.xml")],
+    category = SettingsCategory.TOOLS
+)
+class MpySettingsService : SimplePersistentStateComponent<MpyState>(MpyState()) {
+    companion object {
+        fun getInstance(project: Project): MpySettingsService =
+            project.getService(MpySettingsService::class.java)
+    }
+
     private fun createCredentialAttributes(key: String): CredentialAttributes {
         return CredentialAttributes(
             generateServiceName("MySystem", key)
