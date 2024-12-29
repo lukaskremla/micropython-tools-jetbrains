@@ -58,7 +58,8 @@ class MpyFacet(
             get() = "${pluginDescriptor.pluginPath}/stubs"
 
         private val pluginDescriptor: IdeaPluginDescriptor
-            get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID)) ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
+            get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))
+                ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
     }
 
     override fun initFacet() {
@@ -66,14 +67,17 @@ class MpyFacet(
     }
 
     override fun updateLibrary() {
-        val stubsPath = configuration.activeStubsPath
+        val settings = MpySettingsService.getInstance(module.project)
 
-        if (stubsPath == "") {
+        val activeStubsPath = settings.state.activeStubsPath
+
+        if (activeStubsPath == "") {
             return
         }
 
+        //TODO: modify path properly
         ApplicationManager.getApplication().invokeLater {
-            FacetLibraryConfigurator.attachPythonLibrary(module, null, "MicroPython Tools", listOf(stubsPath))
+            FacetLibraryConfigurator.attachPythonLibrary(module, null, "MicroPython Tools", listOf(activeStubsPath))
         }
     }
 

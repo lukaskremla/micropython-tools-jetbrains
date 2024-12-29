@@ -53,8 +53,8 @@ import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.intellij.nova.*
-import dev.micropythontools.intellij.settings.MpyPasswordSafe
 import dev.micropythontools.intellij.settings.MpyProjectConfigurable
+import dev.micropythontools.intellij.settings.MpySettingsService
 import dev.micropythontools.intellij.settings.mpyFacet
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
@@ -675,7 +675,8 @@ private class FTPUploadClient {
 /**
  * @author Mikhail Golubev, Lukas Kremla
  */
-class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : AbstractRunConfiguration(project, factory), RunConfigurationWithSuppressedDefaultDebugAction {
+class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : AbstractRunConfiguration(project, factory),
+    RunConfigurationWithSuppressedDefaultDebugAction {
     var path: String = ""
     var runReplOnSuccess: Boolean = false
     var resetOnSuccess: Boolean = true
@@ -694,20 +695,29 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
         val projectDir = project.guessProjectDir()
         val projectPath = projectDir?.path
 
-        val facet = module?.mpyFacet
+        val settings = MpySettingsService.getInstance(project)
 
-        val ssid = facet?.configuration?.ssid ?: ""
+        val ssid = settings.state.ssid ?: ""
         var wifiPassword = ""
 
         runWithModalProgressBlocking(project, "Retrieving Password...") {
-            wifiPassword = project.service<MpyPasswordSafe>().retrieveWifiPassword()
+            wifiPassword = project.service<MpySettingsService>().retrieveWifiPassword()
         }
 
         if (path.isBlank() || (projectPath != null && path == projectPath)) {
             success = uploadProject(project, excludedPaths, synchronize, excludePaths, useFTP, ssid, wifiPassword)
         } else {
             val toUpload = StandardFileSystems.local().findFileByPath(path) ?: return null
-            success = uploadFileOrFolder(project, toUpload, excludedPaths, synchronize, excludePaths, useFTP, ssid, wifiPassword)
+            success = uploadFileOrFolder(
+                project,
+                toUpload,
+                excludedPaths,
+                synchronize,
+                excludePaths,
+                useFTP,
+                ssid,
+                wifiPassword
+            )
         }
         if (success) {
             val fileSystemWidget = fileSystemWidget(project)
@@ -871,7 +881,17 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
 
             FileDocumentManager.getInstance().saveAllDocuments()
             val filesToUpload = collectProjectUploadables(project)
-            return performUpload(project, filesToUpload, true, excludedPaths, shouldSynchronize, shouldExcludePaths, useFTP, ssid, wifiPassword)
+            return performUpload(
+                project,
+                filesToUpload,
+                true,
+                excludedPaths,
+                shouldSynchronize,
+                shouldExcludePaths,
+                useFTP,
+                ssid,
+                wifiPassword
+            )
         }
 
         fun uploadFileOrFolder(
@@ -886,7 +906,17 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
         ): Boolean {
 
             FileDocumentManager.getInstance().saveAllDocuments()
-            return performUpload(project, setOf(toUpload), false, excludedPaths, shouldSynchronize, shouldExcludePaths, useFTP, ssid, wifiPassword)
+            return performUpload(
+                project,
+                setOf(toUpload),
+                false,
+                excludedPaths,
+                shouldSynchronize,
+                shouldExcludePaths,
+                useFTP,
+                ssid,
+                wifiPassword
+            )
         }
 
         fun uploadItems(
@@ -901,7 +931,17 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
         ): Boolean {
 
             FileDocumentManager.getInstance().saveAllDocuments()
-            return performUpload(project, toUpload, false, excludedPaths, shouldSynchronize, shouldExcludePaths, useFTP, ssid, wifiPassword)
+            return performUpload(
+                project,
+                toUpload,
+                false,
+                excludedPaths,
+                shouldSynchronize,
+                shouldExcludePaths,
+                useFTP,
+                ssid,
+                wifiPassword
+            )
         }
 
         private fun performUpload(
@@ -968,11 +1008,17 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                         val path = when {
                             sourceFolders.find { VfsUtil.isAncestor(it, file, false) }?.let { sourceRoot ->
                                 VfsUtil.getRelativePath(file, sourceRoot) ?: file.name
-                            } != null -> VfsUtil.getRelativePath(file, sourceFolders.find { VfsUtil.isAncestor(it, file, false) }!!) ?: file.name
+                            } != null -> VfsUtil.getRelativePath(
+                                file,
+                                sourceFolders.find { VfsUtil.isAncestor(it, file, false) }!!
+                            ) ?: file.name
 
                             testFolders.find { VfsUtil.isAncestor(it, file, false) }?.let { sourceRoot ->
                                 VfsUtil.getRelativePath(file, sourceRoot) ?: file.name
-                            } != null -> VfsUtil.getRelativePath(file, testFolders.find { VfsUtil.isAncestor(it, file, false) }!!) ?: file.name
+                            } != null -> VfsUtil.getRelativePath(
+                                file,
+                                testFolders.find { VfsUtil.isAncestor(it, file, false) }!!
+                            ) ?: file.name
 
                             else -> projectDir?.let { VfsUtil.getRelativePath(file, it) } ?: file.name
                         }
@@ -988,7 +1034,12 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
 
                     reportProgress(10000) { reporter ->
                         reporter.sizedStep(0, scriptProgressText) {
-                            val alreadyUploadedFiles = fileSystemWidget.synchronizeAndGetAlreadyUploadedFiles(fileToTargetPath, excludedPaths, shouldSynchronize, shouldExcludePaths)
+                            val alreadyUploadedFiles = fileSystemWidget.synchronizeAndGetAlreadyUploadedFiles(
+                                fileToTargetPath,
+                                excludedPaths,
+                                shouldSynchronize,
+                                shouldExcludePaths
+                            )
                             fileToTargetPath.keys.removeAll(alreadyUploadedFiles.toSet())
                         }
 
@@ -1011,7 +1062,8 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
 
                                     println(formattedScript)
 
-                                    val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, formattedScript).extractSingleResponse().trim()
+                                    val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, formattedScript)
+                                        .extractSingleResponse().trim()
 
                                     print(scriptResponse)
 

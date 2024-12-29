@@ -34,6 +34,7 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TtyConnector
+import dev.micropythontools.intellij.settings.MpySettingsService
 import dev.micropythontools.intellij.settings.mpyFacet
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import javax.swing.JComponent
@@ -119,11 +120,11 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val module = project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
-        val configuration = module?.mpyFacet?.configuration
+        val settings = project?.let { MpySettingsService.getInstance(it) }
 
-        val portName = configuration?.portName
-        val uart = configuration?.uart
-        val url = configuration?.webReplUrl
+        val portName = settings?.state?.portName
+        val uart = settings?.state?.uart
+        val url = settings?.state?.webReplUrl
 
         if (uart == true || uart == null) {
             e.presentation.text = if (portName == "" || portName == null) "No Port Selected" else portName
@@ -144,14 +145,16 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val module = project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
+        val settings = project?.let { MpySettingsService.getInstance(it) }
+
         val portListing = module?.mpyFacet?.listSerialPorts(project)
 
         portListing?.forEach { portName ->
             val action = object : AnAction(portName) {
                 override fun actionPerformed(e: AnActionEvent) {
                     module.mpyFacet?.let {
-                        it.configuration.uart = true
-                        it.configuration.portName = portName
+                        settings?.state?.uart = true
+                        settings?.state?.portName = portName
 
                         FacetManager.getInstance(module).facetConfigurationChanged(it)
 

@@ -24,10 +24,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.Messages
-import dev.micropythontools.intellij.settings.MpyPasswordSafe
 import dev.micropythontools.intellij.settings.MpyProjectConfigurable
+import dev.micropythontools.intellij.settings.MpySettingsService
 import dev.micropythontools.intellij.settings.messageForBrokenUrl
 import dev.micropythontools.intellij.settings.mpyFacet
 import kotlinx.coroutines.Dispatchers
@@ -64,11 +63,13 @@ class ConnectAction(text: String = "Connect") : ReplAction(text, false, false) {
 
 suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
     if (fileSystemWidget.state == State.CONNECTED) return
-    val facet = fileSystemWidget.project.modules.firstNotNullOfOrNull { it.mpyFacet } ?: return
+
+    val settings = MpySettingsService.getInstance(fileSystemWidget.project)
+
     var msg: String? = null
     val connectionParameters: ConnectionParameters?
-    if (facet.configuration.uart) {
-        val portName = facet.configuration.portName
+    if (settings.state.uart) {
+        val portName = settings.state.portName ?: ""
         if (portName.isBlank()) {
             msg = "No port is selected"
             connectionParameters = null
@@ -77,8 +78,8 @@ suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
         }
 
     } else {
-        val url = facet.configuration.webReplUrl
-        val password = fileSystemWidget.project.service<MpyPasswordSafe>().retrieveWebReplPassword(url)
+        val url = settings.state.webReplUrl ?: ""
+        val password = fileSystemWidget.project.service<MpySettingsService>().retrieveWebReplPassword(url)
         msg = messageForBrokenUrl(url)
         if (password.isBlank()) {
             msg = "Empty password"

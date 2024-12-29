@@ -67,13 +67,13 @@ class MpyModuleConfigurable(private val module: Module) : Configurable {
 
         if (enabledCheckbox.isSelected) {
             if (facet != null) {
-                panel.apply(facet.configuration, facet)
+                panel.apply(facet)
                 FacetManager.getInstance(module).facetConfigurationChanged(facet)
                 facet.updateLibrary()
             } else {
                 val facetType = getInstance()
                 val newFacet = facetManager.createFacet(facetType, facetType.defaultFacetName, null)
-                panel.apply(newFacet.configuration, newFacet)
+                panel.apply(newFacet)
 
                 val facetModel = facetManager.createModifiableModel()
                 facetModel.addFacet(newFacet)

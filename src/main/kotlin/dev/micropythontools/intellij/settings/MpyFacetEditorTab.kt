@@ -44,7 +44,7 @@ class MpyFacetEditorTab(
     override fun createComponent(): JComponent = panel
 
     override fun apply() {
-        panel.apply(configuration, facet)
+        panel.apply(facet)
         facet.updateLibrary()
     }
 
