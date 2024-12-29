@@ -41,7 +41,7 @@ import com.jetbrains.python.statistics.version
 import javax.swing.JComponent
 
 /**
- * @author vlan
+ * @author vlan, Lukas Kremla
  */
 class MpyFacet(
     facetType: FacetType<out Facet<*>, *>, module: Module, name: String,
@@ -91,14 +91,12 @@ class MpyFacet(
             return ValidationResult("MicroPython Tools support requires valid Python 3.10+ SDK")
         }
 
-        val requirements = PyRequirementParser.fromText("pyserial==3.5")
-
         if (!isPyserialInstalled()) {
             return ValidationResult(
                 "Packages required for MicroPython support not found: pyserial",
                 object : FacetConfigurationQuickFix("Install Requirements") {
                     override fun run(place: JComponent?) {
-                        PyPackageManagerUI(module.project, sdk, null).install(requirements, emptyList())
+                        installRequiredPythonPackages()
                     }
                 })
         }
@@ -131,7 +129,7 @@ class MpyFacet(
         return result
     }
 
-    private fun isPyserialInstalled(): Boolean {
+    fun isPyserialInstalled(): Boolean {
         var result = false
         // A very improvised way of checking if pyserial is installed
         // An alternative to the deprecated PyPackageManager
@@ -142,6 +140,14 @@ class MpyFacet(
             result = output.stdout.trim() == "OK"
         }.get()
         return result
+    }
+
+    fun installRequiredPythonPackages() {
+        val sdk = ProjectRootManager.getInstance(module.project).projectSdk
+
+        val requirements = PyRequirementParser.fromText("pyserial==3.5")
+
+        sdk?.let { PyPackageManagerUI(module.project, it, null).install(requirements, emptyList()) }
     }
 }
 

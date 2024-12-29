@@ -1,5 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
+ * Copyright 2024 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +30,7 @@ import java.net.URI
 import java.net.URISyntaxException
 
 /**
- * @author elmot
+ * @author elmot, Lukas Kremla
  */
 private const val WIFI_CREDENTIALS_KEY = "MicroPython_Tools_wifi_key"
 

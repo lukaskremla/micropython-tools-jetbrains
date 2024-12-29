@@ -264,10 +264,17 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         val module = project.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
-        if (module?.mpyFacet != null) {
+        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() ?: true // Facet might not be loaded yet
+
+        if (module?.mpyFacet != null && isPyserialInstalled) {
             tree.emptyText.appendText("No board is connected")
             tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 performReplAction(project, false, "Connecting...") { doConnect(it) }
+            }
+        } else if (!isPyserialInstalled) {
+            tree.emptyText.appendText("Missing required Python packages")
+            tree.emptyText.appendLine("Install...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                module?.mpyFacet?.installRequiredPythonPackages()
             }
         } else {
             tree.emptyText.appendText("MicroPython support is disabled")
