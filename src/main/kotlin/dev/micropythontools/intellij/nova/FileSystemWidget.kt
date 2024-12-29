@@ -31,6 +31,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.Disposer
@@ -54,6 +56,8 @@ import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
 import dev.micropythontools.intellij.settings.DEFAULT_WEBREPL_URL
+import dev.micropythontools.intellij.settings.MpyProjectConfigurable
+import dev.micropythontools.intellij.settings.mpyFacet
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
@@ -222,8 +226,23 @@ data class ConnectionParameters(
     var ssid: String,
     var wifiPassword: String
 ) {
-    constructor(portName: String) : this(uart = true, url = DEFAULT_WEBREPL_URL, webReplPassword = "", portName = portName, ssid = "", wifiPassword = "")
-    constructor(url: String, webReplPassword: String) : this(uart = false, url = url, webReplPassword = webReplPassword, portName = "", ssid = "", wifiPassword = "")
+    constructor(portName: String) : this(
+        uart = true,
+        url = DEFAULT_WEBREPL_URL,
+        webReplPassword = "",
+        portName = portName,
+        ssid = "",
+        wifiPassword = ""
+    )
+
+    constructor(url: String, webReplPassword: String) : this(
+        uart = false,
+        url = url,
+        webReplPassword = webReplPassword,
+        portName = "",
+        ssid = "",
+        wifiPassword = ""
+    )
 }
 
 class FileSystemWidget(val project: Project, newDisposable: Disposable) :
@@ -240,11 +259,27 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
     private fun newTreeModel() = DefaultTreeModel(DirNode("/", "/"), true)
 
-    init {
-        tree.emptyText.appendText("No board is connected")
-        tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-            performReplAction(project, false, "Connecting...") { doConnect(it) }
+    fun updateEmptyText() {
+        tree.emptyText.clear()
+
+        val module = project.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+
+        if (module?.mpyFacet != null) {
+            tree.emptyText.appendText("No board is connected")
+            tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                performReplAction(project, false, "Connecting...") { doConnect(it) }
+            }
+        } else {
+            tree.emptyText.appendText("MicroPython support is disabled")
+            tree.emptyText.appendLine("Change settings...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyProjectConfigurable::class.java)
+            }
         }
+    }
+
+    init {
+        updateEmptyText()
+
         tree.setCellRenderer(object : ColoredTreeCellRenderer() {
 
             override fun customizeCellRenderer(
@@ -301,7 +336,12 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         return String.format("%08x", crc.value)
     }
 
-    suspend fun synchronizeAndGetAlreadyUploadedFiles(uploadFilesToTargetPath: MutableMap<VirtualFile, String>, excludedPaths: List<String>, shouldSynchronize: Boolean, shouldExcludePaths: Boolean): MutableList<VirtualFile> {
+    suspend fun synchronizeAndGetAlreadyUploadedFiles(
+        uploadFilesToTargetPath: MutableMap<VirtualFile, String>,
+        excludedPaths: List<String>,
+        shouldSynchronize: Boolean,
+        shouldExcludePaths: Boolean
+    ): MutableList<VirtualFile> {
         val alreadyUploadedFiles = mutableListOf<VirtualFile>()
         val fileToUploadListing = mutableListOf<String>()
         val targetPathToFile = uploadFilesToTargetPath.entries.associate { (file, path) -> path to file }
@@ -441,7 +481,8 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                 val fileName = fileSystemNodes[0].fullName
                 if (fileSystemNodes[0] is DirNode) {
                     title = "Delete folder $fileName"
-                    message = "Are you sure you want to delete the folder and its subtree?\n\rThis operation cannot be undone!"
+                    message =
+                        "Are you sure you want to delete the folder and its subtree?\n\rThis operation cannot be undone!"
                 } else {
                     title = "Delete file $fileName"
                     message = "Are you sure you want to delete this file?\n\rThis operation cannot be undone!"

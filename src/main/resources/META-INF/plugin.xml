@@ -59,12 +59,12 @@
 
     <actions>
         <group id="micropythontools.repl.FSToolbar">
+            <action id="micropythontools.repl.Connect" class="dev.micropythontools.intellij.nova.ConnectAction"
+                    icon="/icons/connectActive.svg"/>
             <action id="micropythontools.repl.Disconnect" class="dev.micropythontools.intellij.nova.Disconnect"
                     icon="/icons/connectActive.svg">
                 <keyboard-shortcut first-keystroke="control CLOSE_BRACKET" keymap="$default"/>
             </action>
-            <action id="micropythontools.repl.Connect" class="dev.micropythontools.intellij.nova.ConnectAction"
-                    icon="/icons/connectActive.svg"/>
             <action id="micropythontools.repl.connectionSelector"
                     class="dev.micropythontools.intellij.nova.ConnectionSelectorAction"/>
             <action id="micropythontools.fs.Refresh" class="dev.micropythontools.intellij.nova.Refresh"
@@ -96,8 +96,8 @@
 
         <group id="micropython.repl.ReplToolbar">
             <reference ref="micropythontools.repl.Connect"/>
-            <reference ref="micropythontools.repl.connectionSelector"/>
             <reference ref="micropythontools.repl.Disconnect"/>
+            <reference ref="micropythontools.repl.connectionSelector"/>
             <action id="micropythontools.repl.SoftReset" class="dev.micropythontools.intellij.nova.SoftResetAction"
                     icon="AllIcons.Actions.StopAndRestart" description="Soft reset the board">
                 <keyboard-shortcut first-keystroke="control D" keymap="$default"/>
