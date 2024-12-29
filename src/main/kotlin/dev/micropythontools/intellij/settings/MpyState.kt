@@ -7,5 +7,5 @@ class MpyState : BaseState() {
     var uart by property(true)
     var portName by string("")
     var ssid by string("")
-    var activeStubsPath by string("")
+    var activeStubsPackage by string("")
 }

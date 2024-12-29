@@ -39,7 +39,7 @@ const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
 @State(
     name = "MicroPythonTools",
     storages = [Storage("micropython-tools-settings.xml")],
-    category = SettingsCategory.TOOLS
+    category = SettingsCategory.PLUGINS
 )
 class MpySettingsService : SimplePersistentStateComponent<MpyState>(MpyState()) {
     companion object {

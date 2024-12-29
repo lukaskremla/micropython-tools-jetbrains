@@ -69,15 +69,14 @@ class MpyFacet(
     override fun updateLibrary() {
         val settings = MpySettingsService.getInstance(module.project)
 
-        val activeStubsPath = settings.state.activeStubsPath
+        val activeStubsPackage = settings.state.activeStubsPackage
 
-        if (activeStubsPath == "") {
+        if (activeStubsPackage == "") {
             return
         }
 
-        //TODO: modify path properly
         ApplicationManager.getApplication().invokeLater {
-            FacetLibraryConfigurator.attachPythonLibrary(module, null, "MicroPython Tools", listOf(activeStubsPath))
+            FacetLibraryConfigurator.attachPythonLibrary(module, null, "MicroPython Tools", listOf("$stubsPath/$activeStubsPackage"))
         }
     }
 
