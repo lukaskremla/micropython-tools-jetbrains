@@ -29,7 +29,7 @@ import org.jdom.Element
 const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
 
 
-class MicroPythonFacetConfiguration : FacetConfiguration {
+class MpyFacetConfiguration : FacetConfiguration {
     var webReplUrl: String = DEFAULT_WEBREPL_URL
     var uart: Boolean = true
     var portName: String = "COM1"
@@ -37,11 +37,11 @@ class MicroPythonFacetConfiguration : FacetConfiguration {
     var activeStubsPath: String = ""
 
     override fun createEditorTabs(editorContext: FacetEditorContext, validatorsManager: FacetValidatorsManager): Array<FacetEditorTab> {
-        val facet = editorContext.facet as MicroPythonFacet
+        val facet = editorContext.facet as MpyFacet
         validatorsManager.registerValidator(object : FacetEditorValidator() {
             override fun check() = facet.checkValid()
         })
-        return arrayOf(MicroPythonFacetEditorTab(this, facet))
+        return arrayOf(MpyFacetEditorTab(this, facet))
     }
 
     @Deprecated("Deprecated in Java")

@@ -19,7 +19,6 @@ package dev.micropythontools.intellij.nova
 import com.intellij.openapi.diagnostic.thisLogger
 import jssc.SerialPort
 import jssc.SerialPort.FLOWCONTROL_NONE
-import jssc.SerialPortEvent
 import jssc.SerialPortEventListener
 import jssc.SerialPortException
 import java.io.IOException
@@ -28,11 +27,10 @@ import java.nio.charset.StandardCharsets
 /**
  * @author elmot
  */
-class SerialClient(private val comm: MpyComm) : Client {
-
+class MpySerialMpyClient(private val comm: MpyComm) : MpyClient {
     private val port = SerialPort(comm.connectionParameters.portName)
     override fun send(string: String) {
-        this@SerialClient.thisLogger().debug("< $string")
+        this@MpySerialMpyClient.thisLogger().debug("< $string")
         port.writeString(string)
     }
 
@@ -40,19 +38,17 @@ class SerialClient(private val comm: MpyComm) : Client {
 
     override fun close() = closeBlocking()
 
-    private val listener = object : SerialPortEventListener {
-        override fun serialEvent(event: SerialPortEvent) {
-            if (event.eventType and SerialPort.MASK_RXCHAR != 0) {
-                val count = event.eventValue
-                val s = port.readBytes(count).toString(StandardCharsets.UTF_8)
-                comm.dataReceived(s)
-                this@SerialClient.thisLogger().debug("> $s")
-            }
+    private val listener = SerialPortEventListener { event ->
+        if (event.eventType and SerialPort.MASK_RXCHAR != 0) {
+            val count = event.eventValue
+            val s = port.readBytes(count).toString(StandardCharsets.UTF_8)
+            comm.dataReceived(s)
+            this@MpySerialMpyClient.thisLogger().debug("> $s")
         }
     }
 
     @Throws(IOException::class)
-    override suspend fun connect(progressIndicatorText: String): SerialClient {
+    override suspend fun connect(progressIndicatorText: String): MpySerialMpyClient {
         try {
             port.openPort()
             port.addEventListener(listener, SerialPort.MASK_RXCHAR)

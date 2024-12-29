@@ -82,7 +82,7 @@ class DownloadFromDeviceAction : ReplAction("Download File or Folder...", true, 
         val parentNameToFile = selectedFiles.map { node -> "" to node }.toMutableList()
         var listIndex = 0
         while (listIndex < parentNameToFile.size) {
-            var (nodeParentName, node) = parentNameToFile[listIndex]
+            val (nodeParentName, node) = parentNameToFile[listIndex]
             node.children().asSequence().forEach { child ->
                 child as FileSystemNode
                 val parentName = when {

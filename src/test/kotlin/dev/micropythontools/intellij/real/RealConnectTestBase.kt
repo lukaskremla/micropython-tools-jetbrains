@@ -1,24 +1,15 @@
 package dev.micropythontools.intellij.real
 
-import dev.micropythontools.intellij.nova.ExecResponse
-import dev.micropythontools.intellij.nova.LONG_TIMEOUT
-import dev.micropythontools.intellij.nova.MpyCommForTest
-import dev.micropythontools.intellij.nova.State
-import dev.micropythontools.intellij.nova.extractSingleResponse
+import dev.micropythontools.intellij.nova.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import java.util.stream.IntStream
 
 abstract class RealConnectTestBase {
-
     protected lateinit var comm: MpyCommForTest
 
     @BeforeEach

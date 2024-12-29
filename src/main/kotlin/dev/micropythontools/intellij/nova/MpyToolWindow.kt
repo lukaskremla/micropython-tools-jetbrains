@@ -34,7 +34,7 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TtyConnector
-import dev.micropythontools.intellij.settings.microPythonFacet
+import dev.micropythontools.intellij.settings.mpyFacet
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import javax.swing.JComponent
 
@@ -110,7 +110,7 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val module = project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
-        val configuration = module?.microPythonFacet?.configuration
+        val configuration = module?.mpyFacet?.configuration
 
         val portName = configuration?.portName
         val uart = configuration?.uart
@@ -132,12 +132,12 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val module = project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
-        val portListing = module?.microPythonFacet?.listSerialPorts(project)
+        val portListing = module?.mpyFacet?.listSerialPorts(project)
 
         portListing?.forEach { portName ->
             val action = object : AnAction(portName) {
                 override fun actionPerformed(e: AnActionEvent) {
-                    module.microPythonFacet?.let {
+                    module.mpyFacet?.let {
                         it.configuration.uart = true
                         it.configuration.portName = portName
 

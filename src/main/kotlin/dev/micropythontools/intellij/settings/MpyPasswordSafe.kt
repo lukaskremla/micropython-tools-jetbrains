@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.intellij.nova
+package dev.micropythontools.intellij.settings
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.Service
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.net.URI
@@ -35,7 +33,7 @@ import java.net.URISyntaxException
 private const val WIFI_CREDENTIALS_KEY = "MicroPython_Tools_wifi_key"
 
 @Service(Service.Level.PROJECT)
-class MpySupportService(val cs: CoroutineScope) {
+class MpyPasswordSafe {
     private fun createCredentialAttributes(key: String): CredentialAttributes {
         return CredentialAttributes(
             generateServiceName("MySystem", key)
@@ -72,13 +70,6 @@ class MpySupportService(val cs: CoroutineScope) {
         val credentials = Credentials("", password)
         withContext(Dispatchers.IO) {
             PasswordSafe.instance.set(attributes, credentials)
-        }
-    }
-
-    fun listSerialPorts(receiver: suspend (Array<String>) -> Unit) {
-        cs.launch {
-            val portNames = jssc.SerialPortList.getPortNames() ?: emptyArray<String>()
-            receiver(portNames)
         }
     }
 }

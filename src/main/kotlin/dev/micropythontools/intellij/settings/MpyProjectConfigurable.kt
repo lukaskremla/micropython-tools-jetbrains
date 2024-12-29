@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.intellij.nova
+package dev.micropythontools.intellij.settings
+
+import com.intellij.application.options.ModuleAwareProjectConfigurable
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.Project
 
 /**
- * @author elmot
+ * @author vlan
  */
-interface Client {
-    fun send(string: String)
-    fun hasPendingData(): Boolean
-    fun close()
-    suspend fun connect(progressIndicatorText: String): Client
-    fun closeBlocking()
-    fun sendPing()
-
-    val isConnected: Boolean
+class MpyProjectConfigurable(project: Project) : ModuleAwareProjectConfigurable<Configurable>(project, "MicroPython", null) {
+    override fun createModuleConfigurable(module: Module?) = MpyModuleConfigurable(module!!)
 }

@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package dev.micropythontools.intellij.run
 
 import com.intellij.execution.Executor
@@ -51,8 +53,9 @@ import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.intellij.nova.*
-import dev.micropythontools.intellij.settings.MicroPythonProjectConfigurable
-import dev.micropythontools.intellij.settings.microPythonFacet
+import dev.micropythontools.intellij.settings.MpyPasswordSafe
+import dev.micropythontools.intellij.settings.MpyProjectConfigurable
+import dev.micropythontools.intellij.settings.mpyFacet
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.jdom.Element
@@ -421,7 +424,7 @@ try:
                                    "    Data address ({})\r\n"
                                    "    TYPE: Binary STRU: File MODE: Stream\r\n"
                                    "    Session timeout {}\r\n"
-                                   "211 Client count is {}\r\n".format(
+                                   "211 MpyClient count is {}\r\n".format(
                                     self.remote_addr, self.pasv_data_addr,
                                     _COMMAND_TIMEOUT, len(client_list)))
                     else:
@@ -672,7 +675,7 @@ private class FTPUploadClient {
 /**
  * @author Mikhail Golubev, Lukas Kremla
  */
-class MicroPythonRunConfiguration(project: Project, factory: ConfigurationFactory) : AbstractRunConfiguration(project, factory), RunConfigurationWithSuppressedDefaultDebugAction {
+class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : AbstractRunConfiguration(project, factory), RunConfigurationWithSuppressedDefaultDebugAction {
     var path: String = ""
     var runReplOnSuccess: Boolean = false
     var resetOnSuccess: Boolean = true
@@ -682,22 +685,22 @@ class MicroPythonRunConfiguration(project: Project, factory: ConfigurationFactor
     var excludedPaths: MutableList<String> = mutableListOf()
 
     override fun getValidModules() =
-        allModules.filter { it.microPythonFacet != null }.toMutableList()
+        allModules.filter { it.mpyFacet != null }.toMutableList()
 
-    override fun getConfigurationEditor() = MicroPythonRunConfigurationEditor(this)
+    override fun getConfigurationEditor() = MpyRunConfigurationEditor(this)
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val success: Boolean
         val projectDir = project.guessProjectDir()
         val projectPath = projectDir?.path
 
-        val facet = module?.microPythonFacet
+        val facet = module?.mpyFacet
 
         val ssid = facet?.configuration?.ssid ?: ""
-        var wifiPassword: String = ""
+        var wifiPassword = ""
 
         runWithModalProgressBlocking(project, "Retrieving Password...") {
-            wifiPassword = project.service<MpySupportService>().retrieveWifiPassword()
+            wifiPassword = project.service<MpyPasswordSafe>().retrieveWifiPassword()
         }
 
         if (path.isBlank() || (projectPath != null && path == projectPath)) {
@@ -722,7 +725,7 @@ class MicroPythonRunConfiguration(project: Project, factory: ConfigurationFactor
         val showSettings = Runnable {
             when {
                 PlatformUtils.isPyCharm() ->
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project, MicroPythonProjectConfigurable::class.java)
+                    ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyProjectConfigurable::class.java)
 
                 PlatformUtils.isIntelliJ() ->
                     ProjectSettingsService.getInstance(project).openModuleSettings(module)
@@ -731,7 +734,7 @@ class MicroPythonRunConfiguration(project: Project, factory: ConfigurationFactor
                     ShowSettingsUtil.getInstance().showSettingsDialog(project)
             }
         }
-        val facet = m.microPythonFacet ?: throw RuntimeConfigurationError(
+        val facet = m.mpyFacet ?: throw RuntimeConfigurationError(
             "MicroPython support was not enabled for selected module in IDE settings",
             showSettings
         )

@@ -1,7 +1,7 @@
 package dev.micropythontools.intellij.real
 
-import dev.micropythontools.intellij.nova.Client
 import dev.micropythontools.intellij.nova.ConnectionParameters
+import dev.micropythontools.intellij.nova.MpyClient
 import dev.micropythontools.intellij.nova.MpyCommForTest
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NonNls
@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Test
 import java.nio.charset.StandardCharsets
 import kotlin.random.Random
 
-abstract class FileTest(val connectionParameters: ConnectionParameters) {
-    lateinit var comm: CountingMpyComm
+abstract class FileTest(private val connectionParameters: ConnectionParameters) {
+    private lateinit var comm: CountingMpyComm
 
-    var uploadedFiles = mutableListOf<String>()
+    private var uploadedFiles = mutableListOf<String>()
 
     @BeforeEach
     fun init() {
@@ -97,7 +97,7 @@ abstract class FileTest(val connectionParameters: ConnectionParameters) {
         runBlocking {
             comm.instantRun("import os")
             uploadedFiles.forEach { fileName ->
-                comm.blindExecute(1000,"os.remove('$fileName')")
+                comm.blindExecute(1000, "os.remove('$fileName')")
             }
         }
         comm.close()
@@ -105,7 +105,7 @@ abstract class FileTest(val connectionParameters: ConnectionParameters) {
 
 }
 
-class CountingMpyComm() : MpyCommForTest() {
+class CountingMpyComm : MpyCommForTest() {
     @Volatile
     var charsTransmitted = 0L
 
@@ -123,34 +123,34 @@ class CountingMpyComm() : MpyCommForTest() {
         super.dataReceived(s)
     }
 
-    override fun createClient(): Client {
-        return CountingClient(super.createClient())
+    override fun createClient(): MpyClient {
+        return CountingMpyClient(super.createClient())
     }
 
-    private inner class CountingClient(private val innerClient: Client) : Client {
+    private inner class CountingMpyClient(private val innerMpyClient: MpyClient) : MpyClient {
         override fun send(string: String) {
             charsTransmitted += string.length
-            innerClient.send(string)
+            innerMpyClient.send(string)
         }
 
-        override fun hasPendingData(): Boolean = innerClient.hasPendingData()
+        override fun hasPendingData(): Boolean = innerMpyClient.hasPendingData()
 
-        override fun close() = innerClient.close()
+        override fun close() = innerMpyClient.close()
 
-        override suspend fun connect(progressIndicatorText: String): Client {
+        override suspend fun connect(progressIndicatorText: String): MpyClient {
             connectTimestamp = System.currentTimeMillis()
-            innerClient.connect(progressIndicatorText)
+            innerMpyClient.connect(progressIndicatorText)
             return this
         }
 
-        override fun closeBlocking()  =  innerClient.closeBlocking()
+        override fun closeBlocking() = innerMpyClient.closeBlocking()
 
         override fun sendPing() {
             pings++
-            innerClient.sendPing()
+            innerMpyClient.sendPing()
         }
 
-        override val isConnected: Boolean = innerClient.isConnected
+        override val isConnected: Boolean = innerMpyClient.isConnected
     }
 
     fun printData(header: String) {

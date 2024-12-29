@@ -33,19 +33,19 @@
     <idea-version since-build="243" until-build="243.*"/>
 
     <extensions defaultExtensionNs="com.intellij">
-        <facetType implementation="dev.micropythontools.intellij.settings.MicroPythonFacetType"/>
-        <configurationType implementation="dev.micropythontools.intellij.run.MicroPythonConfigurationType"/>
+        <facetType implementation="dev.micropythontools.intellij.settings.MpyFacetType"/>
+        <configurationType implementation="dev.micropythontools.intellij.run.MpyConfigurationType"/>
         <runConfigurationProducer
-                implementation="dev.micropythontools.intellij.run.MicroPythonRunConfigurationProducer"/>
+                implementation="dev.micropythontools.intellij.run.MpyRunConfigurationProducer"/>
         <projectConfigurable groupId="language"
                              id="dev.micropythontools.intellij.configurable"
                              displayName="MicroPython"
-                             instance="dev.micropythontools.intellij.settings.MicroPythonProjectConfigurable"/>
+                             instance="dev.micropythontools.intellij.settings.MpyProjectConfigurable"/>
         <localInspection language="Python"
                          displayName="MicroPython requirements inspection"
                          groupName="MicroPython"
                          enabledByDefault="true"
-                         implementationClass="dev.micropythontools.intellij.inspections.MicroPythonRequirementsInspection"/>
+                         implementationClass="dev.micropythontools.intellij.inspections.MpyRequirementsInspection"/>
         <notificationGroup displayType="BALLOON" id="Micropython"/>
     </extensions>
 
@@ -58,73 +58,77 @@
     </extensions>
 
     <actions>
-        <group id="micropython.repl.FSToolbar">
-            <action id="micropython.repl.Disconnect" class="dev.micropythontools.intellij.nova.Disconnect"
+        <group id="micropythontools.repl.FSToolbar">
+            <action id="micropythontools.repl.Disconnect" class="dev.micropythontools.intellij.nova.Disconnect"
                     icon="/icons/connectActive.svg">
                 <keyboard-shortcut first-keystroke="control CLOSE_BRACKET" keymap="$default"/>
             </action>
-            <action id="micropython.repl.Connect" class="dev.micropythontools.intellij.nova.ConnectAction"
+            <action id="micropythontools.repl.Connect" class="dev.micropythontools.intellij.nova.ConnectAction"
                     icon="/icons/connectActive.svg"/>
-            <action id="micropython.repl.connectionSelector"
+            <action id="micropythontools.repl.connectionSelector"
                     class="dev.micropythontools.intellij.nova.ConnectionSelectorAction"/>
-            <action id="micropython.fs.Refresh" class="dev.micropythontools.intellij.nova.Refresh"
+            <action id="micropythontools.fs.Refresh" class="dev.micropythontools.intellij.nova.Refresh"
                     icon="AllIcons.Actions.StopRefresh">
                 <keyboard-shortcut first-keystroke="control R" keymap="$default"/>
             </action>
-            <action id="micropython.fs.CreateFolder" class="dev.micropythontools.intellij.nova.CreateDeviceFolderAction"
+            <action id="micropythontools.fs.CreateFolder"
+                    class="dev.micropythontools.intellij.nova.CreateDeviceFolderAction"
                     icon="AllIcons.Actions.AddDirectory"/>
-            <action id="micropython.fs.Download" class="dev.micropythontools.intellij.nova.DownloadFromDeviceAction"
+            <action id="micropythontools.fs.Download"
+                    class="dev.micropythontools.intellij.nova.DownloadFromDeviceAction"
                     icon="AllIcons.Actions.Download"/>
-            <action id="micropython.fs.Delete" class="dev.micropythontools.intellij.nova.DeleteFiles"
+            <action id="micropythontools.fs.Delete" class="dev.micropythontools.intellij.nova.DeleteFiles"
                     use-shortcut-of="$Delete" icon="AllIcons.Actions.GC"/>
-            <action id="micropython.repl.ConnectionParameters"
+            <action id="micropythontools.repl.ConnectionParameters"
                     class="dev.micropythontools.intellij.nova.OpenSettingsAction"
                     icon="AllIcons.General.GearPlain"/>
-            <action id="micropython.repl.AutoClear" class="dev.micropythontools.intellij.nova.AutoClearAction"/>
+            <action id="micropythontools.repl.AutoClear" class="dev.micropythontools.intellij.nova.AutoClearAction"/>
         </group>
-        <group id="micropython.repl.FSContextMenu">
-            <action class="dev.micropythontools.intellij.nova.OpenMpyFile" id="micropython.repl.OpenFile"
+        <group id="micropythontools.repl.FSContextMenu">
+            <action class="dev.micropythontools.intellij.nova.OpenMpyFile" id="micropythontools.repl.OpenFile"
                     icon="AllIcons.Actions.MenuOpen"/>
-            <reference ref="micropython.fs.Refresh"/>
-            <reference ref="micropython.fs.Download"/>
+            <reference ref="micropythontools.fs.Refresh"/>
+            <reference ref="micropythontools.fs.Download"/>
             <separator/>
-            <reference ref="micropython.fs.CreateFolder"/>
-            <reference ref="micropython.fs.Delete"/>
+            <reference ref="micropythontools.fs.CreateFolder"/>
+            <reference ref="micropythontools.fs.Delete"/>
         </group>
 
         <group id="micropython.repl.ReplToolbar">
-            <reference ref="micropython.repl.Connect"/>
-            <reference ref="micropython.repl.connectionSelector"/>
-            <reference ref="micropython.repl.Disconnect"/>
-            <action id="micropython.repl.SoftReset" class="dev.micropythontools.intellij.nova.SoftResetAction"
+            <reference ref="micropythontools.repl.Connect"/>
+            <reference ref="micropythontools.repl.connectionSelector"/>
+            <reference ref="micropythontools.repl.Disconnect"/>
+            <action id="micropythontools.repl.SoftReset" class="dev.micropythontools.intellij.nova.SoftResetAction"
                     icon="AllIcons.Actions.StopAndRestart" description="Soft reset the board">
                 <keyboard-shortcut first-keystroke="control D" keymap="$default"/>
             </action>
-            <action id="micropython.repl.Interrupt" class="dev.micropythontools.intellij.nova.InterruptAction"
+            <action id="micropythontools.repl.Interrupt" class="dev.micropythontools.intellij.nova.InterruptAction"
                     icon="AllIcons.Actions.Suspend" description="Interrupt a running program">
             </action>
-            <reference ref="micropython.repl.ConnectionParameters"/>
-            <reference ref="micropython.repl.AutoClear"/>
+            <reference ref="micropythontools.repl.ConnectionParameters"/>
+            <reference ref="micropythontools.repl.AutoClear"/>
         </group>
 
-        <action id="micropython.repl.UploadFile" class="dev.micropythontools.intellij.nova.UploadFile"
+        <action id="micropythontools.repl.UploadFile" class="dev.micropythontools.intellij.nova.UploadFile"
                 icon="AllIcons.Actions.Upload">
             <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ExecuteInPyConsoleAction"/>
             <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>
         </action>
 
-        <action id="micropython.repl.InstantRun" class="dev.micropythontools.intellij.nova.InstantRun"
+        <action id="micropythontools.repl.InstantRun" class="dev.micropythontools.intellij.nova.InstantRun"
                 text="Execute File in Micropython REPL"
                 icon="AllIcons.Actions.Rerun">
-            <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="micropython.repl.UploadFile"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="before"
+                          relative-to-action="micropythontools.repl.UploadFile"/>
             <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="before"
-                          relative-to-action="micropython.repl.UploadFile"/>
+                          relative-to-action="micropythontools.repl.UploadFile"/>
         </action>
 
-        <action id="micropython.repl.InstantFragmentRun" class="dev.micropythontools.intellij.nova.InstantFragmentRun"
+        <action id="micropythontools.repl.InstantFragmentRun"
+                class="dev.micropythontools.intellij.nova.InstantFragmentRun"
                 text="Execute Fragment" icon="AllIcons.Actions.Run_anything">
-            <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="micropython.repl.InstantRun"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="before"
+                          relative-to-action="micropythontools.repl.InstantRun"/>
         </action>
     </actions>
-    <resource-bundle>messages.Micropython</resource-bundle>
 </idea-plugin>

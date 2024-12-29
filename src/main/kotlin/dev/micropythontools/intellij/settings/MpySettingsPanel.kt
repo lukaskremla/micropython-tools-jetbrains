@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package dev.micropythontools.intellij.settings
 
 import com.intellij.openapi.Disposable
@@ -28,8 +30,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.asSafely
 import com.intellij.util.ui.UIUtil
 import dev.micropythontools.intellij.nova.ConnectionParameters
-import dev.micropythontools.intellij.nova.MpySupportService
-import dev.micropythontools.intellij.nova.messageForBrokenUrl
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.event.PopupMenuEvent
@@ -38,8 +38,8 @@ import javax.swing.event.PopupMenuListener
 /**
  * @author vlan, elmot
  */
-class MicroPythonSettingsPanel(private val module: Module, disposable: Disposable) : JPanel(BorderLayout()) {
-    private val parameters = module.microPythonFacet?.let { facet ->
+class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPanel(BorderLayout()) {
+    private val parameters = module.mpyFacet?.let { facet ->
         ConnectionParameters(
             uart = facet.configuration.uart,
             url = facet.configuration.webReplUrl,
@@ -55,10 +55,10 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
     init {
         border = IdeBorderFactory.createEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
         runWithModalProgressBlocking(module.project, "Retrieving WebREPL Password...") {
-            parameters.webReplPassword = module.project.service<MpySupportService>().retrieveWebReplPassword(parameters.url)
+            parameters.webReplPassword = module.project.service<MpyPasswordSafe>().retrieveWebReplPassword(parameters.url)
         }
         runWithModalProgressBlocking(module.project, "Retrieving Wi-Fi Password...") {
-            parameters.wifiPassword = module.project.service<MpySupportService>().retrieveWifiPassword()
+            parameters.wifiPassword = module.project.service<MpyPasswordSafe>().retrieveWifiPassword()
         }
         val portSelectModel = MutableCollectionComboBoxModel<String>()
         if (parameters.portName.isNotBlank()) {
@@ -123,7 +123,7 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
                 }
             }
 
-            group("FTP Upload Wi-Fi credentials") {
+            group("FTP Upload Wi-Fi Credentials") {
                 indent {
                     row {
                         textField()
@@ -151,18 +151,18 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
         return connectionPanel.isModified()
     }
 
-    fun apply(configuration: MicroPythonFacetConfiguration, facet: MicroPythonFacet) {
+    fun apply(configuration: MpyFacetConfiguration, facet: MpyFacet) {
         connectionPanel.apply()
         configuration.webReplUrl = parameters.url
         configuration.uart = parameters.uart
         configuration.portName = parameters.portName
         configuration.ssid = parameters.ssid
         runWithModalProgressBlocking(facet.module.project, "Saving WebREPL Password") {
-            facet.module.project.service<MpySupportService>()
+            facet.module.project.service<MpyPasswordSafe>()
                 .saveWebReplPassword(configuration.webReplUrl, parameters.webReplPassword)
         }
         runWithModalProgressBlocking(facet.module.project, "Saving Wi-Fi Password") {
-            facet.module.project.service<MpySupportService>()
+            facet.module.project.service<MpyPasswordSafe>()
                 .saveWifiPassword(parameters.wifiPassword)
         }
     }
@@ -172,7 +172,7 @@ class MicroPythonSettingsPanel(private val module: Module, disposable: Disposabl
     }
 
     fun refreshAPortSelectModel(module: Module, portSelectModel: MutableCollectionComboBoxModel<String>) {
-        val ports = module.microPythonFacet?.listSerialPorts(module.project) ?: emptyList()
+        val ports = module.mpyFacet?.listSerialPorts(module.project) ?: emptyList()
 
         var i = 0
         while (i < portSelectModel.size) {

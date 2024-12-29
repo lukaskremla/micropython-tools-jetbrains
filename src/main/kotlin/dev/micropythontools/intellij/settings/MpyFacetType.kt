@@ -28,25 +28,25 @@ import javax.swing.Icon
 /**
  * @author vlan
  */
-class MicroPythonFacetType : FacetType<MicroPythonFacet, MicroPythonFacetConfiguration>(ID, STRING_ID, PRESENTABLE_NAME) {
+class MpyFacetType : FacetType<MpyFacet, MpyFacetConfiguration>(ID, STRING_ID, PRESENTABLE_NAME) {
     companion object {
         const val STRING_ID = "MicroPython Tools"
         const val PRESENTABLE_NAME = "MicroPython Tools"
-        val ID = FacetTypeId<MicroPythonFacet>(STRING_ID)
-        val LOGO = IconLoader.getIcon("/icons/micropython.svg", MicroPythonFacetType::class.java)
-
-        fun getInstance() = findInstance(MicroPythonFacetType::class.java)!!
     }
 
-    override fun createDefaultConfiguration() = MicroPythonFacetConfiguration()
+    override fun createDefaultConfiguration() = MpyFacetConfiguration()
 
     override fun createFacet(
-        module: Module, name: String, configuration: MicroPythonFacetConfiguration,
+        module: Module, name: String, configuration: MpyFacetConfiguration,
         underlyingFacet: Facet<*>?
     ) =
-        MicroPythonFacet(this, module, name, configuration, underlyingFacet)
+        MpyFacet(this, module, name, configuration, underlyingFacet)
 
     override fun isSuitableModuleType(moduleType: ModuleType<*>?) = moduleType is PythonModuleTypeBase
 
     override fun getIcon(): Icon = LOGO
 }
+
+val ID = FacetTypeId<MpyFacet>(MpyFacetType.STRING_ID)
+val LOGO = IconLoader.getIcon("/icons/micropython.svg", MpyFacetType::class.java)
+fun getInstance() = FacetType.findInstance(MpyFacetType::class.java)!!

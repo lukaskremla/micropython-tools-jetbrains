@@ -28,17 +28,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightVirtualFile
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import dev.micropythontools.intellij.settings.MicroPythonFacetType
+import dev.micropythontools.intellij.settings.ID
 
 /**
  * @author Mikhail Golubev
  */
-class MicroPythonRunConfigurationProducer : LazyRunConfigurationProducer<MicroPythonRunConfiguration>() {
+class MpyRunConfigurationProducer : LazyRunConfigurationProducer<MpyRunConfiguration>() {
     override fun getConfigurationFactory(): ConfigurationFactory {
-        return MicroPythonConfigurationType.getInstance().factory
+        return getInstance().factory
     }
 
-    override fun isConfigurationFromContext(configuration: MicroPythonRunConfiguration, context: ConfigurationContext): Boolean {
+    override fun isConfigurationFromContext(configuration: MpyRunConfiguration, context: ConfigurationContext): Boolean {
         val file = context.location?.virtualFile ?: return false
         if (!facetEnabledForElement(file, context.project)) return false
         if (file is LightVirtualFile) return false
@@ -46,7 +46,7 @@ class MicroPythonRunConfigurationProducer : LazyRunConfigurationProducer<MicroPy
     }
 
     override fun setupConfigurationFromContext(
-        configuration: MicroPythonRunConfiguration,
+        configuration: MpyRunConfiguration,
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>
     ): Boolean {
@@ -60,7 +60,7 @@ class MicroPythonRunConfigurationProducer : LazyRunConfigurationProducer<MicroPy
 
     private fun facetEnabledForElement(virtualFile: VirtualFile, project: Project): Boolean {
         val module = ModuleUtilCore.findModuleForFile(virtualFile, project) ?: return false
-        return FacetManager.getInstance(module)?.getFacetByType(MicroPythonFacetType.ID) != null
+        return FacetManager.getInstance(module)?.getFacetByType(ID) != null
     }
 
     override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext) =

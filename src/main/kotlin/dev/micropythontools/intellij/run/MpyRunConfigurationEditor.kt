@@ -41,7 +41,7 @@ import javax.swing.JPanel
 import javax.swing.table.DefaultTableModel
 
 
-class MicroPythonRunConfigurationEditor(config: MicroPythonRunConfiguration) : SettingsEditor<MicroPythonRunConfiguration>() {
+class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<MpyRunConfiguration>() {
     private val pathField = TextFieldWithBrowseButton()
     private val resetOnSuccess = CheckBox("Reset on success", selected = true)
     private val runReplOnSuccess = CheckBox("Switch to REPL tab on success", selected = true)
@@ -268,7 +268,7 @@ class MicroPythonRunConfigurationEditor(config: MicroPythonRunConfiguration) : S
             .addComponent(excludedPathsTablePanel)
             .panel
 
-    override fun applyEditorTo(s: MicroPythonRunConfiguration) {
+    override fun applyEditorTo(s: MpyRunConfiguration) {
         s.path = pathField.text
         s.runReplOnSuccess = runReplOnSuccess.isSelected
         s.resetOnSuccess = resetOnSuccess.isSelected
@@ -286,7 +286,7 @@ class MicroPythonRunConfigurationEditor(config: MicroPythonRunConfiguration) : S
         }
     }
 
-    override fun resetEditorFrom(s: MicroPythonRunConfiguration) {
+    override fun resetEditorFrom(s: MpyRunConfiguration) {
         pathField.text = s.path
         runReplOnSuccess.isSelected = s.runReplOnSuccess
         resetOnSuccess.isSelected = s.resetOnSuccess
