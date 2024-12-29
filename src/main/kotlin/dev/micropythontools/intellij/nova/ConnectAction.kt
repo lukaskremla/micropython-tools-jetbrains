@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.Messages
@@ -45,10 +46,19 @@ class ConnectAction(text: String = "Connect") : ReplAction(text, false, false) {
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = when (fileSystemWidget(e)?.state) {
-            State.DISCONNECTING, State.DISCONNECTED, null -> true
-            State.CONNECTING, State.CONNECTED, State.TTY_DETACHED -> false
+        val module = e.project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+
+        if (module?.mpyFacet != null) {
+            e.presentation.isEnabledAndVisible = when (fileSystemWidget(e)?.state) {
+                State.DISCONNECTING, State.DISCONNECTED, null -> true
+                State.CONNECTING, State.CONNECTED, State.TTY_DETACHED -> false
+            }
+        } else {
+            e.presentation.isEnabled = false
         }
+
+        // utilize this update method to ensure accurate FileSystemWidget empty text
+        fileSystemWidget(e.project)?.updateEmptyText()
     }
 }
 

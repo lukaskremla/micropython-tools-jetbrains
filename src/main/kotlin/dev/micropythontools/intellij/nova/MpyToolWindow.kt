@@ -88,6 +88,14 @@ class AutoClearAction :
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
+    override fun update(e: AnActionEvent) {
+        super.update(e)
+
+        val module = e.project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+
+        e.presentation.isEnabled = module?.mpyFacet != null
+    }
+
     override fun isSelected(e: AnActionEvent): Boolean = isAutoClearEnabled
 
     override fun setSelected(e: AnActionEvent, state: Boolean) =
@@ -124,7 +132,9 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
         }
 
         e.presentation.isEnabled =
-            fileSystemWidget(project)?.state == State.DISCONNECTED || fileSystemWidget(project)?.state == State.DISCONNECTING
+            (module?.mpyFacet != null) &&
+                    (fileSystemWidget(project)?.state == State.DISCONNECTED
+                            || fileSystemWidget(project)?.state == State.DISCONNECTING)
     }
 
     override fun createPopupActionGroup(button: JComponent, dataContext: DataContext): DefaultActionGroup {
