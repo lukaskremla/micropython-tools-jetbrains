@@ -28,12 +28,10 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.facet.ui.ValidationResult
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
@@ -44,7 +42,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -734,30 +731,19 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
     override fun checkConfiguration() {
         super.checkConfiguration()
         val m = module ?: throw RuntimeConfigurationError("Module for path was not found")
-        val showSettings = Runnable {
-            when {
-                PluginManager.isPluginInstalled(PluginId.getId("com.intellij.pycharm")) ->
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyProjectConfigurable::class.java)
 
-                PluginManager.isPluginInstalled(PluginId.getId("com.intellij.modules.java")) ->
-                    ProjectSettingsService.getInstance(project).openModuleSettings(module)
-
-                else ->
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project)
-            }
-        }
         val facet = m.mpyFacet ?: throw RuntimeConfigurationError(
-            "MicroPython support was not enabled for selected module in IDE settings",
-            showSettings
+            "MicroPython support was not enabled for this project",
+            Runnable { ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyProjectConfigurable::class.java) }
         )
         val validationResult = facet.checkValid()
         if (validationResult != ValidationResult.OK) {
-            val runQuickFix = Runnable {
+            /*val runQuickFix = Runnable {
                 validationResult.quickFix.run(null)
-            }
-            throw RuntimeConfigurationError(validationResult.errorMessage, runQuickFix)
+            }*/
+            throw RuntimeConfigurationError(validationResult.errorMessage) //throw RuntimeConfigurationError(validationResult.errorMessage, runQuickFix)
         }
-        facet.pythonPath ?: throw RuntimeConfigurationError("Python interpreter is not found")
+        facet.pythonPath ?: throw RuntimeConfigurationError("Python interpreter was not found")
     }
 
     override fun suggestedName() = "Flash ${PathUtil.getFileName(path)}"

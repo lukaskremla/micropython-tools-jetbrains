@@ -33,8 +33,6 @@
     <extensions defaultExtensionNs="com.intellij">
         <facetType implementation="dev.micropythontools.intellij.settings.MpyFacetType"/>
         <configurationType implementation="dev.micropythontools.intellij.run.MpyConfigurationType"/>
-        <runConfigurationProducer
-                implementation="dev.micropythontools.intellij.run.MpyRunConfigurationProducer"/>
         <projectConfigurable groupId="language"
                              id="dev.micropythontools.intellij.configurable"
                              displayName="MicroPython"

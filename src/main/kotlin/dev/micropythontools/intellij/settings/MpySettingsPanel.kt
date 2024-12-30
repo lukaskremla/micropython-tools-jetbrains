@@ -85,11 +85,11 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
                             )
                             .validationInfo { comboBox ->
                                 val portName = comboBox.selectedItem.asSafely<String>()
-
-                                val isPyserialInstalled = module.mpyFacet?.isPyserialInstalled() ?: true // Facet might not be loaded yet
+                                
+                                val isPyserialInstalled = module.mpyFacet?.isPyserialInstalled() ?: false
 
                                 if (!isPyserialInstalled) {
-                                    ValidationInfo("Missing python package: Pyserial")
+                                    ValidationInfo("Required Python packages are missing. Check the tool window for more info")
                                 } else if (portName.isNullOrBlank()) {
                                     ValidationInfo("No port name provided")
                                         .withOKEnabled()
