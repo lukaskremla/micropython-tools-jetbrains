@@ -49,7 +49,7 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
     @Volatile
     private var connectInProcess = true
 
-    private val webSocketClient = object : WebSocketClient(URI(comm.connectionParameters.url)) {
+    private val webSocketClient = object : WebSocketClient(URI(comm.connectionParameters.webReplUrl)) {
         override fun onOpen(handshakedata: ServerHandshake) = open() //Nothing to do
 
         override fun onMessage(message: String) {

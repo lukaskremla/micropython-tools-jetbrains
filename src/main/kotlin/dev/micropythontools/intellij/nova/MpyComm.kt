@@ -321,7 +321,7 @@ except OSError as e:
     }
 
     inner class WebSocketTtyConnector : TtyConnector {
-        override fun getName(): String = connectionParameters.url
+        override fun getName(): String = connectionParameters.webReplUrl
         override fun close() = Disposer.dispose(this@MpyComm)
         override fun isConnected(): Boolean = true
         override fun ready(): Boolean {
@@ -377,13 +377,13 @@ except OSError as e:
     }
 
     protected open fun createClient(): MpyClient {
-        return if (connectionParameters.uart) MpySerialMpyClient(this) else MpyWebSocketClient(this)
+        return if (connectionParameters.usingUart) MpySerialMpyClient(this) else MpyWebSocketClient(this)
     }
 
     @Throws(IOException::class)
     suspend fun connect() {
         val name = with(connectionParameters) {
-            if (uart) portName else url
+            if (usingUart) portName else webReplUrl
         }
         state = State.CONNECTING
         offTtyBuffer.clear()

@@ -219,27 +219,27 @@ except Exception as e:
 """
 
 data class ConnectionParameters(
-    var uart: Boolean = true,
-    var url: String,
-    var webReplPassword: String,
+    var usingUart: Boolean = true,
     var portName: String,
+    var webReplUrl: String,
+    var webReplPassword: String,
     var ssid: String,
     var wifiPassword: String
 ) {
     constructor(portName: String) : this(
-        uart = true,
-        url = DEFAULT_WEBREPL_URL,
-        webReplPassword = "",
+        usingUart = true,
         portName = portName,
+        webReplUrl = DEFAULT_WEBREPL_URL,
+        webReplPassword = "",
         ssid = "",
         wifiPassword = ""
     )
 
-    constructor(url: String, webReplPassword: String) : this(
-        uart = false,
-        url = url,
-        webReplPassword = webReplPassword,
+    constructor(webReplUrl: String, webReplPassword: String) : this(
+        usingUart = false,
         portName = "",
+        webReplUrl = webReplUrl,
+        webReplPassword = webReplPassword,
         ssid = "",
         wifiPassword = ""
     )

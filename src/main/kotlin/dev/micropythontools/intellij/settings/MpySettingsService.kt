@@ -23,6 +23,7 @@ import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
@@ -32,9 +33,9 @@ import java.net.URISyntaxException
 /**
  * @author elmot, Lukas Kremla
  */
-private const val WIFI_CREDENTIALS_KEY = "MicroPython_Tools_wifi_key"
-
 const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
+private const val WIFI_KEY = "WiFi"
+private const val WebREPL_KEY = "WebREPL"
 
 @Service(Service.Level.PROJECT)
 @State(
@@ -42,48 +43,55 @@ const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
     storages = [Storage("micropython-tools-settings.xml")],
     category = SettingsCategory.PLUGINS
 )
-class MpySettingsService : SimplePersistentStateComponent<MpyState>(MpyState()) {
+class MpySettingsService(private val project: Project) : SimplePersistentStateComponent<MpyState>(MpyState()) {
     companion object {
         fun getInstance(project: Project): MpySettingsService =
             project.getService(MpySettingsService::class.java)
     }
 
     private fun createCredentialAttributes(key: String): CredentialAttributes {
+        val projectIdentifyingElement = project.guessProjectDir()?.path ?: project.name
+        // The final key consists of this plugins namespace, some unique attribute of the project, and finally the
+        // key of the stored credentials itself. The goal is to avoid conflicts with other plugins and to ensure
+        // each project gets its separate MPY Tools credentials.
+        val fullKey = "${this::class.java.name}/${projectIdentifyingElement}/$key"
+
         return CredentialAttributes(
-            generateServiceName("MySystem", key)
+            generateServiceName("MySystem", fullKey)
         )
     }
 
-    private fun key(url: String) = "${this::class.java.name}/$url"
+    suspend fun saveWebReplPassword(password: String) {
+        val attributes = createCredentialAttributes(WebREPL_KEY)
+        val credentials = Credentials("", password)
 
-    suspend fun retrieveWebReplPassword(url: String): String {
-        return withContext(Dispatchers.IO) {
-            val attributes = createCredentialAttributes(key(url))
-            val passwordSafe = PasswordSafe.instance
-            passwordSafe.getPassword(attributes) ?: ""
-        }
-    }
-
-    suspend fun saveWebReplPassword(url: String, password: String) {
-        val attributes = createCredentialAttributes(key(url))
-        val credentials = Credentials(null, password)
         withContext(Dispatchers.IO) {
             PasswordSafe.instance.set(attributes, credentials)
         }
     }
 
-    suspend fun retrieveWifiPassword(): String {
+    suspend fun retrieveWebReplPassword(): String {
+        val attributes = createCredentialAttributes(WebREPL_KEY)
+
         return withContext(Dispatchers.IO) {
-            val attributes = createCredentialAttributes(WIFI_CREDENTIALS_KEY)
             PasswordSafe.instance.getPassword(attributes) ?: ""
         }
     }
 
-    suspend fun saveWifiPassword(password: String) {
-        val attributes = createCredentialAttributes(WIFI_CREDENTIALS_KEY)
-        val credentials = Credentials("", password)
+    suspend fun saveWifiCredentials(ssid: String, password: String) {
+        val attributes = createCredentialAttributes(WIFI_KEY)
+        val credentials = Credentials(ssid, password)
+
         withContext(Dispatchers.IO) {
             PasswordSafe.instance.set(attributes, credentials)
+        }
+    }
+
+    suspend fun retrieveWifiCredentials(): Credentials {
+        val attributes = createCredentialAttributes(WIFI_KEY)
+
+        return withContext(Dispatchers.IO) {
+            PasswordSafe.instance.get(attributes) ?: Credentials("", "")
         }
     }
 }

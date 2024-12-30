@@ -25,10 +25,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.Messages
-import dev.micropythontools.intellij.settings.MpyProjectConfigurable
-import dev.micropythontools.intellij.settings.MpySettingsService
-import dev.micropythontools.intellij.settings.messageForBrokenUrl
-import dev.micropythontools.intellij.settings.mpyFacet
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import dev.micropythontools.intellij.settings.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -70,7 +68,7 @@ suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
 
     var msg: String? = null
     val connectionParameters: ConnectionParameters?
-    if (settings.state.uart) {
+    if (settings.state.usingUart) {
         val portName = settings.state.portName ?: ""
         if (portName.isBlank()) {
             msg = "No port is selected"
@@ -80,8 +78,13 @@ suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
         }
 
     } else {
-        val url = settings.state.webReplUrl ?: ""
-        val password = fileSystemWidget.project.service<MpySettingsService>().retrieveWebReplPassword(url)
+        val url = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL
+        var password = ""
+
+        runWithModalProgressBlocking(fileSystemWidget.project, "Retrieving credentials...") {
+            password = fileSystemWidget.project.service<MpySettingsService>().retrieveWebReplPassword()
+        }
+
         msg = messageForBrokenUrl(url)
         if (password.isBlank()) {
             msg = "Empty password"

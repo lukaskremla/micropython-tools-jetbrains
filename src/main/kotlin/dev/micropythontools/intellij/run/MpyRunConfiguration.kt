@@ -696,13 +696,14 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
         val projectDir = project.guessProjectDir()
         val projectPath = projectDir?.path
 
-        val settings = MpySettingsService.getInstance(project)
-
-        val ssid = settings.state.ssid ?: ""
+        var ssid = ""
         var wifiPassword = ""
 
-        runWithModalProgressBlocking(project, "Retrieving Password...") {
-            wifiPassword = project.service<MpySettingsService>().retrieveWifiPassword()
+        runWithModalProgressBlocking(project, "Retrieving credentials...") {
+            val wifiCredentials = project.service<MpySettingsService>().retrieveWifiCredentials()
+
+            ssid = wifiCredentials.userName ?: ""
+            wifiPassword = wifiCredentials.getPasswordAsString() ?: ""
         }
 
         if (path.isBlank() || (projectPath != null && path == projectPath)) {
