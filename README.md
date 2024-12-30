@@ -18,7 +18,7 @@ requests, feel free to start a discussion.
 Some of the features you can expect soon include:
 
 - New device management and built-in type hint support
-- New flashing/upload ui
+- New flashing/upload UI
 - Drag and drop file system interaction
 
 Long term plans:
@@ -35,7 +35,7 @@ To access all of the features this plugin offers always create a MicroPython Too
 and leave the path empty.
 
 If no folder is marked as a sources root, the project root contents will be uploaded, if at least one folder is marked
-as a source root, only source root contents will be uploaded. In all cases leading dot items, excluded folders, and test
+as a source root, only source root contents will be uploaded. In all cases files/folders with a leading dot in their name, excluded folders, and test
 source roots are skipped. If you want to upload a test source root marked folder, or its contents, you can do so via
 the context menu actions.
 
