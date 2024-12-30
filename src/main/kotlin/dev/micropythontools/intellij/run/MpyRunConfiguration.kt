@@ -1013,13 +1013,6 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                                 sourceFolders.find { VfsUtil.isAncestor(it, file, false) }!!
                             ) ?: file.name
 
-                            testFolders.find { VfsUtil.isAncestor(it, file, false) }?.let { sourceRoot ->
-                                VfsUtil.getRelativePath(file, sourceRoot) ?: file.name
-                            } != null -> VfsUtil.getRelativePath(
-                                file,
-                                testFolders.find { VfsUtil.isAncestor(it, file, false) }!!
-                            ) ?: file.name
-
                             else -> projectDir?.let { VfsUtil.getRelativePath(file, it) } ?: file.name
                         }
 
@@ -1048,7 +1041,7 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                                 Notifications.Bus.notify(
                                     Notification(
                                         NOTIFICATION_GROUP,
-                                        "Cannot upload over FTP, no SSID was provided in settings! Falling back to serial communication.",
+                                        "Cannot upload over FTP, no SSID was provided in settings! Falling back to normal communication.",
                                         NotificationType.ERROR
                                     ), project
                                 )
@@ -1071,7 +1064,7 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                                         Notifications.Bus.notify(
                                             Notification(
                                                 NOTIFICATION_GROUP,
-                                                "Ran into an error establishing an FTP connection, falling back to serial communication: $scriptResponse",
+                                                "Ran into an error establishing an FTP connection, falling back to normal communication: $scriptResponse",
                                                 NotificationType.ERROR
                                             ), project
                                         )

@@ -1,114 +1,99 @@
-# MicroPython Plugin for PyCharm and IntelliJ
+# MicroPython Tools for PyCharm
 
-[![JetBrains team project](http://jb.gg/badges/team.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
-[![JetBrains IntelliJ Plugins](https://img.shields.io/jetbrains/plugin/v/9777-micropython)](https://plugins.jetbrains.com/plugin/9777-micropython)
-[![JetBrains IntelliJ plugins](https://img.shields.io/jetbrains/plugin/d/9777-micropython)](https://plugins.jetbrains.com/plugin/9777-micropython)
-[![JetBrains IntelliJ Plugins](https://img.shields.io/jetbrains/plugin/r/rating/9777-micropython)](https://plugins.jetbrains.com/plugin/9777-micropython)
-[![check](https://github.com/JetBrains/intellij-micropython/actions/workflows/check.yml/badge.svg?branch=master)](https://github.com/JetBrains/intellij-micropython/actions/workflows/check.yml)
-[![Join the chat at https://gitter.im/intellij-micropython/community](https://badges.gitter.im/intellij-micropython/community.svg)](https://gitter.im/intellij-micropython/community)
+This is a fork of the [jetbrains intellij micropython plugin](https://github.com/JetBrains/intellij-micropython).
+Credits to [Andrey Vlasovskikh](https://github.com/vlasovskikh) for creating the original plugin and
+to [Ilia Motornyi](https://github.com/elmot) for rewriting the communication layer to kotlin and for developing the new
+UI, which serves as the foundation for this project.
 
-The Python code development plugin for [MicroPython](http://micropython.org/) devices in
-[PyCharm](https://www.jetbrains.com/pycharm/) and [IntelliJ](https://www.jetbrains.com/idea/).
+I have decided fork the original jetbrains plugin as its development was very slow and the marketplace version was left
+unmaintained for very long.
 
+I believe that the MicroPython community needs robust, actively maintained and developed tools adding MicroPython
+support to modern industry-standard IDEs. My aim with this fork is to address this need.
 
-## Supported devices
+There will be frequent updates, I'm actively working on developing new features and fixing bugs in the existing
+code. If you run into any problems or bugs using this plugin, please create an issue.
 
-The plugin supports Python development for these devices:
+Some of the features you can expect soon include:
 
-* [ESP8266](https://github.com/JetBrains/intellij-micropython/wiki/ESP8266)
-* [PyBoard](https://github.com/JetBrains/intellij-micropython/wiki/Pyboard)
-* [BBC Micro:bit](https://github.com/JetBrains/intellij-micropython/wiki/BBC-Micro%3Abit)
-* [Raspberry Pi Pico](https://www.raspberrypi.org/products/raspberry-pi-pico/)
+- New device management and built-in type hint support
+- New approach flashing/upload ui
+- Drag and drop file system interaction
 
-It will support more MicroPython devices and more device-specific and MicroPython-specific modules eventually. We are
-interested in your contributions to the project. Feel free to open issues and send pull requests!
+Long term plans:
 
-See also [the changelog](CHANGES.md) for the plugin.
+- Built-in MicroPython firmware flashing support
+- Rewrite communication layer using pyserial
+- Support compiling to bytecode
+- After finishing the pyserial communication rewrite I might consider developing MicroPython plugins for Visual Studio
+  and VScode as well
+
+## Usage tips
+
+To access all of the features this plugin offers always create a MicroPython Tools run configuration in a new project
+and leave the path empty.
+
+If no folder is marked as a sources root, the project root contents will be uploaded, if at least one folder is marked
+as a source root, only source root contents will be uploaded. In all cases leading dot items, excluded folders, and test
+source roots are skipped. If you want to upload a test source root marked folder, or its contents, you can do so via
+the context menu actions.
+
+I also recommend enabling the synchronize option, this way you don't have to worry about cleaning up the File System
+if you make large changes to your project. When flashing, all empty folders and files that were not apart of the
+flashing operation will be deleted - you can also simply configure excluded target (MicroPython) paths, that will be
+ignored by the synchronization feature.
+
+For projects which involve flashing large files *(For MicoPython standards)*, FTP uploads might help speed things up,
+especially if you're using serial communication.
 
 ## Features
 
+### Expanded File System widget
 
-### Code insight for MicroPython modules
+- With new connection selector for easily switching between devices
+  ![File System Widget](media/file_system.png)
 
-* Context-aware code completion and documentation
-    * Use <kbd>Ctrl+Q</kbd> (<kbd>F1</kbd> on macOS) for quick documentation window, you can dock it permanently
+### Expanded run configuration options
 
-      ![Code completion](media/code-completion.png)
+- Synchronization - automatically clean up the device file system when flashing
+- Except device paths from synchronization (avoid deleting persistent data such as logs)
+- FTP uploads for large projects - increased upload speed and reliability
+- New tooltips
+  ![Run Configuration](media/run_configuration.png)
 
-* Syntax checking and type checking
-    * The plugin checks your code while you're typing it
+### Context sensitive menu actions
 
-      ![Type checking](media/type-checking.png)
+- Tooltip descriptions dynamically change based on your selection
+- You can now select multiple items for the upload action
+  ![Context Menu Actions](media/context_actions.png)
 
+### Cleaned up settings menu
 
-### Run code on MicroPython devices
+- Removed old unused device type dropdowns
+- Updated the settings persistence system to use a more modern approach
+- Added a Target Wi-Fi AP configuration for FTP upload functionality (The password is safely stored in
+  the [Jetbrains password
+  safe](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html#storage))
+  ![Context Menu Actions](media/settings.png)
 
-* Flash Python files or project directories to devices
-    * Right-click on a file or directory and select <em>"Run 'Flash <your-file-name>'"</em> to flash this item to your
-      connected device. If you want to flash a sub-directory to the root directory of your device, please mark this
-      sub-directory as a sources root: right-click on it and select <em>"Mark Directory as | Sources Root"</em>. Its
-      icon will become blue, see the screenshot.
-    
-      ![Flash directory](media/flash-directory.png)
+### Other
 
-    * You can edit your run configurations for flashing files or directories in <em>"Run | Edit Configurations..."</em>
-      menu.
+- Automatically skips already uploaded files (on boards offering binascii library)
+- Several bug fixes, new edge case handling, removed most of the old deprecated code, new python library management
+  system and more backend changes
 
-      ![Run](media/run.png)
+## Supported devices
 
-* MicroPython REPL
-    * Use <em>"Tools | MicroPython | MicroPython REPL"</em> menu to run a MicroPython shell on your device. Or open 
-  MicroPython REPL tool window directly
-
-      ![REPL](media/repl_toolwindow.png)
-
+All MicroPython devices are supported, however, as of right now the plugin does not offer built in type hints. I'm
+working on adding them, in the mean time I recommend checking
+out https://micropython-stubs.readthedocs.io/en/main/.
 
 ## Requirements
 
 * PyCharm or IntelliJ
-* Python 3.5+
-    * The MicroPython language version is 3.5. If you select a newer version, turn on <em>"File | Settings | Editor |
-      Inspections | Python | Code compatibility inspection"</em> and add Python 3.5 to the compatibility list there
+* Python 3.10+
+* Pyserial library installed (the plugin will offer you an option to automatically install it)
 * Python plugin (IntelliJ only)
-* Supported MicroPython development board with a recent version of MicroPython firmware flashed to the board
-
-
-## Installation
-
-1. Install the "MicroPython" plugin from your IDE settings.
-
-2. Create a new project or open an existing folder with your MicroPython code.
-
-3. This step differs for PyCharm and IntelliJ:
-    * PyCharm: Enable MicroPython support in <em>"File | Settings | Languages & Frameworks | MicroPython"</em> and
-      specify the path to your MicroPython device
-    * IntelliJ: Add the MicroPython facet to a Python module in your project structure and specify the path to your
-      MicroPython device
-
-    ![Configurable](media/configurable.png)
-
-4. Open any Python file in project. You may see a yellow bar on top of the file, notifying you that you don't
-   have some packages required for communicating with your device. In this case click "Install requirements" and wait
-   while the plugin downloads and installs the packages.
-
-
-## Source Code
-
-We write this plugin in Python and [Kotlin](https://kotlinlang.org/). Kotlin a new JVM language by JetBrains, the
-makers of PyCharm and IntelliJ. Google recommends Kotlin as the best language for developing Android apps. If you are a
-Python developer, Kotlin may be an interesting language for you to learn.
-
-The steps for setting up the development environment:
-
-1. Check out this project from GitHub
-2. Create a new project from existing sources in IntelliJ
-
-To just run the development version use `./gradlew clean runIde` from the command line
-or just run **runIde** [run configuration](https://www.jetbrains.com/help/idea/run-debug-configuration.html).
-
-Contributions are welcome!
-
-
-## License
+* A development board with MicroPython installed
 
 The plugin is licensed under the terms of the Apache 2 license.
