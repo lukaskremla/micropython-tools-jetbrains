@@ -18,7 +18,7 @@ requests, feel free to start a discussion.
 Some of the features you can expect soon include:
 
 - New device management and built-in type hint support
-- New approach flashing/upload ui
+- New flashing/upload ui
 - Drag and drop file system interaction
 
 Long term plans:
