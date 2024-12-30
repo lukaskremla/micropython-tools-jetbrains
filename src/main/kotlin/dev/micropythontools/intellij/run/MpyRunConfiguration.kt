@@ -28,10 +28,12 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.facet.ui.ValidationResult
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
@@ -50,7 +52,6 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
-import com.intellij.util.PlatformUtils
 import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.intellij.nova.*
 import dev.micropythontools.intellij.settings.MpyProjectConfigurable
@@ -734,10 +735,10 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
         val m = module ?: throw RuntimeConfigurationError("Module for path was not found")
         val showSettings = Runnable {
             when {
-                PlatformUtils.isPyCharm() ->
+                PluginManager.isPluginInstalled(PluginId.getId("com.intellij.pycharm")) ->
                     ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyProjectConfigurable::class.java)
 
-                PlatformUtils.isIntelliJ() ->
+                PluginManager.isPluginInstalled(PluginId.getId("com.intellij.modules.java")) ->
                     ProjectSettingsService.getInstance(project).openModuleSettings(module)
 
                 else ->
