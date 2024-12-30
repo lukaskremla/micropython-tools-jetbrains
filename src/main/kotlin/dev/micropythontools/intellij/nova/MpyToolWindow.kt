@@ -125,7 +125,7 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
         val settings = project?.let { MpySettingsService.getInstance(it) }
 
         val portName = settings?.state?.portName
-        val uart = settings?.state?.uart
+        val uart = settings?.state?.usingUart
         val url = settings?.state?.webReplUrl
 
         if (uart == true || uart == null) {
@@ -158,7 +158,7 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
             val action = object : AnAction(portName) {
                 override fun actionPerformed(e: AnActionEvent) {
                     module.mpyFacet?.let {
-                        settings?.state?.uart = true
+                        settings?.state?.usingUart = true
                         settings?.state?.portName = portName
 
                         FacetManager.getInstance(module).facetConfigurationChanged(it)
