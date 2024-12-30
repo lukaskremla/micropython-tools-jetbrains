@@ -88,7 +88,7 @@ class MpyFacet(
         val sdk = ProjectRootManager.getInstance(module.project).projectSdk
 
         if (sdk == null || sdk.version.isOlderThan(LanguageLevel.PYTHON310)) {
-            return ValidationResult("MicroPython Tools support requires valid Python 3.10+ SDK")
+            return ValidationResult("MicroPython Tools support requires a valid Python 3.10+ SDK")
         }
 
         if (!isPyserialInstalled()) {
@@ -98,7 +98,8 @@ class MpyFacet(
                     override fun run(place: JComponent?) {
                         installRequiredPythonPackages()
                     }
-                })
+                }
+            )
         }
 
         return ValidationResult.OK
@@ -108,6 +109,10 @@ class MpyFacet(
         get() = PythonSdkUtil.findPythonSdk(module)?.homePath
 
     fun listSerialPorts(project: Project): List<String> {
+        if (pythonPath == null) {
+            return emptyList()
+        }
+
         val timeout = 1_000
         val command = mutableListOf(pythonPath, "$scriptsPath/scanSerialPorts.py")
         var result = listOf<String>()
@@ -130,6 +135,10 @@ class MpyFacet(
     }
 
     fun isPyserialInstalled(): Boolean {
+        if (pythonPath == null) {
+            return false
+        }
+
         var result = false
         // A very improvised way of checking if pyserial is installed
         // An alternative to the deprecated PyPackageManager

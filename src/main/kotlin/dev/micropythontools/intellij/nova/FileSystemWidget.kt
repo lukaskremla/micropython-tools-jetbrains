@@ -83,8 +83,6 @@ try:
 except Exception as e:
     pass
 
-print(os.uname())
-
 """
 
 private const val MPY_FS_SCAN = """
@@ -264,22 +262,29 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         val module = project.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
+        val isPythonSdkValid = module?.mpyFacet?.pythonPath != null
+
         val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() ?: true // Facet might not be loaded yet
 
-        if (module?.mpyFacet != null && isPyserialInstalled) {
+        if (module?.mpyFacet != null && isPythonSdkValid && isPyserialInstalled) {
             tree.emptyText.appendText("No board is connected")
             tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 performReplAction(project, false, "Connecting...") { doConnect(it) }
             }
-        } else if (!isPyserialInstalled) {
-            tree.emptyText.appendText("Missing required Python packages")
-            tree.emptyText.appendLine("Install...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                module?.mpyFacet?.installRequiredPythonPackages()
-            }
-        } else {
+        } else if (module?.mpyFacet == null) {
             tree.emptyText.appendText("MicroPython support is disabled")
             tree.emptyText.appendLine("Change settings...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyProjectConfigurable::class.java)
+            }
+        } else if (!isPythonSdkValid) {
+            tree.emptyText.appendText("No Python interpreter is configured")
+            /*tree.emptyText.appendLine("Fix...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                // action to fix the interpreter (move the user to python interpreter settings)
+            }*/
+        } else if (!isPyserialInstalled) {
+            tree.emptyText.appendText("Missing required Python packages")
+            tree.emptyText.appendLine("Install...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                module.mpyFacet?.installRequiredPythonPackages()
             }
         }
     }
@@ -288,7 +293,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         updateEmptyText()
 
         tree.setCellRenderer(object : ColoredTreeCellRenderer() {
-
             override fun customizeCellRenderer(
                 tree: JTree, value: Any?, selected: Boolean, expanded: Boolean,
                 leaf: Boolean, row: Int, hasFocus: Boolean,
@@ -415,11 +419,9 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             "($year, $month, $day, $hour, $minute, $second, 0, 0)"
         )
 
-        //println(formattedScript)
+        // Try to sync the RTC, temporary feature, might not work on all boards and port versions
+        blindExecute(TIMEOUT, formattedScript)
 
-        val scriptResponse = blindExecute(TIMEOUT, formattedScript).extractSingleResponse().trim()
-
-        //println(scriptResponse)
     }
 
     suspend fun refresh() {
