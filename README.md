@@ -12,7 +12,8 @@ I believe that the MicroPython community needs robust, actively maintained and d
 support to modern industry-standard IDEs. My aim with this fork is to address this need.
 
 There will be frequent updates, I'm actively working on developing new features and fixing bugs in the existing
-code. If you run into any problems or bugs using this plugin, please create an issue.
+code. If you run into any problems or bugs using this plugin, please create an issue. For any suggestions or feature
+requests, feel free to start a discussion.
 
 Some of the features you can expect soon include:
 
