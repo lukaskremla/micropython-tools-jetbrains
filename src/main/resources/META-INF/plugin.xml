@@ -15,7 +15,7 @@
       </ul>
       <p>All MicroPython devices are supported. However, built-in typehint support isn't yet implemented. In the meantime I recommend <a href="https://micropython-stubs.readthedocs.io/en/main/">installing the stubs manually.</a></p>
        <p>Feedback and bug reports are welcome!</p>
-       <p>Check this plugin out <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">on GitHub!</a></p>
+       <p>More info and usage tips <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">on GitHub!</a></p>
     ]]></description>
     <version>SNAPSHOT</version>
     <vendor>Lukas Kremla</vendor>

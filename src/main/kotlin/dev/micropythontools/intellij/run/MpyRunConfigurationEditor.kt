@@ -43,7 +43,7 @@ import javax.swing.table.DefaultTableModel
 
 class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<MpyRunConfiguration>() {
     private val pathField = TextFieldWithBrowseButton()
-    private val resetOnSuccess = CheckBox("Reset on success", selected = true)
+    private val resetOnSuccess = CheckBox("Reset on success", selected = false)
     private val runReplOnSuccess = CheckBox("Switch to REPL tab on success", selected = true)
     private val useFTP = CheckBox("Use FTP for file uploads", selected = false)
     private val synchronize = CheckBox("Synchronize", selected = false)
@@ -53,7 +53,7 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
         layout = BoxLayout(this, BoxLayout.X_AXIS)
         add(useFTP)
         add(JBLabel(AllIcons.General.Information).apply {
-            toolTipText = "Wifi credentials, FTP server code and IP will be communicated over serial communication."
+            toolTipText = "Make sure to setup wifi credentials in the plugin settings"
         })
     }
 
@@ -61,7 +61,7 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
         layout = BoxLayout(this, BoxLayout.X_AXIS)
         add(synchronize)
         add(JBLabel(AllIcons.General.Information).apply {
-            toolTipText = "Synchronize device file system to only contain flashed files"
+            toolTipText = "Synchronize device file system to only contain flashed files (deletes empty folders)"
         })
     }
 
