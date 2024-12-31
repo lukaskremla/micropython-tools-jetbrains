@@ -152,7 +152,7 @@ class MpyFacet(
     }
 
     fun installRequiredPythonPackages() {
-        val sdk = ProjectRootManager.getInstance(module.project).projectSdk
+        val sdk = PythonSdkUtil.findPythonSdk(module)
 
         val requirements = PyRequirementParser.fromText("pyserial==3.5")
 
