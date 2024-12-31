@@ -46,7 +46,7 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="dev.micropythontools.intellij.nova.MicroPythonToolWindow"
+        <toolWindow factoryClass="dev.micropythontools.intellij.nova.MpyToolWindow"
                     id="MicroPython Tools"
                     anchor="bottom"
                     icon="/icons/micropython_tw.svg"
@@ -90,7 +90,7 @@
             <reference ref="micropythontools.fs.Delete"/>
         </group>
 
-        <group id="micropython.repl.ReplToolbar">
+        <group id="micropythontools.repl.ReplToolbar">
             <reference ref="micropythontools.repl.Connect"/>
             <reference ref="micropythontools.repl.Disconnect"/>
             <reference ref="micropythontools.repl.connectionSelector"/>

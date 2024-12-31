@@ -88,7 +88,7 @@ class MpyFacet(
         val sdk = ProjectRootManager.getInstance(module.project).projectSdk
 
         if (sdk == null || sdk.version.isOlderThan(LanguageLevel.PYTHON310)) {
-            return ValidationResult("MicroPython Tools support requires a valid Python 3.10+ SDK")
+            return ValidationResult("MicroPython Tools plugin requires a valid Python 3.10+ SDK")
         }
 
         if (!isPyserialInstalled()) {
