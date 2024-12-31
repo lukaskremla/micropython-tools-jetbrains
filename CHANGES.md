@@ -1,6 +1,16 @@
 The Changelog
 =============
 
+0.1.2 - 31-12-2024
+------------------
+* Improved the way credentials are stored by the plugin
+* Fixed several errors related to un-configured Python interpreter IDE state
+* Added more descriptive error messages and information texts for un-configured plugin state
+  
+0.1.1 - 30-12-2024
+------------------
+* Replaced internal annotated API usage
+
 0.1.0 - 30-12-2024
 ------------------
 Initial fork release:
