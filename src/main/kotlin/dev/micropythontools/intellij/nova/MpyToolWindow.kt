@@ -45,7 +45,7 @@ import javax.swing.JComponent
 internal const val NOTIFICATION_GROUP = "MicroPython Tools"
 internal const val TOOL_WINDOW_ID = "MicroPython Tools"
 
-class MicroPythonToolWindow : ToolWindowFactory, DumbAware {
+class MpyToolWindow : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val newDisposable = Disposer.newDisposable(toolWindow.disposable, "Webrepl")
 
@@ -75,7 +75,7 @@ class MicroPythonToolWindow : ToolWindowFactory, DumbAware {
 
         val widget = BorderLayoutPanel()
         widget.addToCenter(terminal)
-        val actions = ActionManager.getInstance().getAction("micropython.repl.ReplToolbar") as ActionGroup
+        val actions = ActionManager.getInstance().getAction("micropythontools.repl.ReplToolbar") as ActionGroup
         val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, actions, true)
         actionToolbar.targetComponent = terminal
         widget.addToTop(actionToolbar.component)
@@ -105,7 +105,7 @@ class AutoClearAction :
         PropertiesComponent.getInstance().setValue(PROPERTY_NAME, state, DEFAULT)
 
     companion object {
-        private const val PROPERTY_NAME = "micropython.repl.autoClear"
+        private const val PROPERTY_NAME = "micropythontools.repl.autoClear"
         private const val DEFAULT = true
         val isAutoClearEnabled: Boolean
             get() = PropertiesComponent.getInstance().getBoolean(PROPERTY_NAME, DEFAULT)
