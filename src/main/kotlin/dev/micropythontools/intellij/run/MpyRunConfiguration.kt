@@ -738,10 +738,14 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
         )
         val validationResult = facet.checkValid()
         if (validationResult != ValidationResult.OK) {
-            /*val runQuickFix = Runnable {
-                validationResult.quickFix.run(null)
-            }*/
-            throw RuntimeConfigurationError(validationResult.errorMessage) //throw RuntimeConfigurationError(validationResult.errorMessage, runQuickFix)
+            if (validationResult.quickFix != null) {
+                val runQuickFix = Runnable {
+                    validationResult.quickFix.run(null)
+                }
+                throw RuntimeConfigurationError(validationResult.errorMessage, runQuickFix)
+            } else {
+                throw RuntimeConfigurationError(validationResult.errorMessage)
+            }
         }
         facet.pythonPath ?: throw RuntimeConfigurationError("Python interpreter was not found")
     }

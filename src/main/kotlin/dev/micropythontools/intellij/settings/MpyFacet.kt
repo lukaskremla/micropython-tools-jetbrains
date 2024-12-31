@@ -24,12 +24,14 @@ import com.intellij.facet.FacetType
 import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.facet.FacetLibraryConfigurator
 import com.jetbrains.python.facet.LibraryContributingFacet
@@ -85,16 +87,41 @@ class MpyFacet(
     }
 
     fun checkValid(): ValidationResult {
-        val sdk = ProjectRootManager.getInstance(module.project).projectSdk
+        val sdk = PythonSdkUtil.findPythonSdk(module)
 
         if (sdk == null || sdk.version.isOlderThan(LanguageLevel.PYTHON310)) {
-            return ValidationResult("MicroPython Tools plugin requires a valid Python 3.10+ SDK")
+            return if (
+                PluginManager.isPluginInstalled(PluginId.getId("com.intellij.modules.java")) ||
+                PluginManager.isPluginInstalled(PluginId.getId("com.intellij.java"))
+            ) {
+                ValidationResult(
+                    "MicroPython Tools plugin requires a valid Python 3.10+ SDK",
+                    object : FacetConfigurationQuickFix("Configure") {
+                        override fun run(place: JComponent?) {
+                            ApplicationManager.getApplication().invokeLater {
+                                ProjectSettingsService.getInstance(module.project).openModuleLibrarySettings(module)
+                            }
+                        }
+                    }
+                )
+            } else {
+                ValidationResult(
+                    "MicroPython Tools plugin requires a valid Python 3.10+ SDK",
+                    object : FacetConfigurationQuickFix("Configure") {
+                        override fun run(place: JComponent?) {
+                            ApplicationManager.getApplication().invokeLater {
+                                ShowSettingsUtil.getInstance().showSettingsDialog(module.project, "ProjectStructure")
+                            }
+                        }
+                    }
+                )
+            }
         }
 
         if (!isPyserialInstalled()) {
             return ValidationResult(
-                "Packages required for MicroPython support not found: pyserial",
-                object : FacetConfigurationQuickFix("Install Requirements") {
+                "Missing required Python packages",
+                object : FacetConfigurationQuickFix("Install") {
                     override fun run(place: JComponent?) {
                         installRequiredPythonPackages()
                     }

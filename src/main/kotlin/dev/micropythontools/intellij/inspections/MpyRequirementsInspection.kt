@@ -34,7 +34,9 @@ class MpyRequirementsInspection : LocalInspectionTool() {
         if (result.isOk) return null
         val facetFix: FacetConfigurationQuickFix? = result.quickFix
         val fix = if (facetFix != null) object : LocalQuickFix {
-            override fun getFamilyName() = "Install missing packages"
+            @Suppress("DialogTitleCapitalization")
+            // The fixButtonText follows proper capitalization in all cases, the warning can be ignored
+            override fun getFamilyName() = facetFix.fixButtonText.toString()
 
             override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                 facetFix.run(null)
