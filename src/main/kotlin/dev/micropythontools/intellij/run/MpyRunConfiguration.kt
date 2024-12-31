@@ -733,7 +733,7 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
         val m = module ?: throw RuntimeConfigurationError("Module for path was not found")
 
         val facet = m.mpyFacet ?: throw RuntimeConfigurationError(
-            "MicroPython Tools plugin was not enabled for this project",
+            "MicroPython support was not enabled for this project",
             Runnable { ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyProjectConfigurable::class.java) }
         )
         val validationResult = facet.checkValid()

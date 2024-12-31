@@ -46,7 +46,7 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="dev.micropythontools.intellij.nova.MpyToolWindow"
+        <toolWindow factoryClass="dev.micropythontools.intellij.nova.MicroPythonToolWindow"
                     id="MicroPython Tools"
                     anchor="bottom"
                     icon="/icons/micropython_tw.svg"
