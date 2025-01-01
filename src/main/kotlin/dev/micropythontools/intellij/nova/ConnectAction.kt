@@ -33,7 +33,12 @@ import kotlinx.coroutines.withContext
 /**
  * @author elmot
  */
-class ConnectAction(text: String = "Connect") : ReplAction(text, false, false) {
+class ConnectAction(text: String = "Connect") : ReplAction(
+    text,
+    false,
+    true,
+    "Connection attempt cancelled"
+) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override val actionDescription: String = "Connect"
@@ -92,7 +97,6 @@ suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
         } else {
             connectionParameters = ConnectionParameters(url, password)
         }
-
     }
     if (msg != null) {
         withContext(Dispatchers.EDT) {
@@ -117,7 +121,7 @@ suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
             try {
                 if (fileSystemWidget.state == State.CONNECTED) {
                     fileSystemWidget.initializeDevice()
-                    fileSystemWidget.refresh()
+                    fileSystemWidget.initialRefresh()
                 }
             } finally {
                 ActivityTracker.getInstance().inc()

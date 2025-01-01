@@ -72,7 +72,10 @@ fun fileSystemWidget(project: Project?): FileSystemWidget? {
 }
 
 abstract class ReplAction(
-    text: String, private val connectionRequired: Boolean, private val requiresRefreshAfter: Boolean
+    text: String,
+    private val connectionRequired: Boolean,
+    private val requiresRefreshAfter: Boolean,
+    private val cancelledMessage: String = "",
 ) : DumbAwareAction(text) {
 
     abstract val actionDescription: @NlsContexts.DialogMessage String
@@ -82,10 +85,16 @@ abstract class ReplAction(
 
     final override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
+
+        var wasCancelled = false
+
         try {
-            performReplAction(project, connectionRequired, actionDescription, this::performAction)
+            performReplAction(project, connectionRequired, actionDescription, cancelledMessage, this::performAction)
+        } catch (e: CancellationException) {
+            wasCancelled = true
+            throw e
         } finally {
-            if (requiresRefreshAfter) {
+            if (requiresRefreshAfter && !wasCancelled) {
                 runWithModalProgressBlocking(project, "Updating file system view...") {
                     fileSystemWidget(project)?.refresh()
                 }
@@ -100,13 +109,29 @@ abstract class ReplAction(
             e.presentation.isEnabled = false
         }
     }
+}
 
+// Overload to allow not specifying cancellation message
+fun <T> performReplAction(
+    project: Project,
+    connectionRequired: Boolean,
+    @NlsContexts.DialogMessage description: String,
+    action: suspend (FileSystemWidget) -> T
+): T? {
+    return performReplAction(
+        project,
+        connectionRequired,
+        description,
+        cancelledMessage = "$description cancelled",
+        action
+    )
 }
 
 fun <T> performReplAction(
     project: Project,
     connectionRequired: Boolean,
     @NlsContexts.DialogMessage description: String,
+    cancelledMessage: String,
     action: suspend (FileSystemWidget) -> T
 ): T? {
     val fileSystemWidget = fileSystemWidget(project) ?: return null
@@ -128,7 +153,7 @@ fun <T> performReplAction(
             error = "$description timed out"
             thisLogger().info(error, e)
         } catch (e: CancellationException) {
-            error = "$description cancelled"
+            error = cancelledMessage
             thisLogger().info(error, e)
             errorType = NotificationType.INFORMATION
         } catch (e: IOException) {

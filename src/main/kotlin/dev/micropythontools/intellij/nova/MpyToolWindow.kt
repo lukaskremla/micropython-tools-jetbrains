@@ -134,7 +134,7 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
             e.presentation.text = if (url == "") "No URL Selected" else url
         }
 
-        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() ?: true // Facet might not be loaded yet
+        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() ?: false
 
         e.presentation.isEnabled =
             (module?.mpyFacet != null) &&
