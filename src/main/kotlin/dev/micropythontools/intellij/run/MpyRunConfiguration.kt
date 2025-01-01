@@ -956,7 +956,7 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
             val projectDir = project.guessProjectDir()
 
             var ftpUploadClient: FTPUploadClient? = null
-
+            
             try {
                 performReplAction(project, true, "Upload") { fileSystemWidget ->
                     var i = 0
@@ -1095,19 +1095,22 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                     }
                 }
             } finally {
-                ftpUploadClient?.disconnect()
+                if (fileSystemWidget(project)?.state == State.CONNECTED) {
+                    ftpUploadClient?.disconnect()
 
-                runWithModalProgressBlocking(project, "Cleaning up after FTP upload...") {
-                    if (useFTP) {
-                        fileSystemWidget(project)?.blindExecute(TIMEOUT, FTP_SERVER_CLEANUP)
+                    runWithModalProgressBlocking(project, "Cleaning up after FTP upload...") {
+                        if (useFTP) {
+                            fileSystemWidget(project)?.blindExecute(TIMEOUT, FTP_SERVER_CLEANUP)
+                        }
+                    }
+
+                    runWithModalProgressBlocking(project, "Updating file system view...") {
+                        fileSystemWidget(project)?.refresh()
                     }
                 }
-
-                runWithModalProgressBlocking(project, "Updating file system view...") {
-                    fileSystemWidget(project)?.refresh()
-                }
             }
-            return true
+            // If we get here, and the plugin isn't connected, the after upload configuration logic shouldn't execute
+            return fileSystemWidget(project)?.state == State.CONNECTED
         }
     }
 }

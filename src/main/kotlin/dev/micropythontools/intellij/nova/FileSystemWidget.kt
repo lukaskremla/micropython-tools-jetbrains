@@ -18,6 +18,7 @@
 package dev.micropythontools.intellij.nova
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -30,10 +31,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -269,7 +272,16 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         if (module?.mpyFacet != null && isPythonSdkValid && isPyserialInstalled) {
             tree.emptyText.appendText("No board is connected")
             tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                performReplAction(project, false, "Connecting...") { doConnect(it) }
+                try {
+                    performReplAction(
+                        project,
+                        false,
+                        "Connecting...",
+                        "Connection attempt cancelled",
+                    ) { doConnect(it) }
+                } catch (e: CancellationException) {
+                    throw e
+                }
             }
         } else if (module?.mpyFacet == null) {
             tree.emptyText.appendText("MicroPython support is disabled")
@@ -278,9 +290,15 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             }
         } else if (!isPythonSdkValid) {
             tree.emptyText.appendText("No Python interpreter is configured")
-            /*tree.emptyText.appendLine("Fix...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                // action to fix the interpreter (move the user to python interpreter settings)
-            }*/
+            tree.emptyText.appendLine("Configure...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.modules.java")) ||
+                    PluginManager.isPluginInstalled(PluginId.getId("com.intellij.java"))
+                ) {
+                    ProjectSettingsService.getInstance(module.project).openModuleLibrarySettings(module)
+                } else {
+                    ShowSettingsUtil.getInstance().showSettingsDialog(module.project, "ProjectStructure")
+                }
+            }
         } else if (!isPyserialInstalled) {
             tree.emptyText.appendText("Missing required Python packages")
             tree.emptyText.appendLine("Install...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
@@ -365,8 +383,8 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             fileToUploadListing.add("""("$path", $size, "$hash")""")
         }
 
-        println(excludedPaths)
-        println(shouldExcludePaths)
+        //println(excludedPaths)
+        //println(shouldExcludePaths)
 
         val formattedScript = MPY_SYNCHRONIZE_AND_CHECK_MATCHES.format(
             if (shouldSynchronize) "True" else "False",
@@ -374,7 +392,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             if (excludedPaths.isNotEmpty() && shouldExcludePaths) excludedPaths.joinToString(",\n        ") { "\"$it\"" } else ""
         )
 
-        println(formattedScript)
+        //println(formattedScript)
 
         val scriptResponse = blindExecute(30000L, formattedScript).extractSingleResponse().trim()
 
@@ -424,7 +442,11 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
     }
 
-    suspend fun refresh() {
+    suspend fun refresh() = refresh(isInitialRefresh = false)
+
+    suspend fun initialRefresh() = refresh(isInitialRefresh = true)
+
+    private suspend fun refresh(isInitialRefresh: Boolean) {
         comm.checkConnected()
         val newModel = newTreeModel()
         val dirList: String
@@ -432,7 +454,18 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             dirList = blindExecute(LONG_TIMEOUT, MPY_FS_SCAN).extractSingleResponse()
         } catch (e: CancellationException) {
             disconnect()
-            throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
+            // If this is the initial refresh the cancellation exception should be passed on as is, the user should
+            // only be informed about the connection being cancelled. However, if this is not the initial refresh, the
+            // cancellation exception should instead raise a more severe exception to be shown to the user as an error.
+            // If the user cancels a non-initial refresh then, even if the user voluntarily chose to do so,
+            // it puts the plugin into a situation where the file system listing can go out of sync with the actual
+            // file system after a plugin-initiated change took place on the board. This means the plugin should
+            // disconnect from the board and show an error message to the user.
+            if (isInitialRefresh) {
+                throw e
+            } else {
+                throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
+            }
         } catch (e: Throwable) {
             disconnect()
             throw IOException("Micropython filesystem scan failed, ${e.localizedMessage}", e)

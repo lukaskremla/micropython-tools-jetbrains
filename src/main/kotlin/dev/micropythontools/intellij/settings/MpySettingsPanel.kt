@@ -29,6 +29,9 @@ import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.asSafely
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.statistics.version
 import dev.micropythontools.intellij.nova.ConnectionParameters
 import java.awt.BorderLayout
 import javax.swing.JPanel
@@ -85,10 +88,14 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
                             )
                             .validationInfo { comboBox ->
                                 val portName = comboBox.selectedItem.asSafely<String>()
-                                
+
+                                val sdk = PythonSdkUtil.findPythonSdk(module)
+
                                 val isPyserialInstalled = module.mpyFacet?.isPyserialInstalled() ?: false
 
-                                if (!isPyserialInstalled) {
+                                if (sdk == null || sdk.version.isOlderThan(LanguageLevel.PYTHON310)) {
+                                    ValidationInfo("MicroPython Tools plugin requires a valid Python 3.10+ SDK")
+                                } else if (!isPyserialInstalled) {
                                     ValidationInfo("Required Python packages are missing. Check the tool window for more info")
                                 } else if (portName.isNullOrBlank()) {
                                     ValidationInfo("No port name provided")

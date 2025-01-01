@@ -402,6 +402,7 @@ except OSError as e:
             state = State.DISCONNECTING
             mpyClient?.closeBlocking()
             mpyClient = null
+            state = State.DISCONNECTED
         }
     }
 
