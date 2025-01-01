@@ -1,6 +1,13 @@
 The Changelog
 =============
 
+0.1.4 - 1-1-2025
+------------------
+* Fixed several unhandled exceptions related to connection state transitions
+* Fixed several cases where connection related actions wouldn't work as intended
+
+There should no longer be any odd errors when cancelling any of the plugin's dialogs. The displayed information/error messages when cancelling a dialog should now be more accurate and the board should be properly refreshed() after each action if required.
+
 0.1.3 - 31-12-2024
 ------------------
 * Fixed incorrect python SDK retrieval
