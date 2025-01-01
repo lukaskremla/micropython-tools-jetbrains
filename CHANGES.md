@@ -1,6 +1,10 @@
 The Changelog
 =============
 
+0.1.3 - 31-12-2024
+------------------
+* Fixed incorrect python SDK retrieval
+
 0.1.2 - 31-12-2024
 ------------------
 * Improved the way credentials are stored by the plugin
