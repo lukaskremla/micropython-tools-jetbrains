@@ -41,6 +41,7 @@ import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.statistics.version
+import java.io.File
 import javax.swing.JComponent
 
 /**
@@ -54,8 +55,11 @@ class MpyFacet(
     companion object {
         private const val PLUGIN_ID = "micropython-tools-jetbrains"
 
-        val scriptsPath: String
-            get() = "${pluginDescriptor.pluginPath}/scripts"
+        val pythonScriptsPath: String
+            get() = "${pluginDescriptor.pluginPath}/scripts/Python"
+
+        val microPythonScriptsPath: String
+            get() = "${pluginDescriptor.pluginPath}/scripts/MicroPythonOptimized"
 
         val stubsPath: String
             get() = "${pluginDescriptor.pluginPath}/stubs"
@@ -70,6 +74,8 @@ class MpyFacet(
     }
 
     override fun updateLibrary() {
+        removeLibrary()
+
         val settings = MpySettingsService.getInstance(module.project)
 
         val activeStubsPackage = settings.state.activeStubsPackage
@@ -85,6 +91,11 @@ class MpyFacet(
 
     override fun removeLibrary() {
         FacetLibraryConfigurator.detachPythonLibrary(module, "MicroPython Tools")
+    }
+
+    fun retrieveMpyScriptAsString(scriptFileName: String): String {
+        val scriptPath = "$microPythonScriptsPath/$scriptFileName"
+        return File(scriptPath).readText(Charsets.UTF_8)
     }
 
     fun checkValid(): ValidationResult {
@@ -133,16 +144,16 @@ class MpyFacet(
         return ValidationResult.OK
     }
 
-    val pythonPath: String?
+    val pythonSdkPath: String?
         get() = PythonSdkUtil.findPythonSdk(module)?.homePath
 
     fun listSerialPorts(project: Project): List<String> {
-        if (pythonPath == null) {
+        if (pythonSdkPath == null) {
             return emptyList()
         }
 
         val timeout = 1_000
-        val command = mutableListOf(pythonPath, "$scriptsPath/scanSerialPorts.py")
+        val command = mutableListOf(pythonSdkPath, "$pythonScriptsPath/scan_serial_ports.py")
         var result = listOf<String>()
 
         runWithModalProgressBlocking(project, "Listing serial ports...") {
@@ -163,7 +174,7 @@ class MpyFacet(
     }
 
     fun isPyserialInstalled(): Boolean {
-        if (pythonPath == null) {
+        if (pythonSdkPath == null) {
             return false
         }
 
@@ -171,7 +182,7 @@ class MpyFacet(
         // A very improvised way of checking if pyserial is installed
         // An alternative to the deprecated PyPackageManager
         ApplicationManager.getApplication().executeOnPooledThread {
-            val command = mutableListOf(pythonPath, "$scriptsPath/checkPyserial.py")
+            val command = mutableListOf(pythonSdkPath, "$pythonScriptsPath/check_pyserial.py")
             val process = CapturingProcessHandler(GeneralCommandLine(command))
             val output = process.runProcess(5000)
             result = output.stdout.trim() == "OK"
