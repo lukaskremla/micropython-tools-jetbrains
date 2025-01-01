@@ -71,154 +71,8 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
 /**
- * @authors elmot, Lukas Kremla (synchronization and initialization script)
+ * @authors elmot, Lukas Kremla
  */
-
-private const val MPY_INITIALIZATION_SCRIP = """
-    
-import machine, os
-
-datetime = %s
-
-try:
-    rtc = machine.RTC()
-    rtc.datetime(datetime)
-except Exception as e:
-    pass
-
-"""
-
-private const val MPY_FS_SCAN = """
-
-import os
-class ___FSScan(object):
-
-    def fld(self, name):
-        for r in os.ilistdir(name):
-            print(r[1],r[3] if len(r) > 3 else -1,name + r[0],sep='&')
-            if r[1] & 0x4000:
-                self.fld(name + r[0]+ "/")
-
-___FSScan().fld("/")
-del ___FSScan
-try:
-    import gc
-    gc.collect()
-except Exception:
-        pass
-  
-"""
-
-private const val MPY_SYNCHRONIZE_AND_CHECK_MATCHES = """
-    
-try:
-    import os
-
-    try:
-        import binascii
-
-        imported_successfully = True
-    except ImportError:
-        imported_successfully = False
-
-    should_synchronize = %s
-
-    files_to_upload = [
-        %s
-    ]
-
-    paths_to_exclude = [
-        %s
-    ]
-
-    local_files = set()
-    local_directories = set()
-
-    def save_all_items_on_path(dir_path) -> None:
-        for entry in os.ilistdir(dir_path):
-            name, kind = entry[0], entry[1]
-
-            file_path = f"{dir_path}/{name}" if dir_path != "/" else f"/{name}"
-
-            if any(file_path == excluded_path or file_path.startswith(excluded_path + '/') for excluded_path in paths_to_exclude):
-                continue
-
-            if kind == 0x8000:  # file
-                local_files.add(file_path)
-            elif kind == 0x4000:  # dir
-                local_directories.add(file_path)
-                save_all_items_on_path(file_path)
-
-    if should_synchronize:
-        save_all_items_on_path("/")
-
-    try:
-        chunk_size = 1024
-        buffer = bytearray(chunk_size)
-        already_uploaded_paths = []
-
-        if not imported_successfully and not should_synchronize:
-            raise Exception
-
-        for remote_file_tuple in files_to_upload:
-            path, remote_size, remote_hash = remote_file_tuple
-
-            if not path.startswith("/"):
-                path = "/" + path
-
-            try:
-                local_size = os.stat(path)[6]
-
-                if should_synchronize:
-                    local_files.remove(path)
-            except OSError:
-                continue
-
-            if not imported_successfully or remote_size != local_size:
-                continue
-
-            crc = 0
-            with open(path, 'rb') as f:
-                while True:
-                    n = f.readinto(buffer)
-                    if n == 0:
-                        break
-
-                    if n < chunk_size:
-                        crc = binascii.crc32(buffer[:n], crc)
-                    else:
-                        crc = binascii.crc32(buffer, crc)
-
-                calculated_hash = "%%08x" %% (crc & 0xffffffff)
-
-                if calculated_hash == remote_hash:
-                    already_uploaded_paths.append(path)
-
-        if should_synchronize:
-            for file in local_files:
-                os.remove(file)
-
-        if should_synchronize:
-            for directory in local_directories:
-                try:
-                    os.rmdir(directory)
-                except OSError:
-                    pass
-
-        if not already_uploaded_paths:
-            raise Exception
-
-        output = "&".join(already_uploaded_paths)
-        print(output)
-
-    except Exception:
-        print("NO MATCHES")
-
-except Exception as e:
-    print(f"ERROR: {e}")
-
-"""
-
 data class ConnectionParameters(
     var usingUart: Boolean = true,
     var portName: String,
@@ -255,6 +109,8 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
     private val comm: MpyComm = MpyComm().also { Disposer.register(newDisposable, it) }
 
+    private val module = project.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+
     val state: State
         get() = comm.state
 
@@ -263,9 +119,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     fun updateEmptyText() {
         tree.emptyText.clear()
 
-        val module = project.let { ModuleManager.getInstance(it).modules.firstOrNull() }
-
-        val isPythonSdkValid = module?.mpyFacet?.pythonPath != null
+        val isPythonSdkValid = module?.mpyFacet?.pythonSdkPath != null
 
         val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() ?: true // Facet might not be loaded yet
 
@@ -383,16 +237,16 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             fileToUploadListing.add("""("$path", $size, "$hash")""")
         }
 
-        //println(excludedPaths)
-        //println(shouldExcludePaths)
+        val scriptFileName = "synchronize_and_skip.py"
 
-        val formattedScript = MPY_SYNCHRONIZE_AND_CHECK_MATCHES.format(
+        val synchronizeAndSkipScript = module?.mpyFacet?.retrieveMpyScriptAsString(scriptFileName)
+            ?: throw Exception("Failed to find: $scriptFileName")
+
+        val formattedScript = synchronizeAndSkipScript.format(
             if (shouldSynchronize) "True" else "False",
             fileToUploadListing.joinToString(",\n        "),
             if (excludedPaths.isNotEmpty() && shouldExcludePaths) excludedPaths.joinToString(",\n        ") { "\"$it\"" } else ""
         )
-
-        //println(formattedScript)
 
         val scriptResponse = blindExecute(30000L, formattedScript).extractSingleResponse().trim()
 
@@ -433,7 +287,12 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         val minute = calendar.get(Calendar.MINUTE)
         val second = calendar.get(Calendar.SECOND)
 
-        val formattedScript = MPY_INITIALIZATION_SCRIP.format(
+        val scriptFileName = "initialize_device.py"
+
+        val initializeDeviceScript = module?.mpyFacet?.retrieveMpyScriptAsString(scriptFileName)
+            ?: throw Exception("Failed to find: $scriptFileName")
+
+        val formattedScript = initializeDeviceScript.format(
             "($year, $month, $day, $hour, $minute, $second, 0, 0)"
         )
 
@@ -450,8 +309,14 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         comm.checkConnected()
         val newModel = newTreeModel()
         val dirList: String
+
+        val scriptFileName = "scan_file_system.py"
+
+        val fileSystemScanScript = module?.mpyFacet?.retrieveMpyScriptAsString(scriptFileName)
+            ?: throw Exception("Failed to find: $scriptFileName")
+
         try {
-            dirList = blindExecute(LONG_TIMEOUT, MPY_FS_SCAN).extractSingleResponse()
+            dirList = blindExecute(LONG_TIMEOUT, fileSystemScanScript).extractSingleResponse()
         } catch (e: CancellationException) {
             disconnect()
             // If this is the initial refresh the cancellation exception should be passed on as is, the user should
