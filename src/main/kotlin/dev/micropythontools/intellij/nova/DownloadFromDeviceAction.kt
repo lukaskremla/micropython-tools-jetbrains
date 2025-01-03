@@ -1,5 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
+ * Copyright 2024-2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +28,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
-import com.intellij.platform.util.progress.reportSequentialProgress
+import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -54,7 +55,10 @@ class DownloadFromDeviceAction : ReplAction("Download File or Folder...", true, 
 
     override val actionDescription: @NlsContexts.DialogMessage String = "Downloading..."
 
-    override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
+        reporter.text("Collecting files to download...")
+        reporter.fraction(null)
+
         val selectedFiles = fileSystemWidget.selectedFiles()
         if (selectedFiles.isEmpty()) return
         var destination: VirtualFile? = null
@@ -81,6 +85,7 @@ class DownloadFromDeviceAction : ReplAction("Download File or Folder...", true, 
         if (destination == null) return
         val parentNameToFile = selectedFiles.map { node -> "" to node }.toMutableList()
         var listIndex = 0
+
         while (listIndex < parentNameToFile.size) {
             val (nodeParentName, node) = parentNameToFile[listIndex]
             node.children().asSequence().forEach { child ->
@@ -91,6 +96,7 @@ class DownloadFromDeviceAction : ReplAction("Download File or Folder...", true, 
                     nodeParentName == "/" -> node.name
                     else -> "$nodeParentName/${node.name}"
                 }
+
                 parentNameToFile.add(parentName to child)
             }
             if (node.isRoot) {
@@ -99,13 +105,18 @@ class DownloadFromDeviceAction : ReplAction("Download File or Folder...", true, 
                 listIndex++
             }
         }
-        reportSequentialProgress(parentNameToFile.size) { reporter ->
-            parentNameToFile.forEach { (parentName, node) ->
-                val name = if (parentName.isEmpty()) node.name else "$parentName/${node.name}"
-                reporter.itemStep(name) {
-                    writeDown(node, fileSystemWidget, name, destination)
-                }
-            }
+
+        val singleFileProgress: Double = (1 / parentNameToFile.size.toDouble())
+        var downloadedFiles = 1
+
+        parentNameToFile.forEach { (parentName, node) ->
+            val name = if (parentName.isEmpty()) node.name else "$parentName/${node.name}"
+            writeDown(node, fileSystemWidget, name, destination)
+            reporter.text("Downloading files: $downloadedFiles of ${parentNameToFile.size} files")
+            reporter.fraction(downloadedFiles.toDouble() * singleFileProgress)
+            reporter.details(name)
+
+            downloadedFiles++
         }
     }
 
