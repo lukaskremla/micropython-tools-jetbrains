@@ -32,7 +32,9 @@ class MpyRequirementsInspection : LocalInspectionTool() {
         val facet = module.mpyFacet ?: return null
         val result = facet.checkValid()
         if (result.isOk) return null
+
         val facetFix: FacetConfigurationQuickFix? = result.quickFix
+
         val fix = if (facetFix != null) object : LocalQuickFix {
             @Suppress("DialogTitleCapitalization")
             // The fixButtonText follows proper capitalization in all cases, the warning can be ignored
@@ -42,7 +44,9 @@ class MpyRequirementsInspection : LocalInspectionTool() {
                 facetFix.run(null)
             }
         } else null
+
         val fixes = if (fix != null) arrayOf(fix) else emptyArray()
+
         return arrayOf(
             manager.createProblemDescriptor(
                 file, result.errorMessage, true, fixes,

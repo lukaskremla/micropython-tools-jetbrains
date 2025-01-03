@@ -41,6 +41,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SimpleTextAttributes
@@ -60,6 +61,7 @@ import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
 import dev.micropythontools.intellij.settings.DEFAULT_WEBREPL_URL
 import dev.micropythontools.intellij.settings.MpyProjectConfigurable
+import dev.micropythontools.intellij.settings.MpySettingsService
 import dev.micropythontools.intellij.settings.mpyFacet
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
@@ -126,16 +128,16 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         if (module?.mpyFacet != null && isPythonSdkValid && isPyserialInstalled) {
             tree.emptyText.appendText("No board is connected")
             tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                try {
-                    performReplAction(
-                        project,
-                        false,
-                        "Connecting...",
-                        "Connection attempt cancelled",
-                    ) { doConnect(it) }
-                } catch (e: CancellationException) {
-                    throw e
-                }
+                performReplAction(
+                    project,
+                    false,
+                    "Connecting...",
+                    false,
+                    "Connection attempt cancelled",
+                    { fileSystemWidget, reporter ->
+                        doConnect(fileSystemWidget, reporter)
+                    }
+                )
             }
         } else if (module?.mpyFacet == null) {
             tree.emptyText.appendText("MicroPython support is disabled")
@@ -301,11 +303,14 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
     }
 
-    suspend fun refresh() = refresh(isInitialRefresh = false)
+    suspend fun refresh(reporter: RawProgressReporter) = refresh(reporter, isInitialRefresh = false)
 
-    suspend fun initialRefresh() = refresh(isInitialRefresh = true)
+    suspend fun initialRefresh(reporter: RawProgressReporter) = refresh(reporter, isInitialRefresh = true)
 
-    private suspend fun refresh(isInitialRefresh: Boolean) {
+    private suspend fun refresh(reporter: RawProgressReporter, isInitialRefresh: Boolean) {
+        reporter.text("Updating file system view...")
+        reporter.fraction(null)
+
         comm.checkConnected()
         val newModel = newTreeModel()
         val dirList: String
@@ -318,7 +323,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         try {
             dirList = blindExecute(LONG_TIMEOUT, fileSystemScanScript).extractSingleResponse()
         } catch (e: CancellationException) {
-            disconnect()
+            disconnect(reporter)
             // If this is the initial refresh the cancellation exception should be passed on as is, the user should
             // only be informed about the connection being cancelled. However, if this is not the initial refresh, the
             // cancellation exception should instead raise a more severe exception to be shown to the user as an error.
@@ -332,7 +337,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                 throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
             }
         } catch (e: Throwable) {
-            disconnect()
+            disconnect(reporter)
             throw IOException("Micropython filesystem scan failed, ${e.localizedMessage}", e)
         }
         dirList.lines().filter { it.isNotBlank() }.forEach { line ->
@@ -374,30 +379,36 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         }
     }
 
-    suspend fun deleteCurrent() {
+    suspend fun deleteCurrent(reporter: RawProgressReporter) {
         comm.checkConnected()
         val confirmedFileSystemNodes = withContext(Dispatchers.EDT) {
             val fileSystemNodes = tree.selectionPaths?.mapNotNull { it.lastPathComponent.asSafely<FileSystemNode>() }
                 ?.filter { it.fullName != "" && it.fullName != "/" } ?: emptyList()
             val title: String
+            val reporterText: String
             val message: String
             if (fileSystemNodes.isEmpty()) {
                 return@withContext emptyList()
             } else if (fileSystemNodes.size == 1) {
                 val fileName = fileSystemNodes[0].fullName
                 if (fileSystemNodes[0] is DirNode) {
+                    reporterText = "Deleting folder..."
                     title = "Delete folder $fileName"
                     message =
                         "Are you sure you want to delete the folder and its subtree?\n\rThis operation cannot be undone!"
                 } else {
+                    reporterText = "Deleting file..."
                     title = "Delete file $fileName"
                     message = "Are you sure you want to delete this file?\n\rThis operation cannot be undone!"
                 }
             } else {
-                title = "Delete multiple objects"
+                reporterText = "Deleting item(s)..."
+                title = "Delete item(s)?"
                 message =
                     "Are you sure you want to delete ${fileSystemNodes.size} items?\n\rThis operation cannot be undone!"
             }
+
+            reporter.text(reporterText)
 
             val sure = MessageDialogBuilder.yesNo(title, message).ask(project)
             if (sure) fileSystemNodes else emptyList()
@@ -414,18 +425,8 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                     }
                 }
                 .toCollection(commands)
-            try {
-                blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
-                    .extractResponse()
-            } catch (_: CancellationException) {
-                Notifications.Bus.notify(
-                    Notification(
-                        NOTIFICATION_GROUP,
-                        "Deletion cancelled",
-                        NotificationType.INFORMATION
-                    ), project
-                )
-            }
+
+            blindExecute(LONG_TIMEOUT, *commands.toTypedArray()).extractResponse()
         }
     }
 
@@ -433,7 +434,11 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         return tree.selectionPaths?.mapNotNull { it.lastPathComponent.asSafely<FileSystemNode>() } ?: emptyList()
     }
 
-    suspend fun disconnect() {
+    suspend fun disconnect(reporter: RawProgressReporter) {
+        val settings = MpySettingsService.getInstance(project)
+
+        reporter.text("Disconnecting from ${settings.state.portName}")
+        reporter.fraction(null)
         comm.disconnect()
     }
 

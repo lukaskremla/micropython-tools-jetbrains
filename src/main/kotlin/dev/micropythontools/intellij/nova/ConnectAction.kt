@@ -1,5 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
+ * Copyright 2024-2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +27,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.intellij.settings.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,15 +38,15 @@ import kotlinx.coroutines.withContext
 class ConnectAction(text: String = "Connect") : ReplAction(
     text,
     false,
-    true,
+    false,
     "Connection attempt cancelled"
 ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override val actionDescription: String = "Connect"
 
-    override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
-        doConnect(fileSystemWidget)
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
+        doConnect(fileSystemWidget, reporter)
     }
 
     override fun update(e: AnActionEvent) {
@@ -66,10 +68,13 @@ class ConnectAction(text: String = "Connect") : ReplAction(
     }
 }
 
-suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
+suspend fun doConnect(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
     if (fileSystemWidget.state == State.CONNECTED) return
 
     val settings = MpySettingsService.getInstance(fileSystemWidget.project)
+
+    reporter.text("Connecting to ${settings.state.portName}")
+    reporter.fraction(null)
 
     var msg: String? = null
     val connectionParameters: ConnectionParameters?
@@ -121,7 +126,7 @@ suspend fun doConnect(fileSystemWidget: FileSystemWidget) {
             try {
                 if (fileSystemWidget.state == State.CONNECTED) {
                     fileSystemWidget.initializeDevice()
-                    fileSystemWidget.initialRefresh()
+                    fileSystemWidget.initialRefresh(reporter)
                 }
             } finally {
                 ActivityTracker.getInstance().inc()

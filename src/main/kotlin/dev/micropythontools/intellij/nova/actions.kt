@@ -1,5 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
+ * Copyright 2024-2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@file:Suppress("UnstableApiUsage")
 
 package dev.micropythontools.intellij.nova
 
@@ -45,6 +48,8 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PathUtilRt.Platform
@@ -61,7 +66,7 @@ import java.nio.charset.StandardCharsets
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * @author elmot
+ * @author elmot, Lukas Kremla
  */
 fun fileSystemWidget(project: Project?): FileSystemWidget? {
     return ToolWindowManager.getInstance(project ?: return null)
@@ -75,31 +80,27 @@ abstract class ReplAction(
     text: String,
     private val connectionRequired: Boolean,
     private val requiresRefreshAfter: Boolean,
-    private val cancelledMessage: String = "",
+    private val cancelledMessage: String? = null,
 ) : DumbAwareAction(text) {
 
     abstract val actionDescription: @NlsContexts.DialogMessage String
 
     @Throws(IOException::class, TimeoutCancellationException::class, CancellationException::class)
-    abstract suspend fun performAction(fileSystemWidget: FileSystemWidget)
+    abstract suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter)
 
     final override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 
-        var wasCancelled = false
-
-        try {
-            performReplAction(project, connectionRequired, actionDescription, cancelledMessage, this::performAction)
-        } catch (e: CancellationException) {
-            wasCancelled = true
-            throw e
-        } finally {
-            if (requiresRefreshAfter && !wasCancelled) {
-                runWithModalProgressBlocking(project, "Updating file system view...") {
-                    fileSystemWidget(project)?.refresh()
-                }
+        performReplAction(
+            project,
+            connectionRequired,
+            actionDescription,
+            requiresRefreshAfter,
+            cancelledMessage,
+            { fileSystemWidget, reporter ->
+                performAction(fileSystemWidget, reporter)
             }
-        }
+        )
     }
 
     protected fun fileSystemWidget(e: AnActionEvent): FileSystemWidget? = fileSystemWidget(e.project)
@@ -116,14 +117,18 @@ fun <T> performReplAction(
     project: Project,
     connectionRequired: Boolean,
     @NlsContexts.DialogMessage description: String,
-    action: suspend (FileSystemWidget) -> T
+    requiresRefreshAfter: Boolean,
+    action: suspend (FileSystemWidget, RawProgressReporter) -> T,
+    cleanUpAction: (suspend (FileSystemWidget, RawProgressReporter) -> Unit)? = null
 ): T? {
     return performReplAction(
         project,
         connectionRequired,
         description,
+        requiresRefreshAfter,
         cancelledMessage = "$description cancelled",
-        action
+        action,
+        cleanUpAction
     )
 }
 
@@ -131,8 +136,10 @@ fun <T> performReplAction(
     project: Project,
     connectionRequired: Boolean,
     @NlsContexts.DialogMessage description: String,
-    cancelledMessage: String,
-    action: suspend (FileSystemWidget) -> T
+    requiresRefreshAfter: Boolean,
+    cancelledMessage: String? = null,
+    action: suspend (FileSystemWidget, RawProgressReporter) -> T,
+    cleanUpAction: (suspend (FileSystemWidget, RawProgressReporter) -> Unit)? = null
 ): T? {
     val fileSystemWidget = fileSystemWidget(project) ?: return null
     if (connectionRequired && fileSystemWidget.state != State.CONNECTED) {
@@ -141,32 +148,46 @@ fun <T> performReplAction(
         }
     }
     var result: T? = null
-    runWithModalProgressBlocking(project, "Exchanging data with the board...") {
-        var error: String? = null
-        var errorType = NotificationType.ERROR
-        try {
-            if (connectionRequired) {
-                doConnect(fileSystemWidget)
+    try {
+        runWithModalProgressBlocking(project, "Communicating with the board...") {
+            reportRawProgress { reporter ->
+                var error: String? = null
+                var errorType = NotificationType.ERROR
+                try {
+                    if (connectionRequired) {
+                        doConnect(fileSystemWidget, reporter)
+                    }
+                    result = action(fileSystemWidget, reporter)
+                } catch (e: TimeoutCancellationException) {
+                    error = "$description timed out"
+                    thisLogger().info(error, e)
+                } catch (e: CancellationException) {
+                    error = cancelledMessage ?: "$description cancelled"
+                    thisLogger().info(error, e)
+                    errorType = NotificationType.INFORMATION
+                } catch (e: IOException) {
+                    error = "$description I/O error - ${e.localizedMessage ?: e.message ?: "No message"}"
+                    thisLogger().info(error, e)
+                } catch (e: Exception) {
+                    error = e.localizedMessage ?: e.message
+                    error = if (error.isNullOrBlank()) "$description error - ${e::class.simpleName}"
+                    else "$description error - ${e::class.simpleName}: $error"
+                    thisLogger().error(error, e)
+                }
+                if (!error.isNullOrBlank()) {
+                    Notifications.Bus.notify(Notification(NOTIFICATION_GROUP, error, errorType), project)
+                }
             }
-            result = action(fileSystemWidget)
-        } catch (e: TimeoutCancellationException) {
-            error = "$description timed out"
-            thisLogger().info(error, e)
-        } catch (e: CancellationException) {
-            error = cancelledMessage
-            thisLogger().info(error, e)
-            errorType = NotificationType.INFORMATION
-        } catch (e: IOException) {
-            error = "$description I/O error - ${e.localizedMessage ?: e.message ?: "No message"}"
-            thisLogger().info(error, e)
-        } catch (e: Exception) {
-            error = e.localizedMessage ?: e.message
-            error = if (error.isNullOrBlank()) "$description error - ${e::class.simpleName}"
-            else "$description error - ${e::class.simpleName}: $error"
-            thisLogger().error(error, e)
         }
-        if (!error.isNullOrBlank()) {
-            Notifications.Bus.notify(Notification(NOTIFICATION_GROUP, error, errorType), project)
+    } finally {
+        runWithModalProgressBlocking(project, "Cleaning up after board operation...") {
+            reportRawProgress { reporter ->
+                cleanUpAction?.let { cleanUpAction(fileSystemWidget, reporter) }
+
+                if (requiresRefreshAfter) {
+                    fileSystemWidget(project)?.refresh(reporter)
+                }
+            }
         }
     }
     return result
@@ -179,7 +200,7 @@ class Refresh : ReplAction("Refresh", false, false) { //todo optimize
 
     override fun update(e: AnActionEvent) = enableIfConnected(e)
 
-    override suspend fun performAction(fileSystemWidget: FileSystemWidget) = fileSystemWidget.refresh()
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) = fileSystemWidget.refresh(reporter)
 }
 
 class Disconnect(text: String = "Disconnect") : ReplAction(text, false, false), Toggleable {
@@ -187,7 +208,7 @@ class Disconnect(text: String = "Disconnect") : ReplAction(text, false, false), 
 
     override val actionDescription: String = "Disconnect"
 
-    override suspend fun performAction(fileSystemWidget: FileSystemWidget) = fileSystemWidget.disconnect()
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) = fileSystemWidget.disconnect(reporter)
 
     override fun update(e: AnActionEvent) {
         if (fileSystemWidget(e)?.state != State.CONNECTED) {
@@ -203,8 +224,8 @@ class DeleteFiles : ReplAction("Delete Item(s)", true, true) {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
-        fileSystemWidget.deleteCurrent()
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
+        fileSystemWidget.deleteCurrent(reporter)
     }
 
     override fun update(e: AnActionEvent) {
@@ -234,9 +255,9 @@ class InstantRun : DumbAwareAction() {
         val project = e.project ?: return
         FileDocumentManager.getInstance().saveAllDocuments()
         val code = e.getData(CommonDataKeys.VIRTUAL_FILE)?.readText() ?: return
-        performReplAction(project, true, "Run code") {
-            it.instantRun(code, false)
-        }
+        performReplAction(project, true, "Run code", false, { fileSystemWidget, _ ->
+            fileSystemWidget.instantRun(code, false)
+        })
     }
 }
 
@@ -258,7 +279,7 @@ class InstantFragmentRun : ReplAction("Instant Run", true, false) {
     private fun editor(project: Project?): Editor? =
         project?.let { FileEditorManager.getInstance(it).selectedTextEditor }
 
-    override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
         val code = withContext(Dispatchers.EDT) {
             val editor = editor(fileSystemWidget.project) ?: return@withContext null
             var text = editor.selectionModel.getSelectedText(true)
@@ -291,7 +312,7 @@ class OpenMpyFile : ReplAction("Open file", true, false) {
                 fileSystemWidget.selectedFiles().any { it is FileNode }
     }
 
-    override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
 
         val selectedFiles = withContext(Dispatchers.EDT) {
             fileSystemWidget.selectedFiles().mapNotNull { it as? FileNode }
@@ -381,7 +402,7 @@ class InterruptAction : ReplAction("Interrupt", true, false) {
     override fun update(e: AnActionEvent) = enableIfConnected(e)
     override val actionDescription: @NlsContexts.DialogMessage String = "Interrupt..."
 
-    override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
         fileSystemWidget.interrupt()
     }
 }
@@ -391,7 +412,7 @@ class SoftResetAction : ReplAction("Reset", true, false) {
     override fun update(e: AnActionEvent) = enableIfConnected(e)
     override val actionDescription: @NlsContexts.DialogMessage String = "Reset..."
 
-    override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
         fileSystemWidget.reset()
         fileSystemWidget.clearTerminalIfNeeded()
     }
@@ -412,7 +433,7 @@ class CreateDeviceFolderAction : ReplAction("New Folder", true, false) {
 
     override val actionDescription: @NlsContexts.DialogMessage String = "Creating new folder..."
 
-    override suspend fun performAction(fileSystemWidget: FileSystemWidget) {
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
 
         val parent = selectedFolder(fileSystemWidget) ?: return
 
@@ -436,7 +457,7 @@ class CreateDeviceFolderAction : ReplAction("New Folder", true, false) {
         if (!newName.isNullOrBlank()) {
             fileSystemWidget.blindExecute(TIMEOUT, "import os; os.mkdir('${parent.fullName}/$newName')")
                 .extractSingleResponse()
-            fileSystemWidget.refresh()
+            fileSystemWidget.refresh(reporter)
         }
     }
 }

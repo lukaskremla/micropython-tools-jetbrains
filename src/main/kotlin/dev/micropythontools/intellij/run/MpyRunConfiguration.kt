@@ -1,6 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
- * Copyright 2024 Lukas Kremla
+ * Copyright 2024-2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-@file:Suppress("UnstableApiUsage")
 
 package dev.micropythontools.intellij.run
 
@@ -47,7 +45,6 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.reportProgress
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
@@ -55,6 +52,7 @@ import dev.micropythontools.intellij.nova.*
 import dev.micropythontools.intellij.settings.MpyProjectConfigurable
 import dev.micropythontools.intellij.settings.MpySettingsService
 import dev.micropythontools.intellij.settings.mpyFacet
+import kotlinx.coroutines.withTimeout
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.jdom.Element
@@ -394,9 +392,17 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
             val projectDir = project.guessProjectDir()
 
             var ftpUploadClient: FTPUploadClient? = null
+            var uploadedSuccessfully = false
 
-            try {
-                performReplAction(project, true, "Upload") { fileSystemWidget ->
+            performReplAction(
+                project = project,
+                connectionRequired = true,
+                description = "Upload",
+                requiresRefreshAfter = true,
+                action = { fileSystemWidget, reporter ->
+                    reporter.text("Collecting files to upload...")
+                    reporter.fraction(null)
+
                     var i = 0
                     while (i < filesToUpload.size) {
                         val file = filesToUpload[i]
@@ -455,91 +461,120 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                         "Detecting already uploaded files..."
                     }
 
-                    reportProgress(10000) { reporter ->
-                        reporter.sizedStep(0, scriptProgressText) {
-                            val alreadyUploadedFiles = fileSystemWidget.synchronizeAndGetAlreadyUploadedFiles(
-                                fileToTargetPath,
-                                excludedPaths,
-                                shouldSynchronize,
-                                shouldExcludePaths
-                            )
-                            fileToTargetPath.keys.removeAll(alreadyUploadedFiles.toSet())
-                        }
+                    reporter.text(scriptProgressText)
+                    reporter.fraction(null)
 
-                        if (useFTP && fileToTargetPath.isNotEmpty()) {
-                            if (ssid.isEmpty()) {
+                    val alreadyUploadedFiles = fileSystemWidget.synchronizeAndGetAlreadyUploadedFiles(
+                        fileToTargetPath,
+                        excludedPaths,
+                        shouldSynchronize,
+                        shouldExcludePaths
+                    )
+                    fileToTargetPath.keys.removeAll(alreadyUploadedFiles.toSet())
+
+                    if (useFTP && fileToTargetPath.isNotEmpty()) {
+                        if (ssid.isEmpty()) {
+                            Notifications.Bus.notify(
+                                Notification(
+                                    NOTIFICATION_GROUP,
+                                    "Cannot upload over FTP, no SSID was provided in settings! Falling back to normal communication.",
+                                    NotificationType.ERROR
+                                ), project
+                            )
+                        } else {
+                            reporter.text("Establishing an FTP server connection...")
+                            reporter.fraction(null)
+
+                            val module = project.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+
+                            val scriptFileName = "ftp.py"
+
+                            val ftpScript = module?.mpyFacet?.retrieveMpyScriptAsString(scriptFileName)
+                                ?: throw Exception("Failed to find: $scriptFileName")
+
+                            val formattedScript = ftpScript.format(
+                                """"$ssid"""",
+                                """"$password"""",
+                                10 // Wi-Fi connection timeout
+                            )
+
+                            val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, formattedScript)
+                                .extractSingleResponse().trim()
+
+                            if (scriptResponse.contains("ERROR") || !scriptResponse.startsWith("IP: ")) {
                                 Notifications.Bus.notify(
                                     Notification(
                                         NOTIFICATION_GROUP,
-                                        "Cannot upload over FTP, no SSID was provided in settings! Falling back to normal communication.",
+                                        "Ran into an error establishing an FTP connection, falling back to normal communication: $scriptResponse",
                                         NotificationType.ERROR
                                     ), project
                                 )
                             } else {
-                                reporter.sizedStep(0, "Establishing an FTP server connection...") {
-                                    val module = project.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+                                try {
+                                    val ip = scriptResponse.removePrefix("IP: ")
 
-                                    val scriptFileName = "ftp.py"
-
-                                    val ftpScript = module?.mpyFacet?.retrieveMpyScriptAsString(scriptFileName)
-                                        ?: throw Exception("Failed to find: $scriptFileName")
-
-                                    val formattedScript = ftpScript.format(
-                                        """"$ssid"""",
-                                        """"$password"""",
-                                        10 // Wi-Fi connection timeout
+                                    ftpUploadClient = FTPUploadClient()
+                                    ftpUploadClient?.connect(ip, "", "") // No credentials are used
+                                } catch (e: Exception) {
+                                    Notifications.Bus.notify(
+                                        Notification(
+                                            NOTIFICATION_GROUP,
+                                            "Connecting to FTP server failed: $e",
+                                            NotificationType.ERROR
+                                        ), project
                                     )
-
-                                    val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, formattedScript)
-                                        .extractSingleResponse().trim()
-
-                                    if (scriptResponse.contains("ERROR") || !scriptResponse.startsWith("IP: ")) {
-                                        Notifications.Bus.notify(
-                                            Notification(
-                                                NOTIFICATION_GROUP,
-                                                "Ran into an error establishing an FTP connection, falling back to normal communication: $scriptResponse",
-                                                NotificationType.ERROR
-                                            ), project
-                                        )
-                                    } else {
-                                        try {
-                                            val ip = scriptResponse.removePrefix("IP: ")
-
-                                            ftpUploadClient = FTPUploadClient()
-                                            ftpUploadClient?.connect(ip, "", "") // No credentials are used
-                                        } catch (e: Exception) {
-                                            Notifications.Bus.notify(
-                                                Notification(
-                                                    NOTIFICATION_GROUP,
-                                                    "Connecting to FTP server failed: $e",
-                                                    NotificationType.ERROR
-                                                ), project
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        val totalBytes = fileToTargetPath.keys.sumOf { it.length }
-
-                        fileToTargetPath.forEach { (file, path) ->
-                            val fileProgress = ((file.length.toDouble() / totalBytes) * 10000).toInt()
-                            reporter.sizedStep(fileProgress, path) {
-                                if (ftpUploadClient != null) {
-                                    ftpUploadClient?.uploadFile(file.contentsToByteArray(), path)
-                                } else {
-                                    fileSystemWidget.upload(path, file.contentsToByteArray())
                                 }
                             }
                         }
                     }
-                }
-            } finally {
-                if (fileSystemWidget(project)?.state == State.CONNECTED) {
-                    ftpUploadClient?.disconnect()
 
-                    runWithModalProgressBlocking(project, "Cleaning up after FTP upload...") {
+                    val totalBytes = fileToTargetPath.keys.sumOf { it.length }
+
+                    val startTime = System.currentTimeMillis() / 1000
+                    var uploadProgress = 0.0
+                    var uploadedKB = 0
+                    var uploadedFiles = 1
+
+                    fileToTargetPath.forEach { (file, path) ->
+                        uploadProgress += (file.length.toDouble() / totalBytes.toDouble())
+
+                        reporter.text("Uploading files: $uploadedFiles of ${fileToTargetPath.size} files | $uploadedKB KB of ${totalBytes / 1000} KB")
+                        reporter.fraction(uploadProgress)
+                        reporter.details(path)
+
+                        if (ftpUploadClient != null) {
+                            withTimeout(10_000) {
+                                ftpUploadClient?.uploadFile(file.contentsToByteArray(), path)
+                            }
+                        } else {
+                            fileSystemWidget.upload(path, file.contentsToByteArray())
+                        }
+
+                        uploadedKB += (file.length / 1000).toInt()
+                        uploadedFiles++
+
+                        checkCanceled()
+                    }
+
+                    val endTime = System.currentTimeMillis() / 1000
+                    println("Upload took:")
+                    println(endTime - startTime)
+
+
+                    // reporter text and fraction parameters are always set when the reporter is used elsewhere,
+                    // but details aren't thus they should be cleaned up
+                    reporter.details(null)
+
+                    uploadedSuccessfully = true
+                },
+
+                cleanUpAction = { fileSystemWidget, reporter ->
+                    if (fileSystemWidget.state == State.CONNECTED) {
+                        ftpUploadClient?.disconnect()
+
+                        reporter.text("Cleaning up after FTP upload...")
+                        reporter.fraction(null)
+
                         if (useFTP) {
                             val module = project.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
@@ -551,14 +586,9 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                             fileSystemWidget(project)?.blindExecute(TIMEOUT, ftpCleanupScript)
                         }
                     }
-
-                    runWithModalProgressBlocking(project, "Updating file system view...") {
-                        fileSystemWidget(project)?.refresh()
-                    }
                 }
-            }
-            // If we get here, and the plugin isn't connected, the after upload configuration logic shouldn't execute
-            return fileSystemWidget(project)?.state == State.CONNECTED
+            )
+            return uploadedSuccessfully
         }
     }
 }
