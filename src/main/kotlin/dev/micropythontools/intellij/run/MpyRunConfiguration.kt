@@ -52,11 +52,13 @@ import dev.micropythontools.intellij.nova.*
 import dev.micropythontools.intellij.settings.MpyProjectConfigurable
 import dev.micropythontools.intellij.settings.MpySettingsService
 import dev.micropythontools.intellij.settings.mpyFacet
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.jdom.Element
 import java.io.ByteArrayInputStream
+import java.io.IOException
 
 
 /**
@@ -530,7 +532,6 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
 
                     val totalBytes = fileToTargetPath.keys.sumOf { it.length }
 
-                    val startTime = System.currentTimeMillis() / 1000
                     var uploadProgress = 0.0
                     var uploadedKB = 0
                     var uploadedFiles = 1
@@ -543,8 +544,12 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                         reporter.details(path)
 
                         if (ftpUploadClient != null) {
-                            withTimeout(10_000) {
-                                ftpUploadClient?.uploadFile(file.contentsToByteArray(), path)
+                            try {
+                                withTimeout(10_000) {
+                                    ftpUploadClient?.uploadFile(file.contentsToByteArray(), path)
+                                }
+                            } catch (e: TimeoutCancellationException) {
+                                throw IOException("Timed out while uploading a file with FTP")
                             }
                         } else {
                             fileSystemWidget.upload(path, file.contentsToByteArray())
@@ -555,11 +560,6 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
 
                         checkCanceled()
                     }
-
-                    val endTime = System.currentTimeMillis() / 1000
-                    println("Upload took:")
-                    println(endTime - startTime)
-
 
                     // reporter text and fraction parameters are always set when the reporter is used elsewhere,
                     // but details aren't thus they should be cleaned up
