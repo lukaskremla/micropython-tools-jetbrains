@@ -121,7 +121,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     fun updateEmptyText() {
         tree.emptyText.clear()
 
-        val isPythonSdkValid = module?.mpyFacet?.pythonSdkPath != null
+        val isPythonSdkValid = module?.mpyFacet?.findValidPyhonSdk() != null
 
         val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() ?: true // Facet might not be loaded yet
 
