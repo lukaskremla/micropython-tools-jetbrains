@@ -497,7 +497,7 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                             val formattedScript = ftpScript.format(
                                 """"$ssid"""",
                                 """"$password"""",
-                                10 // Wi-Fi connection timeout
+                                20 // Wi-Fi connection timeout
                             )
 
                             val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, formattedScript)

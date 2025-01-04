@@ -32,6 +32,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.facet.FacetLibraryConfigurator
@@ -98,10 +99,22 @@ class MpyFacet(
         return File(scriptPath).readText(Charsets.UTF_8)
     }
 
-    fun checkValid(): ValidationResult {
+    fun findValidPyhonSdk(): Sdk? {
         val sdk = PythonSdkUtil.findPythonSdk(module)
+        val interpreter = sdk?.homeDirectory
 
-        if (sdk == null || sdk.version.isOlderThan(LanguageLevel.PYTHON310)) {
+        return when {
+            (sdk == null ||
+                    interpreter == null ||
+                    !interpreter.exists() ||
+                    sdk.version.isOlderThan(LanguageLevel.PYTHON310)) -> null
+
+            else -> sdk
+        }
+    }
+
+    fun checkValid(): ValidationResult {
+        if (findValidPyhonSdk() == null) {
             return if (
                 PluginManager.isPluginInstalled(PluginId.getId("com.intellij.modules.java")) ||
                 PluginManager.isPluginInstalled(PluginId.getId("com.intellij.java"))
@@ -148,7 +161,7 @@ class MpyFacet(
         get() = PythonSdkUtil.findPythonSdk(module)?.homePath
 
     fun listSerialPorts(project: Project): List<String> {
-        if (pythonSdkPath == null) {
+        if (findValidPyhonSdk() == null) {
             return emptyList()
         }
 
@@ -174,7 +187,7 @@ class MpyFacet(
     }
 
     fun isPyserialInstalled(): Boolean {
-        if (pythonSdkPath == null) {
+        if (findValidPyhonSdk() == null) {
             return false
         }
 
