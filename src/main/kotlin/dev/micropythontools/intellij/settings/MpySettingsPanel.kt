@@ -166,7 +166,7 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
         return connectionPanel.isModified()
     }
 
-    fun apply(facet: MpyFacet) {
+    fun apply() {
         connectionPanel.apply()
         val settings = MpySettingsService.getInstance(module.project)
 
@@ -174,11 +174,11 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
         settings.state.portName = parameters.portName
         settings.state.webReplUrl = parameters.webReplUrl
 
-        runWithModalProgressBlocking(facet.module.project, "Saving credentials...") {
-            facet.module.project.service<MpySettingsService>()
+        runWithModalProgressBlocking(module.project, "Saving credentials...") {
+            module.project.service<MpySettingsService>()
                 .saveWebReplPassword(parameters.webReplPassword)
 
-            facet.module.project.service<MpySettingsService>()
+            module.project.service<MpySettingsService>()
                 .saveWifiCredentials(parameters.ssid, parameters.wifiPassword)
         }
     }
