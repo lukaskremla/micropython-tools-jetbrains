@@ -24,6 +24,7 @@ import javax.swing.JComponent
  * @author vlan
  */
 class MpyFacetEditorTab(
+    val configuration: MpyFacetConfiguration,
     private val facet: MpyFacet
 ) : FacetEditorTab() {
     private val disposable = Disposer.newDisposable()

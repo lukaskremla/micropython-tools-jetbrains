@@ -112,7 +112,7 @@ class DownloadFromDeviceAction : ReplAction("Download File or Folder...", true, 
         parentNameToFile.forEach { (parentName, node) ->
             val name = if (parentName.isEmpty()) node.name else "$parentName/${node.name}"
             writeDown(node, fileSystemWidget, name, destination)
-            reporter.text("Downloading files: $downloadedFiles of ${parentNameToFile.size} files")
+            reporter.text("Downloading: file $downloadedFiles of ${parentNameToFile.size}")
             reporter.fraction(downloadedFiles.toDouble() * singleFileProgress)
             reporter.details(name)
 

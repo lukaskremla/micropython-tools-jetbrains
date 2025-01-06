@@ -29,7 +29,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -57,6 +57,7 @@ import com.intellij.util.asSafely
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.intellij.run.MpyRunConfiguration
 import dev.micropythontools.intellij.settings.MpyProjectConfigurable
+import dev.micropythontools.intellij.settings.MpySettingsService
 import dev.micropythontools.intellij.settings.mpyFacet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -142,17 +143,31 @@ fun <T> performReplAction(
     cleanUpAction: (suspend (FileSystemWidget, RawProgressReporter) -> Unit)? = null
 ): T? {
     val fileSystemWidget = fileSystemWidget(project) ?: return null
+
     if (connectionRequired && fileSystemWidget.state != State.CONNECTED) {
-        if (!MessageDialogBuilder.yesNo("No device is connected", "Connect now?").ask(project)) {
+        val settings = project.service<MpySettingsService>().state
+
+        val deviceToConnectTo = when {
+            settings.usingUart -> settings.portName
+
+            else -> settings.webReplUrl
+        }
+
+        if (deviceToConnectTo == null ||
+            !MessageDialogBuilder.yesNo("No device is connected", "Connect to $deviceToConnectTo?").ask(project)
+        ) {
             return null
         }
     }
+
     var result: T? = null
+
     try {
         runWithModalProgressBlocking(project, "Communicating with the board...") {
             reportRawProgress { reporter ->
                 var error: String? = null
                 var errorType = NotificationType.ERROR
+
                 try {
                     if (connectionRequired) {
                         doConnect(fileSystemWidget, reporter)
@@ -160,19 +175,15 @@ fun <T> performReplAction(
                     result = action(fileSystemWidget, reporter)
                 } catch (e: TimeoutCancellationException) {
                     error = "$description timed out"
-                    thisLogger().info(error, e)
                 } catch (e: CancellationException) {
                     error = cancelledMessage ?: "$description cancelled"
-                    thisLogger().info(error, e)
                     errorType = NotificationType.INFORMATION
                 } catch (e: IOException) {
                     error = "$description I/O error - ${e.localizedMessage ?: e.message ?: "No message"}"
-                    thisLogger().info(error, e)
                 } catch (e: Exception) {
                     error = e.localizedMessage ?: e.message
                     error = if (error.isNullOrBlank()) "$description error - ${e::class.simpleName}"
                     else "$description error - ${e::class.simpleName}: $error"
-                    thisLogger().error(error, e)
                 }
                 if (!error.isNullOrBlank()) {
                     Notifications.Bus.notify(Notification(NOTIFICATION_GROUP, error, errorType), project)
@@ -182,10 +193,33 @@ fun <T> performReplAction(
     } finally {
         runWithModalProgressBlocking(project, "Cleaning up after board operation...") {
             reportRawProgress { reporter ->
-                cleanUpAction?.let { cleanUpAction(fileSystemWidget, reporter) }
+                var error: String? = null
 
-                if (requiresRefreshAfter) {
-                    fileSystemWidget(project)?.refresh(reporter)
+                try {
+                    cleanUpAction?.let { cleanUpAction(fileSystemWidget, reporter) }
+
+                    if (requiresRefreshAfter) {
+                        fileSystemWidget(project)?.refresh(reporter)
+                    }
+                } catch (e: Exception) {
+                    error = e.localizedMessage ?: e.message
+                    error = if (error.isNullOrBlank()) {
+                        "$description error - ${e::class.simpleName}"
+                    } else {
+                        "$description error - ${e::class.simpleName}: $error"
+                    }
+                    error = "Clean up Exception: $error"
+                }
+                if (!error.isNullOrBlank()) {
+                    fileSystemWidget.disconnect(reporter)
+
+                    Notifications.Bus.notify(
+                        Notification(
+                            NOTIFICATION_GROUP,
+                            "$error - disconnecting to prevent a de-synchronized state",
+                            NotificationType.ERROR
+                        ), project
+                    )
                 }
             }
         }

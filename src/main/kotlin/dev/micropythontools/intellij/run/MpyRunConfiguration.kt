@@ -539,7 +539,7 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                     fileToTargetPath.forEach { (file, path) ->
                         uploadProgress += (file.length.toDouble() / totalBytes.toDouble())
 
-                        reporter.text("Uploading files: $uploadedFiles of ${fileToTargetPath.size} files | $uploadedKB KB of ${totalBytes / 1000} KB")
+                        reporter.text("Uploading: file $uploadedFiles of ${fileToTargetPath.size} | $uploadedKB KB of ${totalBytes / 1000} KB")
                         reporter.fraction(uploadProgress)
                         reporter.details(path)
 
