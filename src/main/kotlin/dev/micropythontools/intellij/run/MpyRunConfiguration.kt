@@ -56,6 +56,8 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
+import org.apache.commons.net.io.CopyStreamEvent
+import org.apache.commons.net.io.CopyStreamListener
 import org.jdom.Element
 import java.io.ByteArrayInputStream
 import java.io.IOException
@@ -79,7 +81,7 @@ private class FTPUploadClient {
         ftpClient.disconnect()
     }
 
-    fun uploadFile(bytes: ByteArray, path: String) {
+    fun uploadFile(path: String, bytes: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {
         val unixPath = if (!path.startsWith("/")) {
             "/$path"
         } else {
@@ -104,6 +106,14 @@ private class FTPUploadClient {
         }
 
         ftpClient.changeWorkingDirectory(filePath)
+
+        ftpClient.copyStreamListener = object : CopyStreamListener {
+            override fun bytesTransferred(event: CopyStreamEvent) {}
+
+            override fun bytesTransferred(totalBytesTransferred: Long, bytesTransferred: Int, streamSize: Long) {
+                progressCallback(bytesTransferred)
+            }
+        }
 
         ByteArrayInputStream(bytes).use { inputStream ->
             ftpClient.storeFile(fileName, inputStream)
@@ -533,31 +543,36 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                     val totalBytes = fileToTargetPath.keys.sumOf { it.length }
 
                     var uploadProgress = 0.0
-                    var uploadedKB = 0
+                    var uploadedKB = 0.0
                     var uploadedFiles = 1
 
-                    fileToTargetPath.forEach { (file, path) ->
-                        uploadProgress += (file.length.toDouble() / totalBytes.toDouble())
-
-                        reporter.text("Uploading: file $uploadedFiles of ${fileToTargetPath.size} | $uploadedKB KB of ${totalBytes / 1000} KB")
+                    fun progressCallbackHandler(uploadedBytes: Int) {
+                        uploadedKB += (uploadedBytes.toDouble() / 1000)
+                        // Convert to double for maximal accuracy
+                        uploadProgress += (uploadedBytes.toDouble() / totalBytes.toDouble())
+                        // Ensure that uploadProgress never goes over 1.0
+                        // as floating point arithmetic can have minor inaccuracies
+                        uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
+                        reporter.text("Uploading: file $uploadedFiles of ${fileToTargetPath.size} | ${"%.2f".format(uploadedKB)} KB of ${totalBytes / 1000} KB")
                         reporter.fraction(uploadProgress)
+                    }
+
+                    fileToTargetPath.forEach { (file, path) ->
                         reporter.details(path)
 
                         if (ftpUploadClient != null) {
                             try {
                                 withTimeout(10_000) {
-                                    ftpUploadClient?.uploadFile(file.contentsToByteArray(), path)
+                                    ftpUploadClient?.uploadFile(path, file.contentsToByteArray(), ::progressCallbackHandler)
                                 }
                             } catch (e: TimeoutCancellationException) {
                                 throw IOException("Timed out while uploading a file with FTP")
                             }
                         } else {
-                            fileSystemWidget.upload(path, file.contentsToByteArray())
+                            fileSystemWidget.upload(path, file.contentsToByteArray(), ::progressCallbackHandler)
                         }
 
-                        uploadedKB += (file.length / 1000).toInt()
                         uploadedFiles++
-
                         checkCanceled()
                     }
 
