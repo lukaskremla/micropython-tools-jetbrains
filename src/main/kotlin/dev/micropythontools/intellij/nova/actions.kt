@@ -201,7 +201,7 @@ fun <T> performReplAction(
                     if (requiresRefreshAfter) {
                         fileSystemWidget(project)?.refresh(reporter)
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     error = e.localizedMessage ?: e.message
                     error = if (error.isNullOrBlank()) {
                         "$description error - ${e::class.simpleName}"

@@ -443,8 +443,8 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     }
 
     @Throws(IOException::class)
-    suspend fun upload(relativeName: @NonNls String, contentsToByteArray: ByteArray) {
-        comm.upload(relativeName, contentsToByteArray)
+    suspend fun upload(relativeName: @NonNls String, contentsToByteArray: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {
+        comm.upload(relativeName, contentsToByteArray, progressCallback)
     }
 
     @Throws(IOException::class)

@@ -116,18 +116,20 @@ open class MpyComm : Disposable, Closeable {
     }
 
     @Throws(IOException::class, CancellationException::class, TimeoutCancellationException::class)
-    suspend fun upload(fullName: @NonNls String, content: ByteArray) {
+    suspend fun upload(fullName: @NonNls String, content: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {
         checkConnected()
-        val commands = mutableListOf("import os,errno")
+        val commands = mutableListOf<Pair<String, Int?>>(Pair("import os,errno", null))
         var slashIdx = 0
         while (slashIdx >= 0) {
             slashIdx = fullName.indexOf('/', slashIdx + 1)
             if (slashIdx > 0) {
                 val folderName = fullName.substring(0, slashIdx)
                 commands.add(
-                    """try: os.mkdir('$folderName');
+                    Pair(
+                        """try: os.mkdir('$folderName');
 except OSError as e:
-    if e.errno != errno.EEXIST: raise """
+    if e.errno != errno.EEXIST: raise """, null
+                    )
                 )
             }
         }
@@ -137,11 +139,10 @@ except OSError as e:
             commands.addAll(txtUpload(fullName, content))
         }
 
-        commands.add("print(os.stat('$fullName'))")
-
+        commands.add(Pair("print(os.stat('$fullName'))", null))
 
         val result = webSocketMutex.withLock {
-            doBlindExecute(LONG_TIMEOUT, *commands.toTypedArray())
+            doBlindExecuteUpload(LONG_TIMEOUT, commands, progressCallback = progressCallback)
         }
         val error = result.mapNotNull { Strings.nullize(it.stderr) }.joinToString(separator = "\n", limit = 1000)
         if (error.isNotEmpty()) {
@@ -155,13 +156,14 @@ except OSError as e:
         }
     }
 
-    private fun txtUpload(fullName: @NonNls String, content: ByteArray): List<String> {
-        val commands = mutableListOf("__f=open('$fullName','wb')")
+    private fun txtUpload(fullName: @NonNls String, content: ByteArray): List<Pair<String, Int?>> {
+        val commands = mutableListOf<Pair<String, Int?>>(Pair("__f=open('$fullName','wb')", null))
         val chunk = StringBuilder()
         val maxDataChunk = 220
         var contentIdx = 0
         while (contentIdx < content.size) {
             chunk.setLength(0)
+            val startIdx = contentIdx
             while (chunk.length < maxDataChunk && contentIdx < content.size) {
                 val b = content[contentIdx++]
                 chunk.append(
@@ -175,18 +177,19 @@ except OSError as e:
                     }
                 )
             }
-            commands.add("__f.write(b'$chunk')")
+            val chunkSize = contentIdx - startIdx
+            commands.add(Pair("__f.write(b'$chunk')", chunkSize))
         }
-        commands.add("__f.close()")
-        commands.add("del(__f)")
+        commands.add(Pair("__f.close()", null))
+        commands.add(Pair("del(__f)", null))
         return commands
     }
 
-    private fun binUpload(fullName: @NonNls String, content: ByteArray): List<String> {
-        val commands = mutableListOf(
-            "import binascii",
-            "__e=lambda b:__f.write(binascii.a2b_base64(b))",
-            "__f=open('$fullName','wb')"
+    private fun binUpload(fullName: @NonNls String, content: ByteArray): List<Pair<String, Int?>> {
+        val commands = mutableListOf<Pair<String, Int?>>(
+            Pair("import binascii", null),
+            Pair("__e=lambda b:__f.write(binascii.a2b_base64(b))", null),
+            Pair("__f=open('$fullName','wb')", null)
         )
         val maxDataChunk = 120
         assert(maxDataChunk % 4 == 0)
@@ -196,11 +199,82 @@ except OSError as e:
             val len = maxDataChunk.coerceAtMost(content.size - contentIdx)
             val chunk = encoder.encodeToString(content.copyOfRange(contentIdx, contentIdx + len))
             contentIdx += len
-            commands.add("__e('$chunk')")
+            commands.add(Pair("__e('$chunk')", len))
         }
-        commands.add("__f.close()")
-        commands.add("del __f,__e")
+        commands.add(Pair("__f.close()", null))
+        commands.add(Pair("del __f,__e", null))
+        print(commands)
         return commands
+    }
+
+    @Throws(IOException::class)
+    private suspend fun doBlindExecuteUpload(commandTimeout: Long, commands: List<Pair<String, Int?>>, progressCallback: (uploadedBytes: Int) -> Unit): ExecResponse {
+        state = State.TTY_DETACHED
+        try {
+            withTimeout(LONG_TIMEOUT) {
+                do {
+                    var promptNotReady = true
+                    mpyClient?.send("\u0003")
+                    mpyClient?.send("\u0003")
+                    mpyClient?.send("\u0003")
+                    delay(SHORT_DELAY)
+                    mpyClient?.send("\u0001")
+                    withTimeoutOrNull(TIMEOUT) {
+                        while (!offTtyBuffer.endsWith("\n>")) {
+                            delay(SHORT_DELAY)
+                        }
+                        promptNotReady = false
+                    }
+                } while (promptNotReady)
+            }
+            delay(SHORT_DELAY)
+            offTtyBuffer.clear()
+            val result = mutableListOf<SingleExecResponse>()
+            for (command in commands) {
+                try {
+                    withTimeout(commandTimeout) {
+                        val (cmd, size) = command
+
+                        cmd.lines().forEachIndexed { index, s ->
+                            if (index > 0) {
+                                delay(SHORT_DELAY)
+                            }
+
+                            if (size != null) {
+                                progressCallback(size)
+                            }
+
+                            mpyClient?.send("$s\n")
+                        }
+                        mpyClient?.send("\u0004")
+                        while (!(offTtyBuffer.startsWith("OK") && offTtyBuffer.endsWith("\u0004>") && offTtyBuffer.count { it == '\u0004' } == 2)) {
+                            delay(SHORT_DELAY)
+                        }
+                        val eotPos = offTtyBuffer.indexOf('\u0004')
+                        val stdout = offTtyBuffer.substring(2, eotPos).trim()
+                        val stderr = offTtyBuffer.substring(eotPos + 1, offTtyBuffer.length - 2).trim()
+                        result.add(SingleExecResponse(stdout, stderr))
+                        offTtyBuffer.clear()
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    throw IOException("Timeout during command execution:$command", e)
+                }
+            }
+            return result
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            state = State.DISCONNECTED
+            mpyClient?.close()
+            mpyClient = null
+            throw e
+        } finally {
+            mpyClient?.send("\u0002")
+            offTtyBuffer.clear()
+            if (state == State.TTY_DETACHED) {
+                state = State.CONNECTED
+            }
+        }
     }
 
     @Throws(IOException::class)

@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("DEPRECATION", "REMOVAL")
+
 package dev.micropythontools.intellij.settings
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -36,6 +38,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.facet.LibraryContributingFacet
+import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.psi.LanguageLevel
@@ -171,11 +174,22 @@ class MpyFacet(
     }
 
     fun isPyserialInstalled(): Boolean {
-        if (findValidPyhonSdk() == null) {
+        /*if (findValidPyhonSdk() == null) {
             return false
-        }
+        }*/
 
-        var result = false
+        val sdk = findValidPyhonSdk() ?: return false
+
+        val packageManager = PyPackageManager.getInstance(sdk)
+        val packages = packageManager.packages ?: return false
+
+        val requirements = PyRequirementParser.fromText("pyserial==3.5")
+
+        val missingPackages = requirements.filter { it.match(packages) == null }.toList()
+
+        return missingPackages.isEmpty()
+
+        /*var result = false
         // A very improvised way of checking if pyserial is installed
         // An alternative to the deprecated PyPackageManager
         ApplicationManager.getApplication().executeOnPooledThread {
@@ -184,7 +198,7 @@ class MpyFacet(
             val output = process.runProcess(5000)
             result = output.stdout.trim() == "OK"
         }.get()
-        return result
+        return result*/
     }
 
     fun installRequiredPythonPackages() {
