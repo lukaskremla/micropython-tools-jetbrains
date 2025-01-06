@@ -35,7 +35,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.jetbrains.python.facet.FacetLibraryConfigurator
 import com.jetbrains.python.facet.LibraryContributingFacet
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.PyRequirementParser
@@ -62,36 +61,21 @@ class MpyFacet(
         val microPythonScriptsPath: String
             get() = "${pluginDescriptor.pluginPath}/scripts/MicroPythonOptimized"
 
-        val stubsPath: String
-            get() = "${pluginDescriptor.pluginPath}/stubs"
-
         private val pluginDescriptor: IdeaPluginDescriptor
             get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))
                 ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
     }
 
     override fun initFacet() {
-        updateLibrary()
+        // To be re-implemented
     }
 
     override fun updateLibrary() {
-        removeLibrary()
-
-        val settings = MpySettingsService.getInstance(module.project)
-
-        val activeStubsPackage = settings.state.activeStubsPackage
-
-        if (activeStubsPackage == "") {
-            return
-        }
-
-        ApplicationManager.getApplication().invokeLater {
-            FacetLibraryConfigurator.attachPythonLibrary(module, null, "MicroPython Tools", listOf("$stubsPath/$activeStubsPackage"))
-        }
+        // To be re-implemented
     }
 
     override fun removeLibrary() {
-        FacetLibraryConfigurator.detachPythonLibrary(module, "MicroPython Tools")
+        // To be re-implemented
     }
 
     fun retrieveMpyScriptAsString(scriptFileName: String): String {

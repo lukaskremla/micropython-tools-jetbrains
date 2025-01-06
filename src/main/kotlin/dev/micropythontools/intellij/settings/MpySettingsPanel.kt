@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("UnstableApiUsage")
-
 package dev.micropythontools.intellij.settings
 
 import com.intellij.openapi.Disposable
@@ -47,11 +45,11 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
             webReplUrl = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL,
             webReplPassword = "",
             ssid = "",
-            wifiPassword = "",
+            wifiPassword = ""
         )
     }
 
-    private val connectionPanel: DialogPanel
+    private val settingsPanel: DialogPanel
 
     init {
         border = IdeBorderFactory.createEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
@@ -71,7 +69,7 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
 
         refreshAPortSelectModel(module, portSelectModel)
 
-        connectionPanel = panel {
+        settingsPanel = panel {
             group("Connection") {
                 buttonsGroup {
                     row {
@@ -131,7 +129,9 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
                                 .comment("(4-9 symbols)")
                                 .columns(40)
                                 .validationInfo { field ->
-                                    if (field.password.size !in PASSWORD_LENGTH) error("Allowed password length is $PASSWORD_LENGTH").withOKEnabled() else null
+                                    if (field.password.size !in PASSWORD_LENGTH && !parameters.usingUart) {
+                                        error("Allowed password length is $PASSWORD_LENGTH").withOKEnabled()
+                                    } else null
                                 }
                         }.layout(RowLayout.LABEL_ALIGNED)
                     }
@@ -159,15 +159,16 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
             registerValidators(disposable)
             validateAll()
         }
-        add(connectionPanel, BorderLayout.CENTER)
+
+        add(settingsPanel, BorderLayout.CENTER)
     }
 
     fun isModified(): Boolean {
-        return connectionPanel.isModified()
+        return settingsPanel.isModified()
     }
 
     fun apply() {
-        connectionPanel.apply()
+        settingsPanel.apply()
         val settings = MpySettingsService.getInstance(module.project)
 
         settings.state.usingUart = parameters.usingUart
@@ -184,7 +185,7 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
     }
 
     fun reset() {
-        connectionPanel.reset()
+        settingsPanel.reset()
     }
 
     fun refreshAPortSelectModel(module: Module, portSelectModel: MutableCollectionComboBoxModel<String>) {
