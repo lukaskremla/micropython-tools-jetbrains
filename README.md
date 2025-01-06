@@ -5,8 +5,10 @@ Credits to [Andrey Vlasovskikh](https://github.com/vlasovskikh) for creating the
 to [Ilia Motornyi](https://github.com/elmot) for rewriting the communication layer to kotlin and for developing the new
 UI, which serves as the foundation for this project.
 
-I have decided fork the original jetbrains plugin as its development was very slow and the marketplace version was left
-unmaintained for very long.
+Many thanks also go to all of the contributors who helped maintain and improve the plugin in the past.
+
+I have decided fork the original jetbrains plugin as its development had slowed and I wanted to focus on implementing
+more advanced features that I deem invaluable based on my professional experience working with MicroPython
 
 I believe that the MicroPython community needs robust, actively maintained and developed tools adding MicroPython
 support to modern industry-standard IDEs. My aim with this fork is to address this need.
@@ -35,7 +37,8 @@ To access all of the features this plugin offers always create a MicroPython Too
 and leave the path empty.
 
 If no folder is marked as a sources root, the project root contents will be uploaded, if at least one folder is marked
-as a source root, only source root contents will be uploaded. In all cases files/folders with a leading dot in their name, excluded folders, and test
+as a source root, only source root contents will be uploaded. In all cases files/folders with a leading dot in their
+name, excluded folders, and test
 source roots are skipped. If you want to upload a test source root marked folder, or its contents, you can do so via
 the context menu actions.
 

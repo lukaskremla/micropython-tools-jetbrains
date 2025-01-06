@@ -1,25 +1,41 @@
 The Changelog
 =============
 
+0.1.5 - 6-1-2025
+------------------
+
+* Completely overhauled the progress reporting for all board communication actions
+* Every action now provides more detailed explanation of steps that are happening
+* Uploads now show the mount of files and KBs being uploaded alongside real-time updates as data gets transferred
+* Reworked how clean-up actions work, the progress dialog titles are now unified
+* Fixed several bugs: EDT related stack trace on start-up, improper clean-up, increased FTP wi-fi timeouts, delete
+  action cancellation issues
+
 0.1.4 - 1-1-2025
 ------------------
+
 * Fixed several unhandled exceptions related to connection state transitions
 * Fixed several cases where connection related actions wouldn't work as intended
 
-There should no longer be any odd errors when cancelling any of the plugin's dialogs. The displayed information/error messages when cancelling a dialog should now be more accurate and the board should be properly refreshed() after each action if required.
+There should no longer be any odd errors when cancelling any of the plugin's dialogs. The displayed information/error
+messages when cancelling a dialog should now be more accurate and the board should be properly refreshed() after each
+action if required.
 
 0.1.3 - 31-12-2024
 ------------------
+
 * Fixed incorrect python SDK retrieval
 
 0.1.2 - 31-12-2024
 ------------------
+
 * Improved the way credentials are stored by the plugin
 * Fixed several errors related to un-configured Python interpreter IDE state
 * Added more descriptive error messages and information texts for un-configured plugin state
-  
+
 0.1.1 - 30-12-2024
 ------------------
+
 * Replaced internal annotated API usage
 
 0.1.0 - 30-12-2024
