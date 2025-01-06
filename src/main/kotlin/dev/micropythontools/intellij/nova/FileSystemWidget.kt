@@ -409,6 +409,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             }
 
             reporter.text(reporterText)
+            reporter.fraction(null)
 
             val sure = MessageDialogBuilder.yesNo(title, message).ask(project)
             if (sure) fileSystemNodes else emptyList()
