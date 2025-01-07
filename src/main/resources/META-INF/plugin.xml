@@ -49,7 +49,7 @@
         <toolWindow factoryClass="dev.micropythontools.intellij.nova.MpyToolWindow"
                     id="MicroPython Tools"
                     anchor="bottom"
-                    icon="/icons/micropython_tw.svg"
+                    icon="/icons/micropythonTw.svg"
                     canCloseContents="false"/>
     </extensions>
 
