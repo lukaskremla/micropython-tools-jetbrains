@@ -17,6 +17,7 @@
 package dev.micropythontools.intellij.settings
 
 import com.intellij.facet.ui.FacetEditorTab
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import javax.swing.JComponent
 
@@ -26,7 +27,7 @@ import javax.swing.JComponent
 class MpyFacetEditorTab(
     val configuration: MpyFacetConfiguration,
     private val facet: MpyFacet
-) : FacetEditorTab() {
+) : FacetEditorTab(), DumbAware {
     private val disposable = Disposer.newDisposable()
     override fun disposeUIResources() {
         super.disposeUIResources()
