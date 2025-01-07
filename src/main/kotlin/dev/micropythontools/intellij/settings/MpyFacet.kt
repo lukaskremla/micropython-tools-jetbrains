@@ -30,13 +30,20 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
+import com.jetbrains.python.facet.FacetLibraryConfigurator
 import com.jetbrains.python.facet.LibraryContributingFacet
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagerUI
@@ -53,7 +60,7 @@ import javax.swing.JComponent
 class MpyFacet(
     facetType: FacetType<out Facet<*>, *>, module: Module, name: String,
     configuration: MpyFacetConfiguration, underlyingFacet: Facet<*>?
-) : LibraryContributingFacet<MpyFacetConfiguration>(facetType, module, name, configuration, underlyingFacet) {
+) : LibraryContributingFacet<MpyFacetConfiguration>(facetType, module, name, configuration, underlyingFacet), DumbAware {
 
     companion object {
         private const val PLUGIN_ID = "micropython-tools-jetbrains"
@@ -64,21 +71,86 @@ class MpyFacet(
         val microPythonScriptsPath: String
             get() = "${pluginDescriptor.pluginPath}/scripts/MicroPythonOptimized"
 
+        val stubsPath: String
+            get() = "${pluginDescriptor.pluginPath}/stubs"
+
         private val pluginDescriptor: IdeaPluginDescriptor
             get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))
                 ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
     }
 
     override fun initFacet() {
-        // To be re-implemented
+        updateLibrary()
     }
 
     override fun updateLibrary() {
-        // To be re-implemented
+        val settings = module.project.service<MpySettingsService>()
+        val activeStubPackage = settings.state.activeStubsPackage
+        val availableStubs = getAvailableStubs()
+
+        DumbService.getInstance(module.project).smartInvokeLater {
+            runWithModalProgressBlocking(module.project, "Updating libraries") {
+                val workspaceModel = WorkspaceModel.getInstance(module.project)
+                val currentSnapshot = workspaceModel.currentSnapshot
+                val libraryTableId = LibraryTableId.ProjectLibraryTableId
+
+                val libraryEntity = if (activeStubPackage != null && availableStubs.contains(activeStubPackage)) {
+                    val libraryEntitySource =
+                        LegacyBridgeJpsEntitySourceFactory.getInstance(module.project)
+                            .createEntitySourceForProjectLibrary(null)
+
+                    val libraryPathUrl = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl("file://$stubsPath/$activeStubPackage")
+
+                    LibraryEntity(
+                        "MicroPython Tools",
+                        libraryTableId,
+                        listOf(
+                            LibraryRoot(
+                                url = libraryPathUrl,
+                                type = LibraryRootTypeId("CLASSES"),
+                                inclusionOptions = LibraryRoot.InclusionOptions.ROOT_ITSELF
+                            )
+                        ),
+                        libraryEntitySource
+                    )
+                } else null
+
+                workspaceModel.update("Adding new module dependency") { builder ->
+                    val libraryId = LibraryId("MicroPython Tools", libraryTableId)
+
+                    if (libraryId in currentSnapshot) {
+                        val existingEntity = currentSnapshot.resolve(libraryId)
+
+                        if (existingEntity != null) {
+                            builder.removeEntity(existingEntity)
+                        }
+                    }
+
+                    if (libraryEntity != null) {
+                        builder.addEntity(libraryEntity)
+                    }
+                }
+
+                PythonSdkUtil.findPythonSdk(module)?.let { sdk ->
+                    PyPackageManager.getInstance(sdk).refreshAndGetPackages(true)
+                }
+            }
+        }
     }
 
     override fun removeLibrary() {
-        // To be re-implemented
+        DumbService.getInstance(module.project).smartInvokeLater {
+            ApplicationManager.getApplication().runWriteAction {
+                FacetLibraryConfigurator.detachPythonLibrary(module, "MicroPython Tools")
+            }
+        }
+    }
+
+    fun getAvailableStubs(): List<String> {
+        return File(stubsPath).listFiles()?.filter { it.isDirectory }
+            ?.sortedBy { it }
+            ?.map { it.name }
+            ?: emptyList()
     }
 
     fun retrieveMpyScriptAsString(scriptFileName: String): String {
@@ -101,6 +173,9 @@ class MpyFacet(
     }
 
     fun checkValid(): ValidationResult {
+        val settings = module.project.service<MpySettingsService>()
+        val activeStubsPackage = settings.state.activeStubsPackage
+
         if (findValidPyhonSdk() == null) {
             return if (
                 PluginManager.isPluginInstalled(PluginId.getId("com.intellij.modules.java")) ||
@@ -130,12 +205,25 @@ class MpyFacet(
             }
         }
 
-        if (!isPyserialInstalled()) {
+        if (isPyserialInstalled() == false) {
             return ValidationResult(
                 "Missing required Python packages",
                 object : FacetConfigurationQuickFix("Install") {
                     override fun run(place: JComponent?) {
                         installRequiredPythonPackages()
+                    }
+                }
+            )
+        }
+
+        if (activeStubsPackage != null && !getAvailableStubs().contains(activeStubsPackage)) {
+            return ValidationResult(
+                "Invalid stub package selected",
+                object : FacetConfigurationQuickFix("Change Settings") {
+                    override fun run(place: JComponent?) {
+                        ApplicationManager.getApplication().invokeLater {
+                            ShowSettingsUtil.getInstance().showSettingsDialog(module.project, MpyProjectConfigurable::class.java)
+                        }
                     }
                 }
             )
@@ -173,32 +261,17 @@ class MpyFacet(
         return result
     }
 
-    fun isPyserialInstalled(): Boolean {
-        /*if (findValidPyhonSdk() == null) {
-            return false
-        }*/
-
+    fun isPyserialInstalled(): Boolean? {
         val sdk = findValidPyhonSdk() ?: return false
 
         val packageManager = PyPackageManager.getInstance(sdk)
-        val packages = packageManager.packages ?: return false
+        val packages = packageManager.packages ?: return null
 
         val requirements = PyRequirementParser.fromText("pyserial==3.5")
 
         val missingPackages = requirements.filter { it.match(packages) == null }.toList()
 
         return missingPackages.isEmpty()
-
-        /*var result = false
-        // A very improvised way of checking if pyserial is installed
-        // An alternative to the deprecated PyPackageManager
-        ApplicationManager.getApplication().executeOnPooledThread {
-            val command = mutableListOf(pythonSdkPath, "$pythonScriptsPath/check_pyserial.py")
-            val process = CapturingProcessHandler(GeneralCommandLine(command))
-            val output = process.runProcess(5000)
-            result = output.stdout.trim() == "OK"
-        }.get()
-        return result*/
     }
 
     fun installRequiredPythonPackages() {

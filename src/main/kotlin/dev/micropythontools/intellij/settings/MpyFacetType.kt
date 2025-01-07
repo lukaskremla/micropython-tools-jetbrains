@@ -21,6 +21,7 @@ import com.intellij.facet.FacetType
 import com.intellij.facet.FacetTypeId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.IconLoader
 import com.jetbrains.python.PythonModuleTypeBase
 import javax.swing.Icon
@@ -28,7 +29,7 @@ import javax.swing.Icon
 /**
  * @author vlan
  */
-class MpyFacetType : FacetType<MpyFacet, MpyFacetConfiguration>(ID, STRING_ID, PRESENTABLE_NAME) {
+class MpyFacetType : FacetType<MpyFacet, MpyFacetConfiguration>(ID, STRING_ID, PRESENTABLE_NAME), DumbAware {
     companion object {
         const val STRING_ID = "MicroPython Tools"
         const val PRESENTABLE_NAME = "MicroPython Tools"
@@ -48,5 +49,5 @@ class MpyFacetType : FacetType<MpyFacet, MpyFacetConfiguration>(ID, STRING_ID, P
 }
 
 val ID = FacetTypeId<MpyFacet>(MpyFacetType.STRING_ID)
-val LOGO = IconLoader.getIcon("/icons/micropython.svg", MpyFacetType::class.java)
+val LOGO = IconLoader.getIcon("/icons/miiicropython.svg", MpyFacetType::class.java)
 fun getInstance() = FacetType.findInstance(MpyFacetType::class.java)!!

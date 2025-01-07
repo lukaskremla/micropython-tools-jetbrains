@@ -20,6 +20,7 @@ import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
@@ -30,7 +31,7 @@ import javax.swing.JPanel
 /**
  * @author vlan
  */
-class MpyModuleConfigurable(private val module: Module) : Configurable {
+class MpyModuleConfigurable(private val module: Module) : Configurable, DumbAware {
     private val disposable = Disposer.newDisposable()
 
     override fun disposeUIResources() {

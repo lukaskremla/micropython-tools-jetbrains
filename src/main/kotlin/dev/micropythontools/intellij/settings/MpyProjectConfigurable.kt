@@ -19,11 +19,12 @@ package dev.micropythontools.intellij.settings
 import com.intellij.application.options.ModuleAwareProjectConfigurable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 
 /**
  * @author vlan
  */
-class MpyProjectConfigurable(project: Project) : ModuleAwareProjectConfigurable<Configurable>(project, "MicroPython", null) {
+class MpyProjectConfigurable(project: Project) : ModuleAwareProjectConfigurable<Configurable>(project, "MicroPython", null), DumbAware {
     override fun createModuleConfigurable(module: Module?) = MpyModuleConfigurable(module!!)
 }

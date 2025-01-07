@@ -52,9 +52,9 @@ class ConnectAction(text: String = "Connect") : ReplAction(
     override fun update(e: AnActionEvent) {
         val module = e.project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
-        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() ?: true // Facet might not be loaded yet
+        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() // Facet might not be loaded yet
 
-        if (module?.mpyFacet != null && isPyserialInstalled) {
+        if (module?.mpyFacet != null && isPyserialInstalled == true) {
             e.presentation.isEnabledAndVisible = when (fileSystemWidget(e)?.state) {
                 State.DISCONNECTING, State.DISCONNECTED, null -> true
                 State.CONNECTING, State.CONNECTED, State.TTY_DETACHED -> false

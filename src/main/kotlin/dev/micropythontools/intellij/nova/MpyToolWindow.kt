@@ -41,7 +41,7 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import javax.swing.JComponent
 
 /**
- * @author elmot, Lukas Kremla (connection selector)
+ * @author elmot, Lukas Kremla
  */
 internal const val NOTIFICATION_GROUP = "MicroPython Tools"
 internal const val TOOL_WINDOW_ID = "MicroPython Tools"
@@ -95,9 +95,9 @@ class AutoClearAction :
 
         val module = e.project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
-        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() ?: true // Facet might not be loaded yet
+        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() // Facet might not be loaded yet
 
-        e.presentation.isEnabled = module?.mpyFacet != null && isPyserialInstalled
+        e.presentation.isEnabled = module?.mpyFacet != null && isPyserialInstalled == true
     }
 
     override fun isSelected(e: AnActionEvent): Boolean = isAutoClearEnabled
@@ -135,11 +135,11 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
             e.presentation.text = if (url == "") "No URL Selected" else url
         }
 
-        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() ?: false
+        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled()
 
         e.presentation.isEnabled =
             (module?.mpyFacet != null) &&
-                    isPyserialInstalled &&
+                    isPyserialInstalled == true &&
                     (fileSystemWidget(project)?.state == State.DISCONNECTED
                             || fileSystemWidget(project)?.state == State.DISCONNECTING)
     }

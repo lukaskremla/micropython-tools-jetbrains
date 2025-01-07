@@ -81,7 +81,8 @@ data class ConnectionParameters(
     var webReplUrl: String,
     var webReplPassword: String,
     var ssid: String,
-    var wifiPassword: String
+    var wifiPassword: String,
+    var activeStubsPackage: String? = null
 ) {
     constructor(portName: String) : this(
         usingUart = true,
@@ -89,7 +90,8 @@ data class ConnectionParameters(
         webReplUrl = DEFAULT_WEBREPL_URL,
         webReplPassword = "",
         ssid = "",
-        wifiPassword = ""
+        wifiPassword = "",
+        activeStubsPackage = ""
     )
 
     constructor(webReplUrl: String, webReplPassword: String) : this(
@@ -98,7 +100,8 @@ data class ConnectionParameters(
         webReplUrl = webReplUrl,
         webReplPassword = webReplPassword,
         ssid = "",
-        wifiPassword = ""
+        wifiPassword = "",
+        activeStubsPackage = null
     )
 }
 
@@ -123,9 +126,9 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         val isPythonSdkValid = module?.mpyFacet?.findValidPyhonSdk() != null
 
-        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() ?: true // Facet might not be loaded yet
+        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled()
 
-        if (module?.mpyFacet != null && isPythonSdkValid && isPyserialInstalled) {
+        if (module?.mpyFacet != null && isPythonSdkValid && isPyserialInstalled == true) {
             tree.emptyText.appendText("No board is connected")
             tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 performReplAction(
@@ -155,11 +158,13 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                     ShowSettingsUtil.getInstance().showSettingsDialog(module.project, "ProjectStructure")
                 }
             }
-        } else if (!isPyserialInstalled) {
+        } else if (isPyserialInstalled == false) {
             tree.emptyText.appendText("Missing required Python packages")
             tree.emptyText.appendLine("Install...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 module.mpyFacet?.installRequiredPythonPackages()
             }
+        } else {
+            tree.emptyText.appendText("Waiting for python library manager initialization...")
         }
     }
 

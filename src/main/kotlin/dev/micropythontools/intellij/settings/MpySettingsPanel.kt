@@ -17,6 +17,7 @@
 
 package dev.micropythontools.intellij.settings
 
+import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -25,6 +26,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.MutableCollectionComboBoxModel
+import com.intellij.ui.TextFieldWithAutoCompletion
+import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.asSafely
 import com.intellij.util.ui.UIUtil
@@ -45,7 +48,8 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
             webReplUrl = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL,
             webReplPassword = "",
             ssid = "",
-            wifiPassword = ""
+            wifiPassword = "",
+            activeStubsPackage = settings.state.activeStubsPackage,
         )
     }
 
@@ -69,6 +73,8 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
 
         refreshAPortSelectModel(module, portSelectModel)
 
+        val availableStubs = module.mpyFacet?.getAvailableStubs() ?: emptyList()
+
         settingsPanel = panel {
             group("Connection") {
                 buttonsGroup {
@@ -85,12 +91,14 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
                             .validationInfo { comboBox ->
                                 val portName = comboBox.selectedItem.asSafely<String>()
 
-                                val isPyserialInstalled = module.mpyFacet?.isPyserialInstalled() ?: false
+                                val isPyserialInstalled = module.mpyFacet?.isPyserialInstalled()
 
                                 if (module.mpyFacet?.findValidPyhonSdk() == null) {
                                     ValidationInfo("MicroPython Tools plugin requires a valid Python 3.10+ SDK")
-                                } else if (!isPyserialInstalled) {
+                                } else if (isPyserialInstalled == false) {
                                     ValidationInfo("Required Python packages are missing. Check the tool window for more info")
+                                } else if (isPyserialInstalled == null) {
+                                    ValidationInfo("Wait for python library manager initialization, please reopen the settings...")
                                 } else if (portName.isNullOrBlank()) {
                                     ValidationInfo("No port name provided")
                                         .withOKEnabled()
@@ -155,6 +163,50 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
                 }
             }
 
+            group("MicroPython Stubs") {
+                row {
+                    cell(
+                        TextFieldWithAutoCompletion(
+                            module.project,
+                            object : TextFieldWithAutoCompletionListProvider<String>(availableStubs) {
+                                override fun getItems(prefix: String?, cached: Boolean, parameters: CompletionParameters?): MutableCollection<String> {
+                                    return if (prefix.isNullOrEmpty()) {
+                                        availableStubs.toMutableList()
+                                    } else {
+                                        availableStubs.filter { it.contains(prefix, ignoreCase = true) }.toMutableList()
+                                    }
+                                }
+
+                                override fun getLookupString(item: String) = item
+                            },
+                            true,
+                            ""
+                        ).apply {
+                            setPreferredWidth(450)
+                        }
+                    )
+                        .bind(
+                            { it.text },
+                            { component, text -> component.text = text ?: "" },
+                            parameters::activeStubsPackage.toMutableProperty()
+                        )
+                        .label("Stubs package: ")
+                        .comment(
+                            "Type \"micropython\" to browse available packages, or leave it empty to disable built-in stubs. " +
+                                    "Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubber\">Jos Verlinde</a>", maxLineLength = 60
+                        )
+                        .validationInfo { field ->
+                            val text = field.text
+
+                            if (text.isEmpty()) {
+                                ValidationInfo("No built-in stubs will be active!").asWarning().withOKEnabled()
+                            } else if (!availableStubs.contains(text)) {
+                                ValidationInfo("Invalid stubs package name!")
+                            } else null
+                        }
+                }
+            }
+
         }.apply {
             registerValidators(disposable)
             validateAll()
@@ -174,6 +226,7 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
         settings.state.usingUart = parameters.usingUart
         settings.state.portName = parameters.portName
         settings.state.webReplUrl = parameters.webReplUrl
+        settings.state.activeStubsPackage = parameters.activeStubsPackage
 
         runWithModalProgressBlocking(module.project, "Saving credentials...") {
             module.project.service<MpySettingsService>()

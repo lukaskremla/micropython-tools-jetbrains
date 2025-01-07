@@ -70,7 +70,7 @@ tasks {
     prepareSandbox {
         from("$rootDir") {
             into("micropython-tools-jetbrains")
-            //include("stubs/")
+            include("stubs/")
             include("scripts/")
         }
     }
