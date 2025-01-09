@@ -18,43 +18,69 @@
 package dev.micropythontools.intellij.run
 
 import com.intellij.execution.Executor
-import com.intellij.execution.configuration.AbstractRunConfiguration
 import com.intellij.execution.configuration.EmptyRunProfileState
 import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.RunConfigurationWithSuppressedDefaultDebugAction
+import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.util.PathUtil
 import dev.micropythontools.intellij.communication.MpyTransferService
+import dev.micropythontools.intellij.settings.MpyConfigurable
 import dev.micropythontools.intellij.settings.MpySettingsService
-import org.jdom.Element
 import ui.fileSystemWidget
 import util.MpyPythonService
 
 /**
- * @authors Lukas Kremla, elmot, vlan
+ * @authors Lukas Kremla
  */
-class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : AbstractRunConfiguration(project, factory),
-    RunConfigurationWithSuppressedDefaultDebugAction {
-    var path: String = ""
-    var runReplOnSuccess: Boolean = false
-    var resetOnSuccess: Boolean = true
-    var useFTP: Boolean = false
-    var synchronize: Boolean = false
-    var excludePaths: Boolean = false
-    var excludedPaths: MutableList<String> = mutableListOf()
+class MpyRunConfiguration(
+    project: Project,
+    factory: ConfigurationFactory,
+    name: String
+) : RunConfigurationBase<MpyRunConfigurationOptions>(project, factory, name) {
 
-    override fun getConfigurationEditor() = MpyRunConfigurationEditor(this)
+    override fun getOptions(): MpyRunConfigurationOptions {
+        return super.getOptions() as MpyRunConfigurationOptions
+    }
+
+    fun saveOptions(
+        path: String,
+        runReplOnSuccess: Boolean,
+        resetOnSuccess: Boolean,
+        useFTP: Boolean,
+        synchronize: Boolean,
+        excludePaths: Boolean,
+        excludedPaths: MutableList<String>
+    ) {
+        options.path = path
+        options.runReplOnSuccess = runReplOnSuccess
+        options.resetOnSuccess = resetOnSuccess
+        options.useFTP = useFTP
+        options.synchronize = synchronize
+        options.excludePaths = excludePaths
+        options.excludedPaths = excludedPaths
+    }
+
+    fun getOptionsObject(): MpyRunConfigurationOptions {
+        return options
+    }
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
+        val path: String = options.path ?: ""
+        val runReplOnSuccess = options.runReplOnSuccess
+        val resetOnSuccess = options.resetOnSuccess
+        val useFTP = options.useFTP
+        val synchronize = options.synchronize
+        val excludePaths = options.excludePaths
+        val excludedPaths = options.excludedPaths
+
         val success: Boolean
         val projectDir = project.guessProjectDir()
         val projectPath = projectDir?.path
@@ -105,11 +131,17 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
     override fun checkConfiguration() {
         super.checkConfiguration()
 
-        val pythonService = project.service<MpyPythonService>() /*?: throw RuntimeConfigurationError(
-            "MicroPython support was not enabled for this project",
-            Runnable { ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java) }
-        )*/
+        if (!project.service<MpySettingsService>().state.isPluginEnabled) {
+            throw RuntimeConfigurationError(
+                "MicroPython support was not enabled for this project",
+                Runnable { ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java) }
+            )
+        }
+
+        val pythonService = project.service<MpyPythonService>()
+
         val validationResult = pythonService.checkValid()
+
         if (validationResult != ValidationResult.OK) {
             if (validationResult.quickFix != null) {
                 val runQuickFix = Runnable {
@@ -120,66 +152,9 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
                 throw RuntimeConfigurationError(validationResult.errorMessage)
             }
         }
+
         pythonService.findValidPyhonSdk() ?: throw RuntimeConfigurationError("Python interpreter was not found")
     }
 
-    override fun suggestedName() = "Flash ${PathUtil.getFileName(path)}"
-
-    override fun getValidModules(): MutableCollection<Module> {
-        TODO("Not yet implemented")
-    }
-
-    override fun writeExternal(element: Element) {
-        super.writeExternal(element)
-        element.setAttribute("path", path)
-        element.setAttribute("run-repl-on-success", if (runReplOnSuccess) "yes" else "no")
-        element.setAttribute("reset-on-success", if (resetOnSuccess) "yes" else "no")
-        element.setAttribute("synchronize", if (synchronize) "yes" else "no")
-        element.setAttribute("exclude-paths", if (excludePaths) "yes" else "no")
-        element.setAttribute("ftp", if (useFTP) "yes" else "no")
-
-        if (excludedPaths.isNotEmpty()) {
-            val excludedPathsElement = Element("excluded-paths")
-            excludedPaths.forEach { path ->
-                val pathElement = Element("path")
-                pathElement.setAttribute("value", path)
-                excludedPathsElement.addContent(pathElement)
-            }
-            element.addContent(excludedPathsElement)
-        }
-    }
-
-    override fun readExternal(element: Element) {
-        super.readExternal(element)
-        configurationModule.readExternal(element)
-        element.getAttributeValue("path")?.let {
-            path = it
-        }
-        element.getAttributeValue("run-repl-on-success")?.let {
-            runReplOnSuccess = it == "yes"
-        }
-        element.getAttributeValue("reset-on-success")?.let {
-            resetOnSuccess = it == "yes"
-        }
-        element.getAttributeValue("synchronize")?.let {
-            synchronize = it == "yes"
-        }
-        element.getAttributeValue("exclude-paths")?.let {
-            excludePaths = it == "yes"
-        }
-        element.getAttributeValue("ftp")?.let {
-            useFTP = it == "yes"
-        }
-
-        excludedPaths.clear()
-
-        excludedPaths.clear()
-        element.getChild("excluded-paths")?.let { excludedPathsElement ->
-            excludedPathsElement.getChildren("path").forEach { pathElement ->
-                pathElement.getAttributeValue("value")?.let { path ->
-                    excludedPaths.add(path)
-                }
-            }
-        }
-    }
+    override fun getConfigurationEditor() = MpyRunConfigurationEditor(this)
 }
