@@ -41,12 +41,15 @@ import java.io.File
  */
 class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
     override suspend fun execute(project: Project) {
-        var hasMigrated = false
+        var hasMigratedFacet = false
+        var hasMigratedRunConfiguration = false
 
+        // Assume that the main .iml is inside the project's .idea folder
         val ideaDirPath = "${project.guessProjectDir()}/.idea".removePrefix("file:")
 
         val ideaDir = LocalFileSystem.getInstance().findFileByPath(ideaDirPath) ?: return
 
+        // iterate over all .idea contents and look through .iml files
         for (child in ideaDir.children) {
             if (child.isFile) {
                 if (child.extension == "iml") {
@@ -75,7 +78,7 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                     }
 
                     if (modified) {
-                        hasMigrated = true
+                        hasMigratedFacet = true
                         JDOMUtil.write(document, file)
                         project.save()
                     }
@@ -83,10 +86,85 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
             }
         }
 
-        if (hasMigrated) {
-            // A MicroPython Tools facet was found, new plugin's support should be turned on
+        val runManagerImpls = RunManagerImpl.getInstanceImpl(project)
+
+        runManagerImpls.allConfigurationsList.forEach { configuration ->
+            // Create a temporary element to which the configuration attributes are dumped and write it
+            val element = org.jdom.Element("temporaryConfig")
+            configuration.writeExternal(element)
+
+            // Now the attributes can be checked
+            // They're of no interest and can be skipped if they aren't of the old "MpyConfigurationType"
+            if (!element.attributes.toString().contains("MpyConfigurationType")) return@forEach
+
+            // The configuration must be of MpyConfigurationType if we got here, its settings can be extracted
+            val savedName = element.getAttributeValue("name") ?: null
+            val path = element.getAttributeValue("path") ?: null
+            val useFTP = element.getAttributeValue("ftp") == "yes"
+            val runReplOnSuccess = element.getAttributeValue("run-repl-on-success") == "yes"
+            val resetOnSuccess = element.getAttributeValue("reset-on-success") == "yes"
+            val synchronize = element.getAttributeValue("synchronize") == "yes"
+            val excludePaths = element.getAttributeValue("exclude-paths") == "yes"
+            val excludedPaths = mutableListOf<String>()
+
+            element.getChild("excluded-paths")?.let { excludedPathsElement ->
+                excludedPathsElement.getChildren("path").forEach { pathElement ->
+                    pathElement.getAttributeValue("value")?.let { path ->
+                        excludedPaths.add(path)
+                    }
+                }
+            }
+
+            // Try to preserve the original name, but re-create it up to new standards if necessary
+            val name = when {
+                !savedName.isNullOrBlank() -> savedName
+
+                !path.isNullOrBlank() -> "Flash $path"
+
+                else -> "Flash Project"
+            }
+
+            // The plugin's run factory needs to be instantiated here in order to
+            val factory = MpyRunConfigurationFactory(MpyRunConfigurationType())
+
+            // Instantiate the new flash configuration with the old one's settings
+            val writtenConfiguration = MpyRunConfiguration(
+                project,
+                factory,
+                name
+            ).apply {
+                saveOptions(
+                    path ?: "",
+                    runReplOnSuccess,
+                    resetOnSuccess,
+                    useFTP,
+                    synchronize,
+                    excludePaths,
+                    excludedPaths
+                )
+            }
+
+            // create the final run configuration that can be added to the project
+            val runnerAndConfigSettings = RunManager.getInstance(project).createConfiguration(
+                writtenConfiguration,
+                factory
+            )
+
+            // Add the new migrated configuration and remove the old one
+            runManagerImpls.addConfiguration(runnerAndConfigSettings)
+            runManagerImpls.removeConfiguration(runManagerImpls.findSettings(configuration))
+
+            hasMigratedRunConfiguration = true
+
+        }
+
+        if (hasMigratedFacet || hasMigratedRunConfiguration) {
+            // A MicroPython Tools facet was found, new plugin should be enabled as well
             // to give users a smooth switch to the new plugin settings persistence structure
-            project.service<MpySettingsService>().state.isPluginEnabled = true
+            // (the facet won't be there if the support was disabled)
+            if (hasMigratedFacet) {
+                project.service<MpySettingsService>().state.isPluginEnabled = true
+            }
 
             Notifications.Bus.notify(
                 Notification(
@@ -101,69 +179,6 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                     NotificationType.INFORMATION
                 ), project
             )
-        }
-
-        val runManagerImpls = RunManagerImpl.getInstanceImpl(project)
-
-        runManagerImpls.allConfigurationsList.forEach { configuration ->
-            // Create a temporary element to which the configuration attributes are dumped and write it
-            val element = org.jdom.Element("temporaryConfig")
-            configuration.writeExternal(element)
-
-            // Now the attributes can be checked
-            // They're of no interest and can be skipped if they aren't of the old "MpyConfigurationType"
-            if (element.attributes.toString().contains("MpyConfigurationType")) {
-                val savedName = element.getAttributeValue("name") ?: null
-                val path = element.getAttributeValue("path") ?: null
-                val useFTP = element.getAttributeValue("ftp") == "yes"
-                val runReplOnSuccess = element.getAttributeValue("run-repl-on-success") == "yes"
-                val resetOnSuccess = element.getAttributeValue("reset-on-success") == "yes"
-                val synchronize = element.getAttributeValue("synchronize") == "yes"
-                val excludePaths = element.getAttributeValue("exclude-paths") == "yes"
-                val excludedPaths = mutableListOf<String>()
-
-                element.getChild("excluded-paths")?.let { excludedPathsElement ->
-                    excludedPathsElement.getChildren("path").forEach { pathElement ->
-                        pathElement.getAttributeValue("value")?.let { path ->
-                            excludedPaths.add(path)
-                        }
-                    }
-                }
-
-                val name = when {
-                    !savedName.isNullOrBlank() -> savedName
-
-                    !path.isNullOrBlank() -> "Flash $path"
-
-                    else -> "Flash Project"
-                }
-
-                val factory = MpyRunConfigurationFactory(MpyRunConfigurationType())
-
-                val writtenConfiguration = MpyRunConfiguration(
-                    project,
-                    factory,
-                    name
-                ).apply {
-                    saveOptions(
-                        path ?: "",
-                        runReplOnSuccess,
-                        resetOnSuccess,
-                        useFTP,
-                        synchronize,
-                        excludePaths,
-                        excludedPaths
-                    )
-                }
-
-                val runnerAndConfigSettings = RunManager.getInstance(project).createConfiguration(
-                    writtenConfiguration,
-                    factory
-                )
-
-                runManagerImpls.addConfiguration(runnerAndConfigSettings)
-                runManagerImpls.removeConfiguration(runManagerImpls.findSettings(configuration))
-            }
         }
     }
 }
