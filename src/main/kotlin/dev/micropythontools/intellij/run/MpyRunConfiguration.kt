@@ -19,10 +19,7 @@ package dev.micropythontools.intellij.run
 
 import com.intellij.execution.Executor
 import com.intellij.execution.configuration.EmptyRunProfileState
-import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.RunConfigurationBase
-import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.configurations.RuntimeConfigurationError
+import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.components.service
@@ -31,6 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.util.PathUtil
 import dev.micropythontools.intellij.communication.MpyTransferService
 import dev.micropythontools.intellij.settings.MpyConfigurable
 import dev.micropythontools.intellij.settings.MpySettingsService
@@ -44,7 +42,25 @@ class MpyRunConfiguration(
     project: Project,
     factory: ConfigurationFactory,
     name: String
-) : RunConfigurationBase<MpyRunConfigurationOptions>(project, factory, name) {
+) : RunConfigurationBase<MpyRunConfigurationOptions>(
+    project,
+    factory,
+    name
+), LocatableConfiguration {
+
+    private var myGeneratedName = true
+
+    override fun suggestedName(): String {
+        val currentPath = options.path
+        return when {
+            currentPath.isNullOrBlank() || currentPath == "" -> "Flash Project"
+            else -> "Flash ${PathUtil.getFileName(currentPath)}"
+        }
+    }
+
+    override fun isGeneratedName(): Boolean {
+        return myGeneratedName
+    }
 
     override fun getOptions(): MpyRunConfigurationOptions {
         return super.getOptions() as MpyRunConfigurationOptions
@@ -59,6 +75,8 @@ class MpyRunConfiguration(
         excludePaths: Boolean,
         excludedPaths: MutableList<String>
     ) {
+        suggestedName()
+
         options.path = path
         options.runReplOnSuccess = runReplOnSuccess
         options.resetOnSuccess = resetOnSuccess
@@ -129,7 +147,7 @@ class MpyRunConfiguration(
     }
 
     override fun checkConfiguration() {
-        super.checkConfiguration()
+        super<RunConfigurationBase>.checkConfiguration()
 
         if (!project.service<MpySettingsService>().state.isPluginEnabled) {
             throw RuntimeConfigurationError(
