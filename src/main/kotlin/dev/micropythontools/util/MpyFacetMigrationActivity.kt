@@ -16,6 +16,8 @@
 
 package dev.micropythontools.util
 
+import com.intellij.execution.RunManager
+import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -27,6 +29,9 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.isFile
+import dev.micropythontools.run.MpyRunConfiguration
+import dev.micropythontools.run.MpyRunConfigurationFactory
+import dev.micropythontools.run.MpyRunConfigurationType
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.NOTIFICATION_GROUP
 import java.io.File
@@ -36,23 +41,15 @@ import java.io.File
  */
 class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
     override suspend fun execute(project: Project) {
-        println("Migration verification")
-
         var hasMigrated = false
 
         val ideaDirPath = "${project.guessProjectDir()}/.idea".removePrefix("file:")
 
         val ideaDir = LocalFileSystem.getInstance().findFileByPath(ideaDirPath) ?: return
 
-        println(ideaDir)
-
         for (child in ideaDir.children) {
             if (child.isFile) {
-                println("Processing: $child")
-
                 if (child.extension == "iml") {
-                    println("Found with .iml extension: $child")
-
                     var modified = false
 
                     val file = File(child.path)
@@ -86,8 +83,6 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
             }
         }
 
-        println(hasMigrated)
-
         if (hasMigrated) {
             // A MicroPython Tools facet was found, new plugin's support should be turned on
             // to give users a smooth switch to the new plugin settings persistence structure
@@ -97,16 +92,78 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                 Notification(
                     NOTIFICATION_GROUP,
                     "MicroPython Tools: We have updated the plugin's internal logic to a use the " +
-                            "latest IntelliJ API. Unfortunately, as a result of this, old run configurations " +
-                            "are no longer supported, they must be re-created manually. " +
+                            "latest IntelliJ API. But don't worry!. All of your settings have automatically been migrated." +
                             "<br><br>" +
-                            "The rest of your settings have been fully migrated. You can safely ignore the MicroPython Tools facet error if it popped up." +
+                            "You can ignore any MicroPython Tools facet errors if they popped up, we've already taken " +
+                            "care of them for you!" +
                             "<br><br>" +
-                            "We apologize for the inconvenience this might have caused you, " +
-                            "but we assure you that this change was vital to improving this plugin's maintainability.",
-                    NotificationType.WARNING
+                            "Happy coding!",
+                    NotificationType.INFORMATION
                 ), project
             )
+        }
+
+        val runManagerImpls = RunManagerImpl.getInstanceImpl(project)
+
+        runManagerImpls.allConfigurationsList.forEach { configuration ->
+            // Create a temporary element to which the configuration attributes are dumped and write it
+            val element = org.jdom.Element("temporaryConfig")
+            configuration.writeExternal(element)
+
+            // Now the attributes can be checked
+            // They're of no interest and can be skipped if they aren't of the old "MpyConfigurationType"
+            if (element.attributes.toString().contains("MpyConfigurationType")) {
+                val savedName = element.getAttributeValue("name") ?: null
+                val path = element.getAttributeValue("path") ?: null
+                val useFTP = element.getAttributeValue("ftp") == "yes"
+                val runReplOnSuccess = element.getAttributeValue("run-repl-on-success") == "yes"
+                val resetOnSuccess = element.getAttributeValue("reset-on-success") == "yes"
+                val synchronize = element.getAttributeValue("synchronize") == "yes"
+                val excludePaths = element.getAttributeValue("exclude-paths") == "yes"
+                val excludedPaths = mutableListOf<String>()
+
+                element.getChild("excluded-paths")?.let { excludedPathsElement ->
+                    excludedPathsElement.getChildren("path").forEach { pathElement ->
+                        pathElement.getAttributeValue("value")?.let { path ->
+                            excludedPaths.add(path)
+                        }
+                    }
+                }
+
+                val name = when {
+                    !savedName.isNullOrBlank() -> savedName
+
+                    !path.isNullOrBlank() -> "Flash $path"
+
+                    else -> "Flash Project"
+                }
+
+                val factory = MpyRunConfigurationFactory(MpyRunConfigurationType())
+
+                val writtenConfiguration = MpyRunConfiguration(
+                    project,
+                    factory,
+                    name
+                ).apply {
+                    saveOptions(
+                        path ?: "",
+                        runReplOnSuccess,
+                        resetOnSuccess,
+                        useFTP,
+                        synchronize,
+                        excludePaths,
+                        excludedPaths
+                    )
+                }
+
+                val runnerAndConfigSettings = RunManager.getInstance(project).createConfiguration(
+                    writtenConfiguration,
+                    factory
+                )
+
+                runManagerImpls.addConfiguration(runnerAndConfigSettings)
+                runManagerImpls.removeConfiguration(runManagerImpls.findSettings(configuration))
+            }
         }
     }
 }
