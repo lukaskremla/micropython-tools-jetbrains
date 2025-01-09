@@ -29,6 +29,7 @@ class MpyRunConfigurationType : ConfigurationTypeBase(
     IconLoader.getIcon("/icons/pluginIcon.svg", MpyRunConfigurationType::class.java)
 ) {
     init {
+        // Multiple factories can be added here to achieve similar behavior to, for example docker, configurations
         addFactory(MpyRunConfigurationFactory(this))
     }
 
