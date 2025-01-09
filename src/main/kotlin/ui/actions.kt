@@ -55,16 +55,16 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.PathUtilRt.Platform
 import com.intellij.util.asSafely
 import com.jetbrains.python.PythonFileType
+import dev.micropythontools.intellij.communication.MpyTransferService
 import dev.micropythontools.intellij.communication.State
 import dev.micropythontools.intellij.communication.TIMEOUT
 import dev.micropythontools.intellij.communication.extractSingleResponse
-import dev.micropythontools.intellij.run.MpyRunConfiguration
 import dev.micropythontools.intellij.settings.MpyConfigurable
-import util.MpyPythonService
 import dev.micropythontools.intellij.settings.MpySettingsService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
+import util.MpyPythonService
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import kotlin.coroutines.cancellation.CancellationException
@@ -451,8 +451,31 @@ open class UploadFile : DumbAwareAction("Upload Selected to MicroPython Device")
         FileDocumentManager.getInstance().saveAllDocuments()
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         if (files != null) {
-            MpyRunConfiguration.uploadItems(e.project ?: return, files.toSet())
+            e.project?.service<MpyTransferService>()?.uploadItems(files.toSet())
         }
+    }
+}
+
+class DownloadFromDeviceAction : DumbAwareAction("Download File or Folder...") {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override fun update(e: AnActionEvent) {
+        val fileSystemWidget = fileSystemWidget(e.project)
+        if (fileSystemWidget?.state != State.CONNECTED) {
+            e.presentation.isEnabled = false
+        } else {
+            val selectedFile = fileSystemWidget.selectedFiles().firstOrNull()
+            when {
+                selectedFile == null -> with(e.presentation) { text = "Download File or Folder"; isEnabled = false }
+                selectedFile.isRoot -> e.presentation.text = "Download Device Content"
+                selectedFile is DirNode -> e.presentation.text = "Download Folder '${selectedFile.name}'"
+                else -> e.presentation.text = "Download File '${selectedFile.name}'..."
+            }
+        }
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+        e.project?.service<MpyTransferService>()?.downloadDeviceFiles()
     }
 }
 

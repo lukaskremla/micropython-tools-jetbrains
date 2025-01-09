@@ -29,13 +29,13 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
-/**
- * @author elmot
- */
 private const val PASSWORD_PROMPT = "Password:"
 private const val LOGIN_SUCCESS = "WebREPL connected"
 private const val LOGIN_FAIL = "Access denied"
 
+/**
+ * @author elmot
+ */
 open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
 
     protected open fun open() = Unit
