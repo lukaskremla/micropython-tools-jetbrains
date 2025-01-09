@@ -41,7 +41,7 @@ import javax.swing.JPanel
 import javax.swing.table.DefaultTableModel
 
 /**
- * @authors Lukas Kremla, elmot, vlan
+ * @authors Lukas Kremla
  */
 class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<MpyRunConfiguration>() {
     private val pathField = TextFieldWithBrowseButton()
@@ -270,35 +270,40 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
             .addComponent(excludedPathsTablePanel)
             .panel
 
-    override fun applyEditorTo(s: MpyRunConfiguration) {
-        s.path = pathField.text
-        s.runReplOnSuccess = runReplOnSuccess.isSelected
-        s.resetOnSuccess = resetOnSuccess.isSelected
-        s.useFTP = useFTP.isSelected
-        s.synchronize = synchronize.isSelected
-        s.excludePaths = excludePaths.isSelected
-
-        s.excludedPaths = mutableListOf()
+    override fun applyEditorTo(runConfiguration: MpyRunConfiguration) {
+        val excludedPathsList = mutableListOf<String>()
 
         val model = excludedPathsTable.model as DefaultTableModel
         var i = 0
         while (i < model.rowCount) {
-            s.excludedPaths.add(model.getValueAt(i, 0).toString())
+            excludedPathsList.add(model.getValueAt(i, 0).toString())
             i++
         }
+
+        runConfiguration.saveOptions(
+            path = pathField.text,
+            runReplOnSuccess = runReplOnSuccess.isSelected,
+            resetOnSuccess = resetOnSuccess.isSelected,
+            useFTP = useFTP.isSelected,
+            synchronize = synchronize.isSelected,
+            excludePaths = excludePaths.isSelected,
+            excludedPaths = excludedPathsList
+        )
     }
 
-    override fun resetEditorFrom(s: MpyRunConfiguration) {
-        pathField.text = s.path
-        runReplOnSuccess.isSelected = s.runReplOnSuccess
-        resetOnSuccess.isSelected = s.resetOnSuccess
-        useFTP.isSelected = s.useFTP
-        synchronize.isSelected = s.synchronize
-        excludePaths.isSelected = s.excludePaths
+    override fun resetEditorFrom(runConfiguration: MpyRunConfiguration) {
+        val options = runConfiguration.getOptionsObject()
+
+        pathField.text = options.path ?: ""
+        runReplOnSuccess.isSelected = options.runReplOnSuccess
+        resetOnSuccess.isSelected = options.resetOnSuccess
+        useFTP.isSelected = options.useFTP
+        synchronize.isSelected = options.synchronize
+        excludePaths.isSelected = options.excludePaths
 
         val model = excludedPathsTable.model as DefaultTableModel
         model.rowCount = 0
-        s.excludedPaths.forEach { path ->
+        options.excludedPaths.forEach { path ->
             model.addRow(arrayOf(path))
         }
     }

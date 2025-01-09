@@ -35,11 +35,14 @@
                              displayName="MicroPython Tools"
                              instance="dev.micropythontools.intellij.settings.MpyConfigurable"/>
 
+        <configurationType implementation="dev.micropythontools.intellij.run.MpyRunConfigurationType"/>
+
         <localInspection language="Python"
                          displayName="MicroPython requirements inspection"
                          groupName="MicroPython"
                          enabledByDefault="true"
                          implementationClass="dev.micropythontools.intellij.inspections.MpyRequirementsInspection"/>
+
         <notificationGroup displayType="BALLOON" id="MicroPython Tools"/>
 
         <toolWindow factoryClass="ui.MpyToolWindow"
