@@ -20,11 +20,13 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.isFile
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.NOTIFICATION_GROUP
 import java.io.File
@@ -34,12 +36,26 @@ import java.io.File
  */
 class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
     override suspend fun execute(project: Project) {
-        ModuleManager.getInstance(project).modules.forEach { module ->
-            val moduleFile = module.moduleFile
-            if (moduleFile != null) {
-                val file = File(moduleFile.path)
-                if (file.exists()) {
+        println("Migration verification")
+
+        var hasMigrated = false
+
+        val ideaDirPath = "${project.guessProjectDir()}/.idea".removePrefix("file:")
+
+        val ideaDir = LocalFileSystem.getInstance().findFileByPath(ideaDirPath) ?: return
+
+        println(ideaDir)
+
+        for (child in ideaDir.children) {
+            if (child.isFile) {
+                println("Processing: $child")
+
+                if (child.extension == "iml") {
+                    println("Found with .iml extension: $child")
+
                     var modified = false
+
+                    val file = File(child.path)
 
                     @Suppress("DEPRECATION")
                     val document = JDOMUtil.loadDocument(file)
@@ -62,30 +78,35 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                     }
 
                     if (modified) {
+                        hasMigrated = true
                         JDOMUtil.write(document, file)
                         project.save()
-
-                        // A MicroPython Tools facet was found, new plugin's support should be turned on
-                        // to give users a smooth switch to the new plugin settings persistence structure
-                        project.service<MpySettingsService>().state.isPluginEnabled = true
-
-                        Notifications.Bus.notify(
-                            Notification(
-                                NOTIFICATION_GROUP,
-                                "MicroPython Tools: We have updated the plugin's internal logic to a use the " +
-                                        "latest IntelliJ API. Unfortunately, as a result of this, old run configurations " +
-                                        "are no longer supported, they must be re-created manually. " +
-                                        "<br><br>" +
-                                        "The rest of your settings have been fully migrated. " +
-                                        "<br><br>" +
-                                        "We apologize for the inconvenience this might have caused you, " +
-                                        "but we assure you that this change was vital to improving this plugin's maintainability.",
-                                NotificationType.WARNING
-                            ), project
-                        )
                     }
                 }
             }
+        }
+
+        println(hasMigrated)
+
+        if (hasMigrated) {
+            // A MicroPython Tools facet was found, new plugin's support should be turned on
+            // to give users a smooth switch to the new plugin settings persistence structure
+            project.service<MpySettingsService>().state.isPluginEnabled = true
+
+            Notifications.Bus.notify(
+                Notification(
+                    NOTIFICATION_GROUP,
+                    "MicroPython Tools: We have updated the plugin's internal logic to a use the " +
+                            "latest IntelliJ API. Unfortunately, as a result of this, old run configurations " +
+                            "are no longer supported, they must be re-created manually. " +
+                            "<br><br>" +
+                            "The rest of your settings have been fully migrated. You can safely ignore the MicroPython Tools facet error if it popped up." +
+                            "<br><br>" +
+                            "We apologize for the inconvenience this might have caused you, " +
+                            "but we assure you that this change was vital to improving this plugin's maintainability.",
+                    NotificationType.WARNING
+                ), project
+            )
         }
     }
 }
