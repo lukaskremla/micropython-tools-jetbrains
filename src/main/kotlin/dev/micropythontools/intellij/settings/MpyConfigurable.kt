@@ -1,6 +1,5 @@
 /*
- * Copyright 2000-2024 JetBrains s.r.o.
- * Copyright 2024-2025 Lukas Kremla
+ * Copyright 2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,49 +17,48 @@
 package dev.micropythontools.intellij.settings
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.TextFieldWithAutoCompletion
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.asSafely
-import com.intellij.util.ui.UIUtil
-import dev.micropythontools.intellij.nova.ConnectionParameters
-import java.awt.BorderLayout
-import javax.swing.JPanel
+import ui.ConnectionParameters
+import util.MpyPythonService
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 
 /**
- * @author vlan, elmot
+ * @author Lukas Kremla
  */
-class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPanel(BorderLayout()) {
-    private val parameters = MpySettingsService.getInstance(module.project).let { settings ->
-        ConnectionParameters(
-            usingUart = settings.state.usingUart,
-            portName = settings.state.portName ?: "",
-            webReplUrl = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL,
-            webReplPassword = "",
-            ssid = "",
-            wifiPassword = "",
-            activeStubsPackage = settings.state.activeStubsPackage,
-        )
-    }
+class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "MicroPython Tools"), DumbAware {
+    private val settings = project.service<MpySettingsService>()
+    private val pythonService = project.service<MpyPythonService>()
 
-    private val settingsPanel: DialogPanel
+    private lateinit var settingsPanel: DialogPanel
+    private val PASSWORD_LENGTH = 4..9
 
-    init {
-        border = IdeBorderFactory.createEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
-        runWithModalProgressBlocking(module.project, "Retrieving credentials...") {
-            parameters.webReplPassword = module.project.service<MpySettingsService>().retrieveWebReplPassword()
+    private val parameters = ConnectionParameters(
+        usingUart = settings.state.usingUart,
+        portName = settings.state.portName ?: "",
+        webReplUrl = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL,
+        webReplPassword = "",
+        ssid = "",
+        wifiPassword = "",
+        activeStubsPackage = settings.state.activeStubsPackage,
+    )
 
-            val wifiCredentials = module.project.service<MpySettingsService>().retrieveWifiCredentials()
+    override fun createPanel(): DialogPanel {
+        runWithModalProgressBlocking(project, "Retrieving credentials...") {
+            parameters.webReplPassword = project.service<MpySettingsService>().retrieveWebReplPassword()
+
+            val wifiCredentials = project.service<MpySettingsService>().retrieveWifiCredentials()
 
             parameters.ssid = wifiCredentials.userName ?: ""
             parameters.wifiPassword = wifiCredentials.getPasswordAsString() ?: ""
@@ -71,9 +69,9 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
             portSelectModel.add(parameters.portName)
         }
 
-        refreshAPortSelectModel(module, portSelectModel)
+        refreshAPortSelectModel(project, portSelectModel)
 
-        val availableStubs = module.mpyFacet?.getAvailableStubs() ?: emptyList()
+        val availableStubs = pythonService.getAvailableStubs()
 
         settingsPanel = panel {
             group("Connection") {
@@ -91,9 +89,9 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
                             .validationInfo { comboBox ->
                                 val portName = comboBox.selectedItem.asSafely<String>()
 
-                                val isPyserialInstalled = module.mpyFacet?.isPyserialInstalled()
+                                val isPyserialInstalled = pythonService.isPyserialInstalled()
 
-                                if (module.mpyFacet?.findValidPyhonSdk() == null) {
+                                if (pythonService.findValidPyhonSdk() == null) {
                                     ValidationInfo("MicroPython Tools plugin requires a valid Python 3.10+ SDK")
                                 } else if (isPyserialInstalled == false) {
                                     ValidationInfo("Required Python packages are missing. Check the tool window for more info")
@@ -112,7 +110,7 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
                                 isEditable = true
                                 addPopupMenuListener(object : PopupMenuListener {
                                     override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
-                                        refreshAPortSelectModel(module, portSelectModel)
+                                        refreshAPortSelectModel(project, portSelectModel)
                                     }
 
                                     override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
@@ -167,7 +165,7 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
                 row {
                     cell(
                         TextFieldWithAutoCompletion(
-                            module.project,
+                            project,
                             object : TextFieldWithAutoCompletionListProvider<String>(availableStubs) {
                                 override fun getItems(prefix: String?, cached: Boolean, parameters: CompletionParameters?): MutableCollection<String> {
                                     return if (prefix.isNullOrEmpty()) {
@@ -208,41 +206,34 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
             }
 
         }.apply {
-            registerValidators(disposable)
+            registerValidators(disposable!!)
             validateAll()
         }
 
-        add(settingsPanel, BorderLayout.CENTER)
+        return settingsPanel
     }
 
-    fun isModified(): Boolean {
-        return settingsPanel.isModified()
+    override fun isModified(): Boolean {
+        return super.isModified()
     }
 
-    fun apply() {
-        settingsPanel.apply()
-        val settings = MpySettingsService.getInstance(module.project)
+
+    override fun apply() {
+        super.apply()
 
         settings.state.usingUart = parameters.usingUart
         settings.state.portName = parameters.portName
         settings.state.webReplUrl = parameters.webReplUrl
         settings.state.activeStubsPackage = parameters.activeStubsPackage
 
-        runWithModalProgressBlocking(module.project, "Saving credentials...") {
-            module.project.service<MpySettingsService>()
-                .saveWebReplPassword(parameters.webReplPassword)
-
-            module.project.service<MpySettingsService>()
-                .saveWifiCredentials(parameters.ssid, parameters.wifiPassword)
+        runWithModalProgressBlocking(project, "Saving credentials...") {
+            settings.saveWebReplPassword(parameters.webReplPassword)
+            settings.saveWifiCredentials(parameters.ssid, parameters.wifiPassword)
         }
     }
 
-    fun reset() {
-        settingsPanel.reset()
-    }
-
-    fun refreshAPortSelectModel(module: Module, portSelectModel: MutableCollectionComboBoxModel<String>) {
-        val ports = module.mpyFacet?.listSerialPorts(module.project) ?: emptyList()
+    fun refreshAPortSelectModel(project: Project, portSelectModel: MutableCollectionComboBoxModel<String>) {
+        val ports = pythonService.listSerialPorts(project)
 
         var i = 0
         while (i < portSelectModel.size) {
@@ -264,5 +255,3 @@ class MpySettingsPanel(private val module: Module, disposable: Disposable) : JPa
         }
     }
 }
-
-private val PASSWORD_LENGTH = 4..9

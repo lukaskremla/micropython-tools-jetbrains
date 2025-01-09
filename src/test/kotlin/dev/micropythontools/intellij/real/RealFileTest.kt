@@ -1,8 +1,8 @@
 package dev.micropythontools.intellij.real
 
-import dev.micropythontools.intellij.nova.ConnectionParameters
-import dev.micropythontools.intellij.nova.MpyClient
-import dev.micropythontools.intellij.nova.MpyCommForTest
+import ui.ConnectionParameters
+import dev.micropythontools.intellij.communication.MpyClient
+import dev.micropythontools.intellij.communication.MpyCommForTest
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.AfterEach

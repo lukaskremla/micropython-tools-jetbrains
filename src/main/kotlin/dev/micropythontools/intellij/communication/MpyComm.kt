@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.intellij.nova
+package dev.micropythontools.intellij.communication
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -31,6 +31,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.NonNls
+import ui.ConnectionParameters
+import ui.NOTIFICATION_GROUP
 import java.io.Closeable
 import java.io.IOException
 import java.io.PipedReader
@@ -451,7 +453,7 @@ except OSError as e:
     }
 
     protected open fun createClient(): MpyClient {
-        return if (connectionParameters.usingUart) MpySerialMpyClient(this) else MpyWebSocketClient(this)
+        return if (connectionParameters.usingUart) MpySerialClient(this) else MpyWebSocketClient(this)
     }
 
     @Throws(IOException::class)

@@ -1,5 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
+ * Copyright 2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,24 +22,24 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IconLoader
 import com.jetbrains.python.run.PythonConfigurationFactoryBase
-import dev.micropythontools.intellij.settings.LOGO
 import javax.swing.Icon
 
 /**
  * @author Mikhail Golubev
  */
 class MpyConfigurationType : ConfigurationType {
-    internal val factory = object : PythonConfigurationFactoryBase(this) {
+    private val factory = object : PythonConfigurationFactoryBase(this) {
         override fun createTemplateConfiguration(project: Project): RunConfiguration =
             MpyRunConfiguration(project, this)
 
         override fun getId(): String = "MicroPython Tools"
     }
 
-    override fun getIcon(): Icon = LOGO
+    override fun getIcon(): Icon = IconLoader.getIcon("/icons/micropython.svg", MpyConfigurationType::class.java)
 
-    override fun getConfigurationTypeDescription(): String = "MicroPython run configuration"
+    override fun getConfigurationTypeDescription(): String = "MicroPython Tools run configuration"
 
     override fun getId(): String = "MpyConfigurationType"
 

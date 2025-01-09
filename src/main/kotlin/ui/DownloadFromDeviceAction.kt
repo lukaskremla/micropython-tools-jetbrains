@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.intellij.nova
+package ui
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.platform.util.progress.RawProgressReporter
+import dev.micropythontools.intellij.communication.State
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

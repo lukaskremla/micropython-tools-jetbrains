@@ -1,6 +1,6 @@
 package dev.micropythontools.intellij.real
 
-import dev.micropythontools.intellij.nova.ConnectionParameters
+import ui.ConnectionParameters
 import org.junit.jupiter.api.Disabled
 
 private const val PORT_NAME = "COM11"
