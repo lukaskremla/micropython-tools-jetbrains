@@ -17,7 +17,7 @@
 
 @file:Suppress("UnstableApiUsage")
 
-package dev.micropythontools.intellij.nova
+package ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
@@ -55,10 +55,13 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.PathUtilRt.Platform
 import com.intellij.util.asSafely
 import com.jetbrains.python.PythonFileType
+import dev.micropythontools.intellij.communication.State
+import dev.micropythontools.intellij.communication.TIMEOUT
+import dev.micropythontools.intellij.communication.extractSingleResponse
 import dev.micropythontools.intellij.run.MpyRunConfiguration
-import dev.micropythontools.intellij.settings.MpyProjectConfigurable
+import dev.micropythontools.intellij.settings.MpyConfigurable
+import util.MpyPythonService
 import dev.micropythontools.intellij.settings.MpySettingsService
-import dev.micropythontools.intellij.settings.mpyFacet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
@@ -170,7 +173,7 @@ fun <T> performReplAction(
 
                 try {
                     if (connectionRequired) {
-                        doConnect(fileSystemWidget, reporter)
+                        fileSystemWidget.doConnect(reporter)
                     }
                     result = action(fileSystemWidget, reporter)
                 } catch (e: TimeoutCancellationException) {
@@ -225,6 +228,39 @@ fun <T> performReplAction(
         }
     }
     return result
+}
+
+class ConnectAction(text: String = "Connect") : ReplAction(
+    text,
+    false,
+    false,
+    "Connection attempt cancelled"
+) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override val actionDescription: String = "Connect"
+
+    override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
+        fileSystemWidget.doConnect(reporter)
+    }
+
+    override fun update(e: AnActionEvent) {
+        val pythonService = e.project?.service<MpyPythonService>()
+
+        val isPyserialInstalled = pythonService?.isPyserialInstalled()
+
+        if (pythonService != null && isPyserialInstalled == true) {
+            e.presentation.isEnabledAndVisible = when (fileSystemWidget(e)?.state) {
+                State.DISCONNECTING, State.DISCONNECTED, null -> true
+                State.CONNECTING, State.CONNECTED, State.TTY_DETACHED -> false
+            }
+        } else {
+            e.presentation.isEnabled = false
+        }
+
+        // utilize this update method to ensure accurate FileSystemWidget empty text
+        fileSystemWidget(e.project)?.updateEmptyText()
+    }
 }
 
 class Refresh : ReplAction("Refresh", false, false) { //todo optimize
@@ -380,11 +416,7 @@ open class UploadFile : DumbAwareAction("Upload Selected to MicroPython Device")
             var fileCount = 0
 
             for (file in files.iterator()) {
-                if (file == null || !file.isInLocalFileSystem || ModuleUtil.findModuleForFile(
-                        file,
-                        project
-                    )?.mpyFacet == null
-                ) {
+                if (file == null || !file.isInLocalFileSystem || ModuleUtil.findModuleForFile(file, project) == null) {
                     return
                 }
 
@@ -427,7 +459,7 @@ open class UploadFile : DumbAwareAction("Upload Selected to MicroPython Device")
 class OpenSettingsAction : DumbAwareAction("Settings") {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyProjectConfigurable::class.java)
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
     }
 }
 

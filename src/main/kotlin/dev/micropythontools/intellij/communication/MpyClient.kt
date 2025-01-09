@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.intellij.settings
-
-import com.intellij.application.options.ModuleAwareProjectConfigurable
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.Project
+package dev.micropythontools.intellij.communication
 
 /**
- * @author vlan
+ * @author elmot
  */
-class MpyProjectConfigurable(project: Project) : ModuleAwareProjectConfigurable<Configurable>(project, "MicroPython", null), DumbAware {
-    override fun createModuleConfigurable(module: Module?) = MpyModuleConfigurable(module!!)
+interface MpyClient {
+    fun send(string: String)
+    fun hasPendingData(): Boolean
+    fun close()
+    suspend fun connect(progressIndicatorText: String): MpyClient
+    fun closeBlocking()
+    fun sendPing()
+
+    val isConnected: Boolean
 }

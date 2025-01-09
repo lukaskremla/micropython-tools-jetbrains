@@ -1,6 +1,6 @@
 package dev.micropythontools.intellij.real
 
-import dev.micropythontools.intellij.nova.*
+import dev.micropythontools.intellij.communication.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking

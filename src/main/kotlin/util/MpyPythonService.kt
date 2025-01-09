@@ -1,6 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
- * Copyright 2024-2025 Lukas Kremla
+ * Copyright 2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,20 @@
 
 @file:Suppress("DEPRECATION", "REMOVAL")
 
-package dev.micropythontools.intellij.settings
+package util
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.facet.Facet
-import com.intellij.facet.FacetManager
-import com.intellij.facet.FacetType
 import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -43,26 +41,24 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
-import com.jetbrains.python.facet.FacetLibraryConfigurator
-import com.jetbrains.python.facet.LibraryContributingFacet
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.statistics.version
+import dev.micropythontools.intellij.settings.MpyConfigurable
+import dev.micropythontools.intellij.settings.MpySettingsService
 import java.io.File
 import javax.swing.JComponent
 
 /**
- * @author vlan, Lukas Kremla
+ * @author Lukas Kremla
  */
-class MpyFacet(
-    facetType: FacetType<out Facet<*>, *>, module: Module, name: String,
-    configuration: MpyFacetConfiguration, underlyingFacet: Facet<*>?
-) : LibraryContributingFacet<MpyFacetConfiguration>(facetType, module, name, configuration, underlyingFacet), DumbAware {
-
+@Service(Service.Level.PROJECT)
+class MpyPythonService(private val project: Project) : DumbAware {
     companion object {
+
         private const val PLUGIN_ID = "micropython-tools-jetbrains"
 
         val pythonScriptsPath: String
@@ -79,24 +75,22 @@ class MpyFacet(
                 ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
     }
 
-    override fun initFacet() {
-        updateLibrary()
-    }
+    private val module = ModuleManager.getInstance(project).modules.first()
 
-    override fun updateLibrary() {
-        val settings = module.project.service<MpySettingsService>()
+    fun updateLibrary() {
+        val settings = project.service<MpySettingsService>()
         val activeStubPackage = settings.state.activeStubsPackage
         val availableStubs = getAvailableStubs()
 
-        DumbService.getInstance(module.project).smartInvokeLater {
-            runWithModalProgressBlocking(module.project, "Updating libraries") {
-                val workspaceModel = WorkspaceModel.getInstance(module.project)
+        DumbService.getInstance(project).smartInvokeLater {
+            runWithModalProgressBlocking(project, "Updating libraries") {
+                val workspaceModel = WorkspaceModel.getInstance(project)
                 val currentSnapshot = workspaceModel.currentSnapshot
                 val libraryTableId = LibraryTableId.ProjectLibraryTableId
 
                 val libraryEntity = if (activeStubPackage != null && availableStubs.contains(activeStubPackage)) {
                     val libraryEntitySource =
-                        LegacyBridgeJpsEntitySourceFactory.getInstance(module.project)
+                        LegacyBridgeJpsEntitySourceFactory.getInstance(project)
                             .createEntitySourceForProjectLibrary(null)
 
                     val libraryPathUrl = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl("file://$stubsPath/$activeStubPackage")
@@ -138,14 +132,6 @@ class MpyFacet(
         }
     }
 
-    override fun removeLibrary() {
-        DumbService.getInstance(module.project).smartInvokeLater {
-            ApplicationManager.getApplication().runWriteAction {
-                FacetLibraryConfigurator.detachPythonLibrary(module, "MicroPython Tools")
-            }
-        }
-    }
-
     fun getAvailableStubs(): List<String> {
         return File(stubsPath).listFiles()?.filter { it.isDirectory }
             ?.sortedBy { it }
@@ -173,7 +159,7 @@ class MpyFacet(
     }
 
     fun checkValid(): ValidationResult {
-        val settings = module.project.service<MpySettingsService>()
+        val settings = project.service<MpySettingsService>()
         val activeStubsPackage = settings.state.activeStubsPackage
 
         if (findValidPyhonSdk() == null) {
@@ -186,7 +172,7 @@ class MpyFacet(
                     object : FacetConfigurationQuickFix("Configure") {
                         override fun run(place: JComponent?) {
                             ApplicationManager.getApplication().invokeLater {
-                                ProjectSettingsService.getInstance(module.project).openModuleLibrarySettings(module)
+                                ProjectSettingsService.getInstance(project).openModuleLibrarySettings(module)
                             }
                         }
                     }
@@ -197,7 +183,7 @@ class MpyFacet(
                     object : FacetConfigurationQuickFix("Configure") {
                         override fun run(place: JComponent?) {
                             ApplicationManager.getApplication().invokeLater {
-                                ShowSettingsUtil.getInstance().showSettingsDialog(module.project, "ProjectStructure")
+                                ShowSettingsUtil.getInstance().showSettingsDialog(project, "ProjectStructure")
                             }
                         }
                     }
@@ -222,7 +208,7 @@ class MpyFacet(
                 object : FacetConfigurationQuickFix("Change Settings") {
                     override fun run(place: JComponent?) {
                         ApplicationManager.getApplication().invokeLater {
-                            ShowSettingsUtil.getInstance().showSettingsDialog(module.project, MpyProjectConfigurable::class.java)
+                            ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
                         }
                     }
                 }
@@ -232,7 +218,7 @@ class MpyFacet(
         return ValidationResult.OK
     }
 
-    val pythonSdkPath: String?
+    private val pythonSdkPath: String?
         get() = PythonSdkUtil.findPythonSdk(module)?.homePath
 
     fun listSerialPorts(project: Project): List<String> {
@@ -282,6 +268,3 @@ class MpyFacet(
         sdk?.let { PyPackageManagerUI(module.project, it, null).install(requirements, emptyList()) }
     }
 }
-
-val Module.mpyFacet: MpyFacet?
-    get() = FacetManager.getInstance(this).getFacetByType(ID)

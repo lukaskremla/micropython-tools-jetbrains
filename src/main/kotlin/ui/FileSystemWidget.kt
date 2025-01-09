@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.intellij.nova
+package ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ActivityTracker
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -33,14 +34,14 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.PopupHandler
@@ -59,12 +60,13 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
-import dev.micropythontools.intellij.settings.DEFAULT_WEBREPL_URL
-import dev.micropythontools.intellij.settings.MpyProjectConfigurable
-import dev.micropythontools.intellij.settings.MpySettingsService
-import dev.micropythontools.intellij.settings.mpyFacet
+import dev.micropythontools.intellij.communication.*
+import dev.micropythontools.intellij.communication.LONG_TIMEOUT
+import dev.micropythontools.intellij.communication.TIMEOUT
+import dev.micropythontools.intellij.settings.*
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
+import util.MpyPythonService
 import java.awt.BorderLayout
 import java.io.IOException
 import java.util.*
@@ -114,7 +116,9 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
     private val comm: MpyComm = MpyComm().also { Disposer.register(newDisposable, it) }
 
-    private val module = project.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+    private val settings = project.service<MpySettingsService>()
+
+    private val pythonService = project.service<MpyPythonService>()
 
     val state: State
         get() = comm.state
@@ -124,11 +128,11 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     fun updateEmptyText() {
         tree.emptyText.clear()
 
-        val isPythonSdkValid = module?.mpyFacet?.findValidPyhonSdk() != null
+        val isPythonSdkValid = pythonService.findValidPyhonSdk() != null
 
-        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled()
+        val isPyserialInstalled = pythonService.isPyserialInstalled()
 
-        if (module?.mpyFacet != null && isPythonSdkValid && isPyserialInstalled == true) {
+        if (isPythonSdkValid && isPyserialInstalled == true) {
             tree.emptyText.appendText("No board is connected")
             tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 performReplAction(
@@ -137,31 +141,30 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                     "Connecting...",
                     false,
                     "Connection attempt cancelled",
-                    { fileSystemWidget, reporter ->
-                        doConnect(fileSystemWidget, reporter)
+                    { _, reporter ->
+                        doConnect(reporter)
                     }
                 )
             }
-        } else if (module?.mpyFacet == null) {
+        } else if (settings.state.isPluginEnabled) {
             tree.emptyText.appendText("MicroPython support is disabled")
             tree.emptyText.appendLine("Change settings...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyProjectConfigurable::class.java)
+                ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
             }
         } else if (!isPythonSdkValid) {
             tree.emptyText.appendText("No Python interpreter is configured")
             tree.emptyText.appendLine("Configure...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.modules.java")) ||
-                    PluginManager.isPluginInstalled(PluginId.getId("com.intellij.java"))
+                if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion"))
                 ) {
-                    ProjectSettingsService.getInstance(module.project).openModuleLibrarySettings(module)
+                    //
                 } else {
-                    ShowSettingsUtil.getInstance().showSettingsDialog(module.project, "ProjectStructure")
+                    ShowSettingsUtil.getInstance().showSettingsDialog(project, "ProjectStructure")
                 }
             }
         } else if (isPyserialInstalled == false) {
             tree.emptyText.appendText("Missing required Python packages")
             tree.emptyText.appendLine("Install...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                module.mpyFacet?.installRequiredPythonPackages()
+                pythonService.installRequiredPythonPackages()
             }
         } else {
             tree.emptyText.appendText("Waiting for python library manager initialization...")
@@ -246,8 +249,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         val scriptFileName = "synchronize_and_skip.py"
 
-        val synchronizeAndSkipScript = module?.mpyFacet?.retrieveMpyScriptAsString(scriptFileName)
-            ?: throw Exception("Failed to find: $scriptFileName")
+        val synchronizeAndSkipScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
 
         val formattedScript = synchronizeAndSkipScript.format(
             if (shouldSynchronize) "True" else "False",
@@ -296,8 +298,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         val scriptFileName = "initialize_device.py"
 
-        val initializeDeviceScript = module?.mpyFacet?.retrieveMpyScriptAsString(scriptFileName)
-            ?: throw Exception("Failed to find: $scriptFileName")
+        val initializeDeviceScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
 
         val formattedScript = initializeDeviceScript.format(
             "($year, $month, $day, $hour, $minute, $second, 0, 0)"
@@ -305,7 +306,73 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         // Try to sync the RTC, temporary feature, might not work on all boards and port versions
         blindExecute(TIMEOUT, formattedScript)
+    }
 
+    suspend fun doConnect(reporter: RawProgressReporter) {
+        if (state == State.CONNECTED) return
+
+        val settings = MpySettingsService.getInstance(project)
+
+        reporter.text("Connecting to ${settings.state.portName}")
+        reporter.fraction(null)
+
+        var msg: String? = null
+        val connectionParameters: ConnectionParameters?
+        if (settings.state.usingUart) {
+            val portName = settings.state.portName ?: ""
+            if (portName.isBlank()) {
+                msg = "No port is selected"
+                connectionParameters = null
+            } else {
+                connectionParameters = ConnectionParameters(portName)
+            }
+
+        } else {
+            val url = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL
+            var password = ""
+
+            runWithModalProgressBlocking(project, "Retrieving credentials...") {
+                password = project.service<MpySettingsService>().retrieveWebReplPassword()
+            }
+
+            msg = messageForBrokenUrl(url)
+            if (password.isBlank()) {
+                msg = "Empty password"
+                connectionParameters = null
+            } else {
+                connectionParameters = ConnectionParameters(url, password)
+            }
+        }
+        if (msg != null) {
+            withContext(Dispatchers.EDT) {
+                val result = Messages.showIdeaMessageDialog(
+                    project,
+                    msg,
+                    "Cannot Connect",
+                    arrayOf("OK", "Settings..."),
+                    1,
+                    AllIcons.General.ErrorDialog,
+                    null
+                )
+                if (result == 1) {
+                    ShowSettingsUtil.getInstance()
+                        .showSettingsDialog(project, MpyConfigurable::class.java)
+                }
+            }
+        } else {
+            if (connectionParameters != null) {
+                setConnectionParams(connectionParameters)
+                connect()
+                try {
+                    if (state == State.CONNECTED) {
+                        initializeDevice()
+                        initialRefresh(reporter)
+                    }
+                } finally {
+                    ActivityTracker.getInstance().inc()
+                }
+            }
+        }
     }
 
     suspend fun refresh(reporter: RawProgressReporter) = refresh(reporter, isInitialRefresh = false)
@@ -322,8 +389,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         val scriptFileName = "scan_file_system.py"
 
-        val fileSystemScanScript = module?.mpyFacet?.retrieveMpyScriptAsString(scriptFileName)
-            ?: throw Exception("Failed to find: $scriptFileName")
+        val fileSystemScanScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
 
         try {
             dirList = blindExecute(LONG_TIMEOUT, fileSystemScanScript).extractSingleResponse()

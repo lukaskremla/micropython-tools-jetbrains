@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.intellij.nova
+package dev.micropythontools.intellij.communication
 
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.util.progress.withProgressText

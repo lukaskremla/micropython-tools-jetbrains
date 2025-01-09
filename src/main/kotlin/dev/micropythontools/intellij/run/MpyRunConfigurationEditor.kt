@@ -1,6 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
- * Copyright 2024 Lukas Kremla
+ * Copyright 2024-2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,9 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.table.DefaultTableModel
 
-
+/**
+ * @authors Lukas Kremla, elmot, vlan
+ */
 class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<MpyRunConfiguration>() {
     private val pathField = TextFieldWithBrowseButton()
     private val resetOnSuccess = CheckBox("Reset on success", selected = false)

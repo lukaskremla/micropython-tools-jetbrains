@@ -1,4 +1,4 @@
-package dev.micropythontools.intellij.nova
+package dev.micropythontools.intellij.communication
 
 import org.junit.jupiter.api.fail
 

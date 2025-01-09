@@ -1,6 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
- * Copyright 2024 Lukas Kremla
+ * Copyright 2024-2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.net.URI
 import java.net.URISyntaxException
 
 /**
- * @author elmot, Lukas Kremla
+ * @author Lukas Kremla, elmot
  */
 const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
 private const val WIFI_KEY = "WiFi"

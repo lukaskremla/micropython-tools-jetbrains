@@ -1,6 +1,6 @@
 package dev.micropythontools.intellij.real
 
-import dev.micropythontools.intellij.nova.ConnectionParameters
+import ui.ConnectionParameters
 import org.junit.jupiter.api.Disabled
 
 private const val URL = "ws://192.168.50.68:8266"

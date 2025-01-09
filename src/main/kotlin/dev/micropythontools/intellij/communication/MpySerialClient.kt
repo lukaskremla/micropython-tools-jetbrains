@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.intellij.nova
+package dev.micropythontools.intellij.communication
 
 import com.intellij.openapi.diagnostic.thisLogger
 import jssc.SerialPort
@@ -27,10 +27,10 @@ import java.nio.charset.StandardCharsets
 /**
  * @author elmot
  */
-class MpySerialMpyClient(private val comm: MpyComm) : MpyClient {
+class MpySerialClient(private val comm: MpyComm) : MpyClient {
     private val port = SerialPort(comm.connectionParameters.portName)
     override fun send(string: String) {
-        this@MpySerialMpyClient.thisLogger().debug("< $string")
+        this@MpySerialClient.thisLogger().debug("< $string")
         port.writeString(string)
     }
 
@@ -43,12 +43,12 @@ class MpySerialMpyClient(private val comm: MpyComm) : MpyClient {
             val count = event.eventValue
             val s = port.readBytes(count).toString(StandardCharsets.UTF_8)
             comm.dataReceived(s)
-            this@MpySerialMpyClient.thisLogger().debug("> $s")
+            this@MpySerialClient.thisLogger().debug("> $s")
         }
     }
 
     @Throws(IOException::class)
-    override suspend fun connect(progressIndicatorText: String): MpySerialMpyClient {
+    override suspend fun connect(progressIndicatorText: String): MpySerialClient {
         try {
             port.openPort()
             port.addEventListener(listener, SerialPort.MASK_RXCHAR)

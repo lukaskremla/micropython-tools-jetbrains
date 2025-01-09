@@ -1,7 +1,7 @@
 package dev.micropythontools.intellij.real
 
-import dev.micropythontools.intellij.nova.ConnectionParameters
-import dev.micropythontools.intellij.nova.MpyCommForTest
+import ui.ConnectionParameters
+import dev.micropythontools.intellij.communication.MpyCommForTest
 import org.junit.jupiter.api.Disabled
 
 private const val PORT_NAME = "COM2"

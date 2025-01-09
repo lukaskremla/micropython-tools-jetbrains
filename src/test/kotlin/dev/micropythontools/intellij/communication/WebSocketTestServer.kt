@@ -1,4 +1,4 @@
-package dev.micropythontools.intellij.nova
+package dev.micropythontools.intellij.communication
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking

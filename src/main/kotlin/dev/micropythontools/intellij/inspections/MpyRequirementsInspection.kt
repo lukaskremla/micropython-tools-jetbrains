@@ -18,10 +18,11 @@ package dev.micropythontools.intellij.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.facet.ui.FacetConfigurationQuickFix
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import dev.micropythontools.intellij.settings.mpyFacet
+import util.MpyPythonService
 
 /**
  * @author vlan
@@ -29,8 +30,8 @@ import dev.micropythontools.intellij.settings.mpyFacet
 class MpyRequirementsInspection : LocalInspectionTool() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
-        val facet = module.mpyFacet ?: return null
-        val result = facet.checkValid()
+        val pythonService = module.project.service<MpyPythonService>()
+        val result = pythonService.checkValid()
         if (result.isOk) return null
 
         val facetFix: FacetConfigurationQuickFix? = result.quickFix

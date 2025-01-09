@@ -1,9 +1,10 @@
-package dev.micropythontools.intellij.nova
+package dev.micropythontools.intellij.communication
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
+import ui.ConnectionParameters
 import java.net.ConnectException
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
@@ -38,7 +39,7 @@ class TestConnect {
         test { comm ->
             comm.setConnectionParams(ConnectionParameters("ws://localhost:$tcpPort", "pa55wd"))
             comm.connect()
-            assertEquals(State.CONNECTED, comm.state )
+            assertEquals(State.CONNECTED, comm.state)
             assertFalse(comm.isTtySuspended())
         }
     }
@@ -83,13 +84,13 @@ class TestConnect {
         test { comm ->
             comm.setConnectionParams(ConnectionParameters("ws://localhost:$tcpPort", "passwd"))
             comm.connect()
-            assertEquals(State.CONNECTED, comm.state )
+            assertEquals(State.CONNECTED, comm.state)
             assertFalse(comm.isTtySuspended())
             val responseA = comm.blindExecute(LONG_TIMEOUT, "print('Test me')")
             assertEquals("Test me", responseA.extractSingleResponse())
             val responseB = comm.blindExecute(LONG_TIMEOUT, "print('Test me 2')")
             assertEquals("Test me 2", responseB.extractSingleResponse())
-            assertEquals(State.CONNECTED, comm.state )
+            assertEquals(State.CONNECTED, comm.state)
             assertFalse(comm.isTtySuspended())
             delay(300)
         }
@@ -114,10 +115,10 @@ class TestConnect {
         test { comm ->
             comm.setConnectionParams(ConnectionParameters("ws://localhost:$tcpPort", "passwd"))
             comm.connect()
-            assertEquals(State.CONNECTED, comm.state )
+            assertEquals(State.CONNECTED, comm.state)
             assertFalse(comm.isTtySuspended())
             comm.instantRun("print('Test me')\nprint('Test me 2')")
-            assertEquals(State.CONNECTED, comm.state )
+            assertEquals(State.CONNECTED, comm.state)
             assertFalse(comm.isTtySuspended())
             assertTrue(comm.ttyConnector.isConnected)
             val buf = CharArray(100)
@@ -150,7 +151,7 @@ class TestConnect {
         test { comm ->
             comm.setConnectionParams(ConnectionParameters("ws://localhost:$tcpPort", "passwd"))
             comm.connect()
-            assertEquals(State.CONNECTED, comm.state )
+            assertEquals(State.CONNECTED, comm.state)
             assertFalse(comm.isTtySuspended())
             val response = comm.blindExecute(LONG_TIMEOUT, "print('Test me 0')", "print('Test me 1')")
             val expected = listOf(
@@ -158,7 +159,7 @@ class TestConnect {
                 SingleExecResponse("Test me 1", ""),
             )
             assertIterableEquals(expected, response)
-            assertEquals(State.CONNECTED, comm.state )
+            assertEquals(State.CONNECTED, comm.state)
             assertFalse(comm.isTtySuspended())
             delay(300)
         }

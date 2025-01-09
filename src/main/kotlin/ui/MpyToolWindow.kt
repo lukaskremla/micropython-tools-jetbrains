@@ -15,16 +15,15 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.intellij.nova
+package ui
 
-import com.intellij.facet.FacetManager
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CheckboxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
-import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -35,8 +34,9 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TtyConnector
+import dev.micropythontools.intellij.communication.State
+import util.MpyPythonService
 import dev.micropythontools.intellij.settings.MpySettingsService
-import dev.micropythontools.intellij.settings.mpyFacet
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import javax.swing.JComponent
 
@@ -93,11 +93,11 @@ class AutoClearAction :
     override fun update(e: AnActionEvent) {
         super.update(e)
 
-        val module = e.project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+        val pythonService = e.project?.service<MpyPythonService>()
 
-        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled() // Facet might not be loaded yet
+        val isPyserialInstalled = pythonService?.isPyserialInstalled()
 
-        e.presentation.isEnabled = module?.mpyFacet != null && isPyserialInstalled == true
+        e.presentation.isEnabled = pythonService != null && isPyserialInstalled == true
     }
 
     override fun isSelected(e: AnActionEvent): Boolean = isAutoClearEnabled
@@ -121,7 +121,7 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val project = e.project
 
-        val module = project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+        val pythonService = e.project?.service<MpyPythonService>()
 
         val settings = project?.let { MpySettingsService.getInstance(it) }
 
@@ -135,10 +135,10 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
             e.presentation.text = if (url == "") "No URL Selected" else url
         }
 
-        val isPyserialInstalled = module?.mpyFacet?.isPyserialInstalled()
+        val isPyserialInstalled = pythonService?.isPyserialInstalled()
 
         e.presentation.isEnabled =
-            (module?.mpyFacet != null) &&
+            (pythonService != null) &&
                     isPyserialInstalled == true &&
                     (fileSystemWidget(project)?.state == State.DISCONNECTED
                             || fileSystemWidget(project)?.state == State.DISCONNECTING)
@@ -149,23 +149,19 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val project = DataManager.getInstance().getDataContext(button).getData(CommonDataKeys.PROJECT)
 
-        val module = project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+        val pythonService = project?.service<MpyPythonService>()
 
         val settings = project?.let { MpySettingsService.getInstance(it) }
 
-        val portListing = module?.mpyFacet?.listSerialPorts(project)
+        val portListing = pythonService?.listSerialPorts(project)
 
         portListing?.forEach { portName ->
             val action = object : AnAction(portName) {
                 override fun actionPerformed(e: AnActionEvent) {
-                    module.mpyFacet?.let {
-                        settings?.state?.usingUart = true
-                        settings?.state?.portName = portName
+                    settings?.state?.usingUart = true
+                    settings?.state?.portName = portName
 
-                        FacetManager.getInstance(module).facetConfigurationChanged(it)
-
-                        project.save()
-                    }
+                    project.save()
                 }
             }
             group.add(action)
