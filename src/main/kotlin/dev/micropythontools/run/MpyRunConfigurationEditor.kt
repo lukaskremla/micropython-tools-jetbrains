@@ -155,6 +155,7 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
                     val normalizedPath = normalizePath(textField.text)
 
                     model.addRow(arrayOf(normalizedPath))
+                    sortExcludedPathsTableModel(model)
                     dialog.dialogWrapper.close(0)
                 } else {
                     dialog.setErrorText(validationResult)
@@ -202,6 +203,7 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
                     val normalizedPath = normalizePath(textField.text)
 
                     model.setValueAt(normalizedPath, selectedRow, 0)
+                    sortExcludedPathsTableModel(model)
                     dialog.dialogWrapper.close(0)
                 } else {
                     dialog.setErrorText(validationResult)
@@ -306,5 +308,25 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
         options.excludedPaths.forEach { path ->
             model.addRow(arrayOf(path))
         }
+
+        sortExcludedPathsTableModel(model)
+    }
+
+    private fun sortExcludedPathsTableModel(model: DefaultTableModel) {
+        val excludedPaths = mutableListOf<String>()
+
+        var i = 0
+        while (i < model.rowCount) {
+            excludedPaths.add(model.getValueAt(i, 0).toString())
+            i++
+        }
+
+        model.rowCount = 0
+
+        excludedPaths
+            .sortedBy { it }
+            .forEach { path ->
+                model.addRow(arrayOf(path))
+            }
     }
 }
