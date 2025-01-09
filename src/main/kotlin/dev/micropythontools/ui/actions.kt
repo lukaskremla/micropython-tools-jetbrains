@@ -482,6 +482,7 @@ class DownloadFromDeviceAction : DumbAwareAction("Download File or Folder...") {
 class OpenSettingsAction : DumbAwareAction("Settings") {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
+
         ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
     }
 }
