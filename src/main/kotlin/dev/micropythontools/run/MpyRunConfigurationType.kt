@@ -25,7 +25,7 @@ import com.intellij.openapi.util.IconLoader
 class MpyRunConfigurationType : ConfigurationTypeBase(
     ID,
     "MicroPython Tools",
-    "MicroPython Tools Run Configuration",
+    "MicroPython Tools Run Configuration Type",
     IconLoader.getIcon("/icons/pluginIcon.svg", MpyRunConfigurationType::class.java)
 ) {
     init {
@@ -33,6 +33,6 @@ class MpyRunConfigurationType : ConfigurationTypeBase(
     }
 
     companion object {
-        const val ID = "micropython-tools-configuration"
+        const val ID = "micropython-tools-configuration-type"
     }
 }

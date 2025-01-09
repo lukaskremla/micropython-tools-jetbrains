@@ -6,7 +6,11 @@ import com.intellij.openapi.project.Project
 
 class MpyRunConfigurationFactory(type: MpyRunConfigurationType) : ConfigurationFactory(type) {
     override fun createTemplateConfiguration(project: Project): RunConfiguration {
-        return MpyRunConfiguration(project, this, "MicroPython Tools")
+        return MpyRunConfiguration(project, this, "Flash")
+    }
+
+    override fun getName(): String {
+        return "Flash"
     }
 
     override fun getId(): String {
