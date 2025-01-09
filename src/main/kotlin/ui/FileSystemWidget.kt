@@ -20,9 +20,6 @@ package ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -39,7 +36,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -61,8 +57,6 @@ import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
 import dev.micropythontools.intellij.communication.*
-import dev.micropythontools.intellij.communication.LONG_TIMEOUT
-import dev.micropythontools.intellij.communication.TIMEOUT
 import dev.micropythontools.intellij.settings.*
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
@@ -74,9 +68,6 @@ import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-/**
- * @authors elmot, Lukas Kremla
- */
 data class ConnectionParameters(
     var usingUart: Boolean = true,
     var portName: String,
@@ -107,6 +98,9 @@ data class ConnectionParameters(
     )
 }
 
+/**
+ * @authors elmot, Lukas Kremla
+ */
 class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     JBPanel<FileSystemWidget>(BorderLayout()) {
     var terminalContent: Content? = null
@@ -222,71 +216,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         tree.model = null
     }
 
-    private fun calculateCRC32(file: VirtualFile): String {
-        val localFileBytes = file.contentsToByteArray()
-        val crc = java.util.zip.CRC32()
-        crc.update(localFileBytes)
-        return String.format("%08x", crc.value)
-    }
-
-    suspend fun synchronizeAndGetAlreadyUploadedFiles(
-        uploadFilesToTargetPath: MutableMap<VirtualFile, String>,
-        excludedPaths: List<String>,
-        shouldSynchronize: Boolean,
-        shouldExcludePaths: Boolean
-    ): MutableList<VirtualFile> {
-        val alreadyUploadedFiles = mutableListOf<VirtualFile>()
-        val fileToUploadListing = mutableListOf<String>()
-        val targetPathToFile = uploadFilesToTargetPath.entries.associate { (file, path) -> path to file }
-
-        for (file in uploadFilesToTargetPath.keys) {
-            val path = uploadFilesToTargetPath[file]
-            val size = file.length
-            val hash = calculateCRC32(file)
-
-            fileToUploadListing.add("""("$path", $size, "$hash")""")
-        }
-
-        val scriptFileName = "synchronize_and_skip.py"
-
-        val synchronizeAndSkipScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
-
-        val formattedScript = synchronizeAndSkipScript.format(
-            if (shouldSynchronize) "True" else "False",
-            fileToUploadListing.joinToString(",\n        "),
-            if (excludedPaths.isNotEmpty() && shouldExcludePaths) excludedPaths.joinToString(",\n        ") { "\"$it\"" } else ""
-        )
-
-        val scriptResponse = blindExecute(30000L, formattedScript).extractSingleResponse().trim()
-
-        val matchingTargetPaths = when {
-            !scriptResponse.contains("NO MATCHES") && !scriptResponse.contains("ERROR") -> scriptResponse
-                .split("&")
-                .filter { it.isNotEmpty() }
-
-            else -> emptyList()
-        }
-
-        if (scriptResponse.contains("ERROR")) {
-            Notifications.Bus.notify(
-                Notification(
-                    NOTIFICATION_GROUP,
-                    "Failed to execute synchronize and check matches script: $scriptResponse",
-                    NotificationType.ERROR
-                ), project
-            )
-        }
-
-        for (path in matchingTargetPaths) {
-            targetPathToFile[path]?.let {
-                alreadyUploadedFiles.add(it)
-            }
-        }
-
-        return alreadyUploadedFiles
-    }
-
-    suspend fun initializeDevice() {
+    private suspend fun initializeDevice() {
         val calendar = Calendar.getInstance()
 
         val year = calendar.get(Calendar.YEAR)
@@ -377,7 +307,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
     suspend fun refresh(reporter: RawProgressReporter) = refresh(reporter, isInitialRefresh = false)
 
-    suspend fun initialRefresh(reporter: RawProgressReporter) = refresh(reporter, isInitialRefresh = true)
+    private suspend fun initialRefresh(reporter: RawProgressReporter) = refresh(reporter, isInitialRefresh = true)
 
     private suspend fun refresh(reporter: RawProgressReporter, isInitialRefresh: Boolean) {
         reporter.text("Updating file system view...")
@@ -576,7 +506,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     @Throws(IOException::class)
     suspend fun connect() = comm.connect()
 
-    fun setConnectionParams(connectionParameters: ConnectionParameters) = comm.setConnectionParams(connectionParameters)
+    private fun setConnectionParams(connectionParameters: ConnectionParameters) = comm.setConnectionParams(connectionParameters)
     fun interrupt() {
         comm.interrupt()
     }

@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nls
 import java.net.URI
 import java.net.URISyntaxException
 
-/**
- * @author Lukas Kremla, elmot
- */
 const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
 private const val WIFI_KEY = "WiFi"
 private const val WebREPL_KEY = "WebREPL"
@@ -43,6 +40,9 @@ private const val WebREPL_KEY = "WebREPL"
     storages = [Storage("micropython-tools-settings.xml")],
     category = SettingsCategory.PLUGINS
 )
+/**
+ * @author Lukas Kremla, elmot
+ */
 class MpySettingsService(private val project: Project) : SimplePersistentStateComponent<MpyState>(MpyState()) {
     companion object {
         fun getInstance(project: Project): MpySettingsService =

@@ -33,7 +33,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtil
-import dev.micropythontools.intellij.communication.*
+import dev.micropythontools.intellij.communication.MpyTransferService
 import dev.micropythontools.intellij.settings.MpySettingsService
 import org.jdom.Element
 import ui.fileSystemWidget
@@ -69,12 +69,20 @@ class MpyRunConfiguration(project: Project, factory: ConfigurationFactory) : Abs
             wifiPassword = wifiCredentials.getPasswordAsString() ?: ""
         }
 
+        val transferService = project.service<MpyTransferService>()
+
         if (path.isBlank() || (projectPath != null && path == projectPath)) {
-            success = uploadProject(project, excludedPaths, synchronize, excludePaths, useFTP, ssid, wifiPassword)
+            success = transferService.uploadProject(
+                excludedPaths,
+                synchronize,
+                excludePaths,
+                useFTP,
+                ssid,
+                wifiPassword
+            )
         } else {
             val toUpload = StandardFileSystems.local().findFileByPath(path) ?: return null
-            success = uploadFileOrFolder(
-                project,
+            success = transferService.uploadFileOrFolder(
                 toUpload,
                 excludedPaths,
                 synchronize,

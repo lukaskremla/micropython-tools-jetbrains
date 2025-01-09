@@ -52,10 +52,10 @@ import dev.micropythontools.intellij.settings.MpySettingsService
 import java.io.File
 import javax.swing.JComponent
 
+@Service(Service.Level.PROJECT)
 /**
  * @author Lukas Kremla
  */
-@Service(Service.Level.PROJECT)
 class MpyPythonService(private val project: Project) : DumbAware {
     companion object {
 

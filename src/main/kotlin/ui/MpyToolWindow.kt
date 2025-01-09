@@ -35,17 +35,17 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TtyConnector
 import dev.micropythontools.intellij.communication.State
-import util.MpyPythonService
 import dev.micropythontools.intellij.settings.MpySettingsService
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import util.MpyPythonService
 import javax.swing.JComponent
+
+internal const val NOTIFICATION_GROUP = "MicroPython Tools"
+internal const val TOOL_WINDOW_ID = "MicroPython Tools"
 
 /**
  * @author elmot, Lukas Kremla
  */
-internal const val NOTIFICATION_GROUP = "MicroPython Tools"
-internal const val TOOL_WINDOW_ID = "MicroPython Tools"
-
 class MpyToolWindow : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val newDisposable = Disposer.newDisposable(toolWindow.disposable, "Webrepl")

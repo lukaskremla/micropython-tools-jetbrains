@@ -42,7 +42,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     private val pythonService = project.service<MpyPythonService>()
 
     private lateinit var settingsPanel: DialogPanel
-    private val PASSWORD_LENGTH = 4..9
+    private val maxPasswordLength = 4..9
 
     private val parameters = ConnectionParameters(
         usingUart = settings.state.usingUart,
@@ -135,8 +135,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                 .comment("(4-9 symbols)")
                                 .columns(40)
                                 .validationInfo { field ->
-                                    if (field.password.size !in PASSWORD_LENGTH && !parameters.usingUart) {
-                                        error("Allowed password length is $PASSWORD_LENGTH").withOKEnabled()
+                                    if (field.password.size !in maxPasswordLength && !parameters.usingUart) {
+                                        error("Allowed password length is $maxPasswordLength").withOKEnabled()
                                     } else null
                                 }
                         }.layout(RowLayout.LABEL_ALIGNED)

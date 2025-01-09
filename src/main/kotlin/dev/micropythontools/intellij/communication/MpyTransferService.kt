@@ -20,8 +20,11 @@ package dev.micropythontools.intellij.communication
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.checkCanceled
@@ -29,28 +32,93 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.project.stateStore
 import com.jetbrains.python.sdk.PythonSdkUtil
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
-import ui.NOTIFICATION_GROUP
-import ui.fileSystemWidget
-import ui.performReplAction
+import ui.*
 import util.MpyPythonService
 import java.io.IOException
 
 @Service(Service.Level.PROJECT)
-class MpyTransferService {
-    companion object {
-        fun getInstance(project: Project): MpyTransferService =
-            project.getService(MpyTransferService::class.java)
+/**
+ * @author Lukas Kremla, elmot
+ */
+class MpyTransferService(private val project: Project) {
+    private fun calculateCRC32(file: VirtualFile): String {
+        val localFileBytes = file.contentsToByteArray()
+        val crc = java.util.zip.CRC32()
+        crc.update(localFileBytes)
+        return String.format("%08x", crc.value)
+    }
+
+    private suspend fun synchronizeAndGetAlreadyUploadedFiles(
+        uploadFilesToTargetPath: MutableMap<VirtualFile, String>,
+        excludedPaths: List<String>,
+        shouldSynchronize: Boolean,
+        shouldExcludePaths: Boolean
+    ): MutableList<VirtualFile> {
+        val alreadyUploadedFiles = mutableListOf<VirtualFile>()
+        val fileToUploadListing = mutableListOf<String>()
+        val targetPathToFile = uploadFilesToTargetPath.entries.associate { (file, path) -> path to file }
+
+        for (file in uploadFilesToTargetPath.keys) {
+            val path = uploadFilesToTargetPath[file]
+            val size = file.length
+            val hash = calculateCRC32(file)
+
+            fileToUploadListing.add("""("$path", $size, "$hash")""")
+        }
+
+        val scriptFileName = "synchronize_and_skip.py"
+
+        val pythonService = project.service<MpyPythonService>()
+
+        val synchronizeAndSkipScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
+
+        val formattedScript = synchronizeAndSkipScript.format(
+            if (shouldSynchronize) "True" else "False",
+            fileToUploadListing.joinToString(",\n        "),
+            if (excludedPaths.isNotEmpty() && shouldExcludePaths) excludedPaths.joinToString(",\n        ") { "\"$it\"" } else ""
+        )
+
+        val scriptResponse = fileSystemWidget(project)!!.blindExecute(30000L, formattedScript).extractSingleResponse().trim()
+
+        val matchingTargetPaths = when {
+            !scriptResponse.contains("NO MATCHES") && !scriptResponse.contains("ERROR") -> scriptResponse
+                .split("&")
+                .filter { it.isNotEmpty() }
+
+            else -> emptyList()
+        }
+
+        if (scriptResponse.contains("ERROR")) {
+            Notifications.Bus.notify(
+                Notification(
+                    NOTIFICATION_GROUP,
+                    "Failed to execute synchronize and check matches script: $scriptResponse",
+                    NotificationType.ERROR
+                ), project
+            )
+        }
+
+        for (path in matchingTargetPaths) {
+            targetPathToFile[path]?.let {
+                alreadyUploadedFiles.add(it)
+            }
+        }
+
+        return alreadyUploadedFiles
     }
 
     private fun VirtualFile.leadingDot() = this.name.startsWith(".")
 
-    private fun collectProjectUploadables(project: Project): Set<VirtualFile> {
+    private fun collectProjectUploadables(): Set<VirtualFile> {
         return project.modules.flatMap { module ->
             module.rootManager.contentEntries
                 .mapNotNull { it.file }
@@ -60,7 +128,7 @@ class MpyTransferService {
         }.toSet()
     }
 
-    private fun collectExcluded(project: Project): Set<VirtualFile> {
+    private fun collectExcluded(): Set<VirtualFile> {
         val ideaDir = project.stateStore.directoryStorePath?.let { VfsUtil.findFile(it, false) }
         val excludes = if (ideaDir == null) mutableSetOf() else mutableSetOf(ideaDir)
         project.modules.forEach { module ->
@@ -72,7 +140,7 @@ class MpyTransferService {
         return excludes
     }
 
-    private fun collectSourceRoots(project: Project): Set<VirtualFile> {
+    private fun collectSourceRoots(): Set<VirtualFile> {
         return project.modules.flatMap { module ->
             module.rootManager.contentEntries
                 .flatMap { entry -> entry.sourceFolders.toList() }
@@ -83,7 +151,7 @@ class MpyTransferService {
         }.toSet()
     }
 
-    private fun collectTestRoots(project: Project): Set<VirtualFile> {
+    private fun collectTestRoots(): Set<VirtualFile> {
         return project.modules.flatMap { module ->
             module.rootManager.contentEntries
                 .flatMap { entry -> entry.sourceFolders.toList() }
@@ -93,7 +161,6 @@ class MpyTransferService {
     }
 
     fun uploadProject(
-        project: Project,
         excludedPaths: List<String> = emptyList(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false,
@@ -103,9 +170,8 @@ class MpyTransferService {
     ): Boolean {
 
         FileDocumentManager.getInstance().saveAllDocuments()
-        val filesToUpload = collectProjectUploadables(project)
+        val filesToUpload = collectProjectUploadables()
         return performUpload(
-            project,
             filesToUpload,
             true,
             excludedPaths,
@@ -118,7 +184,6 @@ class MpyTransferService {
     }
 
     fun uploadFileOrFolder(
-        project: Project,
         toUpload: VirtualFile,
         excludedPaths: List<String> = emptyList(),
         shouldSynchronize: Boolean = false,
@@ -130,7 +195,6 @@ class MpyTransferService {
 
         FileDocumentManager.getInstance().saveAllDocuments()
         return performUpload(
-            project,
             setOf(toUpload),
             false,
             excludedPaths,
@@ -143,7 +207,6 @@ class MpyTransferService {
     }
 
     fun uploadItems(
-        project: Project,
         toUpload: Set<VirtualFile>,
         excludedPaths: List<String> = emptyList(),
         shouldSynchronize: Boolean = false,
@@ -155,7 +218,6 @@ class MpyTransferService {
 
         FileDocumentManager.getInstance().saveAllDocuments()
         return performUpload(
-            project,
             toUpload,
             false,
             excludedPaths,
@@ -168,7 +230,6 @@ class MpyTransferService {
     }
 
     private fun performUpload(
-        project: Project,
         toUpload: Set<VirtualFile>,
         initialIsProjectUpload: Boolean,
         excludedPaths: List<String> = emptyList(),
@@ -183,9 +244,9 @@ class MpyTransferService {
 
         var isProjectUpload = initialIsProjectUpload
         var filesToUpload = toUpload.toMutableList()
-        val excludedFolders = collectExcluded(project)
-        val sourceFolders = collectSourceRoots(project)
-        val testFolders = collectTestRoots(project)
+        val excludedFolders = collectExcluded()
+        val sourceFolders = collectSourceRoots()
+        val testFolders = collectTestRoots()
         val projectDir = project.guessProjectDir()
 
         var ftpUploadClient: MpyFTPClient? = null
@@ -220,7 +281,7 @@ class MpyTransferService {
                         file == projectDir -> {
                             i = 0
                             filesToUpload.clear()
-                            filesToUpload = collectProjectUploadables(project).toMutableList()
+                            filesToUpload = collectProjectUploadables().toMutableList()
                             isProjectUpload = true
                         }
 
@@ -261,7 +322,7 @@ class MpyTransferService {
                 reporter.text(scriptProgressText)
                 reporter.fraction(null)
 
-                val alreadyUploadedFiles = fileSystemWidget.synchronizeAndGetAlreadyUploadedFiles(
+                val alreadyUploadedFiles = synchronizeAndGetAlreadyUploadedFiles(
                     fileToTargetPath,
                     excludedPaths,
                     shouldSynchronize,
@@ -383,5 +444,96 @@ class MpyTransferService {
             }
         )
         return uploadedSuccessfully
+    }
+
+    @Suppress("UnstableApiUsage")
+    private suspend fun writeDown(
+        node: FileSystemNode,
+        fileSystemWidget: FileSystemWidget,
+        name: String,
+        destination: VirtualFile?
+    ) {
+        if (node is FileNode) {
+            val content = fileSystemWidget.download(node.fullName)
+            writeAction {
+                destination!!.findOrCreateFile(name).setBinaryContent(content)
+            }
+        } else {
+            writeAction {
+                destination!!.findOrCreateDirectory(name)
+            }
+        }
+    }
+
+    fun downloadDeviceFiles() {
+        performReplAction(
+            project = project,
+            connectionRequired = true,
+            description = "Download",
+            requiresRefreshAfter = false,
+            action = { fileSystemWidget, reporter ->
+                reporter.text("Collecting files to download...")
+                reporter.fraction(null)
+
+                val selectedFiles = fileSystemWidget.selectedFiles()
+                if (selectedFiles.isEmpty()) return@performReplAction
+                var destination: VirtualFile? = null
+                FileChooserFactory.getInstance().createPathChooser(
+                    FileChooserDescriptorFactory.createSingleFolderDescriptor(), fileSystemWidget.project, null
+                ).choose(null) { folders ->
+                    destination = folders.firstOrNull()
+                    if (destination?.children?.isNotEmpty() == true) {
+                        if (Messages.showOkCancelDialog(
+                                fileSystemWidget.project,
+                                "The destination folder is not empty.\nIts contents may be damaged.",
+                                "Warning",
+                                "Continue",
+                                "Cancel",
+                                Messages.getWarningIcon()
+                            ) != Messages.OK
+                        ) {
+                            destination = null
+                        }
+                    }
+                }
+
+                if (destination == null) return@performReplAction
+                val parentNameToFile = selectedFiles.map { node -> "" to node }.toMutableList()
+                var listIndex = 0
+
+                while (listIndex < parentNameToFile.size) {
+                    val (nodeParentName, node) = parentNameToFile[listIndex]
+                    node.children().asSequence().forEach { child ->
+                        child as FileSystemNode
+                        val parentName = when {
+                            nodeParentName.isEmpty() && node.isRoot -> ""
+                            nodeParentName.isEmpty() -> node.name
+                            nodeParentName == "/" -> node.name
+                            else -> "$nodeParentName/${node.name}"
+                        }
+
+                        parentNameToFile.add(parentName to child)
+                    }
+                    if (node.isRoot) {
+                        parentNameToFile.removeAt(listIndex)
+                    } else {
+                        listIndex++
+                    }
+                }
+
+                val singleFileProgress: Double = (1 / parentNameToFile.size.toDouble())
+                var downloadedFiles = 1
+
+                parentNameToFile.forEach { (parentName, node) ->
+                    val name = if (parentName.isEmpty()) node.name else "$parentName/${node.name}"
+                    writeDown(node, fileSystemWidget, name, destination)
+                    reporter.text("Downloading: file $downloadedFiles of ${parentNameToFile.size}")
+                    reporter.fraction(downloadedFiles.toDouble() * singleFileProgress)
+                    reporter.details(name)
+
+                    downloadedFiles++
+                }
+            }
+        )
     }
 }

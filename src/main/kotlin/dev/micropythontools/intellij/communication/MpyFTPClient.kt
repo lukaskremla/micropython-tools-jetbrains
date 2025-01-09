@@ -22,6 +22,9 @@ import org.apache.commons.net.io.CopyStreamEvent
 import org.apache.commons.net.io.CopyStreamListener
 import java.io.ByteArrayInputStream
 
+/**
+ * @author Lukas Kremla
+ */
 class MpyFTPClient {
     private val ftpClient: FTPClient = FTPClient()
 
