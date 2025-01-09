@@ -51,7 +51,7 @@
                     icon="/icons/micropythonTw.svg"
                     canCloseContents="false"/>
 
-        <project.converterProvider implementation="dev.micropythontools.util.MpyRunConfigurationMigrator"/>
+        <postStartupActivity implementation="dev.micropythontools.util.MpyFacetMigrationActivity"/>
     </extensions>
 
     <actions>

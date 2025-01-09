@@ -57,14 +57,7 @@ import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
 import dev.micropythontools.communication.*
-import dev.micropythontools.communication.LONG_TIMEOUT
-import dev.micropythontools.communication.TIMEOUT
-import dev.micropythontools.intellij.communication.*
-import dev.micropythontools.intellij.settings.*
-import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
-import dev.micropythontools.settings.MpyConfigurable
-import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.settings.messageForBrokenUrl
+import dev.micropythontools.settings.*
 import dev.micropythontools.util.MpyPythonService
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
