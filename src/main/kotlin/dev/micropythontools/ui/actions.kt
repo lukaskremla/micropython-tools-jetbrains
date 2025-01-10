@@ -61,7 +61,6 @@ import dev.micropythontools.communication.TIMEOUT
 import dev.micropythontools.communication.extractSingleResponse
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.util.MpyPythonService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
@@ -245,11 +244,11 @@ class ConnectAction(text: String = "Connect") : ReplAction(
     }
 
     override fun update(e: AnActionEvent) {
-        val pythonService = e.project?.service<MpyPythonService>()
+        val settings = e.project?.service<MpySettingsService>()
 
-        val isPyserialInstalled = pythonService?.isPyserialInstalled()
+        val isPluginEnabled = settings?.state?.isPluginEnabled ?: false
 
-        if (pythonService != null && isPyserialInstalled == true) {
+        if (isPluginEnabled) {
             e.presentation.isEnabledAndVisible = when (fileSystemWidget(e)?.state) {
                 State.DISCONNECTING, State.DISCONNECTED, null -> true
                 State.CONNECTING, State.CONNECTED, State.TTY_DETACHED -> false
@@ -482,6 +481,8 @@ class DownloadFromDeviceAction : DumbAwareAction("Download File or Folder...") {
 class OpenSettingsAction : DumbAwareAction("Settings") {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
+
+        project.service<MpyTransferService>().listSerialPorts()
 
         ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
     }

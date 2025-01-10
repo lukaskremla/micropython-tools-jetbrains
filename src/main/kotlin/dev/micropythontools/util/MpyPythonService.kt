@@ -19,12 +19,9 @@
 
 package dev.micropythontools.util
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -35,18 +32,12 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.PyPackageManagerUI
-import com.jetbrains.python.packaging.PyRequirementParser
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.statistics.version
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import java.io.File
@@ -61,8 +52,8 @@ class MpyPythonService(private val project: Project) : DumbAware {
 
         private const val PLUGIN_ID = "micropython-tools-jetbrains"
 
-        val pythonScriptsPath: String
-            get() = "${pluginDescriptor.pluginPath}/scripts/Python"
+        /*val pythonScriptsPath: String
+            get() = "${pluginDescriptor.pluginPath}/scripts/Python"*/
 
         val microPythonScriptsPath: String
             get() = "${pluginDescriptor.pluginPath}/scripts/MicroPythonOptimized"
@@ -144,7 +135,38 @@ class MpyPythonService(private val project: Project) : DumbAware {
         return File(scriptPath).readText(Charsets.UTF_8)
     }
 
-    fun findValidPyhonSdk(): Sdk? {
+    fun checkStubPackageValidity(): ValidationResult {
+        val settings = project.service<MpySettingsService>()
+        val activeStubsPackage = settings.state.activeStubsPackage
+
+        var stubValidationText: String? = null
+
+        if (activeStubsPackage.isNullOrBlank() && !settings.state.isNoStubWarningSuppressed) {
+            stubValidationText = "No stub package selected"
+        } else if (!activeStubsPackage.isNullOrBlank() && !getAvailableStubs().contains(activeStubsPackage)) {
+            stubValidationText = "Invalid stub package selected"
+        }
+
+        return if (stubValidationText != null) {
+            return ValidationResult(
+                stubValidationText,
+                object : FacetConfigurationQuickFix("Change Settings") {
+                    override fun run(place: JComponent?) {
+                        ApplicationManager.getApplication().invokeLater {
+                            ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
+                        }
+                    }
+                }
+            )
+        } else {
+            ValidationResult.OK
+        }
+    }
+
+    // These se are commented out for now, the code below will be salvaged an re-used for planned mpy-cross and
+    // MicroPython firmware flashing pip script integrations
+
+    /*fun findValidPyhonSdk(): Sdk? {
         val sdk = PythonSdkUtil.findPythonSdk(module)
         val interpreter = sdk?.homeDirectory
 
@@ -266,5 +288,5 @@ class MpyPythonService(private val project: Project) : DumbAware {
         val requirements = PyRequirementParser.fromText("pyserial==3.5")
 
         sdk?.let { PyPackageManagerUI(module.project, it, null).install(requirements, emptyList()) }
-    }
+    }*/
 }

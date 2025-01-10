@@ -19,7 +19,6 @@ package dev.micropythontools.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -29,7 +28,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -122,11 +120,12 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     fun updateEmptyText() {
         tree.emptyText.clear()
 
-        val isPythonSdkValid = pythonService.findValidPyhonSdk() != null
-
-        val isPyserialInstalled = pythonService.isPyserialInstalled()
-
-        if (isPythonSdkValid && isPyserialInstalled == true) {
+        if (!settings.state.isPluginEnabled) {
+            tree.emptyText.appendText("MicroPython support is disabled")
+            tree.emptyText.appendLine("Change settings...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
+            }
+        } else {
             tree.emptyText.appendText("No board is connected")
             tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 performReplAction(
@@ -140,28 +139,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                     }
                 )
             }
-        } else if (settings.state.isPluginEnabled) {
-            tree.emptyText.appendText("MicroPython support is disabled")
-            tree.emptyText.appendLine("Change settings...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
-            }
-        } else if (!isPythonSdkValid) {
-            tree.emptyText.appendText("No Python interpreter is configured")
-            tree.emptyText.appendLine("Configure...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion"))
-                ) {
-                    //
-                } else {
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project, "ProjectStructure")
-                }
-            }
-        } else if (isPyserialInstalled == false) {
-            tree.emptyText.appendText("Missing required Python packages")
-            tree.emptyText.appendLine("Install...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                pythonService.installRequiredPythonPackages()
-            }
-        } else {
-            tree.emptyText.appendText("Waiting for python library manager initialization...")
         }
     }
 
