@@ -16,8 +16,11 @@
 
 package dev.micropythontools.util
 
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.generateServiceName
 import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -34,6 +37,8 @@ import dev.micropythontools.run.MpyRunConfigurationFactory
 import dev.micropythontools.run.MpyRunConfigurationType
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.NOTIFICATION_GROUP
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
@@ -41,8 +46,20 @@ import java.io.File
  */
 class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
     override suspend fun execute(project: Project) {
+        val settings = project.service<MpySettingsService>()
+
+        // Avoid running migration code if the settings version is up to date
+        if (settings.state.settingsVersion == 1) {
+            return
+        }
+
         var hasMigratedFacet = false
         var hasMigratedRunConfiguration = false
+        var hasMigratedPasswordSafe: Boolean
+
+        // Instantiate the plugin's run configuration factory here so that all configurations that might be migrated
+        // share one factory
+        val factory = MpyRunConfigurationFactory(MpyRunConfigurationType())
 
         // Assume that the main .iml is inside the project's .idea folder
         val ideaDirPath = "${project.guessProjectDir()}/.idea".removePrefix("file:")
@@ -56,6 +73,9 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                     var modified = false
 
                     val file = File(child.path)
+                    if (!file.exists()) {
+                        continue
+                    }
 
                     @Suppress("DEPRECATION")
                     val document = JDOMUtil.loadDocument(file)
@@ -124,9 +144,6 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                 else -> "Flash Project"
             }
 
-            // The plugin's run factory needs to be instantiated here in order to
-            val factory = MpyRunConfigurationFactory(MpyRunConfigurationType())
-
             // Instantiate the new flash configuration with the old one's settings
             val writtenConfiguration = MpyRunConfiguration(
                 project,
@@ -155,15 +172,41 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
             runManagerImpls.removeConfiguration(runManagerImpls.findSettings(configuration))
 
             hasMigratedRunConfiguration = true
-
         }
 
-        if (hasMigratedFacet || hasMigratedRunConfiguration) {
+        // Retrieve possible old credential attributes
+        val oldWifiAttributes = createOldCredentialAttributes(project, "WiFi")
+        val oldWebREPLAttributes = createOldCredentialAttributes(project, "WebREPL")
+
+        withContext(Dispatchers.IO) {
+            // Retrieve old credentials
+            val oldWifiCredentials = PasswordSafe.instance.get(oldWifiAttributes)
+            val oldWifiSSID = oldWifiCredentials?.userName ?: ""
+            val oldWifiPass = oldWifiCredentials?.getPasswordAsString() ?: ""
+
+            val oldWebReplPass = PasswordSafe.instance.getPassword(oldWebREPLAttributes) ?: ""
+
+            // Save old credentials in the new format
+            settings.saveWifiCredentials(oldWifiSSID, oldWifiPass)
+            settings.saveWebReplPassword(oldWebReplPass)
+
+            // Delete old credentials
+            PasswordSafe.instance.set(oldWifiAttributes, null)
+            PasswordSafe.instance.set(oldWebREPLAttributes, null)
+
+            hasMigratedPasswordSafe = when {
+                oldWifiSSID != "" || oldWifiPass != "" || oldWebReplPass != "" -> true
+
+                else -> false
+            }
+        }
+
+        if (hasMigratedFacet || hasMigratedRunConfiguration || hasMigratedPasswordSafe) {
             // A MicroPython Tools facet was found, new plugin should be enabled as well
             // to give users a smooth switch to the new plugin settings persistence structure
             // (the facet won't be there if the support was disabled)
             if (hasMigratedFacet) {
-                project.service<MpySettingsService>().state.isPluginEnabled = true
+                settings.state.isPluginEnabled = true
             }
 
             Notifications.Bus.notify(
@@ -180,5 +223,18 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                 ), project
             )
         }
+
+        // The migration process has completed fully, the settings version can be saved
+        settings.state.settingsVersion = 1
+    }
+
+    private fun createOldCredentialAttributes(project: Project, key: String): CredentialAttributes {
+        val projectIdentifyingElement = project.guessProjectDir()?.path ?: project.name
+        // In previous versions the package looked like this,
+        val fullKey = "dev.micropythontools.intellij.settings.MpySettingsService/${projectIdentifyingElement}/$key"
+
+        return CredentialAttributes(
+            generateServiceName("MySystem", fullKey)
+        )
     }
 }
