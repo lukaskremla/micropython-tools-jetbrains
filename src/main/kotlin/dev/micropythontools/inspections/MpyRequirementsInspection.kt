@@ -17,7 +17,6 @@
 package dev.micropythontools.inspections
 
 import com.intellij.codeInspection.*
-import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -31,18 +30,18 @@ class MpyRequirementsInspection : LocalInspectionTool() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
         val pythonService = module.project.service<MpyPythonService>()
-        val result = pythonService.checkValid()
+        val result = pythonService.checkStubPackageValidity()
         if (result.isOk) return null
 
-        val facetFix: FacetConfigurationQuickFix? = result.quickFix
+        val stubsFix = result.quickFix
 
-        val fix = if (facetFix != null) object : LocalQuickFix {
+        val fix = if (stubsFix != null) object : LocalQuickFix {
             @Suppress("DialogTitleCapitalization")
             // The fixButtonText follows proper capitalization in all cases, the warning can be ignored
-            override fun getFamilyName() = facetFix.fixButtonText.toString()
+            override fun getFamilyName() = stubsFix.fixButtonText.toString()
 
             override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                facetFix.run(null)
+                stubsFix.run(null)
             }
         } else null
 

@@ -29,6 +29,7 @@ import com.intellij.ui.TextFieldWithAutoCompletion
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.asSafely
+import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.ui.ConnectionParameters
 import dev.micropythontools.util.MpyPythonService
 import javax.swing.event.PopupMenuEvent
@@ -40,8 +41,14 @@ import javax.swing.event.PopupMenuListener
 class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "MicroPython Tools"), DumbAware {
     private val settings = project.service<MpySettingsService>()
     private val pythonService = project.service<MpyPythonService>()
+    private val transferService = project.service<MpyTransferService>()
+
+    private var isPluginEnabled = settings.state.isPluginEnabled
+    private var isNoStubWarningSuppressed = settings.state.isNoStubWarningSuppressed
 
     private lateinit var settingsPanel: DialogPanel
+    private lateinit var mainSettingsPanel: Panel
+    private lateinit var webReplIndent: RowsRange
     private val maxPasswordLength = 4..9
 
     private val parameters = ConnectionParameters(
@@ -69,60 +76,83 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
             portSelectModel.add(parameters.portName)
         }
 
-        refreshAPortSelectModel(project, portSelectModel)
+        refreshAPortSelectModel(portSelectModel)
 
         val availableStubs = pythonService.getAvailableStubs()
 
         settingsPanel = panel {
-            group("Connection") {
-                buttonsGroup {
+            row {
+                checkBox("Enable MicroPython support")
+                    .bindSelected({ isPluginEnabled }) {
+                        isPluginEnabled = it
+                        mainSettingsPanel.enabled(it)
+                    }
+                    .applyToComponent {
+                        addActionListener {
+                            mainSettingsPanel.enabled(isSelected)
+                        }
+                    }
+            }
+
+            mainSettingsPanel = panel {
+                group("Connection") {
                     row {
-                        radioButton("Serial").bindSelected(parameters::usingUart)
                         comboBox(portSelectModel)
-                            .label("Port:")
+                            .label("Port or WebREPL: ")
                             .columns(20)
                             .bind(
                                 { it.editor.item.toString() },
                                 { component, text -> component.selectedItem = text },
-                                parameters::portName.toMutableProperty()
+                                object : MutableProperty<String> {
+                                    override fun get(): String {
+                                        return if (parameters.usingUart) {
+                                            parameters.portName
+                                        } else {
+                                            "WebREPL"
+                                        }
+                                    }
+
+                                    override fun set(value: String) {
+                                        if (value == "WebREPL") {
+                                            parameters.usingUart = false
+                                            parameters.portName = ""
+                                        } else {
+                                            parameters.usingUart = true
+                                            parameters.portName = if (value != "") value else parameters.portName
+                                        }
+                                    }
+                                }
                             )
                             .validationInfo { comboBox ->
-                                val portName = comboBox.selectedItem.asSafely<String>()
+                                val value = comboBox.selectedItem.asSafely<String>()
 
-                                val isPyserialInstalled = pythonService.isPyserialInstalled()
-
-                                if (pythonService.findValidPyhonSdk() == null) {
-                                    ValidationInfo("MicroPython Tools plugin requires a valid Python 3.10+ SDK")
-                                } else if (isPyserialInstalled == false) {
-                                    ValidationInfo("Required Python packages are missing. Check the tool window for more info")
-                                } else if (isPyserialInstalled == null) {
-                                    ValidationInfo("Wait for python library manager initialization, please reopen the settings...")
-                                } else if (portName.isNullOrBlank()) {
+                                if (value.isNullOrBlank()) {
                                     ValidationInfo("No port name provided")
                                         .withOKEnabled()
-                                } else if (!portSelectModel.contains(portName)) {
+                                } else if (!portSelectModel.contains(value)) {
                                     ValidationInfo("Unknown port name")
                                         .asWarning()
                                         .withOKEnabled()
                                 } else null
                             }
                             .applyToComponent {
-                                isEditable = true
+                                isEditable = false
                                 addPopupMenuListener(object : PopupMenuListener {
                                     override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
-                                        refreshAPortSelectModel(project, portSelectModel)
+                                        refreshAPortSelectModel(portSelectModel)
                                     }
 
                                     override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
                                     override fun popupMenuCanceled(e: PopupMenuEvent?) {}
                                 })
+
+                                addActionListener {
+                                    webReplIndent.visible(selectedItem.asSafely<String>() == "WebREPL")
+                                }
                             }
                     }
-                    separator()
-                    row {
-                        radioButton("WebREPL").bindSelected({ !parameters.usingUart }, { parameters.usingUart = !it })
-                    }
-                    indent {
+
+                    webReplIndent = indent {
                         row {
                             textField().bindText(parameters::webReplUrl).label("URL: ").columns(40)
                                 .validationInfo { field ->
@@ -140,74 +170,88 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                     } else null
                                 }
                         }.layout(RowLayout.LABEL_ALIGNED)
+                    }.visible(!parameters.usingUart)
+                }
+
+                group("FTP Upload Wi-Fi Credentials") {
+                    indent {
+                        row {
+                            textField()
+                                .bindText(parameters::ssid.toMutableProperty())
+                                .label("SSID: ")
+                                .columns(40)
+                        }.layout(RowLayout.LABEL_ALIGNED)
+                        row {
+                            passwordField()
+                                .bindText(parameters::wifiPassword.toMutableProperty())
+                                .label("Password: ")
+                                .columns(40)
+                        }.layout(RowLayout.LABEL_ALIGNED)
                     }
                 }
-            }
 
-            group("FTP Upload Wi-Fi Credentials") {
-                indent {
+                group("MicroPython Stubs") {
                     row {
-                        textField()
-                            .bindText(parameters::ssid.toMutableProperty())
-                            .label("SSID: ")
-                            .columns(40)
-                    }.layout(RowLayout.LABEL_ALIGNED)
-                    row {
-                        passwordField()
-                            .bindText(parameters::wifiPassword.toMutableProperty())
-                            .label("Password: ")
-                            .columns(40)
-                    }.layout(RowLayout.LABEL_ALIGNED)
-                }
-            }
-
-            group("MicroPython Stubs") {
-                row {
-                    cell(
-                        TextFieldWithAutoCompletion(
-                            project,
-                            object : TextFieldWithAutoCompletionListProvider<String>(availableStubs) {
-                                override fun getItems(prefix: String?, cached: Boolean, parameters: CompletionParameters?): MutableCollection<String> {
-                                    return if (prefix.isNullOrEmpty()) {
-                                        availableStubs.toMutableList()
-                                    } else {
-                                        availableStubs.filter { it.contains(prefix, ignoreCase = true) }.toMutableList()
-                                    }
+                        checkBox("Suppress \"no stub package selected\" warning")
+                            .bindSelected({ isNoStubWarningSuppressed }) {
+                                isNoStubWarningSuppressed = it
+                            }
+                            .applyToComponent {
+                                addActionListener {
+                                    isNoStubWarningSuppressed = isSelected
                                 }
+                            }
+                    }
 
-                                override fun getLookupString(item: String) = item
-                            },
-                            true,
-                            ""
-                        ).apply {
-                            setPreferredWidth(450)
-                        }
-                    )
-                        .bind(
-                            { it.text },
-                            { component, text -> component.text = text ?: "" },
-                            parameters::activeStubsPackage.toMutableProperty()
-                        )
-                        .label("Stubs package: ")
-                        .comment(
-                            "Type \"micropython\" to browse available packages, or leave it empty to disable built-in stubs. " +
-                                    "Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubber\">Jos Verlinde</a>", maxLineLength = 60
-                        )
-                        .validationInfo { field ->
-                            val text = field.text
+                    row {
+                        cell(
+                            TextFieldWithAutoCompletion(
+                                project,
+                                object : TextFieldWithAutoCompletionListProvider<String>(availableStubs) {
+                                    override fun getItems(prefix: String?, cached: Boolean, parameters: CompletionParameters?): MutableCollection<String> {
+                                        return if (prefix.isNullOrEmpty()) {
+                                            availableStubs.toMutableList()
+                                        } else {
+                                            availableStubs.filter { it.contains(prefix, ignoreCase = true) }.toMutableList()
+                                        }
+                                    }
 
-                            if (text.isEmpty()) {
-                                ValidationInfo("No built-in stubs will be active!").asWarning().withOKEnabled()
-                            } else if (!availableStubs.contains(text)) {
-                                ValidationInfo("Invalid stubs package name!")
-                            } else null
-                        }
+                                    override fun getLookupString(item: String) = item
+                                },
+                                true,
+                                ""
+                            ).apply {
+                                setPreferredWidth(450)
+                            }
+                        )
+                            .bind(
+                                { it.text },
+                                { component, text -> component.text = text ?: "" },
+                                parameters::activeStubsPackage.toMutableProperty()
+                            )
+                            .label("Stubs package: ")
+                            .comment(
+                                "Type \"micropython\" to browse available packages, or leave it empty to disable built-in stubs. " +
+                                        "Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubber\">Jos Verlinde</a>", maxLineLength = 60
+                            )
+                            .validationInfo { field ->
+                                val text = field.text
+
+                                println("Validating stub package")
+                                if (text.isBlank()) {
+                                    if (!isNoStubWarningSuppressed) {
+                                        println("Should show validation info")
+                                        ValidationInfo("No built-in stubs will be active!").asWarning().withOKEnabled()
+                                    } else {
+                                        null
+                                    }
+                                } else if (!availableStubs.contains(text)) {
+                                    ValidationInfo("Invalid stubs package name!")
+                                } else null
+                            }
+                    }
                 }
-            }
-
-        }.apply {
-            registerValidators(disposable!!)
-            validateAll()
+            }.enabled(isPluginEnabled)
         }
 
         return settingsPanel
@@ -221,6 +265,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     override fun apply() {
         super.apply()
 
+        settings.state.isPluginEnabled = isPluginEnabled
         settings.state.usingUart = parameters.usingUart
         settings.state.portName = parameters.portName
         settings.state.webReplUrl = parameters.webReplUrl
@@ -232,8 +277,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         }
     }
 
-    fun refreshAPortSelectModel(project: Project, portSelectModel: MutableCollectionComboBoxModel<String>) {
-        val ports = pythonService.listSerialPorts(project)
+    fun refreshAPortSelectModel(portSelectModel: MutableCollectionComboBoxModel<String>) {
+        val ports = transferService.listSerialPorts()
 
         var i = 0
         while (i < portSelectModel.size) {
@@ -252,6 +297,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
         if (portSelectModel.selectedItem.asSafely<String>().isNullOrBlank() && !portSelectModel.isEmpty) {
             portSelectModel.selectedItem = portSelectModel.items.firstOrNull()
+        }
+
+        if (!portSelectModel.contains("WebREPL")) {
+            portSelectModel.add("WebREPL")
         }
     }
 }

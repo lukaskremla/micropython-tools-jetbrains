@@ -17,6 +17,7 @@
 
 package dev.micropythontools.communication
 
+import com.fazecast.jSerialComm.SerialPort
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -50,6 +51,21 @@ import java.io.IOException
  * @author Lukas Kremla, elmot
  */
 class MpyTransferService(private val project: Project) {
+    fun listSerialPorts(): MutableList<String> {
+        val filteredPorts = mutableListOf<String>()
+
+        val ports = SerialPort.getCommPorts()
+        for (port in ports) {
+            if (port.manufacturer == "Unknown" ||
+                port.systemPortPath.startsWith("/dev/tty.")
+            ) continue
+
+            filteredPorts.add(port.systemPortPath)
+        }
+
+        return filteredPorts
+    }
+
     private fun calculateCRC32(file: VirtualFile): String {
         val localFileBytes = file.contentsToByteArray()
         val crc = java.util.zip.CRC32()

@@ -21,7 +21,9 @@ import com.intellij.execution.Executor
 import com.intellij.execution.configuration.EmptyRunProfileState
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.facet.ui.ValidationResult
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -32,8 +34,8 @@ import com.intellij.util.PathUtil
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
+import dev.micropythontools.ui.NOTIFICATION_GROUP
 import dev.micropythontools.ui.fileSystemWidget
-import dev.micropythontools.util.MpyPythonService
 
 /**
  * @authors Lukas Kremla
@@ -91,6 +93,20 @@ class MpyRunConfiguration(
     }
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
+        try {
+            checkConfiguration()
+        } catch (e: RuntimeConfigurationError) {
+            Notifications.Bus.notify(
+                Notification(
+                    NOTIFICATION_GROUP,
+                    "Cannot run \"${name}\". MicroPython support was not enabled!",
+                    NotificationType.ERROR
+                ), project
+            )
+
+            return null
+        }
+
         val path: String = options.path ?: ""
         val runReplOnSuccess = options.runReplOnSuccess
         val resetOnSuccess = options.resetOnSuccess
@@ -155,23 +171,6 @@ class MpyRunConfiguration(
                 Runnable { ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java) }
             )
         }
-
-        val pythonService = project.service<MpyPythonService>()
-
-        val validationResult = pythonService.checkValid()
-
-        if (validationResult != ValidationResult.OK) {
-            if (validationResult.quickFix != null) {
-                val runQuickFix = Runnable {
-                    validationResult.quickFix.run(null)
-                }
-                throw RuntimeConfigurationError(validationResult.errorMessage, runQuickFix)
-            } else {
-                throw RuntimeConfigurationError(validationResult.errorMessage)
-            }
-        }
-
-        pythonService.findValidPyhonSdk() ?: throw RuntimeConfigurationError("Python interpreter was not found")
     }
 
     override fun getConfigurationEditor() = MpyRunConfigurationEditor(this)

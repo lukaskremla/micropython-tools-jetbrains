@@ -40,6 +40,7 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
     }
     implementation("commons-net:commons-net:3.9.0")
+    implementation("com.fazecast:jSerialComm:2.11.0")
 }
 
 java {

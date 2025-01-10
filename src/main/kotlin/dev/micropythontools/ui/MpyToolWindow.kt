@@ -34,9 +34,9 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TtyConnector
+import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.communication.State
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.util.MpyPythonService
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import javax.swing.JComponent
 
@@ -93,11 +93,9 @@ class AutoClearAction :
     override fun update(e: AnActionEvent) {
         super.update(e)
 
-        val pythonService = e.project?.service<MpyPythonService>()
+        val settings = e.project?.service<MpySettingsService>()
 
-        val isPyserialInstalled = pythonService?.isPyserialInstalled()
-
-        e.presentation.isEnabled = pythonService != null && isPyserialInstalled == true
+        e.presentation.isEnabled = settings?.state?.isPluginEnabled ?: false
     }
 
     override fun isSelected(e: AnActionEvent): Boolean = isAutoClearEnabled
@@ -121,10 +119,9 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val project = e.project
 
-        val pythonService = e.project?.service<MpyPythonService>()
-
         val settings = project?.let { MpySettingsService.getInstance(it) }
 
+        val isPluginEnabled = settings?.state?.isPluginEnabled ?: false
         val portName = settings?.state?.portName
         val uart = settings?.state?.usingUart
         val url = settings?.state?.webReplUrl
@@ -135,11 +132,8 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
             e.presentation.text = if (url == "") "No URL Selected" else url
         }
 
-        val isPyserialInstalled = pythonService?.isPyserialInstalled()
-
         e.presentation.isEnabled =
-            (pythonService != null) &&
-                    isPyserialInstalled == true &&
+            isPluginEnabled &&
                     (fileSystemWidget(project)?.state == State.DISCONNECTED
                             || fileSystemWidget(project)?.state == State.DISCONNECTING)
     }
@@ -149,11 +143,11 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val project = DataManager.getInstance().getDataContext(button).getData(CommonDataKeys.PROJECT)
 
-        val pythonService = project?.service<MpyPythonService>()
-
         val settings = project?.let { MpySettingsService.getInstance(it) }
 
-        val portListing = pythonService?.listSerialPorts(project)
+        val transferService = project?.service<MpyTransferService>()
+
+        val portListing = transferService?.listSerialPorts()
 
         portListing?.forEach { portName ->
             val action = object : AnAction(portName) {
