@@ -22,6 +22,7 @@ import com.intellij.openapi.components.BaseState
  * @author Lukas Kremla
  */
 class MpyState : BaseState() {
+    var settingsVersion by property(0)
     var isPluginEnabled by property(false)
     var usingUart by property(true)
     var portName by string("")
