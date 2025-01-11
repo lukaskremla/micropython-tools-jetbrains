@@ -30,7 +30,9 @@ import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.asSafely
 import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.communication.State
 import dev.micropythontools.ui.ConnectionParameters
+import dev.micropythontools.ui.fileSystemWidget
 import dev.micropythontools.util.MpyPythonService
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
@@ -48,7 +50,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
     private lateinit var settingsPanel: DialogPanel
     private lateinit var mainSettingsPanel: Panel
-    private lateinit var webReplIndent: RowsRange
+
+    private lateinit var serialPanel: Panel
+    private lateinit var webReplPanel: Panel
+
     private val maxPasswordLength = 4..9
 
     private val parameters = ConnectionParameters(
@@ -60,6 +65,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         wifiPassword = "",
         activeStubsPackage = settings.state.activeStubsPackage,
     )
+
+    private var usingUartUI = parameters.usingUart
 
     override fun createPanel(): DialogPanel {
         runWithModalProgressBlocking(project, "Retrieving credentials...") {
@@ -96,98 +103,100 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
             mainSettingsPanel = panel {
                 group("Connection") {
-                    row {
-                        comboBox(portSelectModel)
-                            .label("Port or WebREPL: ")
-                            .columns(20)
-                            .bind(
-                                { it.editor.item.toString() },
-                                { component, text -> component.selectedItem = text },
-                                object : MutableProperty<String> {
-                                    override fun get(): String {
-                                        return if (parameters.usingUart) {
-                                            parameters.portName
-                                        } else {
-                                            "WebREPL"
-                                        }
-                                    }
-
-                                    override fun set(value: String) {
-                                        if (value == "WebREPL") {
-                                            parameters.usingUart = false
-                                            parameters.portName = ""
-                                        } else {
-                                            parameters.usingUart = true
-                                            parameters.portName = if (value != "") value else parameters.portName
+                    buttonsGroup {
+                        row {
+                            label("Type: ")
+                            radioButton("Serial")
+                                .bindSelected(parameters::usingUart)
+                                .applyToComponent {
+                                    addActionListener {
+                                        if (isSelected && !usingUartUI) {
+                                            serialPanel.visible(true)
+                                            webReplPanel.visible(false)
+                                            usingUartUI = true
                                         }
                                     }
                                 }
-                            )
-                            .validationInfo { comboBox ->
-                                val value = comboBox.selectedItem.asSafely<String>()
+                            radioButton("WebREPL")
+                                .bindSelected({ !parameters.usingUart }, { parameters.usingUart = !it })
+                                .applyToComponent {
+                                    addActionListener {
+                                        toolTipText
 
-                                if (value.isNullOrBlank()) {
-                                    ValidationInfo("No port name provided")
-                                        .withOKEnabled()
-                                } else if (!portSelectModel.contains(value)) {
-                                    ValidationInfo("Unknown port name")
-                                        .asWarning()
-                                        .withOKEnabled()
-                                } else null
-                            }
-                            .applyToComponent {
-                                isEditable = false
-                                addPopupMenuListener(object : PopupMenuListener {
-                                    override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
-                                        refreshAPortSelectModel(portSelectModel)
+                                        if (isSelected && usingUartUI) {
+                                            serialPanel.visible(false)
+                                            webReplPanel.visible(true)
+                                            usingUartUI = false
+                                        }
                                     }
-
-                                    override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
-                                    override fun popupMenuCanceled(e: PopupMenuEvent?) {}
-                                })
-
-                                addActionListener {
-                                    webReplIndent.visible(selectedItem.asSafely<String>() == "WebREPL")
                                 }
-                            }
+                        }
                     }
 
-                    webReplIndent = indent {
+                    serialPanel = panel {
                         row {
-                            textField().bindText(parameters::webReplUrl).label("URL: ").columns(40)
+                            comboBox(portSelectModel)
+                                .label("Port: ")
+                                .columns(20)
+                                .bind(
+                                    { it.editor.item.toString() },
+                                    { component, text -> component.selectedItem = text },
+                                    parameters::portName.toMutableProperty()
+                                ).applyToComponent {
+                                    isEditable = false
+                                    addPopupMenuListener(object : PopupMenuListener {
+                                        override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
+                                            refreshAPortSelectModel(portSelectModel)
+                                        }
+
+                                        override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
+                                        override fun popupMenuCanceled(e: PopupMenuEvent?) {}
+                                    })
+                                }
+                        }
+                    }.visible(parameters.usingUart)
+
+                    webReplPanel = panel {
+                        row {
+                            textField()
+                                .bindText(parameters::webReplUrl)
+                                .label("URL: ")
+                                .columns(40)
                                 .validationInfo { field ->
                                     val msg = messageForBrokenUrl(field.text)
                                     msg?.let { error(it).withOKEnabled() }
                                 }
                         }.layout(RowLayout.LABEL_ALIGNED)
                         row {
-                            passwordField().bindText(parameters::webReplPassword).label("Password: ")
+                            passwordField()
+                                .bindText(parameters::webReplPassword).label("Password: ")
                                 .comment("(4-9 symbols)")
                                 .columns(40)
                                 .validationInfo { field ->
-                                    if (field.password.size !in maxPasswordLength && !parameters.usingUart) {
+                                    if (field.password.size !in maxPasswordLength) {
                                         error("Allowed password length is $maxPasswordLength").withOKEnabled()
                                     } else null
                                 }
                         }.layout(RowLayout.LABEL_ALIGNED)
                     }.visible(!parameters.usingUart)
-                }
+                }.enabled(
+                    (fileSystemWidget(project)?.state == State.DISCONNECTED ||
+                            fileSystemWidget(project)?.state == State.DISCONNECTING)
+                )
 
                 group("FTP Upload Wi-Fi Credentials") {
-                    indent {
-                        row {
-                            textField()
-                                .bindText(parameters::ssid.toMutableProperty())
-                                .label("SSID: ")
-                                .columns(40)
-                        }.layout(RowLayout.LABEL_ALIGNED)
-                        row {
-                            passwordField()
-                                .bindText(parameters::wifiPassword.toMutableProperty())
-                                .label("Password: ")
-                                .columns(40)
-                        }.layout(RowLayout.LABEL_ALIGNED)
-                    }
+                    row {
+                        textField()
+                            .bindText(parameters::ssid.toMutableProperty())
+                            .label("SSID: ")
+                            .columns(40)
+                    }.layout(RowLayout.LABEL_ALIGNED)
+                    row {
+                        passwordField()
+                            .bindText(parameters::wifiPassword.toMutableProperty())
+                            .label("Password: ")
+                            .columns(40)
+                    }.layout(RowLayout.LABEL_ALIGNED)
                 }
 
                 group("MicroPython Stubs") {
@@ -267,7 +276,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
         settings.state.isPluginEnabled = isPluginEnabled
         settings.state.usingUart = parameters.usingUart
-        settings.state.portName = parameters.portName
+        settings.state.portName = if (parameters.portName != "No Port Selected") parameters.portName else ""
         settings.state.webReplUrl = parameters.webReplUrl
         settings.state.activeStubsPackage = parameters.activeStubsPackage
 
@@ -295,12 +304,12 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
         portSelectModel.addAll(portSelectModel.size, ports.filter { !portSelectModel.contains(it) })
 
-        if (portSelectModel.selectedItem.asSafely<String>().isNullOrBlank() && !portSelectModel.isEmpty) {
-            portSelectModel.selectedItem = portSelectModel.items.firstOrNull()
-        }
-
-        if (!portSelectModel.contains("WebREPL")) {
-            portSelectModel.add("WebREPL")
+        if (portSelectModel.selectedItem.asSafely<String>().isNullOrBlank()) {
+            if (!portSelectModel.isEmpty) {
+                portSelectModel.selectedItem = portSelectModel.items.firstOrNull()
+            } else {
+                portSelectModel.selectedItem = "No Port Selected"
+            }
         }
     }
 }
