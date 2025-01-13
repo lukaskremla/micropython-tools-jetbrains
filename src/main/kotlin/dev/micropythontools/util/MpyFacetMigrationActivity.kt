@@ -213,7 +213,7 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                 Notification(
                     NOTIFICATION_GROUP,
                     "MicroPython Tools: We have updated the plugin's internal logic to a use the " +
-                            "latest IntelliJ API. But don't worry!. All of your settings have automatically been migrated." +
+                            "latest IntelliJ API. But don't worry! All of your settings have automatically been migrated." +
                             "<br><br>" +
                             "You can ignore any MicroPython Tools facet errors if they popped up, we've already taken " +
                             "care of them for you!" +
