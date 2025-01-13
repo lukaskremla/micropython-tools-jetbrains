@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-@file:Suppress("DEPRECATION", "REMOVAL")
+//@file:Suppress("DEPRECATION", "REMOVAL")
 
 package dev.micropythontools.util
 
@@ -29,15 +29,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
-import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.intellij.openapi.roots.ModifiableModelsProvider
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.jetbrains.python.library.PythonLibraryType
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import java.io.File
@@ -47,10 +45,12 @@ import javax.swing.JComponent
 /**
  * @author Lukas Kremla
  */
-class MpyPythonService(private val project: Project) : DumbAware {
+class MpyPythonService(private val project: Project) {
     companion object {
 
         private const val PLUGIN_ID = "micropython-tools-jetbrains"
+
+        private const val LIBRARY_NAME = "MicroPythonTools"
 
         /*val pythonScriptsPath: String
             get() = "${pluginDescriptor.pluginPath}/scripts/Python"*/
@@ -66,61 +66,9 @@ class MpyPythonService(private val project: Project) : DumbAware {
                 ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
     }
 
-    private val module = ModuleManager.getInstance(project).modules.first()
-
-    fun updateLibrary() {
-        val settings = project.service<MpySettingsService>()
-        val activeStubPackage = settings.state.activeStubsPackage
-        val availableStubs = getAvailableStubs()
-
-        DumbService.getInstance(project).smartInvokeLater {
-            runWithModalProgressBlocking(project, "Updating libraries") {
-                val workspaceModel = WorkspaceModel.getInstance(project)
-                val currentSnapshot = workspaceModel.currentSnapshot
-                val libraryTableId = LibraryTableId.ProjectLibraryTableId
-
-                val libraryEntity = if (activeStubPackage != null && availableStubs.contains(activeStubPackage)) {
-                    val libraryEntitySource =
-                        LegacyBridgeJpsEntitySourceFactory.getInstance(project)
-                            .createEntitySourceForProjectLibrary(null)
-
-                    val libraryPathUrl = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl("file://$stubsPath/$activeStubPackage")
-
-                    LibraryEntity(
-                        "MicroPython Tools",
-                        libraryTableId,
-                        listOf(
-                            LibraryRoot(
-                                url = libraryPathUrl,
-                                type = LibraryRootTypeId("CLASSES"),
-                                inclusionOptions = LibraryRoot.InclusionOptions.ROOT_ITSELF
-                            )
-                        ),
-                        libraryEntitySource
-                    )
-                } else null
-
-                workspaceModel.update("Adding new module dependency") { builder ->
-                    val libraryId = LibraryId("MicroPython Tools", libraryTableId)
-
-                    if (libraryId in currentSnapshot) {
-                        val existingEntity = currentSnapshot.resolve(libraryId)
-
-                        if (existingEntity != null) {
-                            builder.removeEntity(existingEntity)
-                        }
-                    }
-
-                    if (libraryEntity != null) {
-                        builder.addEntity(libraryEntity)
-                    }
-                }
-
-                PythonSdkUtil.findPythonSdk(module)?.let { sdk ->
-                    PyPackageManager.getInstance(sdk).refreshAndGetPackages(true)
-                }
-            }
-        }
+    fun retrieveMpyScriptAsString(scriptFileName: String): String {
+        val scriptPath = "$microPythonScriptsPath/$scriptFileName"
+        return File(scriptPath).readText(Charsets.UTF_8)
     }
 
     fun getAvailableStubs(): List<String> {
@@ -130,9 +78,42 @@ class MpyPythonService(private val project: Project) : DumbAware {
             ?: emptyList()
     }
 
-    fun retrieveMpyScriptAsString(scriptFileName: String): String {
-        val scriptPath = "$microPythonScriptsPath/$scriptFileName"
-        return File(scriptPath).readText(Charsets.UTF_8)
+    fun updateLibrary() {
+        val settings = project.service<MpySettingsService>()
+        val activeStubPackage = settings.state.activeStubsPackage
+        val availableStubs = getAvailableStubs()
+
+        DumbService.getInstance(project).smartInvokeLater {
+            ApplicationManager.getApplication().runWriteAction {
+                val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+                val projectLibraryModel = projectLibraryTable.modifiableModel
+
+                for (library in projectLibraryModel.libraries) {
+                    if (library.name == LIBRARY_NAME) {
+                        projectLibraryTable.removeLibrary(library)
+                        projectLibraryModel.removeLibrary(library)
+                    }
+                }
+
+                if (!activeStubPackage.isNullOrBlank() && availableStubs.contains(activeStubPackage)) {
+                    val newLibrary = projectLibraryModel.createLibrary(LIBRARY_NAME, PythonLibraryType.getInstance().kind)
+                    val newModel = newLibrary.modifiableModel
+
+                    val rootUrl = "$stubsPath/$activeStubPackage"
+                    val virtualFile = LocalFileSystem.getInstance().findFileByPath(rootUrl)
+
+                    newModel.addRoot(virtualFile!!, OrderRootType.CLASSES)
+
+                    val module = ModuleManager.getInstance(project).modules.first()
+                    val moduleModel = ModifiableModelsProvider.getInstance().getModuleModifiableModel(module)
+                    moduleModel.addLibraryEntry(newLibrary)
+
+                    newModel.commit()
+                    projectLibraryModel.commit()
+                    ModifiableModelsProvider.getInstance().commitModuleModifiableModel(moduleModel)
+                }
+            }
+        }
     }
 
     fun checkStubPackageValidity(): ValidationResult {
@@ -141,10 +122,12 @@ class MpyPythonService(private val project: Project) : DumbAware {
 
         var stubValidationText: String? = null
 
-        if (activeStubsPackage.isNullOrBlank() && !settings.state.isNoStubWarningSuppressed) {
-            stubValidationText = "No stub package selected"
-        } else if (!activeStubsPackage.isNullOrBlank() && !getAvailableStubs().contains(activeStubsPackage)) {
-            stubValidationText = "Invalid stub package selected"
+        if (settings.state.areStubsEnabled) {
+            if (activeStubsPackage.isNullOrBlank()) {
+                stubValidationText = "No stub package selected"
+            } else if (activeStubsPackage.isNotBlank() && !getAvailableStubs().contains(activeStubsPackage)) {
+                stubValidationText = "Invalid stub package selected"
+            }
         }
 
         return if (stubValidationText != null) {
@@ -166,7 +149,9 @@ class MpyPythonService(private val project: Project) : DumbAware {
     // These se are commented out for now, the code below will be salvaged an re-used for planned mpy-cross and
     // MicroPython firmware flashing pip script integrations
 
-    /*fun findValidPyhonSdk(): Sdk? {
+    /*
+    fun findValidPyhonSdk(): Sdk? {
+        val module = ModuleManager.getInstance(project).modules.first()
         val sdk = PythonSdkUtil.findPythonSdk(module)
         val interpreter = sdk?.homeDirectory
 

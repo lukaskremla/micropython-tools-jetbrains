@@ -19,7 +19,6 @@ package dev.micropythontools.settings
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
@@ -40,19 +39,21 @@ import javax.swing.event.PopupMenuListener
 /**
  * @author Lukas Kremla
  */
-class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "MicroPython Tools"), DumbAware {
+class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "MicroPython Tools") {
     private val settings = project.service<MpySettingsService>()
     private val pythonService = project.service<MpyPythonService>()
     private val transferService = project.service<MpyTransferService>()
 
     private var isPluginEnabled = settings.state.isPluginEnabled
-    private var isNoStubWarningSuppressed = settings.state.isNoStubWarningSuppressed
+    private var areStubsEnabled = settings.state.areStubsEnabled
 
     private lateinit var settingsPanel: DialogPanel
     private lateinit var mainSettingsPanel: Panel
 
     private lateinit var serialPanel: Panel
     private lateinit var webReplPanel: Panel
+
+    private lateinit var stubsPackageRow: Row
 
     private val maxPasswordLength = 4..9
 
@@ -201,18 +202,21 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
                 group("MicroPython Stubs") {
                     row {
-                        checkBox("Suppress \"no stub package selected\" warning")
-                            .bindSelected({ isNoStubWarningSuppressed }) {
-                                isNoStubWarningSuppressed = it
+                        checkBox("Enable MicroPython stubs")
+                            .bindSelected({ areStubsEnabled }) {
+                                areStubsEnabled = it
                             }
                             .applyToComponent {
                                 addActionListener {
-                                    isNoStubWarningSuppressed = isSelected
+                                    if (areStubsEnabled != isSelected) {
+                                        stubsPackageRow.enabled(isSelected)
+                                    }
+                                    areStubsEnabled = isSelected
                                 }
                             }
                     }
 
-                    row {
+                    stubsPackageRow = row {
                         cell(
                             TextFieldWithAutoCompletion(
                                 project,
@@ -240,25 +244,24 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             )
                             .label("Stubs package: ")
                             .comment(
-                                "Type \"micropython\" to browse available packages, or leave it empty to disable built-in stubs. " +
+                                "Note: Library changes may not take effect immediately after IDE startup. " +
+                                        "If the changes don't appear right away, close the settings, wait a few seconds and try again.<br>" +
                                         "Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubber\">Jos Verlinde</a>", maxLineLength = 60
+
+                                //"Type \"micropython\" to browse available packages, or leave it empty to disable built-in stubs. " +
+                                //"Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubber\">Jos Verlinde</a><br>" +
                             )
                             .validationInfo { field ->
                                 val text = field.text
 
-                                println("Validating stub package")
-                                if (text.isBlank()) {
-                                    if (!isNoStubWarningSuppressed) {
-                                        println("Should show validation info")
-                                        ValidationInfo("No built-in stubs will be active!").asWarning().withOKEnabled()
-                                    } else {
-                                        null
-                                    }
-                                } else if (!availableStubs.contains(text)) {
+                                if (!availableStubs.contains(text) || text.isBlank()) {
                                     ValidationInfo("Invalid stubs package name!")
                                 } else null
                             }
-                    }
+                            .applyToComponent {
+                                toolTipText = "Type \"micropython\" to browse available packages"
+                            }
+                    }.enabled(areStubsEnabled)
                 }
             }.enabled(isPluginEnabled)
         }
@@ -284,6 +287,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
             settings.saveWebReplPassword(parameters.webReplPassword)
             settings.saveWifiCredentials(parameters.ssid, parameters.wifiPassword)
         }
+
+        pythonService.updateLibrary()
     }
 
     fun refreshAPortSelectModel(portSelectModel: MutableCollectionComboBoxModel<String>) {

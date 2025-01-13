@@ -27,6 +27,6 @@ class MpyState : BaseState() {
     var usingUart by property(true)
     var portName by string("")
     var webReplUrl by string(DEFAULT_WEBREPL_URL)
+    var areStubsEnabled by property(true)
     var activeStubsPackage by string("")
-    var isNoStubWarningSuppressed by property(false)
 }

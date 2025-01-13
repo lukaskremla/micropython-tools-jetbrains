@@ -95,7 +95,7 @@ class MpyRunConfiguration(
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         try {
             checkConfiguration()
-        } catch (e: RuntimeConfigurationError) {
+        } catch (_: RuntimeConfigurationError) {
             Notifications.Bus.notify(
                 Notification(
                     NOTIFICATION_GROUP,
