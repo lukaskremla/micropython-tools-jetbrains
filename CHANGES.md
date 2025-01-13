@@ -1,6 +1,16 @@
 The Changelog
 =============
 
+0.2.0 - 13-1-2025
+------------------
+
+* Added built-in stubs support
+* Scrapped the planned pyserial rewrite and removed the dependency on the pyserial python library
+* Reworked the device connection management in the settings
+* Improved plugin's state management (the plugin features will react to the disabled/disconnected states better)
+* Icon improvements (run configurations now have a new icon and the bug with darkening tool window icon was fixed)
+* Complete backend rewrite of run configuration and settings handling to use the latest plugin API for better maintainability (fixed the problems with settings reverting after applying them)
+
 0.1.5 - 6-1-2025
 ------------------
 
