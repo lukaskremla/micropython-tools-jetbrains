@@ -1,3 +1,4 @@
+import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -57,6 +58,18 @@ intellijPlatform {
 
     publishing {
         token = project.property("publishToken").toString()
+    }
+
+    pluginVerification {
+        cliPath = file("/path/to/plugin-verifier-cli.jar")
+        failureLevel = VerifyPluginTask.FailureLevel.ALL
+        verificationReportsFormats = VerifyPluginTask.VerificationReportsFormats.ALL
+        teamCityOutputFormat = false
+        subsystemsToCheck = VerifyPluginTask.Subsystems.ALL
+
+        ides {
+            // ...
+        }
     }
 }
 

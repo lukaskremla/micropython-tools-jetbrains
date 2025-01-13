@@ -18,18 +18,23 @@ package dev.micropythontools.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.util.MpyPythonService
 
 /**
- * @author vlan
+ * @author vlan, Lukas Kremla
  */
 class MpyRequirementsInspection : LocalInspectionTool() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
-        val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return null
-        val pythonService = module.project.service<MpyPythonService>()
+        val settings = file.project.service<MpySettingsService>()
+
+        if (!settings.state.isPluginEnabled || !settings.state.areStubsEnabled) {
+            return emptyArray()
+        }
+
+        val pythonService = file.project.service<MpyPythonService>()
         val result = pythonService.checkStubPackageValidity()
         if (result.isOk) return null
 
