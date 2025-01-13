@@ -73,7 +73,7 @@ class MpyPythonService(private val project: Project) {
 
     fun getAvailableStubs(): List<String> {
         return File(stubsPath).listFiles()?.filter { it.isDirectory }
-            ?.sortedBy { it }
+            ?.sortedByDescending { it }
             ?.map { it.name }
             ?: emptyList()
     }
