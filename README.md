@@ -14,22 +14,20 @@ I believe that the MicroPython community needs robust, actively maintained and d
 support to modern industry-standard IDEs. My aim with this fork is to address this need.
 
 There will be frequent updates, I'm actively working on developing new features and fixing bugs in the existing
-code. If you run into any problems or bugs using this plugin, please create an issue. For any suggestions or feature
+code. If you run into any problems while using this plugin, please create an issue. For any suggestions or feature
 requests, feel free to start a discussion.
 
 Some of the features you can expect soon include:
 
-- New device management and built-in type hint support
-- New flashing/upload UI
+- Availability in CLion plugin marketplace
 - Drag and drop file system interaction
+- Integration with mpy-cross to allow compiling to bytecode
 
 Long term plans:
 
 - Built-in MicroPython firmware flashing support
-- Rewrite communication layer using pyserial
-- Support compiling to bytecode
-- After finishing the pyserial communication rewrite I might consider developing MicroPython plugins for Visual Studio
-  and VScode as well
+- After the full-release of this plugin I might consider also developing MicroPython plugins for VSCode
+  and possibly Visual Studio 2022
 
 ## Usage tips
 
@@ -88,16 +86,14 @@ especially if you're using serial communication.
 
 ## Supported devices
 
-All MicroPython devices are supported, however, as of right now the plugin does not offer built in type hints. I'm
-working on adding them, in the mean time I recommend checking
-out https://micropython-stubs.readthedocs.io/en/main/.
+Most MicroPython devices should be supported. However, this plugin wasn't tested with highly 
+resource constrained microcontrollers such as the ESP8266 and with MicroPython versions below 1.20.
 
 ## Requirements
 
-* PyCharm or IntelliJ
-* Python 3.10+
-* Pyserial library installed (the plugin will offer you an option to automatically install it)
+* PyCharm
+* A valid Python interpreter (3.10 is recommended for most accurate code analysis)
 * Python plugin (IntelliJ only)
-* A development board with MicroPython installed
+* A development board with MicroPython installed (If possible latest release, otherwise at least 1.20 is recommended)
 
 The plugin is licensed under the terms of the Apache 2 license.
