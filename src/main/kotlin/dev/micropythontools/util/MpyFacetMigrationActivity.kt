@@ -118,8 +118,8 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
             if (!element.attributes.toString().contains("MpyConfigurationType")) return@forEach
 
             // The configuration must be of MpyConfigurationType if we got here, its settings can be extracted
-            val savedName = element.getAttributeValue("name") ?: null
-            val path = element.getAttributeValue("path") ?: null
+            val savedName = element.getAttributeValue("name")
+            val path = element.getAttributeValue("path")
             val useFTP = element.getAttributeValue("ftp") == "yes"
             val runReplOnSuccess = element.getAttributeValue("run-repl-on-success") == "yes"
             val resetOnSuccess = element.getAttributeValue("reset-on-success") == "yes"

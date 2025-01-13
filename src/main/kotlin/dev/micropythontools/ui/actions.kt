@@ -66,6 +66,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import kotlin.Throws
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -175,9 +176,9 @@ fun <T> performReplAction(
                         fileSystemWidget.doConnect(reporter)
                     }
                     result = action(fileSystemWidget, reporter)
-                } catch (e: TimeoutCancellationException) {
+                } catch (_: TimeoutCancellationException) {
                     error = "$description timed out"
-                } catch (e: CancellationException) {
+                } catch (_: CancellationException) {
                     error = cancelledMessage ?: "$description cancelled"
                     errorType = NotificationType.INFORMATION
                 } catch (e: IOException) {
@@ -246,7 +247,7 @@ class ConnectAction(text: String = "Connect") : ReplAction(
     override fun update(e: AnActionEvent) {
         val settings = e.project?.service<MpySettingsService>()
 
-        val isPluginEnabled = settings?.state?.isPluginEnabled ?: false
+        val isPluginEnabled = settings?.state?.isPluginEnabled == true
 
         if (isPluginEnabled) {
             e.presentation.isEnabledAndVisible = when (fileSystemWidget(e)?.state) {

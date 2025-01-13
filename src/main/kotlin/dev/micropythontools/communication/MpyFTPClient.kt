@@ -58,7 +58,7 @@ class MpyFTPClient {
                 currentPath += "/$dir"
                 try {
                     ftpClient.makeDirectory(currentPath)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // Directory might already exist, continue
                 }
             }
