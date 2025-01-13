@@ -161,7 +161,7 @@ class MpyTransferService(private val project: Project) {
             module.rootManager.contentEntries
                 .flatMap { entry -> entry.sourceFolders.toList() }
                 .filter { sourceFolder ->
-                    !sourceFolder.isTestSource && sourceFolder.file?.let { !it.leadingDot() } ?: false
+                    !sourceFolder.isTestSource && sourceFolder.file?.let { !it.leadingDot() } == true
                 }
                 .mapNotNull { it.file }
         }.toSet()
@@ -385,7 +385,7 @@ class MpyTransferService(private val project: Project) {
                                 val ip = scriptResponse.removePrefix("IP: ")
 
                                 ftpUploadClient = MpyFTPClient()
-                                ftpUploadClient?.connect(ip, "", "") // No credentials are used
+                                ftpUploadClient.connect(ip, "", "") // No credentials are used
                             } catch (e: Exception) {
                                 Notifications.Bus.notify(
                                     Notification(
@@ -422,9 +422,9 @@ class MpyTransferService(private val project: Project) {
                     if (ftpUploadClient != null) {
                         try {
                             withTimeout(10_000) {
-                                ftpUploadClient?.uploadFile(path, file.contentsToByteArray(), ::progressCallbackHandler)
+                                ftpUploadClient.uploadFile(path, file.contentsToByteArray(), ::progressCallbackHandler)
                             }
-                        } catch (e: TimeoutCancellationException) {
+                        } catch (_: TimeoutCancellationException) {
                             throw IOException("Timed out while uploading a file with FTP")
                         }
                     } else {

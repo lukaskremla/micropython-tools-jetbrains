@@ -95,7 +95,7 @@ class AutoClearAction :
 
         val settings = e.project?.service<MpySettingsService>()
 
-        e.presentation.isEnabled = settings?.state?.isPluginEnabled ?: false
+        e.presentation.isEnabled = settings?.state?.isPluginEnabled == true
     }
 
     override fun isSelected(e: AnActionEvent): Boolean = isAutoClearEnabled
@@ -121,7 +121,7 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val settings = project?.let { MpySettingsService.getInstance(it) }
 
-        val isPluginEnabled = settings?.state?.isPluginEnabled ?: false
+        val isPluginEnabled = settings?.state?.isPluginEnabled == true
         val portName = settings?.state?.portName
         val uart = settings?.state?.usingUart
         val url = settings?.state?.webReplUrl
