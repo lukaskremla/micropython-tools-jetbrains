@@ -91,7 +91,6 @@ resource constrained microcontrollers such as the ESP8266 and with MicroPython v
 
 ## Requirements
 
-* PyCharm
 * A valid Python interpreter (3.10 is recommended for most accurate code analysis)
 * Python plugin (IntelliJ only)
 * A development board with MicroPython installed (If possible latest release, otherwise at least 1.20 is recommended)
