@@ -58,8 +58,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
     private val parameters = ConnectionParameters(
         usingUart = settings.state.usingUart,
-        portName = settings.state.portName ?: "",
-        webReplUrl = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL,
+        portName = settings.state.portName!!,
+        webReplUrl = settings.state.webReplUrl!!,
         webReplPassword = "",
         ssid = "",
         wifiPassword = "",
@@ -138,6 +138,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             comboBox(portSelectModel)
                                 .label("Port: ")
                                 .columns(20)
+                                .bindItem(
+                                    { parameters.portName },
+                                    { parameters.portName = it ?: "" }
+                                )
                                 .applyToComponent {
                                     selectedItem = parameters.portName.takeIf { it.isNotBlank() } ?: "No Port Selected"
                                     isEditable = false
@@ -146,9 +150,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                             updatePortSelectModel(portSelectModel)
                                         }
 
-                                        override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
-                                            parameters.portName = selectedItem?.toString() ?: ""
-                                        }
+                                        override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
 
                                         override fun popupMenuCanceled(e: PopupMenuEvent?) {}
                                     })
@@ -204,13 +206,11 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                         checkBox("Enable MicroPython stubs")
                             .bindSelected({ areStubsEnabled }) {
                                 areStubsEnabled = it
+                                stubsPackageRow.enabled(it)
                             }
                             .applyToComponent {
                                 addActionListener {
-                                    if (areStubsEnabled != isSelected) {
-                                        stubsPackageRow.enabled(isSelected)
-                                    }
-                                    areStubsEnabled = isSelected
+                                    stubsPackageRow.enabled(isSelected)
                                 }
                             }
                     }
@@ -231,7 +231,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                     override fun getLookupString(item: String) = item
                                 },
                                 true,
-                                ""
+                                parameters.activeStubsPackage
                             ).apply {
                                 setPreferredWidth(450)
                             }
@@ -260,15 +260,16 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                     }.enabled(areStubsEnabled)
                 }
             }.enabled(isPluginEnabled)
+        }.apply {
+            validateAll()
         }
 
         return settingsPanel
     }
 
     override fun isModified(): Boolean {
-        return super.isModified()
+        return settingsPanel.isModified()
     }
-
 
     override fun apply() {
         super.apply()
@@ -279,6 +280,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         settings.state.usingUart = parameters.usingUart
         settings.state.portName = formattedPortName
         settings.state.webReplUrl = parameters.webReplUrl
+        settings.state.areStubsEnabled = areStubsEnabled
         settings.state.activeStubsPackage = parameters.activeStubsPackage
 
         runWithModalProgressBlocking(project, "Saving credentials...") {
