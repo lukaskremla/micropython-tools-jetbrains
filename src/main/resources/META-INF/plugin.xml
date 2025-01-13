@@ -5,17 +5,19 @@
       <p>See <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub.</p>
     ]]></change-notes>
     <description><![CDATA[
-  <p>Adds support for MicroPython devices in PyCharm.</p>
+  <p>Adds support for working with MicroPython devices to PyCharm.</p>
   <div class="plugin-features">
     <p>Features:</p>
     <ul>
       <li>Efficiently upload files to MPY boards (Serial, WebREPL, FTP)</li>
       <li>Comfortably view and interact with the board's file system</li>
+      <li>Seamlessly select and utilize MicroPython stubs with the built-in stub manager using stubs by <a href="https://github.com/Josverl/micropython-stubber">Jos Verlinde</a></li>
       <li>Observe code execution through REPL</li>
     </ul>
   </div>
-  <p>All MicroPython devices are supported. However, built-in typehint support isn't yet implemented. In the meantime I recommend <a href="https://micropython-stubs.readthedocs.io/en/main/">installing the stubs manually.</a></p>
-  <p>Feedback and bug reports are welcome!</p>
+  <p>Most MicroPython devices should be supported. However, this plugin wasn't tested with highly resource constrained
+  microcontrollers such as the ESP8266 and with MicroPython versions below 1.20.</a></p>
+  <p>Feedback and bug reports through Github are welcome!</p>
   <p>More info and usage tips <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">on GitHub!</a></p>
 ]]></description>
     <version>SNAPSHOT</version>
