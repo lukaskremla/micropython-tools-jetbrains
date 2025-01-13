@@ -27,7 +27,6 @@ import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.TextFieldWithAutoCompletion
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.asSafely
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.communication.State
 import dev.micropythontools.ui.ConnectionParameters
@@ -84,7 +83,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
             portSelectModel.add(parameters.portName)
         }
 
-        refreshAPortSelectModel(portSelectModel)
+        updatePortSelectModel(portSelectModel, true)
 
         val availableStubs = pythonService.getAvailableStubs()
 
@@ -139,18 +138,18 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             comboBox(portSelectModel)
                                 .label("Port: ")
                                 .columns(20)
-                                .bind(
-                                    { it.editor.item.toString() },
-                                    { component, text -> component.selectedItem = text },
-                                    parameters::portName.toMutableProperty()
-                                ).applyToComponent {
+                                .applyToComponent {
+                                    selectedItem = parameters.portName.takeIf { it.isNotBlank() } ?: "No Port Selected"
                                     isEditable = false
                                     addPopupMenuListener(object : PopupMenuListener {
                                         override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
-                                            refreshAPortSelectModel(portSelectModel)
+                                            updatePortSelectModel(portSelectModel)
                                         }
 
-                                        override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
+                                        override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
+                                            parameters.portName = selectedItem?.toString() ?: ""
+                                        }
+
                                         override fun popupMenuCanceled(e: PopupMenuEvent?) {}
                                     })
                                 }
@@ -247,9 +246,6 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                 "Note: Library changes may not take effect immediately after IDE startup. " +
                                         "If the changes don't appear right away, close the settings, wait a few seconds and try again.<br>" +
                                         "Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubber\">Jos Verlinde</a>", maxLineLength = 60
-
-                                //"Type \"micropython\" to browse available packages, or leave it empty to disable built-in stubs. " +
-                                //"Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubber\">Jos Verlinde</a><br>" +
                             )
                             .validationInfo { field ->
                                 val text = field.text
@@ -277,9 +273,11 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     override fun apply() {
         super.apply()
 
+        val formattedPortName = if (parameters.portName != "No Port Selected") parameters.portName else ""
+
         settings.state.isPluginEnabled = isPluginEnabled
         settings.state.usingUart = parameters.usingUart
-        settings.state.portName = if (parameters.portName != "No Port Selected") parameters.portName else ""
+        settings.state.portName = formattedPortName
         settings.state.webReplUrl = parameters.webReplUrl
         settings.state.activeStubsPackage = parameters.activeStubsPackage
 
@@ -291,7 +289,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         pythonService.updateLibrary()
     }
 
-    fun refreshAPortSelectModel(portSelectModel: MutableCollectionComboBoxModel<String>) {
+    fun updatePortSelectModel(portSelectModel: MutableCollectionComboBoxModel<String>, isInitialUpdate: Boolean = false) {
         val ports = transferService.listSerialPorts()
 
         var i = 0
@@ -309,11 +307,11 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
         portSelectModel.addAll(portSelectModel.size, ports.filter { !portSelectModel.contains(it) })
 
-        if (portSelectModel.selectedItem.asSafely<String>().isNullOrBlank()) {
-            if (!portSelectModel.isEmpty) {
-                portSelectModel.selectedItem = portSelectModel.items.firstOrNull()
-            } else {
+        if (isInitialUpdate || portSelectModel.isEmpty) {
+            if (parameters.portName.isBlank()) {
                 portSelectModel.selectedItem = "No Port Selected"
+            } else {
+                portSelectModel.selectedItem = parameters.portName
             }
         }
     }
