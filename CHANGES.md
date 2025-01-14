@@ -1,6 +1,12 @@
 The Changelog
 =============
 
+0.2.1 - 14-1-2025
+------------------
+
+* Fixed issues with stubs package settings related changes
+* Fixed issues with settings always being in modified state and enabling "apply" option as soon as they were open if the stub package text name field was empty
+
 0.2.0 - 13-1-2025
 ------------------
 
