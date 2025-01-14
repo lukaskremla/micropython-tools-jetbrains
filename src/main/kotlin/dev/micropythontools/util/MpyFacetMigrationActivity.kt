@@ -77,7 +77,8 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                         continue
                     }
 
-                    val document = JDOMUtil.load(file).document ?: continue
+                    @Suppress("DEPRECATION")
+                    val document = JDOMUtil.loadDocument(file)
                     val rootElement = document.rootElement
 
                     rootElement.getChildren("component").forEach { component ->
