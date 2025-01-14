@@ -95,7 +95,10 @@ class MpyPythonService(private val project: Project) {
                     }
                 }
 
-                if (!activeStubPackage.isNullOrBlank() && availableStubs.contains(activeStubPackage)) {
+                if (settings.state.areStubsEnabled &&
+                    !activeStubPackage.isNullOrBlank() &&
+                    availableStubs.contains(activeStubPackage)
+                ) {
                     val newLibrary = projectLibraryModel.createLibrary(LIBRARY_NAME, PythonLibraryType.getInstance().kind)
                     val newModel = newLibrary.modifiableModel
 
@@ -111,6 +114,8 @@ class MpyPythonService(private val project: Project) {
                     newModel.commit()
                     projectLibraryModel.commit()
                     ModifiableModelsProvider.getInstance().commitModuleModifiableModel(moduleModel)
+                } else {
+                    projectLibraryModel.commit()
                 }
             }
         }
