@@ -237,7 +237,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             }
                         )
                             .bind(
-                                { it.text },
+                                { it.text.takeUnless { it.isEmpty() } },
                                 { component, text -> component.text = text ?: "" },
                                 parameters::activeStubsPackage.toMutableProperty()
                             )
