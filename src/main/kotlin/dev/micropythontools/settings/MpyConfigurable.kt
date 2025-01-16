@@ -58,8 +58,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
     private val parameters = ConnectionParameters(
         usingUart = settings.state.usingUart,
-        portName = settings.state.portName!!,
-        webReplUrl = settings.state.webReplUrl!!,
+        portName = settings.state.portName ?: "No Port Selected",
+        webReplUrl = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL,
         webReplPassword = "",
         ssid = "",
         wifiPassword = "",
@@ -237,7 +237,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             }
                         )
                             .bind(
-                                { it.text.takeUnless { it.isEmpty() } },
+                                { it.text.takeUnless { it.isBlank() } },
                                 { component, text -> component.text = text ?: "" },
                                 parameters::activeStubsPackage.toMutableProperty()
                             )
