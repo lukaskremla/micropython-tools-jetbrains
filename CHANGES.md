@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+0.2.2 - 16-1-2025
+------------------
+
+* Fixed a bug with plugin settings not loading in a new project
+
 0.2.1 - 14-1-2025
 ------------------
 
