@@ -1,4 +1,5 @@
-import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -14,8 +15,8 @@ repositories {
 }
 
 plugins {
-    kotlin("jvm") version "2.0.20"
-    id("org.jetbrains.intellij.platform") version "2.0.1"
+    kotlin("jvm") version "2.1.0"
+    id("org.jetbrains.intellij.platform") version "2.2.1"
 }
 
 dependencies {
@@ -57,18 +58,49 @@ intellijPlatform {
     instrumentCode = false
 
     publishing {
-        token = project.property("publishToken").toString()
+        token = file("publish-token.txt").readText().toString()
     }
 
     pluginVerification {
-        cliPath = file("/path/to/plugin-verifier-cli.jar")
-        failureLevel = VerifyPluginTask.FailureLevel.ALL
-        verificationReportsFormats = VerifyPluginTask.VerificationReportsFormats.ALL
-        teamCityOutputFormat = false
-        subsystemsToCheck = VerifyPluginTask.Subsystems.ALL
+        cliPath = file("verifier-cli-1.381-all.jar")
 
         ides {
-            // ...
+            select {
+                types = listOf(
+                    IntelliJPlatformType.PyCharmProfessional,
+                    IntelliJPlatformType.PyCharmCommunity,
+                    IntelliJPlatformType.CLion
+                )
+                channels = listOf(
+                    ProductRelease.Channel.RELEASE,
+                    ProductRelease.Channel.EAP
+                )
+                sinceBuild = "243.*"
+                untilBuild = "251.*"
+            }
+        }
+    }
+}
+
+intellijPlatformTesting {
+    runIde {
+        register("runPyCharmProfessional") {
+            type = IntelliJPlatformType.PyCharmProfessional
+            version = project.property("platformVersion").toString()
+        }
+
+        register("runPyCharmCommunity") {
+            type = IntelliJPlatformType.PyCharmCommunity
+            version = project.property("platformVersion").toString()
+        }
+
+        register("runCLion") {
+            type = IntelliJPlatformType.CLion
+            version = project.property("platformVersion").toString()
+
+            plugins {
+                plugin(project.property("pythonPlugin").toString())
+            }
         }
     }
 }
@@ -81,7 +113,7 @@ tasks {
             apiVersion = KotlinVersion.KOTLIN_2_0
         }
     }
-    prepareSandbox {
+    withType<org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask> {
         from("$rootDir") {
             into("micropython-tools-jetbrains")
             include("stubs/")
