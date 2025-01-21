@@ -419,7 +419,7 @@ class MpyTransferService(private val project: Project) {
                 fileToTargetPath.forEach { (file, path) ->
                     reporter.details(path)
 
-                    if (ftpUploadClient != null) {
+                    if (ftpUploadClient != null && ftpUploadClient.isConnected) {
                         try {
                             withTimeout(10_000) {
                                 ftpUploadClient.uploadFile(path, file.contentsToByteArray(), ::progressCallbackHandler)

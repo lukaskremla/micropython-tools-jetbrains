@@ -27,17 +27,20 @@ import java.io.ByteArrayInputStream
  */
 class MpyFTPClient {
     private val ftpClient: FTPClient = FTPClient()
+    var isConnected: Boolean = false
 
     fun connect(ip: String, ftpUsername: String, ftpPassword: String) {
         ftpClient.connect(ip)
         ftpClient.login(ftpUsername, ftpPassword)
         ftpClient.enterLocalPassiveMode()
         ftpClient.setFileType(FTP.BINARY_FILE_TYPE)
+        isConnected = true
     }
 
     fun disconnect() {
         ftpClient.logout()
         ftpClient.disconnect()
+        isConnected = false
     }
 
     fun uploadFile(path: String, bytes: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {

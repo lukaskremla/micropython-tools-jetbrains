@@ -66,7 +66,6 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import kotlin.Throws
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
