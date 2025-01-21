@@ -5,6 +5,7 @@ build/
 venv/
 tmp/
 out/
+publish-token.txt
 
 # IntelliJ Platform Gradle Plugin
 .intellijPlatform/
