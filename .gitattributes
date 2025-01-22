@@ -6,3 +6,5 @@ test-projects/* linguist-vendored
 test-projects/** linguist-vendored
 project-scripts/* linguist-vendored
 project-scripts/** linguist-vendored
+src/main/resources/inspectionDescriptions/* linguist-vendored
+src/main/resources/inspectionDescriptions/** linguist-vendored
