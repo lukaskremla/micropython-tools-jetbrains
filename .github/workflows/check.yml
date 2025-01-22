@@ -32,7 +32,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build plugin
-        run: ./gradlew :buildPlugin -Pversion=SNAPSHOT-${{ github.run_number }}
+        run: ./gradlew clean :buildPlugin -Pversion=SNAPSHOT-${{ github.run_number }}
 
       - name: Upload plugin archive
         uses: actions/upload-artifact@v4
