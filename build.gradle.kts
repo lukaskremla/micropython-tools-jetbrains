@@ -57,21 +57,17 @@ intellijPlatform {
 
     instrumentCode = false
 
-    /*publishing {
-        try {
-            val tokenFile = file("publish-token.txt")
+    publishing {
+        val tokenFile = file("publish-token.txt")
 
-            if (tokenFile.exists()) {
-                val tokenFileContents = tokenFile.readText().toString()
+        if (tokenFile.exists()) {
+            val tokenFileContents = tokenFile.readText().toString()
 
-                if (tokenFileContents.isNotBlank()) {
-                    token = tokenFileContents
-                }
+            if (tokenFileContents.isNotBlank()) {
+                token = tokenFileContents
             }
-        } catch (_: Exception) {
-            //
         }
-    }*/
+    }
 
     pluginVerification {
         cliPath = file("verifier-cli-1.381-all.jar")
