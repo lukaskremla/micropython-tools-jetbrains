@@ -3,7 +3,6 @@ import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.nio.file.NoSuchFileException
 
 repositories {
     maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
@@ -69,7 +68,7 @@ intellijPlatform {
                     token = tokenFileContents
                 }
             }
-        } catch (_: NoSuchFileException) {
+        } catch (_: Exception) {
             //
         }
     }
