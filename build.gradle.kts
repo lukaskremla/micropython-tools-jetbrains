@@ -57,7 +57,7 @@ intellijPlatform {
 
     instrumentCode = false
 
-    publishing {
+    /*publishing {
         try {
             val tokenFile = file("publish-token.txt")
 
@@ -71,7 +71,7 @@ intellijPlatform {
         } catch (_: Exception) {
             //
         }
-    }
+    }*/
 
     pluginVerification {
         cliPath = file("verifier-cli-1.381-all.jar")
