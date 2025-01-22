@@ -58,7 +58,15 @@ intellijPlatform {
     instrumentCode = false
 
     publishing {
-        token = file("publish-token.txt").readText().toString()
+        val tokenFile = file("publish-token.txt")
+
+        if (tokenFile.exists()) {
+            val tokenFileContents = tokenFile.readText().toString()
+
+            if (tokenFileContents.isNotBlank()) {
+                token = tokenFileContents
+            }
+        }
     }
 
     pluginVerification {
