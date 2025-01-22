@@ -20,6 +20,7 @@
 package dev.micropythontools.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.projectView.ProjectView
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -45,6 +46,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -227,6 +229,120 @@ fun <T> performReplAction(
         }
     }
     return result
+}
+
+class MarkAsMpySource : DumbAwareAction("MicroPython Source") {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override fun actionPerformed(e: AnActionEvent) {
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+
+        // Get existing mpySourcePaths as a set to ensure uniqueness
+        val settings = e.project?.service<MpySettingsService>()
+        val newMpySourcePaths = settings?.state?.mpySourcePaths?.toMutableSet()
+
+        if (e.project != null && files != null && newMpySourcePaths != null) {
+            files.forEach {
+                newMpySourcePaths.add(it.path)
+            }
+
+            // Convert the set back to be saved
+            settings.state.mpySourcePaths = newMpySourcePaths.toMutableList()
+
+            // Refresh the project view to trigger the plugin's MpySourceIconProvider
+            ProjectView.getInstance(e.project!!).refresh()
+        }
+    }
+
+    override fun update(e: AnActionEvent) {
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: emptyArray<VirtualFile>()
+        val excludedFolders = e.project?.service<MpyTransferService>()?.collectExcluded() ?: emptyList<VirtualFile>()
+
+        val settings = e.project?.service<MpySettingsService>()
+        val isPluginEnabled = settings?.state?.isPluginEnabled == true
+        val existingMpySourceRootPaths = settings?.state?.mpySourcePaths ?: emptyList<String>()
+
+        val eligibleFolders = mutableListOf<VirtualFile>()
+
+        for (file in files) {
+            // Skip folders that are already marked as MPY sources
+            if (existingMpySourceRootPaths.contains(file.path)) continue
+
+            // If an excluded folder is selected, the "Mark Directory As" option shouldn't appear at all
+            // The same applies to selections that contain normal files
+            if (excludedFolders.contains(file) || !file.isDirectory) {
+                eligibleFolders.clear()
+                break
+            }
+
+            // All checks passed, the folder is eligible
+            eligibleFolders.add(file)
+        }
+
+        // This option shouldn't show if the plugin is disabled.
+        // eligibleFolders list will be empty if an excluded folder was found (so excluded folders are handled)
+        e.presentation.isEnabledAndVisible = (isPluginEnabled && eligibleFolders.isNotEmpty())
+    }
+}
+
+class UnmarkAsMpySource : DumbAwareAction("Unmark As MicroPython Source") {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override fun actionPerformed(e: AnActionEvent) {
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+
+        // Get existing mpySourcePaths as a set to ensure uniqueness
+        val settings = e.project?.service<MpySettingsService>()
+        val newMpySourcePaths = settings?.state?.mpySourcePaths?.toMutableSet()
+
+        if (e.project != null && files != null && !newMpySourcePaths.isNullOrEmpty()) {
+            files.forEach {
+                newMpySourcePaths.remove(it.path)
+            }
+
+            // Convert the set back to be saved
+            settings.state.mpySourcePaths = newMpySourcePaths.toMutableList()
+
+            // Refresh the project view to trigger the plugin's MpySourceIconProvider
+            ProjectView.getInstance(e.project!!).refresh()
+        }
+    }
+
+    override fun update(e: AnActionEvent) {
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: emptyArray<VirtualFile>()
+        val excludedFolders = e.project?.service<MpyTransferService>()?.collectExcluded() ?: emptyList<VirtualFile>()
+
+        val settings = e.project?.service<MpySettingsService>()
+        val isPluginEnabled = settings?.state?.isPluginEnabled == true
+        val existingMpySourceRootPaths = settings?.state?.mpySourcePaths ?: emptyList<String>()
+
+        val eligibleFolders = mutableListOf<VirtualFile>()
+
+        for (file in files) {
+            // Only check folders that are already marked as MPY sources
+            if (!existingMpySourceRootPaths.contains(file.path)) continue
+
+            // If an excluded folder is selected, the "Mark Directory As" option shouldn't appear at all
+            // The same applies to selections that contain normal files
+            if (excludedFolders.contains(file) || !file.isDirectory) {
+                eligibleFolders.clear()
+                break
+            }
+
+            // All checks passed, the folder is eligible
+            eligibleFolders.add(file)
+        }
+
+        e.presentation.text = when {
+            eligibleFolders.size > 1 -> "Unmark As MicroPython Sources"
+
+            else -> "Unmark As MicroPython Source"
+        }
+
+        // This option shouldn't show if the plugin is disabled.
+        // eligibleFolders list will be empty if an excluded folder was found (so excluded folders are handled)
+        e.presentation.isEnabledAndVisible = (isPluginEnabled && eligibleFolders.isNotEmpty())
+    }
 }
 
 class ConnectAction(text: String = "Connect") : ReplAction(

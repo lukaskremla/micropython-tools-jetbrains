@@ -41,7 +41,7 @@
         <configurationType implementation="dev.micropythontools.run.MpyRunConfigurationType"/>
 
         <localInspection language="Python"
-                         displayName="MicroPython requirements inspection"
+                         displayName="MicroPython Tools requirements inspection"
                          groupName="MicroPython"
                          enabledByDefault="true"
                          implementationClass="dev.micropythontools.inspections.MpyRequirementsInspection"/>
@@ -55,9 +55,22 @@
                     canCloseContents="false"/>
 
         <postStartupActivity implementation="dev.micropythontools.util.MpyFacetMigrationActivity"/>
+
+        <fileIconProvider implementation="dev.micropythontools.ui.MpySourceIconProvider"/>
+
+        <refactoring.elementListenerProvider implementation="dev.micropythontools.ui.MpyRefactoringListenerProvider"/>
     </extensions>
 
     <actions>
+        <action id="micropythontools.MarkAsMpySource" class="dev.micropythontools.ui.MarkAsMpySource"
+                icon="/icons/MpySource.svg">
+            <add-to-group group-id="MarkRootGroup"/>
+        </action>
+
+        <action id="micropythontools.UnmarkAsMpySource" class="dev.micropythontools.ui.UnmarkAsMpySource">
+            <add-to-group group-id="MarkRootGroup"/>
+        </action>
+
         <group id="micropythontools.repl.FSToolbar">
             <action id="micropythontools.repl.Connect" class="dev.micropythontools.ui.ConnectAction"
                     icon="/icons/connectActive.svg"/>

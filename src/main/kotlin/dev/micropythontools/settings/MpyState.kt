@@ -30,4 +30,5 @@ class MpyState : BaseState() {
     var webReplUrl by string(DEFAULT_WEBREPL_URL)
     var areStubsEnabled by property(true)
     var activeStubsPackage by string("")
+    var mpySourcePaths by list<String>()
 }
