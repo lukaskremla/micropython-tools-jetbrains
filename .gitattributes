@@ -1,1 +1,3 @@
 stubs/* linguist-vendored
+stubs/**/*.pyi linguist-vendored
+*.pyi linguist-vendored
