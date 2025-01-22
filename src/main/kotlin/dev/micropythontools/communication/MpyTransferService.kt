@@ -34,10 +34,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findOrCreateDirectory
-import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.*
 import com.intellij.project.stateStore
 import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.settings.MpySettingsService
@@ -52,12 +49,12 @@ import java.io.IOException
  * @author Lukas Kremla, elmot
  */
 class MpyTransferService(private val project: Project) {
-    fun listSerialPorts(filterManufacturers: Boolean = project.service<MpySettingsService>().state.filterManufacturers): MutableList<String> {
+    fun listSerialPorts(): MutableList<String> {
         val filteredPorts = mutableListOf<String>()
 
         val ports = SerialPort.getCommPorts()
         for (port in ports) {
-            if ((filterManufacturers && port.manufacturer == "Unknown") ||
+            if (port.manufacturer == "Unknown" ||
                 port.systemPortPath.startsWith("/dev/tty.")
             ) continue
 
@@ -145,7 +142,7 @@ class MpyTransferService(private val project: Project) {
         }.toSet()
     }
 
-    private fun collectExcluded(): Set<VirtualFile> {
+    fun collectExcluded(): Set<VirtualFile> {
         val ideaDir = project.stateStore.directoryStorePath?.let { VfsUtil.findFile(it, false) }
         val excludes = if (ideaDir == null) mutableSetOf() else mutableSetOf(ideaDir)
         project.modules.forEach { module ->
@@ -155,17 +152,6 @@ class MpyTransferService(private val project: Project) {
             }
         }
         return excludes
-    }
-
-    private fun collectSourceRoots(): Set<VirtualFile> {
-        return project.modules.flatMap { module ->
-            module.rootManager.contentEntries
-                .flatMap { entry -> entry.sourceFolders.toList() }
-                .filter { sourceFolder ->
-                    !sourceFolder.isTestSource && sourceFolder.file?.let { !it.leadingDot() } == true
-                }
-                .mapNotNull { it.file }
-        }.toSet()
     }
 
     private fun collectTestRoots(): Set<VirtualFile> {
@@ -262,9 +248,10 @@ class MpyTransferService(private val project: Project) {
         var isProjectUpload = initialIsProjectUpload
         var filesToUpload = toUpload.toMutableList()
         val excludedFolders = collectExcluded()
-        val sourceFolders = collectSourceRoots()
         val testFolders = collectTestRoots()
         val projectDir = project.guessProjectDir()
+        val mpySourceFolders = project.service<MpySettingsService>().state.mpySourcePaths
+            .mapNotNull { StandardFileSystems.local().findFileByPath(it) }
 
         var ftpUploadClient: MpyFTPClient? = null
         var uploadedSuccessfully = false
@@ -287,8 +274,8 @@ class MpyTransferService(private val project: Project) {
                             FileTypeRegistry.getInstance().isFileIgnored(file) ||
                             excludedFolders.any { VfsUtil.isAncestor(it, file, true) } ||
                             (isProjectUpload && testFolders.any { VfsUtil.isAncestor(it, file, true) }) ||
-                            (isProjectUpload && sourceFolders.isNotEmpty() &&
-                                    !sourceFolders.any { VfsUtil.isAncestor(it, file, false) })
+                            (isProjectUpload && mpySourceFolders.isNotEmpty() &&
+                                    !mpySourceFolders.any { VfsUtil.isAncestor(it, file, false) })
 
                     when {
                         shouldSkip -> {
@@ -317,11 +304,11 @@ class MpyTransferService(private val project: Project) {
 
                 uniqueFilesToUpload.forEach { file ->
                     val path = when {
-                        sourceFolders.find { VfsUtil.isAncestor(it, file, false) }?.let { sourceRoot ->
+                        mpySourceFolders.find { VfsUtil.isAncestor(it, file, false) }?.let { sourceRoot ->
                             VfsUtil.getRelativePath(file, sourceRoot) ?: file.name
                         } != null -> VfsUtil.getRelativePath(
                             file,
-                            sourceFolders.find { VfsUtil.isAncestor(it, file, false) }!!
+                            mpySourceFolders.find { VfsUtil.isAncestor(it, file, false) }!!
                         ) ?: file.name
 
                         else -> projectDir?.let { VfsUtil.getRelativePath(file, it) } ?: file.name
@@ -330,32 +317,21 @@ class MpyTransferService(private val project: Project) {
                     fileToTargetPath[file] = if (path.startsWith("/")) path else "/$path"
                 }
 
-                val hasBinascii = fileSystemWidget.deviceInformation.hasBinascii
-
-                val scriptProgressText = if (hasBinascii) {
-                    if (shouldSynchronize) {
-                        "Syncing and skipping already uploaded files..."
-                    } else {
-                        "Detecting already uploaded files..."
-                    }
+                val scriptProgressText = if (shouldSynchronize) {
+                    "Synchronizing and skipping already uploaded files..."
                 } else {
-                    "Synchronizing..."
+                    "Skipping already uploaded files..."
                 }
 
                 reporter.text(scriptProgressText)
                 reporter.fraction(null)
 
-                // If neither of these two flags is true then running the script is pointless
-                val alreadyUploadedFiles = if (shouldSynchronize || hasBinascii) {
-                    synchronizeAndGetAlreadyUploadedFiles(
-                        fileToTargetPath,
-                        excludedPaths,
-                        shouldSynchronize,
-                        shouldExcludePaths
-                    )
-                } else {
-                    emptyList()
-                }
+                val alreadyUploadedFiles = synchronizeAndGetAlreadyUploadedFiles(
+                    fileToTargetPath,
+                    excludedPaths,
+                    shouldSynchronize,
+                    shouldExcludePaths
+                )
                 fileToTargetPath.keys.removeAll(alreadyUploadedFiles.toSet())
 
                 if (useFTP && fileToTargetPath.isNotEmpty()) {
