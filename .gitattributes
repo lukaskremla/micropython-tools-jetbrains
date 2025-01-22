@@ -1,3 +1,4 @@
 stubs/* linguist-vendored
 stubs/**/*.pyi linguist-vendored
 *.pyi linguist-vendored
+test-projects/* linguist-vendored
