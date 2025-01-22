@@ -3,6 +3,7 @@ import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.nio.file.NoSuchFileException
 
 repositories {
     maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
@@ -58,14 +59,18 @@ intellijPlatform {
     instrumentCode = false
 
     publishing {
-        val tokenFile = file("publish-token.txt")
+        try {
+            val tokenFile = file("publish-token.txt")
 
-        if (tokenFile.exists()) {
-            val tokenFileContents = tokenFile.readText().toString()
+            if (tokenFile.exists()) {
+                val tokenFileContents = tokenFile.readText().toString()
 
-            if (tokenFileContents.isNotBlank()) {
-                token = tokenFileContents
+                if (tokenFileContents.isNotBlank()) {
+                    token = tokenFileContents
+                }
             }
+        } catch (_: NoSuchFileException) {
+            //
         }
     }
 
