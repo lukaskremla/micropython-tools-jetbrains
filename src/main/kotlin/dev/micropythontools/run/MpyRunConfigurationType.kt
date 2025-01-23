@@ -30,7 +30,7 @@ class MpyRunConfigurationType : ConfigurationTypeBase(
 ) {
     init {
         // Multiple factories can be added here to achieve similar behavior to, for example docker, configurations
-        addFactory(MpyRunConfigurationFactory(this))
+        addFactory(MpyFlashConfigurationFactory(this))
     }
 
     companion object {

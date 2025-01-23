@@ -20,9 +20,9 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
 
-class MpyRunConfigurationFactory(type: MpyRunConfigurationType) : ConfigurationFactory(type) {
+class MpyFlashConfigurationFactory(type: MpyRunConfigurationType) : ConfigurationFactory(type) {
     override fun createTemplateConfiguration(project: Project): RunConfiguration {
-        return MpyRunConfiguration(project, this, "Flash")
+        return MpyFlashConfiguration(project, this, "Flash")
     }
 
     override fun getName(): String {
@@ -33,5 +33,5 @@ class MpyRunConfigurationFactory(type: MpyRunConfigurationType) : ConfigurationF
         return "micropython-tools-flash-configuration"
     }
 
-    override fun getOptionsClass() = MpyRunConfigurationOptions::class.java
+    override fun getOptionsClass() = MpyFlashConfigurationOptions::class.java
 }

@@ -43,7 +43,7 @@ import javax.swing.table.DefaultTableModel
 /**
  * @authors Lukas Kremla
  */
-class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<MpyRunConfiguration>() {
+class MpyFlashConfigurationEditor(config: MpyFlashConfiguration) : SettingsEditor<MpyFlashConfiguration>() {
     private val pathField = TextFieldWithBrowseButton()
     private val resetOnSuccess = CheckBox("Reset on success", selected = false)
     private val runReplOnSuccess = CheckBox("Switch to REPL tab on success", selected = true)
@@ -272,7 +272,7 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
             .addComponent(excludedPathsTablePanel)
             .panel
 
-    override fun applyEditorTo(runConfiguration: MpyRunConfiguration) {
+    override fun applyEditorTo(runConfiguration: MpyFlashConfiguration) {
         val excludedPathsList = mutableListOf<String>()
 
         val model = excludedPathsTable.model as DefaultTableModel
@@ -293,7 +293,7 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
         )
     }
 
-    override fun resetEditorFrom(runConfiguration: MpyRunConfiguration) {
+    override fun resetEditorFrom(runConfiguration: MpyFlashConfiguration) {
         val options = runConfiguration.getOptionsObject()
 
         pathField.text = options.path ?: ""

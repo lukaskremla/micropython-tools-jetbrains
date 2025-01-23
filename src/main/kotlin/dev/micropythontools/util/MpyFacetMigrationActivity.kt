@@ -32,8 +32,8 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.isFile
-import dev.micropythontools.run.MpyRunConfiguration
-import dev.micropythontools.run.MpyRunConfigurationFactory
+import dev.micropythontools.run.MpyFlashConfiguration
+import dev.micropythontools.run.MpyFlashConfigurationFactory
 import dev.micropythontools.run.MpyRunConfigurationType
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.NOTIFICATION_GROUP
@@ -59,7 +59,7 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
 
         // Instantiate the plugin's run configuration factory here so that all configurations that might be migrated
         // share one factory
-        val factory = MpyRunConfigurationFactory(MpyRunConfigurationType())
+        val factory = MpyFlashConfigurationFactory(MpyRunConfigurationType())
 
         // Assume that the main .iml is inside the project's .idea folder
         val ideaDirPath = "${project.guessProjectDir()}/.idea".removePrefix("file:")
@@ -145,7 +145,7 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
             }
 
             // Instantiate the new flash configuration with the old one's settings
-            val writtenConfiguration = MpyRunConfiguration(
+            val writtenConfiguration = MpyFlashConfiguration(
                 project,
                 factory,
                 name

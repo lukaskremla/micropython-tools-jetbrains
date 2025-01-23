@@ -40,15 +40,20 @@ import dev.micropythontools.ui.fileSystemWidget
 /**
  * @authors Lukas Kremla
  */
-class MpyRunConfiguration(
+class MpyFlashConfiguration(
     project: Project,
     factory: ConfigurationFactory,
     name: String
-) : RunConfigurationBase<MpyRunConfigurationOptions>(
+) : RunConfigurationBase<MpyFlashConfigurationOptions>(
     project,
     factory,
     name
 ), LocatableConfiguration {
+
+    private fun isProjectUpload(): Boolean =
+        project.guessProjectDir()?.path.let { projectPath ->
+            options.path.isNullOrBlank() || (projectPath != null && options.path == projectPath)
+        }
 
     private var myGeneratedName = true
 
@@ -60,12 +65,10 @@ class MpyRunConfiguration(
         }
     }
 
-    override fun isGeneratedName(): Boolean {
-        return myGeneratedName
-    }
+    override fun isGeneratedName(): Boolean = myGeneratedName
 
-    override fun getOptions(): MpyRunConfigurationOptions {
-        return super.getOptions() as MpyRunConfigurationOptions
+    override fun getOptions(): MpyFlashConfigurationOptions {
+        return super.getOptions() as MpyFlashConfigurationOptions
     }
 
     fun saveOptions(
@@ -88,22 +91,19 @@ class MpyRunConfiguration(
         options.excludedPaths = excludedPaths
     }
 
-    fun getOptionsObject(): MpyRunConfigurationOptions {
-        return options
-    }
+    fun getOptionsObject(): MpyFlashConfigurationOptions = options
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         try {
             checkConfiguration()
-        } catch (_: RuntimeConfigurationError) {
+        } catch (e: RuntimeConfigurationError) {
             Notifications.Bus.notify(
                 Notification(
                     NOTIFICATION_GROUP,
-                    "Cannot run \"${name}\". MicroPython support was not enabled!",
+                    "Cannot run \"${name}\". ${e.localizedMessage}",
                     NotificationType.ERROR
                 ), project
             )
-
             return null
         }
 
@@ -116,8 +116,6 @@ class MpyRunConfiguration(
         val excludedPaths = options.excludedPaths
 
         val success: Boolean
-        val projectDir = project.guessProjectDir()
-        val projectPath = projectDir?.path
 
         var ssid = ""
         var wifiPassword = ""
@@ -131,7 +129,7 @@ class MpyRunConfiguration(
 
         val transferService = project.service<MpyTransferService>()
 
-        if (path.isBlank() || (projectPath != null && path == projectPath)) {
+        if (isProjectUpload()) {
             success = transferService.uploadProject(
                 excludedPaths,
                 synchronize,
@@ -165,13 +163,22 @@ class MpyRunConfiguration(
     override fun checkConfiguration() {
         super<RunConfigurationBase>.checkConfiguration()
 
-        if (!project.service<MpySettingsService>().state.isPluginEnabled) {
+        val settings = project.service<MpySettingsService>()
+
+        if (!settings.state.isPluginEnabled) {
             throw RuntimeConfigurationError(
                 "MicroPython support was not enabled for this project",
                 Runnable { ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java) }
             )
         }
+
+        val mpySourceFolders = settings.state.mpySourcePaths
+            .mapNotNull { StandardFileSystems.local().findFileByPath(it) }
+
+        if (isProjectUpload() && mpySourceFolders.isEmpty()) {
+            throw RuntimeConfigurationError("No folders were marked as MicroPython sources")
+        }
     }
 
-    override fun getConfigurationEditor() = MpyRunConfigurationEditor(this)
+    override fun getConfigurationEditor() = MpyFlashConfigurationEditor(this)
 }
