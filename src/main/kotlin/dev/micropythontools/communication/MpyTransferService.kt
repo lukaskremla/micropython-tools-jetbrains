@@ -154,15 +154,6 @@ class MpyTransferService(private val project: Project) {
         return excludes
     }
 
-    private fun collectTestRoots(): Set<VirtualFile> {
-        return project.modules.flatMap { module ->
-            module.rootManager.contentEntries
-                .flatMap { entry -> entry.sourceFolders.toList() }
-                .filter { sourceFolder -> sourceFolder.isTestSource }
-                .mapNotNull { it.file }
-        }.toSet()
-    }
-
     fun uploadProject(
         excludedPaths: List<String> = emptyList(),
         shouldSynchronize: Boolean = false,
@@ -248,10 +239,15 @@ class MpyTransferService(private val project: Project) {
         var isProjectUpload = initialIsProjectUpload
         var filesToUpload = toUpload.toMutableList()
         val excludedFolders = collectExcluded()
-        val testFolders = collectTestRoots()
         val projectDir = project.guessProjectDir()
         val mpySourceFolders = project.service<MpySettingsService>().state.mpySourcePaths
             .mapNotNull { StandardFileSystems.local().findFileByPath(it) }
+
+        mpySourceFolders.filter { potentialChild ->
+            !mpySourceFolders.any { potentialAncestor ->
+                VfsUtil.isAncestor(potentialAncestor, potentialChild, true)
+            }
+        }
 
         var ftpUploadClient: MpyFTPClient? = null
         var uploadedSuccessfully = false
@@ -272,9 +268,8 @@ class MpyTransferService(private val project: Project) {
                     val shouldSkip = !file.isValid ||
                             (file.leadingDot() && file != projectDir) ||
                             FileTypeRegistry.getInstance().isFileIgnored(file) ||
-                            excludedFolders.any { VfsUtil.isAncestor(it, file, true) } ||
-                            (isProjectUpload && testFolders.any { VfsUtil.isAncestor(it, file, true) }) ||
-                            (isProjectUpload && mpySourceFolders.isNotEmpty() &&
+                            excludedFolders.any { VfsUtil.isAncestor(it, file, false) } ||
+                            (isProjectUpload && !file.isDirectory &&
                                     !mpySourceFolders.any { VfsUtil.isAncestor(it, file, false) })
 
                     when {
@@ -317,6 +312,23 @@ class MpyTransferService(private val project: Project) {
                     fileToTargetPath[file] = if (path.startsWith("/")) path else "/$path"
                 }
 
+                // Group by target path to find duplicates
+                val pathGroups = fileToTargetPath.entries.groupBy(
+                    { entry -> entry.value },
+                    { entry -> projectDir?.let { VfsUtil.getRelativePath(entry.key, it) } ?: entry.key.path }
+                )
+                val duplicates = pathGroups.filter { it.value.size > 1 }
+
+                if (duplicates.isNotEmpty()) {
+                    throw IllegalStateException(
+                        "Multiple source files would be uploaded to the same target path!<br>" +
+                                duplicates.entries.joinToString("<br>") { (targetPath, sourceFiles) ->
+                                    "Target path: \"$targetPath\" has multiple sources:<br>" +
+                                            "\"${sourceFiles.joinToString("\"<br>\"")}\""
+                                }
+                    )
+                }
+
                 val scriptProgressText = if (shouldSynchronize) {
                     "Synchronizing and skipping already uploaded files..."
                 } else {
@@ -332,6 +344,7 @@ class MpyTransferService(private val project: Project) {
                     shouldSynchronize,
                     shouldExcludePaths
                 )
+
                 fileToTargetPath.keys.removeAll(alreadyUploadedFiles.toSet())
 
                 if (useFTP && fileToTargetPath.isNotEmpty()) {

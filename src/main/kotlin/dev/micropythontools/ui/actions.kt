@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.wm.ToolWindowManager
@@ -427,13 +428,15 @@ class InstantRun : DumbAwareAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
-        val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
-        e.presentation.isEnabled = file != null &&
-                !file.isDirectory &&
-                files?.size == 1 &&
-                (file.fileType == PythonFileType.INSTANCE ||
-                        file.extension == "mpy")
+        val excludedFolders = e.project?.service<MpyTransferService>()?.collectExcluded() ?: emptyList<VirtualFile>()
+
+        e.presentation.isEnabledAndVisible = files != null &&
+                files.size == 1 &&
+                !files[0].isDirectory &&
+                !excludedFolders.any { VfsUtil.isAncestor(it, files[0], false) } &&
+                (files[0].fileType == PythonFileType.INSTANCE ||
+                        files[0].extension == "mpy")
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -526,7 +529,14 @@ open class UploadFile : DumbAwareAction("Upload Selected to MicroPython Device")
     override fun update(e: AnActionEvent) {
         val project = e.project
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
-        if (project != null && files != null) {
+
+        val excludedFiles = e.project?.service<MpyTransferService>()?.collectExcluded() ?: emptyList<VirtualFile>()
+
+        val containsExcluded: Boolean = files?.any { selectedFile ->
+            excludedFiles.any { VfsUtil.isAncestor(it, selectedFile, false) }
+        } == true
+
+        if (project != null && files != null && !containsExcluded) {
             var directoryCount = 0
             var fileCount = 0
 
