@@ -60,6 +60,10 @@ class MpyToolWindow : ToolWindowFactory, DumbAware {
         terminalContent.setDisposer(newDisposable)
         toolWindow.contentManager.addContent(terminalContent)
         fileSystemWidget.terminalContent = terminalContent
+
+        val mpyDeviceWidget = MpyDeviceWidget(project, fileSystemWidget)
+        val mpyDeviceWidgetContent = ContentFactory.getInstance().createContent(mpyDeviceWidget, "Device", true)
+        toolWindow.contentManager.addContent(mpyDeviceWidgetContent)
     }
 
     private fun jediTermWidget(project: Project, disposable: Disposable, connector: TtyConnector): JComponent {
