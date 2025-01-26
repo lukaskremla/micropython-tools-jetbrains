@@ -1,5 +1,4 @@
 /*
- * Copyright 2000-2024 JetBrains s.r.o.
  * Copyright 2024-2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,71 +17,84 @@
 package dev.micropythontools.run
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SettingsEditor
-import com.intellij.openapi.ui.ComponentWithBrowseButton
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.DialogBuilder
-import com.intellij.openapi.ui.TextComponentAccessor
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.setEmptyState
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.components.CheckBox
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.table.JBTable
-import com.intellij.util.ui.FormBuilder
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.table.TableView
+import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.ListTableModel
+import dev.micropythontools.settings.MpySettingsService
+import dev.micropythontools.ui.MpySourceIconProvider
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.event.ItemEvent
-import javax.swing.Box
-import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.ListSelectionModel
+import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
 
 /**
  * @authors Lukas Kremla
  */
-class MpyFlashConfigurationEditor(config: MpyFlashConfiguration) : SettingsEditor<MpyFlashConfiguration>() {
-    private val pathField = TextFieldWithBrowseButton()
-    private val resetOnSuccess = CheckBox("Reset on success", selected = false)
-    private val runReplOnSuccess = CheckBox("Switch to REPL tab on success", selected = true)
-    private val useFTP = CheckBox("Use FTP for file uploads", selected = false)
-    private val synchronize = CheckBox("Synchronize", selected = false)
-    private val excludePaths = CheckBox("Exclude selected paths", selected = false)
+private data class FlashParameters(
+    var flashingProject: Boolean,
+    var selectedPaths: MutableList<String>,
+    var resetOnSuccess: Boolean,
+    var switchToReplOnSuccess: Boolean,
+    var alwaysUseFTP: Boolean,
+    var synchronize: Boolean,
+    var excludePaths: Boolean,
+    var excludedPaths: MutableList<String>
+)
 
-    private val ftpPanel = JPanel().apply {
-        layout = BoxLayout(this, BoxLayout.X_AXIS)
-        add(useFTP)
-        add(JBLabel(AllIcons.General.Information).apply {
-            toolTipText = "Make sure to setup wifi credentials in the plugin settings"
-        })
+/**
+ * @authors Lukas Kremla
+ */
+private data class SourceItem(
+    private val project: Project,
+    val path: String
+) {
+    val virtualFile: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(path)
+
+    val displayText: String = virtualFile?.let { thisFile ->
+        project.guessProjectDir()?.let { projectDir ->
+            VfsUtil.getRelativePath(thisFile, projectDir)
+        } ?: thisFile.name
+    } ?: path
+}
+
+/**
+ * @authors Lukas Kremla
+ */
+class MpyFlashConfigurationEditor(private val project: Project, private val config: MpyFlashConfiguration) : SettingsEditor<MpyFlashConfiguration>() {
+    val settings = project.service<MpySettingsService>()
+
+    private val parameters = with(config.options) {
+        FlashParameters(
+            flashingProject = flashingProject,
+            selectedPaths = selectedPaths.toMutableList(),
+            resetOnSuccess = resetOnSuccess,
+            switchToReplOnSuccess = switchToReplOnSuccess,
+            alwaysUseFTP = alwaysUseFTP,
+            synchronize = synchronize,
+            excludePaths = excludePaths,
+            excludedPaths = excludedPaths.toMutableList()
+        )
     }
 
-    private val synchronizePanel = JPanel().apply {
-        layout = BoxLayout(this, BoxLayout.X_AXIS)
-        add(synchronize)
-        add(JBLabel(AllIcons.General.Information).apply {
-            toolTipText = "Synchronize device file system to only contain flashed files (deletes empty folders)"
-        })
-    }
-
-    private val excludePathsPanel = JPanel().apply {
-        layout = BoxLayout(this, BoxLayout.X_AXIS)
-        add(excludePaths)
-        add(JBLabel(AllIcons.General.Information).apply {
-            toolTipText = "Exclude listed on-device paths from synchronization"
-        })
-    }
-
-    private val excludedPathsTable = JBTable().apply {
-        emptyText.text = "No excluded paths"
-        model = DefaultTableModel(0, 1)
-        setShowGrid(false)
-        tableHeader = null
-    }
-
-    private fun validatePath(path: String): String? {
+    private fun validateMicroPythonPath(path: String): String? {
         val forbiddenCharacters = listOf("<", ">", ":", "\"", "|", "?", "*")
         val foundForbiddenCharacters = mutableListOf<String>()
 
@@ -96,7 +108,7 @@ class MpyFlashConfigurationEditor(config: MpyFlashConfiguration) : SettingsEdito
             return "Found forbidden characters: $foundForbiddenCharacters"
         }
 
-        // A just-in-case limit, to prevent over-inflating the synchronization script
+        // A just-in-case limit
         if (path.length > 256) {
             return "Path is too long (maximum 256 characters)"
         }
@@ -108,7 +120,7 @@ class MpyFlashConfigurationEditor(config: MpyFlashConfiguration) : SettingsEdito
         return null
     }
 
-    private fun normalizePath(path: String): String {
+    private fun normalizeMicroPythonPath(path: String): String {
         var normalizedPath = path
 
         // Replace slash format to fit MicroPython file system
@@ -129,11 +141,19 @@ class MpyFlashConfigurationEditor(config: MpyFlashConfiguration) : SettingsEdito
         return normalizedPath
     }
 
+    private val excludedPathsTable = JBTable().apply {
+        emptyText.text = "No excluded paths"
+        model = DefaultTableModel(0, 1)
+        setShowGrid(false)
+        tableHeader = null
+        preferredScrollableViewportSize = Dimension(500, 100)
+    }
+
+    // TODO: Switch to using a TableView
     private val excludedPathsTableWithToolbar = ToolbarDecorator.createDecorator(excludedPathsTable)
         .setAddAction {
             val dialog = DialogBuilder(config.project)
             dialog.title("Add Excluded Path")
-
 
             val model = excludedPathsTable.model as DefaultTableModel
 
@@ -149,13 +169,13 @@ class MpyFlashConfigurationEditor(config: MpyFlashConfiguration) : SettingsEdito
             dialog.centerPanel(panel)
 
             dialog.setOkOperation {
-                val validationResult = validatePath(textField.text)
+                val validationResult = validateMicroPythonPath(textField.text)
 
                 if (validationResult == null) {
-                    val normalizedPath = normalizePath(textField.text)
+                    val normalizedPath = normalizeMicroPythonPath(textField.text)
 
                     model.addRow(arrayOf(normalizedPath))
-                    sortExcludedPathsTableModel(model)
+                    sortDefaultTableModel(model)
                     dialog.dialogWrapper.close(0)
                 } else {
                     dialog.setErrorText(validationResult)
@@ -197,13 +217,13 @@ class MpyFlashConfigurationEditor(config: MpyFlashConfiguration) : SettingsEdito
             dialog.centerPanel(panel)
 
             dialog.setOkOperation {
-                val validationResult = validatePath(textField.text)
+                val validationResult = validateMicroPythonPath(textField.text)
 
                 if (validationResult == null) {
-                    val normalizedPath = normalizePath(textField.text)
+                    val normalizedPath = normalizeMicroPythonPath(textField.text)
 
                     model.setValueAt(normalizedPath, selectedRow, 0)
-                    sortExcludedPathsTableModel(model)
+                    sortDefaultTableModel(model)
                     dialog.dialogWrapper.close(0)
                 } else {
                     dialog.setErrorText(validationResult)
@@ -214,116 +234,227 @@ class MpyFlashConfigurationEditor(config: MpyFlashConfiguration) : SettingsEdito
         }
         .createPanel()
 
-    private val excludedPathsTablePanel = JPanel().apply {
-        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    private fun sourcesTable(emptyText: String) = TableView<SourceItem>().apply {
+        val column = object : ColumnInfo<SourceItem, String>("Source Path") {
+            override fun valueOf(item: SourceItem) = item.displayText
 
-        val labelPanel = JPanel().apply {
-            layout = BoxLayout(this, BoxLayout.X_AXIS)
-            add(Box.createHorizontalStrut(JBUI.scale(15)))
-            add(JBLabel("Excluded paths:"))
-            add(Box.createHorizontalGlue())
-            alignmentX = 0.0f
+            override fun getRenderer(item: SourceItem) = DefaultTableCellRenderer().apply {
+                icon = IconLoader.getIcon("icons/MpySource.svg", MpySourceIconProvider::class.java)
+            }
         }
 
-        val indentedPanel = JPanel().apply {
-            layout = BoxLayout(this, BoxLayout.X_AXIS)
-            add(Box.createHorizontalStrut(JBUI.scale(25)))
-            add(excludedPathsTableWithToolbar)
-            alignmentX = 0.0f
-        }
-
-        add(labelPanel)
-        add(Box.createVerticalStrut(JBUI.scale(5)))
-        add(indentedPanel)
+        model = ListTableModel<SourceItem>(column)
+        tableHeader = null
+        setShowGrid(false)
+        setEmptyState(emptyText)
+        selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
+        preferredScrollableViewportSize = Dimension(250, 150)
     }
 
-    init {
-        val descriptor = FileChooserDescriptor(true, true, false, false, false, false).withTitle("Select Path")
-        val pathListener = ComponentWithBrowseButton.BrowseFolderActionListener(
-            pathField,
-            config.project,
-            descriptor,
-            TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
-        )
-        pathField.addActionListener(pathListener)
+    private val availableSourcesTable = sourcesTable("No available MicroPython sources")
+    private val selectedSourcesTable = sourcesTable("No selected MicroPython sources")
 
-        excludePathsPanel.isVisible = synchronize.isSelected
+    private lateinit var configurationPanel: DialogPanel
+    private lateinit var synchronizeCheckbox: Cell<JBCheckBox>
+    private lateinit var excludePathsCheckbox: Cell<JBCheckBox>
 
-        synchronize.addItemListener { e ->
-            excludePathsPanel.isVisible = e.stateChange == ItemEvent.SELECTED
+    private lateinit var useSelectedPathsRadioButton: Cell<JBRadioButton>
+
+    override fun createEditor(): JComponent {
+        configurationPanel = panel {
+            buttonsGroup {
+                row {
+                    label("Type: ")
+                    radioButton("Project")
+                        .bindSelected(parameters::flashingProject)
+                        .applyToComponent {
+                            addActionListener {
+                                if (config.isGeneratedName) {
+                                    config.suggestedName()
+                                }
+                            }
+                        }
+                    useSelectedPathsRadioButton = radioButton("Selected")
+                        .bindSelected({ !parameters.flashingProject }, { parameters.flashingProject = !it })
+                        .applyToComponent {
+                            addActionListener {
+                                if (config.isGeneratedName) {
+                                    config.suggestedName()
+                                }
+                            }
+                        }
+                }
+            }
+
+            panel {
+                row {
+                    cell(JBScrollPane(availableSourcesTable))
+                        .label("Available sources:", LabelPosition.TOP)
+                        .align(AlignX.FILL)
+
+                    panel {
+                        row {
+                            button("→") {
+                                // Move to selected
+                                transferSourceItem(availableSourcesTable, selectedSourcesTable)
+                            }
+                        }
+                        row {
+                            button("←") {
+                                // Move from selected
+                                transferSourceItem(selectedSourcesTable, availableSourcesTable)
+                            }
+                        }
+                    }
+
+                    cell(JBScrollPane(selectedSourcesTable))
+                        .label("Selected sources:", LabelPosition.TOP)
+                        .align(AlignX.FILL)
+                }
+            }.visibleIf(useSelectedPathsRadioButton.selected)
+
+            row {
+                checkBox("Reset on success")
+                    .bindSelected(parameters::resetOnSuccess)
+            }
+
+            row {
+                checkBox("Switch to REPL tab on success")
+                    .bindSelected(parameters::switchToReplOnSuccess)
+            }
+
+            row {
+                checkBox("Always use FTP")
+                    .bindSelected(parameters::alwaysUseFTP)
+                    .gap(RightGap.SMALL)
+
+                cell(JBLabel(AllIcons.General.Information).apply {
+                    toolTipText = "Make sure to setup wifi credentials in the plugin settings"
+                })
+            }
+
+            row {
+                synchronizeCheckbox = checkBox("Synchronize")
+                    .bindSelected(parameters::synchronize)
+                    .gap(RightGap.SMALL)
+
+                cell(JBLabel(AllIcons.General.Information).apply {
+                    toolTipText = "Synchronize device file system to only contain flashed files (deletes empty folders)"
+                })
+            }
+
+            row {
+                excludePathsCheckbox = checkBox("Exclude selected paths")
+                    .bindSelected(parameters::excludePaths)
+                    .gap(RightGap.SMALL)
+
+                cell(JBLabel(AllIcons.General.Information).apply {
+                    toolTipText = "Exclude listed on-device paths from synchronization"
+                })
+            }.visibleIf(synchronizeCheckbox.selected)
+
+            indent {
+                row {
+                    cell(excludedPathsTableWithToolbar)
+                        .label("Excluded paths:", LabelPosition.TOP)
+                }
+            }.visibleIf(excludePathsCheckbox.selected)
         }
 
-        excludedPathsTablePanel.isVisible = excludePaths.isSelected
-
-        excludePaths.addItemListener { e ->
-            excludedPathsTablePanel.isVisible = e.stateChange == ItemEvent.SELECTED
-        }
+        return configurationPanel
     }
-
-    override fun createEditor(): JComponent =
-        FormBuilder.createFormBuilder()
-            .addTooltip("Leave path empty to upload the whole project")
-            .addLabeledComponent("Path:", pathField)
-            .addComponent(resetOnSuccess)
-            .addComponent(runReplOnSuccess)
-            .addComponent(ftpPanel)
-            .addComponent(synchronizePanel)
-            .addComponent(excludePathsPanel)
-            .addComponent(excludedPathsTablePanel)
-            .panel
 
     override fun applyEditorTo(runConfiguration: MpyFlashConfiguration) {
-        val excludedPathsList = mutableListOf<String>()
+        configurationPanel.apply()
 
-        val model = excludedPathsTable.model as DefaultTableModel
-        var i = 0
-        while (i < model.rowCount) {
-            excludedPathsList.add(model.getValueAt(i, 0).toString())
-            i++
+        with(parameters) {
+            val selectedSourcesListTableModel = selectedSourcesTable.listTableModel
+
+            selectedPaths = selectedSourcesListTableModel.items
+                .map { it.path }
+                .toMutableList()
+
+            excludedPaths.clear()
+
+            val excludedPathsModel = excludedPathsTable.model as DefaultTableModel
+            var i = 0
+            while (i < excludedPathsModel.rowCount) {
+                excludedPaths.add(excludedPathsModel.getValueAt(i, 0).toString())
+                i++
+            }
+
+            runConfiguration.saveOptions(
+                flashingProject = flashingProject,
+                selectedPaths = selectedPaths,
+                resetOnSuccess = resetOnSuccess,
+                switchToReplOnSuccess = switchToReplOnSuccess,
+                alwaysUseFTP = alwaysUseFTP,
+                synchronize = synchronize,
+                excludePaths = excludePaths,
+                excludedPaths = excludedPaths
+            )
         }
-
-        runConfiguration.saveOptions(
-            path = pathField.text,
-            runReplOnSuccess = runReplOnSuccess.isSelected,
-            resetOnSuccess = resetOnSuccess.isSelected,
-            useFTP = useFTP.isSelected,
-            synchronize = synchronize.isSelected,
-            excludePaths = excludePaths.isSelected,
-            excludedPaths = excludedPathsList
-        )
     }
 
     override fun resetEditorFrom(runConfiguration: MpyFlashConfiguration) {
-        val options = runConfiguration.getOptionsObject()
+        val projectMpySourcesPaths = settings.state.mpySourcePaths
+        val configurationMpySourcesPaths = runConfiguration.options.selectedPaths
 
-        pathField.text = options.path ?: ""
-        runReplOnSuccess.isSelected = options.runReplOnSuccess
-        resetOnSuccess.isSelected = options.resetOnSuccess
-        useFTP.isSelected = options.useFTP
-        synchronize.isSelected = options.synchronize
-        excludePaths.isSelected = options.excludePaths
+        val availableSourcesListTableModel = availableSourcesTable.listTableModel
+        val selectedSourcesListTableModel = selectedSourcesTable.listTableModel
 
-        val model = excludedPathsTable.model as DefaultTableModel
-        model.rowCount = 0
-        options.excludedPaths.forEach { path ->
-            model.addRow(arrayOf(path))
+        availableSourcesListTableModel.items = projectMpySourcesPaths
+            .subtract(configurationMpySourcesPaths)
+            .mapNotNull { LocalFileSystem.getInstance().findFileByPath(it)?.path }
+            .map { SourceItem(project, it) }
+            .sortedBy { it.displayText }
+
+        selectedSourcesListTableModel.items = configurationMpySourcesPaths
+            .map { SourceItem(project, it) }
+            .sortedBy { it.displayText }
+
+
+        val excludedPathsModel = excludedPathsTable.model as DefaultTableModel
+        excludedPathsModel.rowCount = 0
+        runConfiguration.options.excludedPaths.forEach { path ->
+            excludedPathsModel.addRow(arrayOf(path))
         }
 
-        sortExcludedPathsTableModel(model)
+        sortDefaultTableModel(excludedPathsModel)
+
+        configurationPanel.reset()
     }
 
-    private fun sortExcludedPathsTableModel(model: DefaultTableModel) {
-        val excludedPaths = mutableListOf<String>()
+    private fun transferSourceItem(sourceTable: TableView<SourceItem>, destinationTable: TableView<SourceItem>) {
+        val selectedRow = sourceTable.selectedRow
+
+        if (selectedRow == -1) return
+
+        val selectedItem = sourceTable.listTableModel.items[selectedRow]
+
+        val newSelectedSources = sourceTable.listTableModel.items.toMutableList()
+        newSelectedSources.remove(selectedItem)
+
+        sourceTable.listTableModel.items = newSelectedSources.sortedBy { it.displayText }
+
+        val newAvailableSources = destinationTable.items.toMutableList()
+        newAvailableSources.add(selectedItem)
+
+        destinationTable.listTableModel.items = newAvailableSources.sortedBy { it.displayText }
+    }
+
+    private fun sortDefaultTableModel(model: DefaultTableModel) {
+        val paths = mutableListOf<String>()
 
         var i = 0
         while (i < model.rowCount) {
-            excludedPaths.add(model.getValueAt(i, 0).toString())
+            paths.add(model.getValueAt(i, 0).toString())
             i++
         }
 
         model.rowCount = 0
 
-        excludedPaths
+        paths
             .sortedBy { it }
             .forEach { path ->
                 model.addRow(arrayOf(path))

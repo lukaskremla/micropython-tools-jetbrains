@@ -108,6 +108,8 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
 
         val runManagerImpls = RunManagerImpl.getInstanceImpl(project)
 
+        // TODO: Revisit the existing run configuration migrator and make sure it works
+        // TODO: Extend the implementation to also migrate newer configurations (as the MicroPython source feature changed things again)
         runManagerImpls.allConfigurationsList.forEach { configuration ->
             // Create a temporary element to which the configuration attributes are dumped and write it
             val element = org.jdom.Element("temporaryConfig")
@@ -151,13 +153,14 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                 name
             ).apply {
                 saveOptions(
-                    path ?: "",
-                    runReplOnSuccess,
-                    resetOnSuccess,
-                    useFTP,
-                    synchronize,
-                    excludePaths,
-                    excludedPaths
+                    flashingProject = path.isNullOrBlank(),
+                    selectedPaths = mutableListOf(path ?: ""),
+                    resetOnSuccess = resetOnSuccess,
+                    switchToReplOnSuccess = runReplOnSuccess,
+                    alwaysUseFTP = useFTP,
+                    synchronize = synchronize,
+                    excludePaths = excludePaths,
+                    excludedPaths = excludedPaths
                 )
             }
 

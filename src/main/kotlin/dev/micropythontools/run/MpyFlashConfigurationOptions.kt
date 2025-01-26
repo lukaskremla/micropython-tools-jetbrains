@@ -19,10 +19,11 @@ package dev.micropythontools.run
 import com.intellij.execution.configurations.RunConfigurationOptions
 
 class MpyFlashConfigurationOptions : RunConfigurationOptions() {
-    var path by string("")
-    var runReplOnSuccess by property(false)
+    var flashingProject by property(true)
+    var selectedPaths by list<String>()
     var resetOnSuccess by property(true)
-    var useFTP by property(false)
+    var switchToReplOnSuccess by property(false)
+    var alwaysUseFTP by property(false)
     var synchronize by property(false)
     var excludePaths by property(false)
     var excludedPaths by list<String>()

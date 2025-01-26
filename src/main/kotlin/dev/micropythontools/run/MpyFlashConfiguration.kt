@@ -18,6 +18,7 @@
 package dev.micropythontools.run
 
 import com.intellij.execution.Executor
+import com.intellij.execution.RunManager
 import com.intellij.execution.configuration.EmptyRunProfileState
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -27,10 +28,8 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.util.PathUtil
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
@@ -50,48 +49,31 @@ class MpyFlashConfiguration(
     name
 ), LocatableConfiguration {
 
-    private fun isProjectUpload(): Boolean =
-        project.guessProjectDir()?.path.let { projectPath ->
-            options.path.isNullOrBlank() || (projectPath != null && options.path == projectPath)
-        }
-
-    private var myGeneratedName = true
-
     override fun suggestedName(): String {
-        val currentPath = options.path
-        return when {
-            currentPath.isNullOrBlank() || currentPath == "" -> "Flash Project"
-            else -> "Flash ${PathUtil.getFileName(currentPath)}"
+        val baseName = when {
+            options.flashingProject -> "Flash Project"
+            else -> "Flash Selection"
         }
+
+        if (name == baseName) return baseName
+
+        val existingNames = project.getService<RunManager>(RunManager::class.java)
+            .allConfigurationsList
+            .map { it.name }
+
+        if (baseName !in existingNames) return baseName
+
+        var counter = 1
+        while ("$baseName ($counter)" in existingNames) {
+            counter++
+        }
+        return "$baseName ($counter)"
     }
 
-    override fun isGeneratedName(): Boolean = myGeneratedName
+    override fun isGeneratedName(): Boolean = listOf("Flash Project", "Flash Selection").any { it in name }
 
-    override fun getOptions(): MpyFlashConfigurationOptions {
-        return super.getOptions() as MpyFlashConfigurationOptions
-    }
-
-    fun saveOptions(
-        path: String,
-        runReplOnSuccess: Boolean,
-        resetOnSuccess: Boolean,
-        useFTP: Boolean,
-        synchronize: Boolean,
-        excludePaths: Boolean,
-        excludedPaths: MutableList<String>
-    ) {
-        suggestedName()
-
-        options.path = path
-        options.runReplOnSuccess = runReplOnSuccess
-        options.resetOnSuccess = resetOnSuccess
-        options.useFTP = useFTP
-        options.synchronize = synchronize
-        options.excludePaths = excludePaths
-        options.excludedPaths = excludedPaths
-    }
-
-    fun getOptionsObject(): MpyFlashConfigurationOptions = options
+    val options: MpyFlashConfigurationOptions
+        get() = super.getOptions() as MpyFlashConfigurationOptions
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         try {
@@ -107,14 +89,6 @@ class MpyFlashConfiguration(
             return null
         }
 
-        val path: String = options.path ?: ""
-        val runReplOnSuccess = options.runReplOnSuccess
-        val resetOnSuccess = options.resetOnSuccess
-        val useFTP = options.useFTP
-        val synchronize = options.synchronize
-        val excludePaths = options.excludePaths
-        val excludedPaths = options.excludedPaths
-
         val success: Boolean
 
         var ssid = ""
@@ -129,34 +103,35 @@ class MpyFlashConfiguration(
 
         val transferService = project.service<MpyTransferService>()
 
-        if (isProjectUpload()) {
-            success = transferService.uploadProject(
-                excludedPaths,
-                synchronize,
-                excludePaths,
-                useFTP,
-                ssid,
-                wifiPassword
-            )
-        } else {
-            val toUpload = StandardFileSystems.local().findFileByPath(path) ?: return null
-            success = transferService.uploadFileOrFolder(
-                toUpload,
-                excludedPaths,
-                synchronize,
-                excludePaths,
-                useFTP,
-                ssid,
-                wifiPassword
-            )
-        }
-        if (success) {
-            val fileSystemWidget = fileSystemWidget(project)
-            if (resetOnSuccess) fileSystemWidget?.reset()
-            if (runReplOnSuccess) fileSystemWidget?.activateRepl()
-            return EmptyRunProfileState.INSTANCE
-        } else {
-            return null
+        with(options) {
+            if (flashingProject) {
+                success = transferService.uploadProject(
+                    excludedPaths,
+                    synchronize,
+                    excludePaths,
+                    alwaysUseFTP
+                )
+            } else {
+                val toUpload = selectedPaths.mapNotNull { path ->
+                    StandardFileSystems.local().findFileByPath(path)
+                }.toSet()
+
+                success = transferService.uploadItems(
+                    toUpload,
+                    excludedPaths,
+                    synchronize,
+                    excludePaths,
+                    alwaysUseFTP
+                )
+            }
+            if (success) {
+                val fileSystemWidget = fileSystemWidget(project)
+                if (resetOnSuccess) fileSystemWidget?.reset()
+                if (switchToReplOnSuccess) fileSystemWidget?.activateRepl()
+                return EmptyRunProfileState.INSTANCE
+            } else {
+                return null
+            }
         }
     }
 
@@ -165,6 +140,9 @@ class MpyFlashConfiguration(
 
         val settings = project.service<MpySettingsService>()
 
+        val mpySourceFolders = settings.state.mpySourcePaths
+            .mapNotNull { StandardFileSystems.local().findFileByPath(it) }
+
         if (!settings.state.isPluginEnabled) {
             throw RuntimeConfigurationError(
                 "MicroPython support was not enabled for this project",
@@ -172,13 +150,53 @@ class MpyFlashConfiguration(
             )
         }
 
-        val mpySourceFolders = settings.state.mpySourcePaths
-            .mapNotNull { StandardFileSystems.local().findFileByPath(it) }
-
-        if (isProjectUpload() && mpySourceFolders.isEmpty()) {
+        // When the whole project is being flashed
+        if (options.flashingProject && mpySourceFolders.isEmpty()) {
             throw RuntimeConfigurationError("No folders were marked as MicroPython sources")
+        }
+
+        // When a selection is being flashed
+        if (!options.flashingProject) {
+            if (options.selectedPaths.any { StandardFileSystems.local().findFileByPath(it) == null }) {
+                throw RuntimeConfigurationError(
+                    "One or more of the selected MicroPython source folders no longer exist in the file system"
+                )
+            }
+
+            if (options.selectedPaths.any { selectedPath ->
+                    val selectedFile = StandardFileSystems.local().findFileByPath(selectedPath)
+                    selectedFile?.let { file ->
+                        mpySourceFolders.any { sourceFolder ->
+                            sourceFolder == file
+                        }
+                    } == true
+                }) {
+                throw RuntimeConfigurationWarning(
+                    "One or more of the selected folders is no longer marked as a MicroPython source folder"
+                )
+            }
         }
     }
 
-    override fun getConfigurationEditor() = MpyFlashConfigurationEditor(this)
+    fun saveOptions(
+        flashingProject: Boolean,
+        selectedPaths: MutableList<String>,
+        resetOnSuccess: Boolean,
+        switchToReplOnSuccess: Boolean,
+        alwaysUseFTP: Boolean,
+        synchronize: Boolean,
+        excludePaths: Boolean,
+        excludedPaths: MutableList<String>
+    ) {
+        options.flashingProject = flashingProject
+        options.selectedPaths = selectedPaths
+        options.resetOnSuccess = resetOnSuccess
+        options.switchToReplOnSuccess = switchToReplOnSuccess
+        options.alwaysUseFTP = alwaysUseFTP
+        options.synchronize = synchronize
+        options.excludePaths = excludePaths
+        options.excludedPaths = excludedPaths
+    }
+
+    override fun getConfigurationEditor() = MpyFlashConfigurationEditor(project, this)
 }
