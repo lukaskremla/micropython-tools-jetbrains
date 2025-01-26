@@ -232,6 +232,24 @@ fun <T> performReplAction(
     return result
 }
 
+//TODO: Investigate and consider implementing IntelliJ platform methods for creating MarkRootActions
+/*class MarkMpySource2 : MarkRootActionBase {
+    override fun modifyRoots(file: VirtualFile?, entry: ContentEntry?) {
+        TODO("Not yet implemented")
+        MarkExcludeRootAction
+        MarkSourceRootAction
+    }
+
+    override fun isEnabled(selection: RootsSelection, module: Module): Boolean {
+        TODO("Not yet implemented")
+    }
+
+}
+
+class UnMarkMpySource2 : UnmarkRootAction {
+
+}*/
+
 class MarkAsMpySource : DumbAwareAction("MicroPython Source") {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 

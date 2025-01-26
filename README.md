@@ -3,7 +3,7 @@
 This is a fork of the [jetbrains intellij micropython plugin](https://github.com/JetBrains/intellij-micropython).
 Credits to [Andrey Vlasovskikh](https://github.com/vlasovskikh) for creating the original plugin and
 to [Ilia Motornyi](https://github.com/elmot) for rewriting the communication layer to kotlin and for developing the new
-UI, which serves as the foundation for this project.
+File System UI, which serves as the foundation for this project.
 
 Many thanks also go to all of the contributors who helped maintain and improve the plugin in the past.
 
@@ -22,10 +22,10 @@ Some of the features you can expect soon include:
 - Availability in CLion plugin marketplace
 - Drag and drop file system interaction
 - Integration with mpy-cross to allow compiling to bytecode
+- Built-in MicroPython firmware flashing support
 
 Long term plans:
 
-- Built-in MicroPython firmware flashing support
 - After the full-release of this plugin I might consider also developing MicroPython plugins for VSCode
   and possibly Visual Studio 2022
 
@@ -86,7 +86,7 @@ especially if you're using serial communication.
 
 ## Supported devices
 
-Most MicroPython devices should be supported. However, this plugin wasn't tested with highly 
+Most MicroPython devices should be supported. However, this plugin wasn't tested with highly
 resource constrained microcontrollers such as the ESP8266 and with MicroPython versions below 1.20.
 
 ## Requirements
