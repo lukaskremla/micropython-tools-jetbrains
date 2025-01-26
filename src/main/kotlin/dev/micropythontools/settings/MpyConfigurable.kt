@@ -43,7 +43,6 @@ import javax.swing.event.PopupMenuListener
 private data class ConfigurableParameters(
     var isPluginEnabled: Boolean,
     var usingUart: Boolean,
-    var filterManufacturers: Boolean,
     var portName: String,
     var webReplUrl: String,
     var webReplPassword: String,
@@ -68,7 +67,6 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
             ConfigurableParameters(
                 isPluginEnabled = isPluginEnabled,
                 usingUart = usingUart,
-                filterManufacturers = filterManufacturers,
                 portName = if (portName.isNullOrBlank()) EMPTY_PORT_NAME_TEXT else portName.toString(),
                 webReplUrl = webReplUrl ?: DEFAULT_WEBREPL_URL,
                 webReplPassword = settings.retrieveWebReplPassword(),
@@ -86,7 +84,6 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     private lateinit var serialRadioButton: Cell<JBRadioButton>
     private lateinit var webReplRadioButton: Cell<JBRadioButton>
 
-    private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
     override fun createPanel(): DialogPanel {
@@ -115,10 +112,6 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                     }
 
                     panel {
-                        row {
-                            filterManufacturersCheckBox = checkBox("Filter out devices with unknown manufacturers")
-                                .bindSelected(parameters::filterManufacturers)
-                        }
                         row {
                             portSelectComboBox = comboBox(portSelectModel)
                                 .label("Port: ")
@@ -257,7 +250,6 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         with(parameters) {
             settings.state.isPluginEnabled = isPluginEnabled
             settings.state.usingUart = usingUart
-            settings.state.filterManufacturers = filterManufacturers
             settings.state.portName = portName.takeUnless { it == EMPTY_PORT_NAME_TEXT }
             settings.state.webReplUrl = webReplUrl
             settings.state.areStubsEnabled = areStubsEnabled
@@ -273,9 +265,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     }
 
     fun updatePortSelectModel(portSelectModel: MutableCollectionComboBoxModel<String>, isInitialUpdate: Boolean = false) {
-        val lsPortsParam = if (isInitialUpdate) parameters.filterManufacturers else filterManufacturersCheckBox.component.isSelected
-
-        val ports = transferService.listSerialPorts(lsPortsParam)
+        val ports = transferService.listSerialPorts()
 
         portSelectModel.items
             .filterNot { it in ports || it == portSelectModel.selectedItem }

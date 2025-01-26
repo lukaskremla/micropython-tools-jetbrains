@@ -36,6 +36,8 @@ import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TtyConnector
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.communication.State
+import dev.micropythontools.settings.EMPTY_PORT_NAME_TEXT
+import dev.micropythontools.settings.EMPTY_URL_TEXT
 import dev.micropythontools.settings.MpySettingsService
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import javax.swing.JComponent
@@ -126,10 +128,10 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
         val uart = settings?.state?.usingUart
         val url = settings?.state?.webReplUrl
 
-        if (uart == true || uart == null) {
-            e.presentation.text = if (portName == "" || portName == null) "No Port Selected" else portName
+        if (uart == false) {
+            e.presentation.text = if (url.isNullOrBlank()) EMPTY_URL_TEXT else url
         } else {
-            e.presentation.text = if (url == "") "No URL Selected" else url
+            e.presentation.text = if (portName.isNullOrBlank()) EMPTY_PORT_NAME_TEXT else portName
         }
 
         e.presentation.isEnabled =
