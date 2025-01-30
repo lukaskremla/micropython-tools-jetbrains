@@ -330,21 +330,32 @@ class MpyTransferService(private val project: Project) {
                     fileToTargetPath[file] = if (path.startsWith("/")) path else "/$path"
                 }
 
-                val scriptProgressText = if (shouldSynchronize) {
-                    "Syncing and skipping already uploaded files..."
+                val hasBinascii = fileSystemWidget.deviceInformation.hasBinascii
+
+                val scriptProgressText = if (hasBinascii) {
+                    if (shouldSynchronize) {
+                        "Syncing and skipping already uploaded files..."
+                    } else {
+                        "Detecting already uploaded files..."
+                    }
                 } else {
-                    "Detecting already uploaded files..."
+                    "Synchronizing..."
                 }
 
                 reporter.text(scriptProgressText)
                 reporter.fraction(null)
 
-                val alreadyUploadedFiles = synchronizeAndGetAlreadyUploadedFiles(
-                    fileToTargetPath,
-                    excludedPaths,
-                    shouldSynchronize,
-                    shouldExcludePaths
-                )
+                // If neither of these two flags is true then running the script is pointless
+                val alreadyUploadedFiles = if (shouldSynchronize || hasBinascii) {
+                    synchronizeAndGetAlreadyUploadedFiles(
+                        fileToTargetPath,
+                        excludedPaths,
+                        shouldSynchronize,
+                        shouldExcludePaths
+                    )
+                } else {
+                    emptyList()
+                }
                 fileToTargetPath.keys.removeAll(alreadyUploadedFiles.toSet())
 
                 if (useFTP && fileToTargetPath.isNotEmpty()) {
