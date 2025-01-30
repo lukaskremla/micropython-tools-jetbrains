@@ -55,9 +55,14 @@ import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
 import dev.micropythontools.communication.*
-import dev.micropythontools.settings.*
+import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
+import dev.micropythontools.settings.MpyConfigurable
+import dev.micropythontools.settings.MpySettingsService
+import dev.micropythontools.settings.messageForBrokenUrl
 import dev.micropythontools.util.MpyPythonService
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.io.IOException
@@ -65,6 +70,12 @@ import java.util.*
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+
+data class DeviceInformation(
+    var version: String = "Unknown",
+    var description: String = "Unknown",
+    var hasBinascii: Boolean = false
+)
 
 data class ConnectionParameters(
     var usingUart: Boolean = true,
@@ -106,14 +117,15 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         get() = comm.ttyConnector
     private val tree: Tree = Tree(newTreeModel())
 
-    private val comm: MpyComm = MpyComm().also { Disposer.register(newDisposable, it) }
+    private val comm: MpyComm = MpyComm(this).also { Disposer.register(newDisposable, it) }
 
     private val settings = project.service<MpySettingsService>()
-
     private val pythonService = project.service<MpyPythonService>()
 
     val state: State
         get() = comm.state
+
+    var deviceInformation: DeviceInformation = DeviceInformation()
 
     private fun newTreeModel() = DefaultTreeModel(DirNode("/", "/"), true)
 
@@ -212,15 +224,26 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         )
 
         // Try to sync the RTC, temporary feature, might not work on all boards and port versions
-        blindExecute(TIMEOUT, formattedScript)
+        val scriptResponse = blindExecute(TIMEOUT, formattedScript).extractSingleResponse()
+        val (version, description, hasBinascii) = scriptResponse.split("&")
+
+        deviceInformation = DeviceInformation(version, description, hasBinascii == "True")
+
+        if (!deviceInformation.hasBinascii) {
+            MessageDialogBuilder.Message(
+                "Missing MicroPython Libraries", "The connected board is missing the binascii " +
+                        "library. The already uploaded files check won't work and uploads may take longer."
+            ).asWarning().buttons("Acknowledge").show(project)
+        }
     }
 
     suspend fun doConnect(reporter: RawProgressReporter) {
         if (state == State.CONNECTED) return
 
-        val settings = MpySettingsService.getInstance(project)
+        val settings = project.service<MpySettingsService>()
 
-        reporter.text("Connecting to ${settings.state.portName}")
+        val device = if (settings.state.usingUart) settings.state.portName else settings.state.webReplUrl
+        reporter.text("Connecting to $device")
         reporter.fraction(null)
 
         var msg: String? = null
@@ -386,6 +409,11 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                     "Are you sure you want to delete ${fileSystemNodes.size} items?\n\rThis operation cannot be undone!"
             }
 
+            MessageDialogBuilder.Message(
+                "Missing MicroPython Libraries", "The connected board is missing the binascii" +
+                        "library. The already uploaded files check won't work and uploads may take longer."
+            ).asWarning().buttons("Acknowledge")
+
             reporter.text(reporterText)
             reporter.fraction(null)
 
@@ -419,6 +447,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         reporter.text("Disconnecting from ${settings.state.portName}")
         reporter.fraction(null)
         comm.disconnect()
+        deviceInformation = DeviceInformation()
     }
 
     @Throws(IOException::class)
