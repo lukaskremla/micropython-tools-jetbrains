@@ -20,16 +20,18 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.TextFieldWithAutoCompletion
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.communication.State
-import dev.micropythontools.ui.ConnectionParameters
 import dev.micropythontools.ui.fileSystemWidget
 import dev.micropythontools.util.MpyPythonService
 import javax.swing.event.PopupMenuEvent
@@ -38,127 +40,110 @@ import javax.swing.event.PopupMenuListener
 /**
  * @author Lukas Kremla
  */
-class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "MicroPython Tools") {
+private data class ConfigurableParameters(
+    var isPluginEnabled: Boolean,
+    var usingUart: Boolean,
+    var filterManufacturers: Boolean,
+    var portName: String,
+    var webReplUrl: String,
+    var webReplPassword: String,
+    var ssid: String,
+    var wifiPassword: String,
+    var areStubsEnabled: Boolean,
+    var activeStubsPackage: String
+)
+
+/**
+ * @author Lukas Kremla
+ */
+class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
     private val settings = project.service<MpySettingsService>()
     private val pythonService = project.service<MpyPythonService>()
     private val transferService = project.service<MpyTransferService>()
 
-    private var isPluginEnabled = settings.state.isPluginEnabled
-    private var areStubsEnabled = settings.state.areStubsEnabled
+    private val parameters = with(settings.state) {
+        runWithModalProgressBlocking(project, "Retrieving settings...") {
+            val wifiCredentials = settings.retrieveWifiCredentials()
 
-    private lateinit var settingsPanel: DialogPanel
-    private lateinit var mainSettingsPanel: Panel
+            ConfigurableParameters(
+                isPluginEnabled = isPluginEnabled,
+                usingUart = usingUart,
+                filterManufacturers = filterManufacturers,
+                portName = if (portName.isNullOrBlank()) EMPTY_PORT_NAME_TEXT else portName.toString(),
+                webReplUrl = webReplUrl ?: DEFAULT_WEBREPL_URL,
+                webReplPassword = settings.retrieveWebReplPassword(),
+                ssid = wifiCredentials.userName ?: "",
+                wifiPassword = wifiCredentials.getPasswordAsString() ?: "",
+                areStubsEnabled = areStubsEnabled,
+                activeStubsPackage = activeStubsPackage ?: "",
+            )
+        }
+    }
 
-    private lateinit var serialPanel: Panel
-    private lateinit var webReplPanel: Panel
+    private lateinit var pluginEnabledCheckBox: Cell<JBCheckBox>
+    private lateinit var areStubsEnabled: Cell<JBCheckBox>
 
-    private lateinit var stubsPackageRow: Row
+    private lateinit var serialRadioButton: Cell<JBRadioButton>
+    private lateinit var webReplRadioButton: Cell<JBRadioButton>
 
-    private val maxPasswordLength = 4..9
-
-    private val parameters = ConnectionParameters(
-        usingUart = settings.state.usingUart,
-        portName = settings.state.portName ?: "No Port Selected",
-        webReplUrl = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL,
-        webReplPassword = "",
-        ssid = "",
-        wifiPassword = "",
-        activeStubsPackage = settings.state.activeStubsPackage,
-    )
-
-    private var usingUartUI = parameters.usingUart
+    private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
+    private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
     override fun createPanel(): DialogPanel {
-        runWithModalProgressBlocking(project, "Retrieving credentials...") {
-            parameters.webReplPassword = project.service<MpySettingsService>().retrieveWebReplPassword()
-
-            val wifiCredentials = project.service<MpySettingsService>().retrieveWifiCredentials()
-
-            parameters.ssid = wifiCredentials.userName ?: ""
-            parameters.wifiPassword = wifiCredentials.getPasswordAsString() ?: ""
-        }
-
         val portSelectModel = MutableCollectionComboBoxModel<String>()
-        if (parameters.portName.isNotBlank()) {
-            portSelectModel.add(parameters.portName)
-        }
-
         updatePortSelectModel(portSelectModel, true)
 
         val availableStubs = pythonService.getAvailableStubs()
 
-        settingsPanel = panel {
+        return panel {
             row {
-                checkBox("Enable MicroPython support")
-                    .bindSelected({ isPluginEnabled }) {
-                        isPluginEnabled = it
-                        mainSettingsPanel.enabled(it)
-                    }
-                    .applyToComponent {
-                        addActionListener {
-                            mainSettingsPanel.enabled(isSelected)
-                        }
-                    }
+                pluginEnabledCheckBox = checkBox("Enable MicroPython support")
+                    .bindSelected(parameters::isPluginEnabled)
             }
 
-            mainSettingsPanel = panel {
+            panel {
                 group("Connection") {
                     buttonsGroup {
                         row {
                             label("Type: ")
-                            radioButton("Serial")
+                            serialRadioButton = radioButton("Serial")
                                 .bindSelected(parameters::usingUart)
-                                .applyToComponent {
-                                    addActionListener {
-                                        if (isSelected && !usingUartUI) {
-                                            serialPanel.visible(true)
-                                            webReplPanel.visible(false)
-                                            usingUartUI = true
-                                        }
-                                    }
-                                }
-                            radioButton("WebREPL")
-                                .bindSelected({ !parameters.usingUart }, { parameters.usingUart = !it })
-                                .applyToComponent {
-                                    addActionListener {
-                                        toolTipText
 
-                                        if (isSelected && usingUartUI) {
-                                            serialPanel.visible(false)
-                                            webReplPanel.visible(true)
-                                            usingUartUI = false
-                                        }
-                                    }
-                                }
+                            webReplRadioButton = radioButton("WebREPL")
+                                .bindSelected({ !parameters.usingUart }, { parameters.usingUart = !it })
                         }
                     }
 
-                    serialPanel = panel {
+                    panel {
                         row {
-                            comboBox(portSelectModel)
+                            filterManufacturersCheckBox = checkBox("Filter out devices with unknown manufacturers")
+                                .bindSelected(parameters::filterManufacturers)
+                        }
+                        row {
+                            portSelectComboBox = comboBox(portSelectModel)
                                 .label("Port: ")
                                 .columns(20)
                                 .bindItem(
                                     { parameters.portName },
-                                    { parameters.portName = it ?: "" }
+                                    { parameters.portName = it.takeIf { !it.isNullOrBlank() } ?: EMPTY_PORT_NAME_TEXT }
                                 )
                                 .applyToComponent {
-                                    selectedItem = parameters.portName.takeIf { it.isNotBlank() } ?: "No Port Selected"
                                     isEditable = false
+                                    selectedItem = parameters.portName
+
                                     addPopupMenuListener(object : PopupMenuListener {
                                         override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
                                             updatePortSelectModel(portSelectModel)
                                         }
 
                                         override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
-
                                         override fun popupMenuCanceled(e: PopupMenuEvent?) {}
                                     })
                                 }
                         }
-                    }.visible(parameters.usingUart)
+                    }.visibleIf(serialRadioButton.selected)
 
-                    webReplPanel = panel {
+                    panel {
                         row {
                             textField()
                                 .bindText(parameters::webReplUrl)
@@ -171,16 +156,17 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                         }.layout(RowLayout.LABEL_ALIGNED)
                         row {
                             passwordField()
-                                .bindText(parameters::webReplPassword).label("Password: ")
+                                .bindText(parameters::webReplPassword)
+                                .label("Password: ")
                                 .comment("(4-9 symbols)")
                                 .columns(40)
                                 .validationInfo { field ->
-                                    if (field.password.size !in maxPasswordLength) {
-                                        error("Allowed password length is $maxPasswordLength").withOKEnabled()
+                                    if (field.password.size !in WEBREPL_PASSWORD_LENGTH_RANGE) {
+                                        error("Allowed password length is $WEBREPL_PASSWORD_LENGTH_RANGE").withOKEnabled()
                                     } else null
                                 }
                         }.layout(RowLayout.LABEL_ALIGNED)
-                    }.visible(!parameters.usingUart)
+                    }.visibleIf(webReplRadioButton.selected)
                 }.enabled(
                     (fileSystemWidget(project)?.state == State.DISCONNECTED ||
                             fileSystemWidget(project)?.state == State.DISCONNECTING)
@@ -189,13 +175,13 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                 group("FTP Upload Wi-Fi Credentials") {
                     row {
                         textField()
-                            .bindText(parameters::ssid.toMutableProperty())
+                            .bindText(parameters::ssid)
                             .label("SSID: ")
                             .columns(40)
                     }.layout(RowLayout.LABEL_ALIGNED)
                     row {
                         passwordField()
-                            .bindText(parameters::wifiPassword.toMutableProperty())
+                            .bindText(parameters::wifiPassword)
                             .label("Password: ")
                             .columns(40)
                     }.layout(RowLayout.LABEL_ALIGNED)
@@ -203,19 +189,11 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
                 group("MicroPython Stubs") {
                     row {
-                        checkBox("Enable MicroPython stubs")
-                            .bindSelected({ areStubsEnabled }) {
-                                areStubsEnabled = it
-                                stubsPackageRow.enabled(it)
-                            }
-                            .applyToComponent {
-                                addActionListener {
-                                    stubsPackageRow.enabled(isSelected)
-                                }
-                            }
+                        areStubsEnabled = checkBox("Enable MicroPython stubs")
+                            .bindSelected(parameters::areStubsEnabled)
                     }
 
-                    stubsPackageRow = row {
+                    row {
                         cell(
                             TextFieldWithAutoCompletion(
                                 project,
@@ -237,8 +215,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             }
                         )
                             .bind(
-                                { it.text.takeUnless { it.isBlank() } },
-                                { component, text -> component.text = text ?: "" },
+                                { it.text.takeIf { it.isNotBlank() } ?: "" },
+                                { component, text -> component.text = text },
                                 parameters::activeStubsPackage.toMutableProperty()
                             )
                             .label("Stubs package: ")
@@ -257,63 +235,60 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             .applyToComponent {
                                 toolTipText = "Type \"micropython\" to browse available packages"
                             }
-                    }.enabled(areStubsEnabled)
+                    }.enabledIf(areStubsEnabled.selected)
                 }
-            }.enabled(isPluginEnabled)
+            }.enabledIf(pluginEnabledCheckBox.selected)
         }.apply {
             validateAll()
         }
-
-        return settingsPanel
     }
 
-    override fun isModified(): Boolean {
-        return settingsPanel.isModified()
+    override fun reset() {
+        portSelectComboBox.component.model.selectedItem = with(settings.state) {
+            if (portName.isNullOrBlank()) EMPTY_PORT_NAME_TEXT else portName.toString()
+        }
+
+        super.reset()
     }
 
     override fun apply() {
         super.apply()
 
-        val formattedPortName = if (parameters.portName != "No Port Selected") parameters.portName else ""
+        with(parameters) {
+            settings.state.isPluginEnabled = isPluginEnabled
+            settings.state.usingUart = usingUart
+            settings.state.filterManufacturers = filterManufacturers
+            settings.state.portName = portName.takeUnless { it == EMPTY_PORT_NAME_TEXT }
+            settings.state.webReplUrl = webReplUrl
+            settings.state.areStubsEnabled = areStubsEnabled
+            settings.state.activeStubsPackage = activeStubsPackage
 
-        settings.state.isPluginEnabled = isPluginEnabled
-        settings.state.usingUart = parameters.usingUart
-        settings.state.portName = formattedPortName
-        settings.state.webReplUrl = parameters.webReplUrl
-        settings.state.areStubsEnabled = areStubsEnabled
-        settings.state.activeStubsPackage = parameters.activeStubsPackage
-
-        runWithModalProgressBlocking(project, "Saving credentials...") {
-            settings.saveWebReplPassword(parameters.webReplPassword)
-            settings.saveWifiCredentials(parameters.ssid, parameters.wifiPassword)
+            runWithModalProgressBlocking(project, "Saving settings...") {
+                settings.saveWebReplPassword(webReplPassword)
+                settings.saveWifiCredentials(ssid, wifiPassword)
+            }
         }
 
         pythonService.updateLibrary()
     }
 
     fun updatePortSelectModel(portSelectModel: MutableCollectionComboBoxModel<String>, isInitialUpdate: Boolean = false) {
-        val ports = transferService.listSerialPorts()
+        val lsPortsParam = if (isInitialUpdate) parameters.filterManufacturers else filterManufacturersCheckBox.component.isSelected
 
-        var i = 0
-        while (i < portSelectModel.size) {
-            val item = portSelectModel.items[i]
+        val ports = transferService.listSerialPorts(lsPortsParam)
 
-            if (item !in ports) {
-                if (item != portSelectModel.selectedItem) {
-                    portSelectModel.remove(item)
-                }
-            }
+        portSelectModel.items
+            .filterNot { it in ports || it == portSelectModel.selectedItem }
+            .forEach { portSelectModel.remove(it) }
 
-            i += 1
-        }
-
-        portSelectModel.addAll(portSelectModel.size, ports.filter { !portSelectModel.contains(it) })
+        val newPorts = ports.filterNot { portSelectModel.contains(it) }
+        portSelectModel.addAll(portSelectModel.size, newPorts)
 
         if (isInitialUpdate || portSelectModel.isEmpty) {
-            if (parameters.portName.isBlank()) {
-                portSelectModel.selectedItem = "No Port Selected"
+            portSelectModel.selectedItem = if (parameters.portName.isBlank()) {
+                EMPTY_PORT_NAME_TEXT
             } else {
-                portSelectModel.selectedItem = parameters.portName
+                parameters.portName
             }
         }
     }

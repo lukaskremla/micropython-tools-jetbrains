@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.project.stateStore
 import com.jetbrains.python.sdk.PythonSdkUtil
+import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.*
 import dev.micropythontools.util.MpyPythonService
 import kotlinx.coroutines.TimeoutCancellationException
@@ -51,12 +52,12 @@ import java.io.IOException
  * @author Lukas Kremla, elmot
  */
 class MpyTransferService(private val project: Project) {
-    fun listSerialPorts(): MutableList<String> {
+    fun listSerialPorts(filterManufacturers: Boolean = project.service<MpySettingsService>().state.filterManufacturers): MutableList<String> {
         val filteredPorts = mutableListOf<String>()
 
         val ports = SerialPort.getCommPorts()
         for (port in ports) {
-            if (port.manufacturer == "Unknown" ||
+            if ((filterManufacturers && port.manufacturer == "Unknown") ||
                 port.systemPortPath.startsWith("/dev/tty.")
             ) continue
 

@@ -25,6 +25,7 @@ class MpyState : BaseState() {
     var settingsVersion by property(0)
     var isPluginEnabled by property(false)
     var usingUart by property(true)
+    var filterManufacturers by property(true)
     var portName by string("")
     var webReplUrl by string(DEFAULT_WEBREPL_URL)
     var areStubsEnabled by property(true)
