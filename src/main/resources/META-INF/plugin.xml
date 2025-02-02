@@ -6,7 +6,6 @@
     ]]></change-notes>
     <description><![CDATA[
   <p>Adds support for working with MicroPython devices to PyCharm.</p>
-  <div class="plugin-features">
     <p>Features:</p>
     <ul>
       <li>Efficiently upload files to MPY boards (Serial, WebREPL, FTP)</li>
@@ -14,8 +13,7 @@
       <li>Seamlessly select and utilize MicroPython stubs with the built-in stub manager using stubs by <a href="https://github.com/Josverl/micropython-stubber">Jos Verlinde</a></li>
       <li>Observe code execution through REPL</li>
     </ul>
-  </div>
-  <p>Most MicroPython devices should be supported. However, this plugin wasn't tested with highly resource constrained
+  <p>All MicroPython devices should be supported. However, certain features might not work on highly resource constrained
   microcontrollers such as the ESP8266 and with MicroPython versions below 1.20.</a></p>
   <p>Feedback and bug reports through Github are welcome!</p>
   <p>More info and usage tips <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">on GitHub!</a></p>
