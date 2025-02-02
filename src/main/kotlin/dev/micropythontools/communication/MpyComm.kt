@@ -28,6 +28,7 @@ import com.intellij.util.text.nullize
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import dev.micropythontools.ui.ConnectionParameters
+import dev.micropythontools.ui.FileSystemWidget
 import dev.micropythontools.ui.NOTIFICATION_GROUP
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -42,6 +43,9 @@ import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.properties.Delegates
 
+/**
+ * @author elmot
+ */
 private const val BOUNDARY = "*********FSOP************"
 
 internal const val TIMEOUT = 2000L
@@ -75,13 +79,11 @@ fun ExecResponse.extractResponse(): String {
     if (stderr.isNotEmpty()) {
         throw IOException(stderr)
     }
+
     return this.mapNotNull { it.stdout.nullize(true) }.joinToString("\n")
 }
 
-/**
- * @author elmot
- */
-open class MpyComm : Disposable, Closeable {
+open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable, Closeable {
     val stateListeners = mutableListOf<StateListener>()
 
     @Volatile
@@ -134,7 +136,7 @@ except OSError as e:
                 )
             }
         }
-        if (content.size > 100 && content.count { b -> b in 32..127 } < content.size / 2) {
+        if (fileSystemWidget.deviceInformation.hasBinascii && content.size > 100 && content.count { b -> b in 32..127 } < content.size / 2) {
             commands.addAll(binUpload(fullName, content))
         } else {
             commands.addAll(txtUpload(fullName, content))

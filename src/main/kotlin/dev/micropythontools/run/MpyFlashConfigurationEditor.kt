@@ -73,6 +73,10 @@ private data class SourceItem(
             VfsUtil.getRelativePath(thisFile, projectDir)
         } ?: thisFile.name
     } ?: path
+
+    val icon = if (virtualFile?.exists() == true)
+        IconLoader.getIcon("icons/MpySource.svg", MpySourceIconProvider::class.java)
+    else AllIcons.General.Error
 }
 
 /**
@@ -239,7 +243,7 @@ class MpyFlashConfigurationEditor(private val project: Project, private val conf
             override fun valueOf(item: SourceItem) = item.displayText
 
             override fun getRenderer(item: SourceItem) = DefaultTableCellRenderer().apply {
-                icon = IconLoader.getIcon("icons/MpySource.svg", MpySourceIconProvider::class.java)
+                icon = item.icon
             }
         }
 
