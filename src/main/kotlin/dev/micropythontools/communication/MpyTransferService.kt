@@ -49,12 +49,12 @@ import java.io.IOException
  * @author Lukas Kremla, elmot
  */
 class MpyTransferService(private val project: Project) {
-    fun listSerialPorts(): MutableList<String> {
+    fun listSerialPorts(filterManufacturers: Boolean = project.service<MpySettingsService>().state.filterManufacturers): MutableList<String> {
         val filteredPorts = mutableListOf<String>()
 
         val ports = SerialPort.getCommPorts()
         for (port in ports) {
-            if (port.manufacturer == "Unknown" ||
+            if ((filterManufacturers && port.manufacturer == "Unknown") ||
                 port.systemPortPath.startsWith("/dev/tty.")
             ) continue
 
