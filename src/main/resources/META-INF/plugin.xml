@@ -30,7 +30,7 @@
         <plugin id="org.jetbrains.plugins.terminal"/>
     </dependencies>
 
-    <idea-version since-build="243" until-build="243.*"/>
+    <idea-version since-build="243.*" until-build="251.*"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <projectConfigurable groupId="language"
