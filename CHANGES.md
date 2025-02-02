@@ -1,6 +1,13 @@
 The Changelog
 =============
 
+0.2.3 - 2-2-2025
+------------------
+
+* Improved compatibility with resource constrained boards such as the ESP8266
+* Added an option to disable port listing filters (use this if your board's port isn't appearing)
+* Fixed several bugs in the plugin settings editor (the editor prompting for applying changes when none were made, reverting unapplied changes not working etc.)
+
 0.2.2 - 16-1-2025
 ------------------
 
