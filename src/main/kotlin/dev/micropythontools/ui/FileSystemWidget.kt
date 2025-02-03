@@ -225,9 +225,14 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         // Try to sync the RTC, temporary feature, might not work on all boards and port versions
         val scriptResponse = blindExecute(TIMEOUT, formattedScript).extractSingleResponse()
-        val (version, description, hasBinascii) = scriptResponse.split("&")
 
-        deviceInformation = DeviceInformation(version, description, hasBinascii == "True")
+        if (!scriptResponse.contains("ERROR")) {
+            val (version, description, hasBinascii) = scriptResponse.split("&")
+
+            deviceInformation = DeviceInformation(version, description, hasBinascii == "True")
+        } else {
+            deviceInformation = DeviceInformation()
+        }
 
         if (!deviceInformation.hasBinascii) {
             MessageDialogBuilder.Message(
@@ -259,10 +264,10 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         } else {
             val url = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL
-            var password = ""
-
-            runWithModalProgressBlocking(project, "Retrieving credentials...") {
-                password = project.service<MpySettingsService>().retrieveWebReplPassword()
+            val password = withContext(Dispatchers.EDT) {
+                runWithModalProgressBlocking(project, "Retrieving credentials...") {
+                    project.service<MpySettingsService>().retrieveWebReplPassword()
+                }
             }
 
             msg = messageForBrokenUrl(url)
