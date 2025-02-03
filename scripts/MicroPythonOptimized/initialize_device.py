@@ -13,14 +13,14 @@ try:
     b = True
 
     s = os.uname()
-    v = os.version
-    d = os.machine
+    v = s[3]
+    d = s[4]
 
     try:
         import binascii
     except ImportError:
-        v = False
+        b = False
 
     print(v, d, b, sep="&")
-except Exception:
-    print("ERROR")
+except Exception as e:
+    print(f"ERROR: {e}")
