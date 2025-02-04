@@ -1,6 +1,12 @@
 The Changelog
 =============
 
+0.2.4 - 4-2-2025
+------------------
+
+* Fixed index out of bound errors after connecting to a device
+* Fixed threading errors when connecting via WebREPL
+
 0.2.3 - 2-2-2025
 ------------------
 
