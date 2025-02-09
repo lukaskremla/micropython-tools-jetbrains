@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+0.2.5 - 6-2-2025
+------------------
+
+* Downgraded gradle dependencies to increase stability and fix errors of recent versions (0.2.3, 0.2.4)
+
 0.2.4 - 4-2-2025
 ------------------
 
