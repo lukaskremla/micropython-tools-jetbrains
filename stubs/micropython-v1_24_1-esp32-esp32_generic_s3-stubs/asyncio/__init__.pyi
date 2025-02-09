@@ -1,7 +1,7 @@
 """
 Asynchronous I/O scheduler for writing concurrent code.
 
-MicroPython module: https://docs.micropython.org/en/v1.24.1/library/asyncio.html
+MicroPython module: https://docs.micropython.org/en/v1.23.0/library/asyncio.html
 
 CPython module:
 `asyncio `<https://docs.python.org/3.8/library/asyncio.html>
@@ -34,16 +34,28 @@ Core functions
 --------------
 
 ---
-Module: 'asyncio.__init__' on micropython-v1.24.1-esp32-ESP32_GENERIC_S3
+Module: 'asyncio.__init__' on micropython-v1.23.0-esp8266-ESP8266_GENERIC
 """
 
-# MCU: {'family': 'micropython', 'version': '1.24.1', 'build': '', 'ver': '1.24.1', 'port': 'esp32', 'board': 'ESP32_GENERIC_S3', 'cpu': 'ESP32S3', 'mpy': 'v6.3', 'arch': 'xtensawin'}
-# Stubber: v1.24.0
+# MCU: {'version': '1.23.0', 'mpy': 'v6.3', 'port': 'esp8266', 'board': 'ESP8266_GENERIC', 'family': 'micropython', 'build': '', 'arch': 'xtensa', 'ver': '1.23.0', 'cpu': 'ESP8266'}
+# Stubber: v1.23.0
 from __future__ import annotations
 from typing import Any, Coroutine, List, Tuple, Generator
 from _typeshed import Incomplete
 
 _attrs: dict = {}
+
+def current_task() -> Task:
+    """
+    Return the `Task` object associated with the currently running task.
+    """
+    ...
+
+def get_event_loop() -> Incomplete:
+    """
+    Return the event loop used to schedule and run tasks.  See `Loop`.
+    """
+    ...
 
 def create_task(coro) -> Task:
     """
@@ -53,28 +65,23 @@ def create_task(coro) -> Task:
     """
     ...
 
-def current_task() -> Task:
-    """
-    Return the `Task` object associated with the currently running task.
-    """
-    ...
-
 def ticks_diff(*args, **kwargs) -> Incomplete: ...
-def ticks_add(*args, **kwargs) -> Incomplete: ...
-def get_event_loop() -> Incomplete:
-    """
-    Return the event loop used to schedule and run tasks.  See `Loop`.
-    """
-    ...
-
-def ticks(*args, **kwargs) -> Incomplete: ...
-def run_until_complete(*args, **kwargs) -> Incomplete: ...
 def new_event_loop() -> Incomplete:
     """
     Reset the event loop and return it.
 
     Note: since MicroPython only has a single event loop this function just
     resets the loop's state, it does not create a new one.
+    """
+    ...
+
+def ticks(*args, **kwargs) -> Incomplete: ...
+def run_until_complete(*args, **kwargs) -> Incomplete: ...
+def run(coro) -> Incomplete:
+    """
+    Create a new task from the given coroutine and run it until it completes.
+
+    Returns the value returned by *coro*.
     """
     ...
 
@@ -86,22 +93,6 @@ def wait_for_ms(awaitable, timeout) -> Coroutine[Incomplete, Any, Any]:
     """
     ...
 
-def sleep(t) -> Coroutine[Incomplete, Any, Any]:
-    """
-    Sleep for *t* seconds (can be a float).
-
-    This is a coroutine.
-    """
-    ...
-
-def run(coro) -> Incomplete:
-    """
-    Create a new task from the given coroutine and run it until it completes.
-
-    Returns the value returned by *coro*.
-    """
-    ...
-
 def sleep_ms(t) -> Coroutine[Incomplete, Any, Any]:
     """
     Sleep for *t* milliseconds.
@@ -110,7 +101,14 @@ def sleep_ms(t) -> Coroutine[Incomplete, Any, Any]:
     """
     ...
 
-cur_task: Incomplete  ## <class 'NoneType'> = None
+def ticks_add(*args, **kwargs) -> Incomplete: ...
+def sleep(t) -> Coroutine[Incomplete, Any, Any]:
+    """
+    Sleep for *t* seconds (can be a float).
+
+    This is a coroutine.
+    """
+    ...
 
 class TaskQueue:
     def push(self, *args, **kwargs) -> Incomplete: ...
@@ -119,13 +117,9 @@ class TaskQueue:
     def pop(self, *args, **kwargs) -> Incomplete: ...
     def __init__(self, *argv, **kwargs) -> None: ...
 
-gather: Generator  ## = <generator>
-
-class CancelledError(Exception): ...
-
-wait_for: Generator  ## = <generator>
 open_connection: Generator  ## = <generator>
-start_server: Generator  ## = <generator>
+cur_task: Incomplete  ## <class 'NoneType'> = None
+gather: Generator  ## = <generator>
 
 class Task:
     """
@@ -137,6 +131,12 @@ class Task:
     """
 
     def __init__(self, *argv, **kwargs) -> None: ...
+
+wait_for: Generator  ## = <generator>
+
+class CancelledError(Exception): ...
+
+start_server: Generator  ## = <generator>
 
 class Lock:
     """
@@ -160,6 +160,41 @@ class Lock:
         """
         ...
     acquire: Generator  ## = <generator>
+    def __init__(self, *argv, **kwargs) -> None: ...
+
+class StreamWriter:
+    def write(self, *args, **kwargs) -> Incomplete: ...
+    def get_extra_info(self, *args, **kwargs) -> Incomplete: ...
+    def close(self, *args, **kwargs) -> Incomplete: ...
+
+    awritestr: Generator  ## = <generator>
+    wait_closed: Generator  ## = <generator>
+    drain: Generator  ## = <generator>
+    readexactly: Generator  ## = <generator>
+    readinto: Generator  ## = <generator>
+    read: Generator  ## = <generator>
+    awrite: Generator  ## = <generator>
+    readline: Generator  ## = <generator>
+    aclose: Generator  ## = <generator>
+    def __init__(self, *argv, **kwargs) -> None: ...
+
+class StreamReader:
+    def write(self, *args, **kwargs) -> Incomplete: ...
+    def get_extra_info(self, *args, **kwargs) -> Incomplete: ...
+    def close(self, *args, **kwargs) -> Incomplete: ...
+
+    awritestr: Generator  ## = <generator>
+    wait_closed: Generator  ## = <generator>
+    drain: Generator  ## = <generator>
+    readexactly: Generator  ## = <generator>
+    readinto: Generator  ## = <generator>
+    read: Generator  ## = <generator>
+    awrite: Generator  ## = <generator>
+    readline: Generator  ## = <generator>
+    aclose: Generator  ## = <generator>
+    def __init__(self, *argv, **kwargs) -> None: ...
+
+class SingletonGenerator:
     def __init__(self, *argv, **kwargs) -> None: ...
 
 class Loop:
@@ -228,15 +263,6 @@ class Loop:
     _exc_handler: Incomplete  ## <class 'NoneType'> = None
     def __init__(self, *argv, **kwargs) -> None: ...
 
-class IOQueue:
-    def queue_read(self, *args, **kwargs) -> Incomplete: ...
-    def wait_io_event(self, *args, **kwargs) -> Incomplete: ...
-    def queue_write(self, *args, **kwargs) -> Incomplete: ...
-    def remove(self, *args, **kwargs) -> Incomplete: ...
-    def _enqueue(self, *args, **kwargs) -> Incomplete: ...
-    def _dequeue(self, *args, **kwargs) -> Incomplete: ...
-    def __init__(self, *argv, **kwargs) -> None: ...
-
 class Event:
     """
     Create a new event which can be used to synchronise tasks.  Events start
@@ -290,39 +316,13 @@ class ThreadSafeFlag:
     wait: Generator  ## = <generator>
     def __init__(self, *argv, **kwargs) -> None: ...
 
+class IOQueue:
+    def queue_read(self, *args, **kwargs) -> Incomplete: ...
+    def wait_io_event(self, *args, **kwargs) -> Incomplete: ...
+    def queue_write(self, *args, **kwargs) -> Incomplete: ...
+    def remove(self, *args, **kwargs) -> Incomplete: ...
+    def _enqueue(self, *args, **kwargs) -> Incomplete: ...
+    def _dequeue(self, *args, **kwargs) -> Incomplete: ...
+    def __init__(self, *argv, **kwargs) -> None: ...
+
 class TimeoutError(Exception): ...
-
-class SingletonGenerator:
-    def __init__(self, *argv, **kwargs) -> None: ...
-
-class StreamWriter:
-    def write(self, *args, **kwargs) -> Incomplete: ...
-    def get_extra_info(self, *args, **kwargs) -> Incomplete: ...
-    def close(self, *args, **kwargs) -> Incomplete: ...
-
-    awritestr: Generator  ## = <generator>
-    wait_closed: Generator  ## = <generator>
-    drain: Generator  ## = <generator>
-    readexactly: Generator  ## = <generator>
-    readinto: Generator  ## = <generator>
-    read: Generator  ## = <generator>
-    awrite: Generator  ## = <generator>
-    readline: Generator  ## = <generator>
-    aclose: Generator  ## = <generator>
-    def __init__(self, *argv, **kwargs) -> None: ...
-
-class StreamReader:
-    def write(self, *args, **kwargs) -> Incomplete: ...
-    def get_extra_info(self, *args, **kwargs) -> Incomplete: ...
-    def close(self, *args, **kwargs) -> Incomplete: ...
-
-    awritestr: Generator  ## = <generator>
-    wait_closed: Generator  ## = <generator>
-    drain: Generator  ## = <generator>
-    readexactly: Generator  ## = <generator>
-    readinto: Generator  ## = <generator>
-    read: Generator  ## = <generator>
-    awrite: Generator  ## = <generator>
-    readline: Generator  ## = <generator>
-    aclose: Generator  ## = <generator>
-    def __init__(self, *argv, **kwargs) -> None: ...

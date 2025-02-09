@@ -1,9 +1,9 @@
 """
-Module: 'asyncio.lock' on micropython-v1.24.1-esp32-ESP32_GENERIC_S3
+Module: 'asyncio.lock' on micropython-v1.23.0-esp8266-ESP8266_GENERIC
 """
 
-# MCU: {'family': 'micropython', 'version': '1.24.1', 'build': '', 'ver': '1.24.1', 'port': 'esp32', 'board': 'ESP32_GENERIC_S3', 'cpu': 'ESP32S3', 'mpy': 'v6.3', 'arch': 'xtensawin'}
-# Stubber: v1.24.0
+# MCU: {'version': '1.23.0', 'mpy': 'v6.3', 'port': 'esp8266', 'board': 'ESP8266_GENERIC', 'family': 'micropython', 'build': '', 'arch': 'xtensa', 'ver': '1.23.0', 'cpu': 'ESP8266'}
+# Stubber: v1.23.0
 from __future__ import annotations
 from typing import Generator
 from _typeshed import Incomplete

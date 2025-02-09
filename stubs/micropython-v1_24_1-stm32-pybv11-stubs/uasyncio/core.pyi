@@ -1,9 +1,9 @@
 """
-Module: 'uasyncio.core' on micropython-v1.24.1-stm32-PYBV11
+Module: 'uasyncio.core' on micropython-v1.23.0-esp8266-ESP8266_GENERIC
 """
 
-# MCU: {'family': 'micropython', 'version': '1.24.1', 'build': '', 'ver': '1.24.1', 'port': 'stm32', 'board': 'PYBV11', 'cpu': 'STM32F405RG', 'mpy': 'v6.3', 'arch': 'armv7emsp'}
-# Stubber: v1.24.0
+# MCU: {'version': '1.23.0', 'mpy': 'v6.3', 'port': 'esp8266', 'board': 'ESP8266_GENERIC', 'family': 'micropython', 'build': '', 'arch': 'xtensa', 'ver': '1.23.0', 'cpu': 'ESP8266'}
+# Stubber: v1.23.0
 from __future__ import annotations
 from typing import Generator
 from _typeshed import Incomplete
