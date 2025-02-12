@@ -306,12 +306,32 @@ except OSError as e:
             for (command in commands) {
                 try {
                     withTimeout(commandTimeout) {
-                        command.lines().forEachIndexed { index, s ->
-                            if (index > 0) {
-                                delay(SHORT_DELAY)
+                        if (!connectionParameters.usingUart) {
+                            var buffer = mutableListOf<String>()
+                            val lines = command.lines()
+
+                            lines.forEach { line ->
+                                buffer.add(line)
+
+                                if (buffer.size >= 5 || line == lines.last()) {
+                                    delay(SHORT_DELAY)
+
+                                    val toSend = buffer.joinToString("\n")
+                                    println("NORMAL: Sending buffer:\n$toSend")
+                                    mpyClient?.send("$toSend\n")
+
+                                    buffer.clear()
+                                }
                             }
-                            mpyClient?.send("$s\n")
+                        } else {
+                            command.lines().forEachIndexed { index, s ->
+                                if (index > 0) {
+                                    delay(SHORT_DELAY)
+                                }
+                                mpyClient?.send("$s\n")
+                            }
                         }
+
                         mpyClient?.send("\u0004")
                         while (!(offTtyBuffer.startsWith("OK") && offTtyBuffer.endsWith("\u0004>") && offTtyBuffer.count { it == '\u0004' } == 2)) {
                             delay(SHORT_DELAY)

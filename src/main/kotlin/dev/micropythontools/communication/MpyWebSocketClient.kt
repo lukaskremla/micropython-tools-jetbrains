@@ -155,7 +155,10 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
 
     override fun closeBlocking() = webSocketClient.closeBlocking()
 
-    override fun send(string: String) = webSocketClient.send(string)
+    override fun send(string: String) {
+        println("WebSocket: \"$string\"")
+        webSocketClient.send(string)
+    }
 
     override fun sendPing() = webSocketClient.sendPing()
 
