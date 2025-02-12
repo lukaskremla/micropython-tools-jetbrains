@@ -21,6 +21,7 @@ import com.fazecast.jSerialComm.SerialPort
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -43,7 +44,9 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.*
 import dev.micropythontools.util.MpyPythonService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
 
@@ -500,30 +503,39 @@ class MpyTransferService(private val project: Project) {
             description = "Download",
             requiresRefreshAfter = false,
             action = { fileSystemWidget, reporter ->
+                println("In perform repl action")
+
                 reporter.text("Collecting files to download...")
                 reporter.fraction(null)
 
                 val selectedFiles = fileSystemWidget.selectedFiles()
                 if (selectedFiles.isEmpty()) return@performReplAction
                 var destination: VirtualFile? = null
-                FileChooserFactory.getInstance().createPathChooser(
-                    FileChooserDescriptorFactory.createSingleFolderDescriptor(), fileSystemWidget.project, null
-                ).choose(null) { folders ->
-                    destination = folders.firstOrNull()
-                    if (destination?.children?.isNotEmpty() == true) {
-                        if (Messages.showOkCancelDialog(
-                                fileSystemWidget.project,
-                                "The destination folder is not empty.\nIts contents may be damaged.",
-                                "Warning",
-                                "Continue",
-                                "Cancel",
-                                Messages.getWarningIcon()
-                            ) != Messages.OK
-                        ) {
-                            destination = null
+
+                println("Collected selected filesystem items")
+
+                withContext(Dispatchers.EDT) {
+                    FileChooserFactory.getInstance().createPathChooser(
+                        FileChooserDescriptorFactory.createSingleFolderDescriptor(), fileSystemWidget.project, null
+                    ).choose(null) { folders ->
+                        destination = folders.firstOrNull()
+                        if (destination?.children?.isNotEmpty() == true) {
+                            if (Messages.showOkCancelDialog(
+                                    fileSystemWidget.project,
+                                    "The destination folder is not empty.\nIts contents may be damaged.",
+                                    "Warning",
+                                    "Continue",
+                                    "Cancel",
+                                    Messages.getWarningIcon()
+                                ) != Messages.OK
+                            ) {
+                                destination = null
+                            }
                         }
                     }
                 }
+
+                println("After creating file chooser UI")
 
                 if (destination == null) return@performReplAction
                 val parentNameToFile = selectedFiles.map { node -> "" to node }.toMutableList()
