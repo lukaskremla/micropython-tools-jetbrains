@@ -2,14 +2,6 @@ try:
     import machine
     import os
 
-    d = %s
-
-    try:
-        r = machine.RTC()
-        r.datetime(d)
-    except Exception as e:
-        pass
-
     b = True
 
     s = os.uname()

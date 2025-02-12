@@ -164,6 +164,9 @@ fun <T> performReplAction(
 
     var result: T? = null
 
+    var gotThroughTryBlock = false
+    var wasCancelled = false
+
     try {
         runWithModalProgressBlocking(project, "Communicating with the board...") {
             reportRawProgress { reporter ->
@@ -175,9 +178,13 @@ fun <T> performReplAction(
                         fileSystemWidget.doConnect(reporter)
                     }
                     result = action(fileSystemWidget, reporter)
+
+                    gotThroughTryBlock = true
                 } catch (_: TimeoutCancellationException) {
                     error = "$description timed out"
                 } catch (_: CancellationException) {
+                    wasCancelled = true
+
                     error = cancelledMessage ?: "$description cancelled"
                     errorType = NotificationType.INFORMATION
                 } catch (e: IOException) {
@@ -193,35 +200,37 @@ fun <T> performReplAction(
             }
         }
     } finally {
-        runWithModalProgressBlocking(project, "Cleaning up after board operation...") {
-            reportRawProgress { reporter ->
-                var error: String? = null
+        if (gotThroughTryBlock || wasCancelled) {
+            runWithModalProgressBlocking(project, "Cleaning up after board operation...") {
+                reportRawProgress { reporter ->
+                    var error: String? = null
 
-                try {
-                    cleanUpAction?.let { cleanUpAction(fileSystemWidget, reporter) }
+                    try {
+                        cleanUpAction?.let { cleanUpAction(fileSystemWidget, reporter) }
 
-                    if (requiresRefreshAfter) {
-                        fileSystemWidget(project)?.refresh(reporter)
+                        if (requiresRefreshAfter) {
+                            fileSystemWidget(project)?.refresh(reporter)
+                        }
+                    } catch (e: Throwable) {
+                        error = e.localizedMessage ?: e.message
+                        error = if (error.isNullOrBlank()) {
+                            "$description error - ${e::class.simpleName}"
+                        } else {
+                            "$description error - ${e::class.simpleName}: $error"
+                        }
+                        error = "Clean up Exception: $error"
                     }
-                } catch (e: Throwable) {
-                    error = e.localizedMessage ?: e.message
-                    error = if (error.isNullOrBlank()) {
-                        "$description error - ${e::class.simpleName}"
-                    } else {
-                        "$description error - ${e::class.simpleName}: $error"
-                    }
-                    error = "Clean up Exception: $error"
-                }
-                if (!error.isNullOrBlank()) {
-                    fileSystemWidget.disconnect(reporter)
+                    if (!error.isNullOrBlank()) {
+                        fileSystemWidget.disconnect(reporter)
 
-                    Notifications.Bus.notify(
-                        Notification(
-                            NOTIFICATION_GROUP,
-                            "$error - disconnecting to prevent a de-synchronized state",
-                            NotificationType.ERROR
-                        ), project
-                    )
+                        Notifications.Bus.notify(
+                            Notification(
+                                NOTIFICATION_GROUP,
+                                "$error - disconnecting to prevent a de-synchronized state",
+                                NotificationType.ERROR
+                            ), project
+                        )
+                    }
                 }
             }
         }

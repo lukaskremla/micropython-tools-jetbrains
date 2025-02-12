@@ -66,7 +66,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.io.IOException
-import java.util.*
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -206,31 +205,32 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     }
 
     private suspend fun initializeDevice() {
-        val calendar = Calendar.getInstance()
+        /*val calendar = Calendar.getInstance()
 
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH)
         val day = calendar.get(Calendar.DAY_OF_MONTH)
         val hour = calendar.get(Calendar.HOUR_OF_DAY)
         val minute = calendar.get(Calendar.MINUTE)
-        val second = calendar.get(Calendar.SECOND)
+        val second = calendar.get(Calendar.SECOND)*/
 
         val scriptFileName = "initialize_device.py"
 
         val initializeDeviceScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
 
-        val formattedScript = initializeDeviceScript.format(
+        /*val formattedScript = initializeDeviceScript.format(
             "($year, $month, $day, $hour, $minute, $second, 0, 0)"
-        )
+        )*/
 
         // Try to sync the RTC, temporary feature, might not work on all boards and port versions
-        val scriptResponse = blindExecute(TIMEOUT, formattedScript).extractSingleResponse()
+        val scriptResponse = blindExecute(TIMEOUT, initializeDeviceScript).extractSingleResponse()
 
         if (!scriptResponse.contains("ERROR")) {
             val (version, description, hasBinascii) = scriptResponse.split("&")
 
             deviceInformation = DeviceInformation(version, description, hasBinascii == "True")
         } else {
+            x
             deviceInformation = DeviceInformation()
         }
 
@@ -243,70 +243,74 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     }
 
     suspend fun doConnect(reporter: RawProgressReporter) {
-        if (state == State.CONNECTED) return
+        try {
+            if (state == State.CONNECTED) return
 
-        val settings = project.service<MpySettingsService>()
+            val settings = project.service<MpySettingsService>()
 
-        val device = if (settings.state.usingUart) settings.state.portName else settings.state.webReplUrl
-        reporter.text("Connecting to $device")
-        reporter.fraction(null)
+            val device = if (settings.state.usingUart) settings.state.portName else settings.state.webReplUrl
+            reporter.text("Connecting to $device")
+            reporter.fraction(null)
 
-        var msg: String? = null
-        val connectionParameters: ConnectionParameters?
-        if (settings.state.usingUart) {
-            val portName = settings.state.portName ?: ""
-            if (portName.isBlank()) {
-                msg = "No port is selected"
-                connectionParameters = null
-            } else {
-                connectionParameters = ConnectionParameters(portName)
-            }
-
-        } else {
-            val url = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL
-            val password = withContext(Dispatchers.EDT) {
-                runWithModalProgressBlocking(project, "Retrieving credentials...") {
-                    project.service<MpySettingsService>().retrieveWebReplPassword()
+            var msg: String? = null
+            val connectionParameters: ConnectionParameters?
+            if (settings.state.usingUart) {
+                val portName = settings.state.portName ?: ""
+                if (portName.isBlank()) {
+                    msg = "No port is selected"
+                    connectionParameters = null
+                } else {
+                    connectionParameters = ConnectionParameters(portName)
                 }
-            }
 
-            msg = messageForBrokenUrl(url)
-            if (password.isBlank()) {
-                msg = "Empty password"
-                connectionParameters = null
             } else {
-                connectionParameters = ConnectionParameters(url, password)
-            }
-        }
-        if (msg != null) {
-            withContext(Dispatchers.EDT) {
-                val result = Messages.showIdeaMessageDialog(
-                    project,
-                    msg,
-                    "Cannot Connect",
-                    arrayOf("OK", "Settings..."),
-                    1,
-                    AllIcons.General.ErrorDialog,
-                    null
-                )
-                if (result == 1) {
-                    ShowSettingsUtil.getInstance()
-                        .showSettingsDialog(project, MpyConfigurable::class.java)
-                }
-            }
-        } else {
-            if (connectionParameters != null) {
-                setConnectionParams(connectionParameters)
-                connect()
-                try {
-                    if (state == State.CONNECTED) {
-                        initializeDevice()
-                        initialRefresh(reporter)
+                val url = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL
+                val password = withContext(Dispatchers.EDT) {
+                    runWithModalProgressBlocking(project, "Retrieving credentials...") {
+                        project.service<MpySettingsService>().retrieveWebReplPassword()
                     }
-                } finally {
-                    ActivityTracker.getInstance().inc()
+                }
+
+                msg = messageForBrokenUrl(url)
+                if (password.isBlank()) {
+                    msg = "Empty password"
+                    connectionParameters = null
+                } else {
+                    connectionParameters = ConnectionParameters(url, password)
                 }
             }
+            if (msg != null) {
+                withContext(Dispatchers.EDT) {
+                    val result = Messages.showIdeaMessageDialog(
+                        project,
+                        msg,
+                        "Cannot Connect",
+                        arrayOf("OK", "Settings..."),
+                        1,
+                        AllIcons.General.ErrorDialog,
+                        null
+                    )
+                    if (result == 1) {
+                        ShowSettingsUtil.getInstance()
+                            .showSettingsDialog(project, MpyConfigurable::class.java)
+                    }
+                }
+            } else {
+                if (connectionParameters != null) {
+                    setConnectionParams(connectionParameters)
+                    connect()
+                    try {
+                        if (state == State.CONNECTED) {
+                            initializeDevice()
+                            initialRefresh(reporter)
+                        }
+                    } finally {
+                        ActivityTracker.getInstance().inc()
+                    }
+                }
+            }
+        } catch (_: CancellationException) {
+            disconnect(reporter)
         }
     }
 
