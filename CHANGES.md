@@ -1,6 +1,13 @@
 The Changelog
 =============
 
+0.2.6 - 12-2-2025
+------------------
+
+* Added 1.24.1 and 1.25 preview stubs
+* Fixed download action EDT errors
+* Fixed a bug where the plugin enters the connected state even after a connection attempt was cancelled
+
 0.2.5 - 6-2-2025
 ------------------
 
@@ -17,7 +24,8 @@ The Changelog
 
 * Improved compatibility with resource constrained boards such as the ESP8266
 * Added an option to disable port listing filters (use this if your board's port isn't appearing)
-* Fixed several bugs in the plugin settings editor (the editor prompting for applying changes when none were made, reverting unapplied changes not working etc.)
+* Fixed several bugs in the plugin settings editor (the editor prompting for applying changes when none were made,
+  reverting unapplied changes not working etc.)
 
 0.2.2 - 16-1-2025
 ------------------
@@ -28,7 +36,8 @@ The Changelog
 ------------------
 
 * Fixed issues with stubs package settings related changes
-* Fixed issues with settings always being in modified state and enabling "apply" option as soon as they were open if the stub package text name field was empty
+* Fixed issues with settings always being in modified state and enabling "apply" option as soon as they were open if the
+  stub package text name field was empty
 
 0.2.0 - 13-1-2025
 ------------------
@@ -38,7 +47,8 @@ The Changelog
 * Reworked the device connection management in the settings
 * Improved plugin's state management (the plugin features will react to the disabled/disconnected states better)
 * Icon improvements (run configurations now have a new icon and the bug with darkening tool window icon was fixed)
-* Complete backend rewrite of run configuration and settings handling to use the latest plugin API for better maintainability (fixed the problems with settings reverting after applying them)
+* Complete backend rewrite of run configuration and settings handling to use the latest plugin API for better
+  maintainability (fixed the problems with settings reverting after applying them)
 
 0.1.5 - 6-1-2025
 ------------------
