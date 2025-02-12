@@ -503,16 +503,12 @@ class MpyTransferService(private val project: Project) {
             description = "Download",
             requiresRefreshAfter = false,
             action = { fileSystemWidget, reporter ->
-                println("In perform repl action")
-
                 reporter.text("Collecting files to download...")
                 reporter.fraction(null)
 
                 val selectedFiles = fileSystemWidget.selectedFiles()
                 if (selectedFiles.isEmpty()) return@performReplAction
                 var destination: VirtualFile? = null
-
-                println("Collected selected filesystem items")
 
                 withContext(Dispatchers.EDT) {
                     FileChooserFactory.getInstance().createPathChooser(
@@ -534,8 +530,6 @@ class MpyTransferService(private val project: Project) {
                         }
                     }
                 }
-
-                println("After creating file chooser UI")
 
                 if (destination == null) return@performReplAction
                 val parentNameToFile = selectedFiles.map { node -> "" to node }.toMutableList()
