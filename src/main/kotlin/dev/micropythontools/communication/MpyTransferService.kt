@@ -414,7 +414,7 @@ class MpyTransferService(private val project: Project) {
                     }
                 }
 
-                val totalBytes = fileToTargetPath.keys.sumOf { it.length }
+                val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
                 var uploadProgress = 0.0
                 var uploadedKB = 0.0
