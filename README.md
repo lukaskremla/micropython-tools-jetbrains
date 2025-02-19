@@ -4,7 +4,7 @@ This is a fork of the [jetbrains intellij micropython plugin](https://github.com
 Credits to [Andrey Vlasovskikh](https://github.com/vlasovskikh) for creating the original plugin and
 to [Ilia Motornyi](https://github.com/elmot) for rewriting the communication layer to kotlin and for developing the file system view, which serves as the foundation for this project.
 
-Many thanks also go to all of the contributors who helped maintain and improve the plugin in the past and to [Jos Verlinde](https://github.com/Josverl/micropython-stubber) for developing and maintaining the MicroPython stubs that this plugin uses.
+Many thanks also go to all of the contributors who helped maintain and improve the plugin in the past and to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for developing and maintaining the MicroPython stubs that this plugin uses.
 
 I have decided fork the original jetbrains plugin as its development had slowed and I wanted to focus on implementing
 more advanced features that I deem invaluable based on my professional experience working with MicroPython
