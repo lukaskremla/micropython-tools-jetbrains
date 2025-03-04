@@ -15,11 +15,14 @@
 """
 
 
-import os, gc
+
+import os, gc, binascii
+
 
 class ___list_files_class:
     def __init__(self):
         self.stats_to_volume_id = {}
+        self.buffer = bytearray(1024)
         self.i = 0
 
     def list_files(self, path):
@@ -34,6 +37,18 @@ class ___list_files_class:
                 self.i += 1
 
             hash = 0
+            if not result[1] & 0x4000:
+                with open(file_path, "rb") as f:
+                    while True:
+                        n = f.readinto(self.buffer)
+                        if n == 0:
+                            break
+                        if n < 1024:
+                            hash = binascii.crc32(self.buffer[:n], hash)
+                        else:
+                            hash = binascii.crc32(self.buffer, hash)
+                    hash = "%08x" % (hash & 0xffffffff)
+
             print(result[1], result[3] if len(result) > 3 else -1, file_path, volume_id, hash, sep="&")
             if result[1] & 0x4000:
                 self.list_files(file_path)
