@@ -32,9 +32,9 @@ class ___c:
                 self.i += 1
             h = 0
             if not r[1] & 0x4000:
-                with open(f, "rb") as f:
+                with open(f, "rb") as o:
                     while True:
-                        n = f.readinto(self.b)
+                        n = o.readinto(self.b)
                         if n == 0:
                             break
                         if n < 1024:
