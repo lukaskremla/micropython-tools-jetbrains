@@ -238,7 +238,7 @@ class MpyTransferService(private val project: Project) {
             description = "Upload",
             requiresRefreshAfter = true,
             action = { fileSystemWidget, reporter ->
-                reporter.text("Collecting files to upload...")
+                reporter.text("collecting files and creating directories...")
                 reporter.fraction(null)
 
                 var i = 0
@@ -277,6 +277,7 @@ class MpyTransferService(private val project: Project) {
                     }
                 }
 
+                // Create a file to target path map
                 val fileToTargetPath = createVirtualFileToTargetPathMap(
                     filesToUpload.toSet(),
                     relativeToFolders,
@@ -284,99 +285,73 @@ class MpyTransferService(private val project: Project) {
                     projectDir
                 )
 
-                reporter.text("Scanning the file system...")
-
-                if (fileSystemWidget.deviceInformation.hasBinascii) {
-                    fileSystemWidget.quietHashingRefresh(reporter)
-                } else {
-                    fileSystemWidget.refresh(reporter)
-                }
-
-                reporter.text("Creating directories...")
-
-                val folderToTargetPath = createVirtualFileToTargetPathMap(
+                // Collect the target paths of directories that must be created
+                val sortedFolderTargetPaths = createVirtualFileToTargetPathMap(
                     foldersToCreate,
                     relativeToFolders,
                     sourceFolders,
                     projectDir
-                )
-
-                val sortedFolderTargetPaths = folderToTargetPath.values
+                ).values
                     .sortedBy { it.split("/").filter { it.isNotEmpty() }.size }
                     .toMutableList()
 
-                val commands = mutableListOf("import os")
-
+                // Prepare the dir creation command
                 sortedFolderTargetPaths.remove("/")
+                val mkdirCommands = mutableListOf(
+                    "import os, gc",
+                    "def ___m(p):",
+                    "   try:",
+                    "       os.mkdir(f'{p}')",
+                    "   catch:",
+                    "       pass"
+                )
                 sortedFolderTargetPaths.forEach {
-                    commands.add("mkdir('$it')")
+                    mkdirCommands.add("___m('$it')")
                 }
+                mkdirCommands.add("del ___m")
+                mkdirCommands.add("gc.collect()")
 
-                fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
+                // Create the directories
+                fileSystemWidget.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray())
 
-                reporter.text("Detecting already uploaded files...")
-
-                val allNodes = mutableListOf<FileSystemNode>()
-                val root = fileSystemWidget.tree.model.root as DirNode
-                TreeUtil.treeNodeTraverser(root)
-                    .traverse(TreeTraversal.POST_ORDER_DFS)
-                    .mapNotNull {
-                        when (val node = it) {
-                            is DirNode -> node
-                            is FileNode -> node
-                            else -> null
-                        }
-                    }
-                    .toCollection(allNodes)
-
-                val deviceFileMap = mutableMapOf<String, FileSystemNode>()
-                allNodes.forEach { node ->
-                    deviceFileMap[node.fullName] = node
+                if (fileSystemWidget.deviceInformation.hasBinascii) {
+                    reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
+                    fileSystemWidget.quietHashingRefresh(reporter)
+                } else if (shouldSynchronize) {
+                    reporter.text("Synchronizing...")
+                    fileSystemWidget.refresh(reporter)
                 }
-
-                val filePathsToRemove = allNodes
-                    .filter { it is FileNode }
-                    .map { it.fullName }
-                    .toMutableSet()
-
-                val directoryPathsToRemove = allNodes
-                    .filter { it is DirNode }
-                    .map { it.fullName }
-                    .toMutableSet()
-
-                val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
-
-                fileToTargetPath.keys.forEach { file ->
-                    val path = fileToTargetPath[file]
-                    val size = file.length.toInt()
-                    val hash = calculateCRC32(file)
-
-                    val matchingNode = deviceFileMap[path]
-
-                    if (matchingNode != null) {
-                        if (matchingNode is FileNode) {
-                            if (size == matchingNode.size && hash == matchingNode.hash) {
-                                // If binascii is missing the hash is "0"
-                                if (matchingNode.hash != "0") {
-                                    alreadyUploadedFiles.add(file)
-                                }
-                            }
-
-                            filePathsToRemove.remove(matchingNode.fullName)
-                        } else {
-                            directoryPathsToRemove.remove(matchingNode.fullName)
-                        }
-                    }
-                }
-
-                fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
-
-                val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
                 if (shouldSynchronize) {
+                    val allNodes = mutableListOf<FileSystemNode>()
+                    val root = fileSystemWidget.tree.model.root as DirNode
+                    TreeUtil.treeNodeTraverser(root)
+                        .traverse(TreeTraversal.POST_ORDER_DFS)
+                        .mapNotNull {
+                            when (val node = it) {
+                                is DirNode -> node
+                                is FileNode -> node
+                                else -> null
+                            }
+                        }
+                        .toCollection(allNodes)
+
+                    val deviceFileMap = mutableMapOf<String, FileSystemNode>()
+                    allNodes.forEach { node ->
+                        deviceFileMap[node.fullName] = node
+                    }
+
                     val commands = mutableListOf("import os")
 
-                    reporter.text("Synchronizing...")
+                    val filePathsToRemove = allNodes
+                        .filter { it is FileNode }
+                        .map { it.fullName }
+                        .toMutableSet()
+
+                    val directoryPathsToRemove = allNodes
+                        .filter { it is DirNode }
+                        .map { it.fullName }
+                        .toMutableSet()
 
                     filePathsToRemove.forEach {
                         if (!shouldExcludePaths || !excludedPaths.contains(it)) {
@@ -391,7 +366,31 @@ class MpyTransferService(private val project: Project) {
                     }
 
                     fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
+
+                    fileToTargetPath.keys.forEach { file ->
+                        val path = fileToTargetPath[file]
+                        val size = file.length.toInt()
+                        val hash = calculateCRC32(file)
+
+                        val matchingNode = deviceFileMap[path]
+
+                        if (matchingNode != null) {
+                            if (matchingNode is FileNode) {
+                                if (size == matchingNode.size && hash == matchingNode.hash) {
+                                    // If binascii is missing the hash is "0"
+                                    if (matchingNode.hash != "0") {
+                                        fileToTargetPath.remove(file)
+                                    }
+                                }
+                                filePathsToRemove.remove(matchingNode.fullName)
+                            } else {
+                                directoryPathsToRemove.remove(matchingNode.fullName)
+                            }
+                        }
+                    }
                 }
+
+                val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
                 if (shouldUseFTP(project, totalBytes) && fileToTargetPath.isNotEmpty()) {
                     reporter.text("Retrieving FTP credentials...")
