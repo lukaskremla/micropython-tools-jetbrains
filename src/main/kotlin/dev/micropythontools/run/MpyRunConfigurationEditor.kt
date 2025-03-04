@@ -31,6 +31,8 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
+import dev.micropythontools.settings.normalizeMPYPath
+import dev.micropythontools.settings.validateMPYPath
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -47,17 +49,8 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
     private val pathField = TextFieldWithBrowseButton()
     private val resetOnSuccess = CheckBox("Reset on success", selected = false)
     private val runReplOnSuccess = CheckBox("Switch to REPL tab on success", selected = true)
-    private val useFTP = CheckBox("Use FTP for file uploads", selected = false)
     private val synchronize = CheckBox("Synchronize", selected = false)
     private val excludePaths = CheckBox("Exclude selected paths", selected = false)
-
-    private val ftpPanel = JPanel().apply {
-        layout = BoxLayout(this, BoxLayout.X_AXIS)
-        add(useFTP)
-        add(JBLabel(AllIcons.General.Information).apply {
-            toolTipText = "Make sure to setup wifi credentials in the plugin settings"
-        })
-    }
 
     private val synchronizePanel = JPanel().apply {
         layout = BoxLayout(this, BoxLayout.X_AXIS)
@@ -82,53 +75,6 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
         tableHeader = null
     }
 
-    private fun validatePath(path: String): String? {
-        val forbiddenCharacters = listOf("<", ">", ":", "\"", "|", "?", "*")
-        val foundForbiddenCharacters = mutableListOf<String>()
-
-        forbiddenCharacters.forEach {
-            if (path.contains(it)) {
-                foundForbiddenCharacters.add(it)
-            }
-        }
-
-        if (foundForbiddenCharacters.isNotEmpty()) {
-            return "Found forbidden characters: $foundForbiddenCharacters"
-        }
-
-        // A just-in-case limit, to prevent over-inflating the synchronization script
-        if (path.length > 256) {
-            return "Path is too long (maximum 256 characters)"
-        }
-
-        if (path.isEmpty()) {
-            return "Path can't be empty!"
-        }
-
-        return null
-    }
-
-    private fun normalizePath(path: String): String {
-        var normalizedPath = path
-
-        // Replace slash format to fit MicroPython file system
-        normalizedPath = normalizedPath.replace("\\", "/")
-
-        // Normalize input to remove potential redundant path elements
-        normalizedPath = java.nio.file.Paths.get(normalizedPath).normalize().toString()
-
-        // Ensure correct slash format again
-        normalizedPath = normalizedPath.replace("\\", "/")
-
-        normalizedPath = normalizedPath.trim()
-
-        if (!path.startsWith("/")) {
-            normalizedPath = "/${path}"
-        }
-
-        return normalizedPath
-    }
-
     private val excludedPathsTableWithToolbar = ToolbarDecorator.createDecorator(excludedPathsTable)
         .setAddAction {
             val dialog = DialogBuilder(config.project)
@@ -149,10 +95,10 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
             dialog.centerPanel(panel)
 
             dialog.setOkOperation {
-                val validationResult = validatePath(textField.text)
+                val validationResult = validateMPYPath(textField.text)
 
                 if (validationResult == null) {
-                    val normalizedPath = normalizePath(textField.text)
+                    val normalizedPath = normalizeMPYPath(textField.text)
 
                     model.addRow(arrayOf(normalizedPath))
                     sortExcludedPathsTableModel(model)
@@ -197,10 +143,10 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
             dialog.centerPanel(panel)
 
             dialog.setOkOperation {
-                val validationResult = validatePath(textField.text)
+                val validationResult = validateMPYPath(textField.text)
 
                 if (validationResult == null) {
-                    val normalizedPath = normalizePath(textField.text)
+                    val normalizedPath = normalizeMPYPath(textField.text)
 
                     model.setValueAt(normalizedPath, selectedRow, 0)
                     sortExcludedPathsTableModel(model)
@@ -266,7 +212,6 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
             .addLabeledComponent("Path:", pathField)
             .addComponent(resetOnSuccess)
             .addComponent(runReplOnSuccess)
-            .addComponent(ftpPanel)
             .addComponent(synchronizePanel)
             .addComponent(excludePathsPanel)
             .addComponent(excludedPathsTablePanel)
@@ -286,7 +231,6 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
             path = pathField.text,
             runReplOnSuccess = runReplOnSuccess.isSelected,
             resetOnSuccess = resetOnSuccess.isSelected,
-            useFTP = useFTP.isSelected,
             synchronize = synchronize.isSelected,
             excludePaths = excludePaths.isSelected,
             excludedPaths = excludedPathsList
@@ -299,7 +243,6 @@ class MpyRunConfigurationEditor(config: MpyRunConfiguration) : SettingsEditor<Mp
         pathField.text = options.path ?: ""
         runReplOnSuccess.isSelected = options.runReplOnSuccess
         resetOnSuccess.isSelected = options.resetOnSuccess
-        useFTP.isSelected = options.useFTP
         synchronize.isSelected = options.synchronize
         excludePaths.isSelected = options.excludePaths
 
