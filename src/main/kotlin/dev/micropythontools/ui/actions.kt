@@ -56,8 +56,8 @@ import com.intellij.util.PathUtilRt.Platform
 import com.intellij.util.asSafely
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.communication.SHORT_TIMEOUT
 import dev.micropythontools.communication.State
-import dev.micropythontools.communication.TIMEOUT
 import dev.micropythontools.communication.extractSingleResponse
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
@@ -115,7 +115,9 @@ abstract class ReplAction(
     }
 }
 
-// Overload to allow not specifying cancellation message
+/**
+ * An overload to allow not specifying the cancelled message.
+ */
 fun <T> performReplAction(
     project: Project,
     connectionRequired: Boolean,
@@ -320,8 +322,18 @@ class InstantRun : DumbAwareAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
+        val settings = e.project?.service<MpySettingsService>()
+
+        if (settings == null || !settings.state.isPluginEnabled) {
+            e.presentation.isEnabledAndVisible = false
+            return
+        }
+
         val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+
+        e.presentation.isEnabledAndVisible = file != null && !file.isDirectory
+
         e.presentation.isEnabled = file != null &&
                 !file.isDirectory &&
                 files?.size == 1 &&
@@ -344,6 +356,13 @@ class InstantFragmentRun : ReplAction("Instant Run", true, false) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
+        val settings = e.project?.service<MpySettingsService>()
+
+        if (settings == null || !settings.state.isPluginEnabled) {
+            e.presentation.isEnabledAndVisible = false
+            return
+        }
+
         val editor = editor(e.project)
         if (editor == null) {
             e.presentation.isEnabledAndVisible = false
@@ -418,8 +437,16 @@ open class UploadFile : DumbAwareAction("Upload Selected to MicroPython Device")
 
     override fun update(e: AnActionEvent) {
         val project = e.project
+
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         if (project != null && files != null) {
+            val settings = project.service<MpySettingsService>()
+
+            if (!settings.state.isPluginEnabled) {
+                e.presentation.isEnabledAndVisible = false
+                return
+            }
+
             var directoryCount = 0
             var fileCount = 0
 
@@ -534,7 +561,6 @@ class CreateDeviceFolderAction : ReplAction("New Folder", true, false) {
     override val actionDescription: @NlsContexts.DialogMessage String = "Creating new folder..."
 
     override suspend fun performAction(fileSystemWidget: FileSystemWidget, reporter: RawProgressReporter) {
-
         val parent = selectedFolder(fileSystemWidget) ?: return
 
         val validator = object : InputValidator {
@@ -555,7 +581,7 @@ class CreateDeviceFolderAction : ReplAction("New Folder", true, false) {
         }
 
         if (!newName.isNullOrBlank()) {
-            fileSystemWidget.blindExecute(TIMEOUT, "import os; os.mkdir('${parent.fullName}/$newName')")
+            fileSystemWidget.blindExecute(SHORT_TIMEOUT, "import os; os.mkdir('${parent.fullName}/$newName')")
                 .extractSingleResponse()
             fileSystemWidget.refresh(reporter)
         }

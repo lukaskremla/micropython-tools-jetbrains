@@ -105,7 +105,7 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                     throw ConnectException("WebREPL connection failed")
                 }
             }
-            withTimeout(TIMEOUT) {
+            withTimeout(SHORT_TIMEOUT) {
                 while (isConnected) {
                     when {
                         loginBuffer.length < PASSWORD_PROMPT.length -> delay(SHORT_DELAY)
