@@ -15,10 +15,11 @@
 """
 
 
-import os, gc
+import os, gc, binascii
 class ___c:
     def __init__(self):
         self.d = {}
+        self.b = bytearray(1024)
         self.i = 0
     def l(self, p):
         for r in os.ilistdir(p):
@@ -30,6 +31,17 @@ class ___c:
                 v = self.d[s] = self.i
                 self.i += 1
             h = 0
+            if not r[1] & 0x4000:
+                with open(f, "rb") as f:
+                    while True:
+                        n = f.readinto(self.b)
+                        if n == 0:
+                            break
+                        if n < 1024:
+                            h = binascii.crc32(self.b[:n], h)
+                        else:
+                            h = binascii.crc32(self.b, h)
+                    h = "%08x" % (h & 0xffffffff)
             print(r[1], r[3] if len(r) > 3 else -1, f, v, h, sep="&")
             if r[1] & 0x4000:
                 self.l(f)

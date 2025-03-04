@@ -15,29 +15,24 @@
 """
 
 
-import network, gc
-def ___c():
-    for i in [network.STA_IF, network.AP_IF]:
-        w = network.WLAN(i)
+import network, time,gc
 
-        if not w.active():
-            continue
+def ___connect_to_wifi():
+    ssid = %s
+    password = %s
+    wifi_timeout = %s
+    sta = network.WLAN(network.STA_IF)
+    sta.active(True)
+    sta.connect(ssid, password)
+    i = 0
+    while not i.isconnected():
+        time.sleep(1)
+        i+= 1
+        if i > wifi_timeout:
+            print(f"ERROR: Connecting to \"{ssid}\" failed, connection timed out. Check your network settings.")
+            break
+    print(f"IP: {sta.ifconfig()[0]}")
 
-        try:
-            w.disconnect()
-        except:
-            pass
-
-        w.active(False)
-
-    try:
-        stop()
-    except:
-        try:
-            ___ftp.stop()
-            del ___ftp
-        except:
-            pass
-___c()
-del ___c
+___connect_to_wifi()
+del ___connect_to_wifi
 gc.collect()
