@@ -113,3 +113,65 @@ fun messageForBrokenUrl(url: String): @Nls String? {
         return "Malformed URL $url"
     }
 }
+
+fun validateMPYPath(path: String, isEmptyPathValid: Boolean = false): String? {
+    val forbiddenCharacters = listOf("<", ">", ":", "\"", "|", "?", "*")
+    val foundForbiddenCharacters = mutableListOf<String>()
+
+    forbiddenCharacters.forEach {
+        if (path.contains(it)) {
+            foundForbiddenCharacters.add(it)
+        }
+    }
+
+    if (foundForbiddenCharacters.isNotEmpty()) {
+        return "Found forbidden characters: $foundForbiddenCharacters"
+    }
+
+    // A just-in-case limit, to prevent over-inflating the synchronization script
+    if (path.length > 256) {
+        return "Path is too long (maximum 256 characters)"
+    }
+
+    if (path.isEmpty() && !isEmptyPathValid) {
+        return "Path can't be empty!"
+    }
+
+    return null
+}
+
+fun normalizeMPYPath(path: String, isEmptyPathValid: Boolean = false): String {
+    var normalizedPath = path
+
+    // Replace slash format to fit MicroPython file system
+    normalizedPath = normalizedPath.replace("\\", "/")
+
+    // Normalize input to remove potential redundant path elements
+    normalizedPath = java.nio.file.Paths.get(normalizedPath).normalize().toString()
+
+    // Ensure correct slash format again
+    normalizedPath = normalizedPath.replace("\\", "/")
+
+    normalizedPath = normalizedPath.trim()
+
+    if (path.isEmpty() && !isEmptyPathValid) {
+        return normalizedPath
+    }
+
+    if (!path.startsWith("/")) {
+        normalizedPath = "/${path}"
+    }
+
+    return normalizedPath
+}
+
+fun isUftpdPathValid(uftpdPath: String): String? {
+    val validationResult = validateMPYPath(uftpdPath, true)
+
+    return validationResult
+        ?: if (uftpdPath.contains(".")) {
+            "The path before uftpd cannot contain a \".\""
+        } else {
+            null
+        }
+}

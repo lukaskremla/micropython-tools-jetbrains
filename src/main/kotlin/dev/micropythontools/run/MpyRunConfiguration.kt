@@ -29,7 +29,6 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtil
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.settings.MpyConfigurable
@@ -72,7 +71,6 @@ class MpyRunConfiguration(
         path: String,
         runReplOnSuccess: Boolean,
         resetOnSuccess: Boolean,
-        useFTP: Boolean,
         synchronize: Boolean,
         excludePaths: Boolean,
         excludedPaths: MutableList<String>
@@ -82,7 +80,6 @@ class MpyRunConfiguration(
         options.path = path
         options.runReplOnSuccess = runReplOnSuccess
         options.resetOnSuccess = resetOnSuccess
-        options.useFTP = useFTP
         options.synchronize = synchronize
         options.excludePaths = excludePaths
         options.excludedPaths = excludedPaths
@@ -110,7 +107,6 @@ class MpyRunConfiguration(
         val path: String = options.path ?: ""
         val runReplOnSuccess = options.runReplOnSuccess
         val resetOnSuccess = options.resetOnSuccess
-        val useFTP = options.useFTP
         val synchronize = options.synchronize
         val excludePaths = options.excludePaths
         val excludedPaths = options.excludedPaths
@@ -119,26 +115,13 @@ class MpyRunConfiguration(
         val projectDir = project.guessProjectDir()
         val projectPath = projectDir?.path
 
-        var ssid = ""
-        var wifiPassword = ""
-
-        runWithModalProgressBlocking(project, "Retrieving credentials...") {
-            val wifiCredentials = project.service<MpySettingsService>().retrieveWifiCredentials()
-
-            ssid = wifiCredentials.userName ?: ""
-            wifiPassword = wifiCredentials.getPasswordAsString() ?: ""
-        }
-
         val transferService = project.service<MpyTransferService>()
 
         if (path.isBlank() || (projectPath != null && path == projectPath)) {
             success = transferService.uploadProject(
                 excludedPaths,
                 synchronize,
-                excludePaths,
-                useFTP,
-                ssid,
-                wifiPassword
+                excludePaths
             )
         } else {
             val toUpload = StandardFileSystems.local().findFileByPath(path) ?: return null
@@ -146,10 +129,7 @@ class MpyRunConfiguration(
                 toUpload,
                 excludedPaths,
                 synchronize,
-                excludePaths,
-                useFTP,
-                ssid,
-                wifiPassword
+                excludePaths
             )
         }
         if (success) {

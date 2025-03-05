@@ -120,7 +120,6 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
             // The configuration must be of MpyConfigurationType if we got here, its settings can be extracted
             val savedName = element.getAttributeValue("name")
             val path = element.getAttributeValue("path")
-            val useFTP = element.getAttributeValue("ftp") == "yes"
             val runReplOnSuccess = element.getAttributeValue("run-repl-on-success") == "yes"
             val resetOnSuccess = element.getAttributeValue("reset-on-success") == "yes"
             val synchronize = element.getAttributeValue("synchronize") == "yes"
@@ -154,7 +153,6 @@ class MpyFacetMigrationActivity : ProjectActivity, DumbAware {
                     path ?: "",
                     runReplOnSuccess,
                     resetOnSuccess,
-                    useFTP,
                     synchronize,
                     excludePaths,
                     excludedPaths

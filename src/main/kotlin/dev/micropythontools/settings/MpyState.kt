@@ -28,6 +28,11 @@ class MpyState : BaseState() {
     var filterManufacturers by property(true)
     var portName by string("")
     var webReplUrl by string(DEFAULT_WEBREPL_URL)
+    var useFTP by property(false)
+    var cacheFTPScript by property(false)
+    var cachedFTPScriptPath by string("")
+    var requireMinimumFTPUploadSize by property(false)
+    var minimumFTPUploadSize by property(200)
     var areStubsEnabled by property(true)
     var activeStubsPackage by string("")
 }

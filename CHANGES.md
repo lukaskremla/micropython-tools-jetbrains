@@ -1,6 +1,18 @@
 The Changelog
 =============
 
+0.3.0 - 14-2-2025
+------------------
+
+* Added support for drag and drop file system interactions (board to board and IDE to board)
+* FTP parameters were fully moved to the plugin settings and extended to allow caching of the uftpd.py script, added a
+  minimum upload size threshold setting
+* Added a description with a disconnect button to the settings which appears when the "Connection" group is disabled due
+  to an already connected board
+* Modified the plugin's context menu actions to not be visible when MicroPython support is disabled
+* Modified the execute in REPL context menu action to not be displayed at all for folders
+* Rewrote and improved the internal MicroPython scripts to reduce on-device memory footprint and speed up execution
+
 0.2.6 - 12-2-2025
 ------------------
 

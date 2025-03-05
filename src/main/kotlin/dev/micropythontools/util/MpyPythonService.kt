@@ -35,10 +35,13 @@ import com.intellij.openapi.roots.ModifiableModelsProvider
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.library.PythonLibraryType
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import java.io.File
+import java.io.FileNotFoundException
 import javax.swing.JComponent
 
 @Service(Service.Level.PROJECT)
@@ -68,7 +71,27 @@ class MpyPythonService(private val project: Project) {
 
     fun retrieveMpyScriptAsString(scriptFileName: String): String {
         val scriptPath = "$microPythonScriptsPath/$scriptFileName"
-        return File(scriptPath).readText(Charsets.UTF_8)
+
+        val retrievedScript = File(scriptPath).readText(Charsets.UTF_8)
+
+        var i = 0
+        if (!scriptFileName.contains("uftpd")) {
+            val lines = retrievedScript.lines().toMutableList()
+
+            while (i < 16) {
+                lines.removeAt(0)
+                i++
+            }
+
+            return lines.joinToString("\n")
+        } else {
+            return retrievedScript
+        }
+    }
+
+    fun retrieveMpyScriptAsVirtualFile(scriptFileName: String): VirtualFile {
+        val scriptPath = "$microPythonScriptsPath/$scriptFileName"
+        return StandardFileSystems.local().findFileByPath(scriptPath) ?: throw FileNotFoundException()
     }
 
     fun getAvailableStubs(): List<String> {
