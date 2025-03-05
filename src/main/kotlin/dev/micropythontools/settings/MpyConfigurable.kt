@@ -192,7 +192,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                     } else null
                                 }
                         }
-                    }.visibleIf(webReplRadioButton.selected)
+                        row {
+                            comment("WebREPL is temporarily disabled due to a bug. It will be reinstated in a later release.")
+                        }
+                    }.visibleIf(webReplRadioButton.selected).enabled(false)
                 }.bottomGap(BottomGap.NONE).enabled(isDisconnected())
 
                 indent {

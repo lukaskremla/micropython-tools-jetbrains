@@ -65,6 +65,6 @@ fun shouldUseFTP(project: Project, uploadSizeBytes: Double? = null): Boolean {
     val settings = project.service<MpySettingsService>()
 
     with(settings.state) {
-        return useFTP && (!requireMinimumFTPUploadSize || uploadSizeBytes == null || uploadSizeBytes > minimumFTPUploadSize)
+        return useFTP && (!requireMinimumFTPUploadSize || uploadSizeBytes == null || uploadSizeBytes > minimumFTPUploadSize * 1000)
     }
 }
