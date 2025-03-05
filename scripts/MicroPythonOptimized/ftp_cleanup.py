@@ -31,7 +31,7 @@ def ___c():
         w.active(False)
 
     try:
-        stop()
+        uftpd.stop()
     except:
         try:
             ___ftp.stop()

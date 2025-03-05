@@ -30,7 +30,6 @@ def ___c():
         if i > t:
             print(f"ERROR: Connecting to \"{s}\" failed, connection timed out. Check your network settings.")
             break
-    print(f"IP: {w.ifconfig()[0]}")
 ___c()
 del ___c
 gc.collect()
