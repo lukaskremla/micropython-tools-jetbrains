@@ -660,17 +660,31 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             if (sure) fileSystemNodes else emptyList()
         }
         for (confirmedFileSystemNode in confirmedFileSystemNodes) {
-            val commands = mutableListOf("import os")
+            val commands = mutableListOf(
+                "import os, gc",
+                "def ___d(p):",
+                "   try:",
+                "       os.remove(p)",
+                "   except:",
+                "       try:",
+                "           os.rmdir(p)",
+                "       except:",
+                "           pass"
+            )
+
             TreeUtil.treeNodeTraverser(confirmedFileSystemNode)
                 .traverse(TreeTraversal.POST_ORDER_DFS)
                 .mapNotNull {
                     when (val node = it) {
-                        is DirNode -> "os.rmdir('${node.fullName}')"
-                        is FileNode -> "os.remove('${node.fullName}')"
+                        is DirNode -> "___d('${node.fullName}')"
+                        is FileNode -> "___d('${node.fullName}')"
                         else -> null
                     }
                 }
                 .toCollection(commands)
+
+            commands.add("del ___d")
+            commands.add("gc.collect()")
 
             blindExecute(LONG_TIMEOUT, *commands.toTypedArray()).extractResponse()
         }

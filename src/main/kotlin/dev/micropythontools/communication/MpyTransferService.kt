@@ -285,13 +285,15 @@ class MpyTransferService(private val project: Project) {
                     projectDir
                 )
 
-                // Collect the target paths of directories that must be created
-                val sortedFolderTargetPaths = createVirtualFileToTargetPathMap(
+                val folderToTargetPath = createVirtualFileToTargetPathMap(
                     foldersToCreate,
                     relativeToFolders,
                     sourceFolders,
                     projectDir
-                ).values
+                )
+
+                // Collect the target paths of directories that must be created
+                val sortedFolderTargetPaths = folderToTargetPath.values
                     .sortedBy { it.split("/").filter { it.isNotEmpty() }.size }
                     .toMutableList()
 
@@ -302,7 +304,7 @@ class MpyTransferService(private val project: Project) {
                     "def ___m(p):",
                     "   try:",
                     "       os.mkdir(f'{p}')",
-                    "   catch:",
+                    "   except:",
                     "       pass"
                 )
                 sortedFolderTargetPaths.forEach {
@@ -312,7 +314,7 @@ class MpyTransferService(private val project: Project) {
                 mkdirCommands.add("gc.collect()")
 
                 // Create the directories
-                fileSystemWidget.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray())
+                fileSystemWidget.blindExecute(SHORT_TIMEOUT, mkdirCommands.joinToString(separator = "\n"))
 
                 if (fileSystemWidget.deviceInformation.hasBinascii) {
                     reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
@@ -353,20 +355,7 @@ class MpyTransferService(private val project: Project) {
                         .map { it.fullName }
                         .toMutableSet()
 
-                    filePathsToRemove.forEach {
-                        if (!shouldExcludePaths || !excludedPaths.contains(it)) {
-                            commands.add("os.remove('$it')")
-                        }
-                    }
-
-                    directoryPathsToRemove.forEach {
-                        if (!shouldExcludePaths || !excludedPaths.contains(it)) {
-                            commands.add("os.rmdir('$it')")
-                        }
-                    }
-
-                    fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
-
+                    val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
                     fileToTargetPath.keys.forEach { file ->
                         val path = fileToTargetPath[file]
                         val size = file.length.toInt()
@@ -379,7 +368,7 @@ class MpyTransferService(private val project: Project) {
                                 if (size == matchingNode.size && hash == matchingNode.hash) {
                                     // If binascii is missing the hash is "0"
                                     if (matchingNode.hash != "0") {
-                                        fileToTargetPath.remove(file)
+                                        alreadyUploadedFiles.add(file)
                                     }
                                 }
                                 filePathsToRemove.remove(matchingNode.fullName)
@@ -388,6 +377,24 @@ class MpyTransferService(private val project: Project) {
                             }
                         }
                     }
+
+                    filePathsToRemove.forEach {
+                        if (!shouldExcludePaths || !excludedPaths.contains(it)) {
+                            commands.add("os.remove('$it')")
+                        }
+                    }
+
+                    println(sortedFolderTargetPaths)
+                    directoryPathsToRemove.removeAll(sortedFolderTargetPaths)
+                    println(directoryPathsToRemove)
+                    directoryPathsToRemove.forEach {
+                        if (!shouldExcludePaths || !excludedPaths.contains(it)) {
+                            commands.add("os.rmdir('$it')")
+                        }
+                    }
+
+                    fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
+                    fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                 }
 
                 val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
@@ -424,7 +431,7 @@ class MpyTransferService(private val project: Project) {
                                 "   pass"
                             )
 
-                            val cacheValid = fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
+                            val cacheValid = fileSystemWidget.blindExecute(SHORT_TIMEOUT, commands.joinToString(separator = "\n"))
                                 .extractSingleResponse() == "valid"
 
                             val uftpdPath = settings.state.cachedFTPScriptPath
@@ -477,7 +484,7 @@ class MpyTransferService(private val project: Project) {
                             )
                         }
 
-                        val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
+                        val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, commands.joinToString(separator = "\n"))
                             .extractSingleResponse().trim()
 
                         if (scriptResponse.contains("ERROR") || !scriptResponse.startsWith("IP: ")) {
