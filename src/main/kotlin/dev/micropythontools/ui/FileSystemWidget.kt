@@ -54,7 +54,6 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -302,12 +301,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                 val dropLocation = support.dropLocation as? JTree.DropLocation ?: return false
                 val targetNode = dropLocation.path.lastPathComponent as? DirNode ?: return false
 
-                val targetChildren = targetNode.children().asSequence()
-                    .mapNotNull { it as? FileSystemNode }
-                    .toList()
-
-                val targetChildNames = targetChildren.map { it.name }
-
                 when {
                     support.isDataFlavorSupported(nodesFlavor) -> {
                         val nodes = try {
@@ -340,6 +333,12 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
                                 quietRefresh(reporter)
 
+                                val targetChildren = targetNode.children().asSequence()
+                                    .mapNotNull { it as? FileSystemNode }
+                                    .toList()
+
+                                val targetChildNames = targetChildren.map { it.name }
+
                                 val foundConflicts = (nodes.any {
                                     targetChildNames.contains(it.name)
                                 })
@@ -348,11 +347,13 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                                     var wasOverwriteConfirmed = false
 
                                     withContext(Dispatchers.EDT) {
-                                        wasOverwriteConfirmed = MessageDialogBuilder.okCancel(
+                                        val clickResult = MessageDialogBuilder.Message(
                                             "Overwrite Destination Paths?",
                                             "One or more of the items being moved already exists in the target location. " +
                                                     "Do you want to overwrite the destination item(s)?"
-                                        ).asWarning().ask(project)
+                                        ).asWarning().buttons("Replace", "Cancel").defaultButton("Cancel").show(project)
+
+                                        wasOverwriteConfirmed = clickResult == "Replace"
                                     }
 
                                     if (!wasOverwriteConfirmed) return@performReplAction false
@@ -363,20 +364,26 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
                                 val commands = mutableListOf("import os")
 
+                                val currentPathToNewPath = mutableMapOf<String, String>()
+                                val pathsToRemove = mutableListOf<String>()
                                 nodes.forEach { node ->
                                     val newPath = "${targetNode.fullName}/${node.name}"
+                                    currentPathToNewPath[node.fullName] = newPath
 
-                                    if (foundConflicts && targetChildNames.contains(node.name)) commands.add("os.remove($newPath)")
+                                    if (foundConflicts && targetChildNames.contains(node.name)) pathsToRemove.add(newPath)
                                     commands.add("os.rename(\"${node.fullName}\", \"$newPath\")")
                                 }
 
-                                blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
+                                transferService.recursivelyDeletePaths(pathsToRemove)
+
+                                blindExecute(LONG_TIMEOUT, *commands.toTypedArray()).extractResponse()
+
+                                refresh(reporter)
                             },
                             { _, reporter ->
                                 refresh(reporter)
                             }
                         )
-
                         if (result == false) return false
                     }
 
@@ -418,10 +425,9 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                             .map { it.parent }
                             .toSet()
 
-                        transferService.performUpload(sanitizedFiles, parentFolders)
+                        transferService.performUpload(sanitizedFiles, targetNode.fullName, parentFolders)
                     }
                 }
-
                 return true
             }
         }
@@ -538,18 +544,24 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     }
 
     suspend fun refresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = false, disconnectOnCancel = true, useReporter = true)
+        doRefresh(reporter, hash = false, disconnectOnCancel = true, isInitialRefresh = false, useReporter = true)
 
     suspend fun quietRefresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = false, disconnectOnCancel = false, useReporter = false)
+        doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = false, useReporter = false)
 
     suspend fun quietHashingRefresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = true, disconnectOnCancel = false, useReporter = false)
+        doRefresh(reporter, hash = true, disconnectOnCancel = false, isInitialRefresh = false, useReporter = false)
 
     private suspend fun initialRefresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = false, disconnectOnCancel = false, useReporter = true)
+        doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = true, useReporter = true)
 
-    private suspend fun doRefresh(reporter: RawProgressReporter, hash: Boolean, disconnectOnCancel: Boolean, useReporter: Boolean) {
+    private suspend fun doRefresh(
+        reporter: RawProgressReporter,
+        hash: Boolean,
+        disconnectOnCancel: Boolean,
+        isInitialRefresh: Boolean,
+        useReporter: Boolean
+    ) {
         if (useReporter) {
             reporter.text("Updating file system view...")
             reporter.fraction(null)
@@ -566,7 +578,9 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         try {
             dirList = blindExecute(LONG_TIMEOUT, fileSystemScanScript).extractSingleResponse()
         } catch (e: CancellationException) {
-            disconnect(reporter)
+            if (disconnectOnCancel) {
+                disconnect(reporter)
+            }
             // If this is the initial refresh the cancellation exception should be passed on as is, the user should
             // only be informed about the connection being cancelled. However, if this is not the initial refresh, the
             // cancellation exception should instead raise a more severe exception to be shown to the user as an error.
@@ -574,10 +588,10 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             // it puts the plugin into a situation where the file system listing can go out of sync with the actual
             // file system after a plugin-initiated change took place on the board. This means the plugin should
             // disconnect from the board and show an error message to the user.
-            if (disconnectOnCancel) {
-                throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
-            } else {
+            if (isInitialRefresh || disconnectOnCancel) {
                 throw e
+            } else {
+                throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
             }
         } catch (e: Throwable) {
             disconnect(reporter)
@@ -660,34 +674,16 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             if (sure) fileSystemNodes else emptyList()
         }
 
-        val commands = mutableListOf(
-            "import os, gc",
-            "def ___d(p):",
-            "   try:",
-            "       os.remove(p)",
-            "   except:",
-            "       try:",
-            "           os.rmdir(p)",
-            "       except:",
-            "           pass"
-        )
-
-        for (confirmedFileSystemNode in confirmedFileSystemNodes) {
-            TreeUtil.treeNodeTraverser(confirmedFileSystemNode)
-                .traverse(TreeTraversal.POST_ORDER_DFS)
-                .mapNotNull {
-                    when (val node = it) {
-                        is DirNode -> "___d('${node.fullName}')"
-                        is FileNode -> "___d('${node.fullName}')"
-                        else -> null
-                    }
-                }
-                .toCollection(commands)
+        // Filter out child nodes that have parent nodes in the selection
+        val filteredNodes = confirmedFileSystemNodes.filter { node ->
+            confirmedFileSystemNodes.none { potentialParent ->
+                potentialParent != node && node.fullName.startsWith(potentialParent.fullName + "/")
+            }
         }
-        commands.add("del ___d")
-        commands.add("gc.collect()")
 
-        blindExecute(LONG_TIMEOUT, *commands.toTypedArray()).extractResponse()
+        val topLevelPathsToRemove = filteredNodes.map { it.fullName }
+
+        transferService.recursivelyDeletePaths(topLevelPathsToRemove)
     }
 
     fun selectedFiles(): Collection<FileSystemNode> {

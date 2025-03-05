@@ -72,6 +72,41 @@ class MpyTransferService(private val project: Project) {
         return filteredPorts
     }
 
+    suspend fun recursivelyDeletePaths(paths: List<String>) {
+        val commands = mutableListOf(
+            "import os, gc",
+            "def ___d(p):",
+            "   try:",
+            "       os.stat(p)",
+            "   except:",
+            "       return",
+            "   try:",
+            "       os.remove(p)",
+            "       return",
+            "   except:",
+            "       pass",
+            "   for r in os.ilistdir(p):",
+            "       f = f'{p}/{r[0]}' if p != '/' else f'/{r[0]}'",
+            "       if r[1] & 0x4000:",
+            "           ___d(f)",
+            "       else:",
+            "           os.remove(f)",
+            "   try:",
+            "       os.rmdir(p)",
+            "   except:",
+            "       pass"
+        )
+
+        paths.forEach {
+            commands.add("___d('${it}')")
+        }
+
+        commands.add("del ___d")
+        commands.add("gc.collect()")
+
+        fileSystemWidget(project)?.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())?.extractResponse()
+    }
+
     private fun calculateCRC32(file: VirtualFile): String {
         val localFileBytes = file.contentsToByteArray()
         val crc = java.util.zip.CRC32()
@@ -125,35 +160,33 @@ class MpyTransferService(private val project: Project) {
 
     private fun createVirtualFileToTargetPathMap(
         files: Set<VirtualFile>,
+        targetDestination: String? = "/",
         relativeToFolders: Set<VirtualFile>?,
         sourceFolders: Set<VirtualFile>,
         projectDir: VirtualFile
     ): MutableMap<VirtualFile, String> {
-        val virtualFileToTargetPath = mutableMapOf<VirtualFile, String>()
+        val normalizedTarget = targetDestination?.trim('/') ?: ""
 
-        files.forEach { file ->
-            val path = when {
-                !relativeToFolders.isNullOrEmpty() && relativeToFolders.find { VfsUtil.isAncestor(it, file, false) }?.let { relativeToFolder ->
-                    VfsUtil.getRelativePath(file, relativeToFolder) ?: file.name
-                } != null -> VfsUtil.getRelativePath(
-                    file,
-                    relativeToFolders.find { VfsUtil.isAncestor(it, file, false) }!!
-                ) ?: file.name
+        return files.associateWithTo(mutableMapOf()) { file ->
+            val baseFolder = when {
+                // relativeToFolders have priority
+                !relativeToFolders.isNullOrEmpty() -> relativeToFolders.firstOrNull {
+                    VfsUtil.isAncestor(it, file, false)
+                }
 
-                sourceFolders.find { VfsUtil.isAncestor(it, file, false) }?.let { sourceRoot ->
-                    VfsUtil.getRelativePath(file, sourceRoot) ?: file.name
-                } != null -> VfsUtil.getRelativePath(
-                    file,
-                    sourceFolders.find { VfsUtil.isAncestor(it, file, false) }!!
-                ) ?: file.name
+                else -> sourceFolders.firstOrNull {
+                    VfsUtil.isAncestor(it, file, false)
+                }
+            } ?: projectDir
 
-                else -> projectDir.let { VfsUtil.getRelativePath(file, it) } ?: file.name
-            }
+            val relativePath = VfsUtil.getRelativePath(file, baseFolder) ?: file.name
 
-            virtualFileToTargetPath[file] = if (path.startsWith("/")) path else "/$path"
+            // Combine and normalize path
+            val combinedPath = "$normalizedTarget/$relativePath".trim('/')
+
+            // Ensure single leading slash
+            "/$combinedPath"
         }
-
-        return virtualFileToTargetPath
     }
 
     fun uploadProject(
@@ -168,9 +201,11 @@ class MpyTransferService(private val project: Project) {
         return performUpload(
             filesToUpload,
             null,
+            null,
             excludedPaths,
             shouldSynchronize,
-            shouldExcludePaths
+            shouldExcludePaths,
+            true
         )
     }
 
@@ -184,9 +219,11 @@ class MpyTransferService(private val project: Project) {
         return performUpload(
             setOf(toUpload),
             null,
+            null,
             excludedPaths,
             shouldSynchronize,
             shouldExcludePaths,
+            false
         )
     }
 
@@ -200,18 +237,22 @@ class MpyTransferService(private val project: Project) {
         return performUpload(
             toUpload,
             null,
+            null,
             excludedPaths,
             shouldSynchronize,
-            shouldExcludePaths
+            shouldExcludePaths,
+            false
         )
     }
 
     fun performUpload(
-        toUpload: Set<VirtualFile>,
+        initialFilesToUpload: Set<VirtualFile>,
+        targetDestination: String? = "/",
         relativeToFolders: Set<VirtualFile>? = null,
         excludedPaths: List<String> = emptyList(),
         shouldSynchronize: Boolean = false,
-        shouldExcludePaths: Boolean = false
+        shouldExcludePaths: Boolean = false,
+        initialIsProjectUpload: Boolean = false
     ): Boolean {
 
         FileDocumentManager.getInstance().saveAllDocuments()
@@ -219,7 +260,7 @@ class MpyTransferService(private val project: Project) {
         val settings = project.service<MpySettingsService>()
         val pythonService = project.service<MpyPythonService>()
 
-        var filesToUpload = toUpload.toMutableList()
+        var filesToUpload = initialFilesToUpload.toMutableList()
         var foldersToCreate = mutableSetOf<VirtualFile>()
 
         val excludedFolders = collectExcluded()
@@ -227,7 +268,7 @@ class MpyTransferService(private val project: Project) {
         val testFolders = collectTestRoots()
         val projectDir = project.guessProjectDir() ?: return false
 
-        var isProjectUpload = toUpload.contains(projectDir)
+        var isProjectUpload = initialIsProjectUpload
 
         var ftpUploadClient: MpyFTPClient? = null
         var uploadedSuccessfully = false
@@ -246,10 +287,14 @@ class MpyTransferService(private val project: Project) {
                     val file = filesToUpload[i]
 
                     val shouldSkip = !file.isValid ||
-                            (file.leadingDot() && file != projectDir) ||
+                            // Only skip leading dot files unless it's a project dir
+                            // or unless it's in the initial list, which means the user explicitly selected it
+                            (file.leadingDot() && file != projectDir && !initialFilesToUpload.contains(file)) ||
                             FileTypeRegistry.getInstance().isFileIgnored(file) ||
                             excludedFolders.any { VfsUtil.isAncestor(it, file, true) } ||
-                            (isProjectUpload && testFolders.any { VfsUtil.isAncestor(it, file, true) }) ||
+                            // Test folders are only uploaded if explicitly selected or if a parent folder was explicitly selected
+                            ((isProjectUpload || !initialFilesToUpload.any { VfsUtil.isAncestor(it, file, true) }) &&
+                                    testFolders.any { VfsUtil.isAncestor(it, file, true) }) ||
                             (isProjectUpload && sourceFolders.isNotEmpty() &&
                                     !sourceFolders.any { VfsUtil.isAncestor(it, file, false) })
 
@@ -280,6 +325,7 @@ class MpyTransferService(private val project: Project) {
                 // Create a file to target path map
                 val fileToTargetPath = createVirtualFileToTargetPathMap(
                     filesToUpload.toSet(),
+                    targetDestination,
                     relativeToFolders,
                     sourceFolders,
                     projectDir
@@ -287,6 +333,7 @@ class MpyTransferService(private val project: Project) {
 
                 val folderToTargetPath = createVirtualFileToTargetPathMap(
                     foldersToCreate,
+                    targetDestination,
                     relativeToFolders,
                     sourceFolders,
                     projectDir
@@ -296,24 +343,6 @@ class MpyTransferService(private val project: Project) {
                 val sortedFolderTargetPaths = folderToTargetPath.values
                     .sortedBy { it.split("/").filter { it.isNotEmpty() }.size }
                     .toMutableList()
-
-                // Prepare the dir creation command
-                val mkdirCommands = mutableListOf(
-                    "import os, gc",
-                    "def ___m(p):",
-                    "   try:",
-                    "       os.mkdir(p)",
-                    "   except:",
-                    "       pass"
-                )
-                sortedFolderTargetPaths.forEach {
-                    mkdirCommands.add("___m('$it')")
-                }
-                mkdirCommands.add("del ___m")
-                mkdirCommands.add("gc.collect()")
-
-                // Create the directories
-                fileSystemWidget.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray()).extractResponse()
 
                 if (fileSystemWidget.deviceInformation.hasBinascii) {
                     reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
@@ -383,9 +412,7 @@ class MpyTransferService(private val project: Project) {
                         }
                     }
 
-                    println(sortedFolderTargetPaths)
                     directoryPathsToRemove.removeAll(sortedFolderTargetPaths)
-                    println(directoryPathsToRemove)
                     directoryPathsToRemove.forEach {
                         if (!shouldExcludePaths || !excludedPaths.contains(it)) {
                             commands.add("os.rmdir('$it')")
@@ -395,6 +422,24 @@ class MpyTransferService(private val project: Project) {
                     fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
                     fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                 }
+
+                // Prepare the dir creation command
+                val mkdirCommands = mutableListOf(
+                    "import os, gc",
+                    "def ___m(p):",
+                    "   try:",
+                    "       os.mkdir(p)",
+                    "   except:",
+                    "       pass"
+                )
+                sortedFolderTargetPaths.forEach {
+                    mkdirCommands.add("___m('$it')")
+                }
+                mkdirCommands.add("del ___m")
+                mkdirCommands.add("gc.collect()")
+
+                // Create the directories
+                fileSystemWidget.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray()).extractResponse()
 
                 val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
