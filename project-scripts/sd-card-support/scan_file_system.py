@@ -16,12 +16,23 @@
 
 
 import os, gc
-def ___l(p):
-    for r in os.ilistdir(p):
-        f = f"{p}/{r[0]}" if p != "/" else f"/{r[0]}"
-        print(r[1], r[3] if len(r) > 3 else -1, f, 0, 0, sep="&")
-        if r[1] & 0x4000:
-            ___l(f)
-___l("/")
-del ___l
+class ___c:
+    def __init__(self):
+        self.d = {}
+        self.i = 0
+    def l(self, p):
+        for r in os.ilistdir(p):
+            f = f"{p}/{r[0]}" if p != "/" else f"/{r[0]}"
+            s = os.statvfs(f)
+            if s in self.d:
+                v = self.d[s]
+            else:
+                v = self.d[s] = self.i
+                self.i += 1
+            h = 0
+            print(r[1], r[3] if len(r) > 3 else -1, f, v, h, sep="&")
+            if r[1] & 0x4000:
+                self.l(f)
+___c().l("/")
+del ___c
 gc.collect()
