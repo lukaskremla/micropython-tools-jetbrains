@@ -241,10 +241,15 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             row {
                                 comment(
                                     "These credentials will be used to establish a network connection over serial communication.<br>" +
-                                            "If WebREPL is active, its URL is used instead."
+                                            "FTP uploads currently do not support webREPL"
                                 )
                             }
                         }
+
+                        /*
+                         *"These credentials will be used to establish a network connection over serial communication.<br>" +
+                         *"If WebREPL is active, its URL is used instead."
+                         */
 
                         row {
                             cacheFTPScriptCheckBox = checkBox("Cache FTP script on device")

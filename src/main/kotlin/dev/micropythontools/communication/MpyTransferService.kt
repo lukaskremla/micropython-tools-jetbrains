@@ -304,7 +304,6 @@ class MpyTransferService(private val project: Project) {
                         }
 
                         file == projectDir -> {
-                            println()
                             i = 0
                             filesToUpload.clear()
                             filesToUpload = collectProjectUploadables().toMutableList()
@@ -322,7 +321,6 @@ class MpyTransferService(private val project: Project) {
                     }
                 }
 
-                // Create a file to target path map
                 val fileToTargetPath = createVirtualFileToTargetPathMap(
                     filesToUpload.toSet(),
                     targetDestination,
@@ -459,10 +457,12 @@ class MpyTransferService(private val project: Project) {
                             ), project
                         )
                     } else {
-                        val cachedFtpScriptImportPath = settings.state.cachedFTPScriptPath
-                            ?.replace("/", ".")
-                            ?.removePrefix("/")
-                            ?.removeSuffix(".py")
+                        val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
+                        val cachedFtpScriptImportPath = cachedFtpScriptPath
+                            .replace("/", ".")
+                            .removePrefix("/")
+                            .removeSuffix(".py")
+                            .trim('.')
 
                         if (settings.state.cacheFTPScript) {
                             reporter.text("Validating the cached FTP script...")
@@ -475,14 +475,12 @@ class MpyTransferService(private val project: Project) {
                                 "   pass"
                             )
 
-                            val cacheValid = fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
+                            val isUftpdAvailable = fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
                                 .extractSingleResponse() == "valid"
 
-                            val uftpdPath = settings.state.cachedFTPScriptPath
-
-                            if (!cacheValid && uftpdPath != null) {
+                            if (!isUftpdAvailable) {
                                 val ftpFile = pythonService.retrieveMpyScriptAsVirtualFile("uftpd.py")
-                                val ftpTotalBytes = ftpFile.length
+                                val ftpTotalBytes = ftpFile.length.toDouble()
                                 var uploadedFTPKB = 0.0
                                 var uploadFtpProgress = 0.0
 
@@ -493,11 +491,11 @@ class MpyTransferService(private val project: Project) {
                                     // Ensure that uploadProgress never goes over 1.0
                                     // as floating point arithmetic can have minor inaccuracies
                                     uploadFtpProgress = uploadFtpProgress.coerceIn(0.0, 1.0)
-                                    reporter.text("Uploading ftp script... | ${"%.2f".format(uploadedFTPKB)} KB of ${"%.2f".format(ftpTotalBytes / 1000)} KB")
+                                    reporter.text("Uploading ftp script... ${"%.2f".format(uploadedFTPKB)} KB of ${"%.2f".format(ftpTotalBytes / 1000)} KB")
                                     reporter.fraction(uploadFtpProgress)
                                 }
 
-                                fileSystemWidget.upload(uftpdPath, ftpFile.contentsToByteArray(), ::ftpUploadProgressCallbackHandler)
+                                fileSystemWidget.upload(cachedFtpScriptPath, ftpFile.contentsToByteArray(), ::ftpUploadProgressCallbackHandler)
                             }
                         }
 
@@ -517,8 +515,8 @@ class MpyTransferService(private val project: Project) {
                         commands.add(formattedWifiConnectScript)
 
                         if (settings.state.cacheFTPScript) {
-                            commands.add("import cachedFtpScriptImportPath")
-                            commands.add("start()")
+                            commands.add("import $cachedFtpScriptImportPath")
+                            commands.add("uftpd.start()")
                         } else {
                             val miniUftpdScript = pythonService.retrieveMpyScriptAsString("mini_uftpd.py")
 
@@ -531,7 +529,7 @@ class MpyTransferService(private val project: Project) {
                         val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
                             .extractSingleResponse().trim()
 
-                        if (scriptResponse.contains("ERROR") || !scriptResponse.startsWith("IP: ")) {
+                        if (scriptResponse.contains("ERROR")) {
                             Notifications.Bus.notify(
                                 Notification(
                                     NOTIFICATION_GROUP,
@@ -541,7 +539,9 @@ class MpyTransferService(private val project: Project) {
                             )
                         } else {
                             try {
-                                val ip = scriptResponse.removePrefix("IP: ")
+                                val ip = scriptResponse
+                                    .removePrefix("FTP server started on ")
+                                    .removeSuffix(":21")
 
                                 ftpUploadClient = MpyFTPClient()
                                 ftpUploadClient.connect(ip, "", "") // No credentials are used
