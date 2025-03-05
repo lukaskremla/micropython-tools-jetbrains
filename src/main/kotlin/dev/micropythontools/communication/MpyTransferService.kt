@@ -298,12 +298,11 @@ class MpyTransferService(private val project: Project) {
                     .toMutableList()
 
                 // Prepare the dir creation command
-                sortedFolderTargetPaths.remove("/")
                 val mkdirCommands = mutableListOf(
                     "import os, gc",
                     "def ___m(p):",
                     "   try:",
-                    "       os.mkdir(f'{p}')",
+                    "       os.mkdir(p)",
                     "   except:",
                     "       pass"
                 )
@@ -314,7 +313,7 @@ class MpyTransferService(private val project: Project) {
                 mkdirCommands.add("gc.collect()")
 
                 // Create the directories
-                fileSystemWidget.blindExecute(SHORT_TIMEOUT, mkdirCommands.joinToString(separator = "\n"))
+                fileSystemWidget.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray()).extractResponse()
 
                 if (fileSystemWidget.deviceInformation.hasBinascii) {
                     reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
@@ -431,7 +430,7 @@ class MpyTransferService(private val project: Project) {
                                 "   pass"
                             )
 
-                            val cacheValid = fileSystemWidget.blindExecute(SHORT_TIMEOUT, commands.joinToString(separator = "\n"))
+                            val cacheValid = fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
                                 .extractSingleResponse() == "valid"
 
                             val uftpdPath = settings.state.cachedFTPScriptPath
@@ -484,7 +483,7 @@ class MpyTransferService(private val project: Project) {
                             )
                         }
 
-                        val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, commands.joinToString(separator = "\n"))
+                        val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
                             .extractSingleResponse().trim()
 
                         if (scriptResponse.contains("ERROR") || !scriptResponse.startsWith("IP: ")) {

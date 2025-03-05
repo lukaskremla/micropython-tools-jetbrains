@@ -538,18 +538,18 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     }
 
     suspend fun refresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = false, isInitialRefresh = false, useReporter = true)
+        doRefresh(reporter, hash = false, disconnectOnCancel = true, useReporter = true)
 
     suspend fun quietRefresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = false, isInitialRefresh = false, useReporter = false)
+        doRefresh(reporter, hash = false, disconnectOnCancel = false, useReporter = false)
 
     suspend fun quietHashingRefresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = true, isInitialRefresh = false, useReporter = false)
+        doRefresh(reporter, hash = true, disconnectOnCancel = false, useReporter = false)
 
     private suspend fun initialRefresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = false, isInitialRefresh = true, useReporter = true)
+        doRefresh(reporter, hash = false, disconnectOnCancel = false, useReporter = true)
 
-    private suspend fun doRefresh(reporter: RawProgressReporter, hash: Boolean, isInitialRefresh: Boolean, useReporter: Boolean) {
+    private suspend fun doRefresh(reporter: RawProgressReporter, hash: Boolean, disconnectOnCancel: Boolean, useReporter: Boolean) {
         if (useReporter) {
             reporter.text("Updating file system view...")
             reporter.fraction(null)
@@ -574,10 +574,10 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             // it puts the plugin into a situation where the file system listing can go out of sync with the actual
             // file system after a plugin-initiated change took place on the board. This means the plugin should
             // disconnect from the board and show an error message to the user.
-            if (isInitialRefresh) {
-                throw e
-            } else {
+            if (disconnectOnCancel) {
                 throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
+            } else {
+                throw e
             }
         } catch (e: Throwable) {
             disconnect(reporter)
@@ -659,19 +659,20 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             val sure = MessageDialogBuilder.yesNo(title, message).ask(project)
             if (sure) fileSystemNodes else emptyList()
         }
-        for (confirmedFileSystemNode in confirmedFileSystemNodes) {
-            val commands = mutableListOf(
-                "import os, gc",
-                "def ___d(p):",
-                "   try:",
-                "       os.remove(p)",
-                "   except:",
-                "       try:",
-                "           os.rmdir(p)",
-                "       except:",
-                "           pass"
-            )
 
+        val commands = mutableListOf(
+            "import os, gc",
+            "def ___d(p):",
+            "   try:",
+            "       os.remove(p)",
+            "   except:",
+            "       try:",
+            "           os.rmdir(p)",
+            "       except:",
+            "           pass"
+        )
+
+        for (confirmedFileSystemNode in confirmedFileSystemNodes) {
             TreeUtil.treeNodeTraverser(confirmedFileSystemNode)
                 .traverse(TreeTraversal.POST_ORDER_DFS)
                 .mapNotNull {
@@ -682,12 +683,11 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                     }
                 }
                 .toCollection(commands)
-
-            commands.add("del ___d")
-            commands.add("gc.collect()")
-
-            blindExecute(LONG_TIMEOUT, *commands.toTypedArray()).extractResponse()
         }
+        commands.add("del ___d")
+        commands.add("gc.collect()")
+
+        blindExecute(LONG_TIMEOUT, *commands.toTypedArray()).extractResponse()
     }
 
     fun selectedFiles(): Collection<FileSystemNode> {
