@@ -17,13 +17,13 @@
 package dev.micropythontools.settings
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.TextFieldWithAutoCompletion
@@ -66,6 +66,7 @@ private data class ConfigurableParameters(
  * @author Lukas Kremla
  */
 class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
+    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", MpyConfigurable::class.java)
     private val settings = project.service<MpySettingsService>()
     private val pythonService = project.service<MpyPythonService>()
     private val transferService = project.service<MpyTransferService>()
@@ -220,7 +221,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             .bindSelected(parameters::useFTP)
                             .gap(RightGap.SMALL)
 
-                        cell(JBLabel(AllIcons.General.Information).apply {
+                        cell(JBLabel(questionMarkIcon).apply {
                             toolTipText = "An FTP server will be established on the board. FTP uploads are faster and more reliable for large uploads."
                         })
                     }
@@ -250,7 +251,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                 .bindSelected(parameters::cacheFTPScript)
                                 .gap(RightGap.SMALL)
 
-                            cell(JBLabel(AllIcons.General.Information).apply {
+                            cell(JBLabel(questionMarkIcon).apply {
                                 toolTipText = "The required uftpd script will be cached on the configured path to save time."
                             })
                         }
@@ -281,7 +282,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                 .bindSelected(parameters::requireMinimumFTPUploadSize)
                                 .gap(RightGap.SMALL)
 
-                            cell(JBLabel(AllIcons.General.Information).apply {
+                            cell(JBLabel(questionMarkIcon).apply {
                                 toolTipText = "FTP uploads will only be used if the total upload size is over the set threshold."
                             })
                         }
