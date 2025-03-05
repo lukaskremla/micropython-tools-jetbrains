@@ -228,7 +228,7 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
             offTtyBuffer.clear()
             val result = mutableListOf<SingleExecResponse>()
 
-            println("Commands to execute: ${commands.joinToString(separator = "\n")}\n")
+            //println("Commands to execute: ${commands.joinToString(separator = "\n")}\n")
             for (command in commands) {
                 try {
                     withTimeout(commandTimeout) {
@@ -309,6 +309,10 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
     suspend fun blindExecute(commandTimeout: Long, vararg commands: String): ExecResponse {
         checkConnected()
         webSocketMutex.withLock {
+            if (commands.size > 1) {
+                val scriptContent = commands.joinToString("\n")
+                return doBlindExecute(commandTimeout, listOf(scriptContent))
+            }
             return doBlindExecute(commandTimeout, commands.toList())
         }
     }
