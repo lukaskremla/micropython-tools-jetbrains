@@ -40,6 +40,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.project.stateStore
+import com.intellij.util.containers.TreeTraversal
+import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.*
@@ -70,70 +72,46 @@ class MpyTransferService(private val project: Project) {
         return filteredPorts
     }
 
+    suspend fun recursivelyDeletePaths(paths: List<String>) {
+        val commands = mutableListOf(
+            "import os, gc",
+            "def ___d(p):",
+            "   try:",
+            "       os.stat(p)",
+            "   except:",
+            "       return",
+            "   try:",
+            "       os.remove(p)",
+            "       return",
+            "   except:",
+            "       pass",
+            "   for r in os.ilistdir(p):",
+            "       f = f'{p}/{r[0]}' if p != '/' else f'/{r[0]}'",
+            "       if r[1] & 0x4000:",
+            "           ___d(f)",
+            "       else:",
+            "           os.remove(f)",
+            "   try:",
+            "       os.rmdir(p)",
+            "   except:",
+            "       pass"
+        )
+
+        paths.forEach {
+            commands.add("___d('${it}')")
+        }
+
+        commands.add("del ___d")
+        commands.add("gc.collect()")
+
+        fileSystemWidget(project)?.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())?.extractResponse()
+    }
+
     private fun calculateCRC32(file: VirtualFile): String {
         val localFileBytes = file.contentsToByteArray()
         val crc = java.util.zip.CRC32()
         crc.update(localFileBytes)
         return String.format("%08x", crc.value)
-    }
-
-    private suspend fun synchronizeAndGetAlreadyUploadedFiles(
-        uploadFilesToTargetPath: MutableMap<VirtualFile, String>,
-        excludedPaths: List<String>,
-        shouldSynchronize: Boolean,
-        shouldExcludePaths: Boolean
-    ): MutableList<VirtualFile> {
-        val alreadyUploadedFiles = mutableListOf<VirtualFile>()
-        val fileToUploadListing = mutableListOf<String>()
-        val targetPathToFile = uploadFilesToTargetPath.entries.associate { (file, path) -> path to file }
-
-        for (file in uploadFilesToTargetPath.keys) {
-            val path = uploadFilesToTargetPath[file]
-            val size = file.length
-            val hash = calculateCRC32(file)
-
-            fileToUploadListing.add("""("$path", $size, "$hash")""")
-        }
-
-        val scriptFileName = "synchronize_and_skip.py"
-
-        val pythonService = project.service<MpyPythonService>()
-
-        val synchronizeAndSkipScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
-
-        val formattedScript = synchronizeAndSkipScript.format(
-            if (shouldSynchronize) "True" else "False",
-            fileToUploadListing.joinToString(",\n        "),
-            if (excludedPaths.isNotEmpty() && shouldExcludePaths) excludedPaths.joinToString(",\n        ") { "\"$it\"" } else ""
-        )
-
-        val scriptResponse = fileSystemWidget(project)!!.blindExecute(30000L, formattedScript).extractSingleResponse().trim()
-
-        val matchingTargetPaths = when {
-            !scriptResponse.contains("NO MATCHES") && !scriptResponse.contains("ERROR") -> scriptResponse
-                .split("&")
-                .filter { it.isNotEmpty() }
-
-            else -> emptyList()
-        }
-
-        if (scriptResponse.contains("ERROR")) {
-            Notifications.Bus.notify(
-                Notification(
-                    NOTIFICATION_GROUP,
-                    "Failed to execute synchronize and check matches script: $scriptResponse",
-                    NotificationType.ERROR
-                ), project
-            )
-        }
-
-        for (path in matchingTargetPaths) {
-            targetPathToFile[path]?.let {
-                alreadyUploadedFiles.add(it)
-            }
-        }
-
-        return alreadyUploadedFiles
     }
 
     private fun VirtualFile.leadingDot() = this.name.startsWith(".")
@@ -148,7 +126,7 @@ class MpyTransferService(private val project: Project) {
         }.toSet()
     }
 
-    private fun collectExcluded(): Set<VirtualFile> {
+    fun collectExcluded(): Set<VirtualFile> {
         val ideaDir = project.stateStore.directoryStorePath?.let { VfsUtil.findFile(it, false) }
         val excludes = if (ideaDir == null) mutableSetOf() else mutableSetOf(ideaDir)
         project.modules.forEach { module ->
@@ -180,26 +158,54 @@ class MpyTransferService(private val project: Project) {
         }.toSet()
     }
 
+    private fun createVirtualFileToTargetPathMap(
+        files: Set<VirtualFile>,
+        targetDestination: String? = "/",
+        relativeToFolders: Set<VirtualFile>?,
+        sourceFolders: Set<VirtualFile>,
+        projectDir: VirtualFile
+    ): MutableMap<VirtualFile, String> {
+        val normalizedTarget = targetDestination?.trim('/') ?: ""
+
+        return files.associateWithTo(mutableMapOf()) { file ->
+            val baseFolder = when {
+                // relativeToFolders have priority
+                !relativeToFolders.isNullOrEmpty() -> relativeToFolders.firstOrNull {
+                    VfsUtil.isAncestor(it, file, false)
+                }
+
+                else -> sourceFolders.firstOrNull {
+                    VfsUtil.isAncestor(it, file, false)
+                }
+            } ?: projectDir
+
+            val relativePath = VfsUtil.getRelativePath(file, baseFolder) ?: file.name
+
+            // Combine and normalize path
+            val combinedPath = "$normalizedTarget/$relativePath".trim('/')
+
+            // Ensure single leading slash
+            "/$combinedPath"
+        }
+    }
+
     fun uploadProject(
         excludedPaths: List<String> = emptyList(),
         shouldSynchronize: Boolean = false,
-        shouldExcludePaths: Boolean = false,
-        useFTP: Boolean = false,
-        ssid: String = "",
-        wifiPassword: String = ""
+        shouldExcludePaths: Boolean = false
     ): Boolean {
 
         FileDocumentManager.getInstance().saveAllDocuments()
         val filesToUpload = collectProjectUploadables()
+
         return performUpload(
             filesToUpload,
-            true,
+            null,
+            null,
             excludedPaths,
             shouldSynchronize,
             shouldExcludePaths,
-            useFTP,
-            ssid,
-            wifiPassword
+            true
         )
     }
 
@@ -207,22 +213,17 @@ class MpyTransferService(private val project: Project) {
         toUpload: VirtualFile,
         excludedPaths: List<String> = emptyList(),
         shouldSynchronize: Boolean = false,
-        shouldExcludePaths: Boolean = false,
-        useFTP: Boolean = false,
-        ssid: String = "",
-        wifiPassword: String = ""
+        shouldExcludePaths: Boolean = false
     ): Boolean {
 
-        FileDocumentManager.getInstance().saveAllDocuments()
         return performUpload(
             setOf(toUpload),
-            false,
+            null,
+            null,
             excludedPaths,
             shouldSynchronize,
             shouldExcludePaths,
-            useFTP,
-            ssid,
-            wifiPassword
+            false
         )
     }
 
@@ -230,44 +231,44 @@ class MpyTransferService(private val project: Project) {
         toUpload: Set<VirtualFile>,
         excludedPaths: List<String> = emptyList(),
         shouldSynchronize: Boolean = false,
-        shouldExcludePaths: Boolean = false,
-        useFTP: Boolean = false,
-        ssid: String = "",
-        wifiPassword: String = ""
+        shouldExcludePaths: Boolean = false
     ): Boolean {
 
-        FileDocumentManager.getInstance().saveAllDocuments()
         return performUpload(
             toUpload,
-            false,
+            null,
+            null,
             excludedPaths,
             shouldSynchronize,
             shouldExcludePaths,
-            useFTP,
-            ssid,
-            wifiPassword
+            false
         )
     }
 
-    private fun performUpload(
-        toUpload: Set<VirtualFile>,
-        initialIsProjectUpload: Boolean,
+    fun performUpload(
+        initialFilesToUpload: Set<VirtualFile>,
+        targetDestination: String? = "/",
+        relativeToFolders: Set<VirtualFile>? = null,
         excludedPaths: List<String> = emptyList(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false,
-        useFTP: Boolean = false,
-        ssid: String = "",
-        password: String = ""
+        initialIsProjectUpload: Boolean = false
     ): Boolean {
 
+        FileDocumentManager.getInstance().saveAllDocuments()
+
+        val settings = project.service<MpySettingsService>()
         val pythonService = project.service<MpyPythonService>()
 
-        var isProjectUpload = initialIsProjectUpload
-        var filesToUpload = toUpload.toMutableList()
+        var filesToUpload = initialFilesToUpload.toMutableList()
+        var foldersToCreate = mutableSetOf<VirtualFile>()
+
         val excludedFolders = collectExcluded()
         val sourceFolders = collectSourceRoots()
         val testFolders = collectTestRoots()
-        val projectDir = project.guessProjectDir()
+        val projectDir = project.guessProjectDir() ?: return false
+
+        var isProjectUpload = initialIsProjectUpload
 
         var ftpUploadClient: MpyFTPClient? = null
         var uploadedSuccessfully = false
@@ -278,7 +279,7 @@ class MpyTransferService(private val project: Project) {
             description = "Upload",
             requiresRefreshAfter = true,
             action = { fileSystemWidget, reporter ->
-                reporter.text("Collecting files to upload...")
+                reporter.text("collecting files and creating directories...")
                 reporter.fraction(null)
 
                 var i = 0
@@ -286,10 +287,14 @@ class MpyTransferService(private val project: Project) {
                     val file = filesToUpload[i]
 
                     val shouldSkip = !file.isValid ||
-                            (file.leadingDot() && file != projectDir) ||
+                            // Only skip leading dot files unless it's a project dir
+                            // or unless it's in the initial list, which means the user explicitly selected it
+                            (file.leadingDot() && file != projectDir && !initialFilesToUpload.contains(file)) ||
                             FileTypeRegistry.getInstance().isFileIgnored(file) ||
                             excludedFolders.any { VfsUtil.isAncestor(it, file, true) } ||
-                            (isProjectUpload && testFolders.any { VfsUtil.isAncestor(it, file, true) }) ||
+                            // Test folders are only uploaded if explicitly selected or if a parent folder was explicitly selected
+                            ((isProjectUpload || !initialFilesToUpload.any { VfsUtil.isAncestor(it, file, true) }) &&
+                                    testFolders.any { VfsUtil.isAncestor(it, file, true) }) ||
                             (isProjectUpload && sourceFolders.isNotEmpty() &&
                                     !sourceFolders.any { VfsUtil.isAncestor(it, file, false) })
 
@@ -308,96 +313,235 @@ class MpyTransferService(private val project: Project) {
                         file.isDirectory -> {
                             filesToUpload.addAll(file.children)
                             filesToUpload.removeAt(i)
+
+                            foldersToCreate.add(file)
                         }
 
                         else -> i++
                     }
-
-                    checkCanceled()
                 }
-                val uniqueFilesToUpload = filesToUpload.distinct()
-                val fileToTargetPath = mutableMapOf<VirtualFile, String>()
 
-                uniqueFilesToUpload.forEach { file ->
-                    val path = when {
-                        sourceFolders.find { VfsUtil.isAncestor(it, file, false) }?.let { sourceRoot ->
-                            VfsUtil.getRelativePath(file, sourceRoot) ?: file.name
-                        } != null -> VfsUtil.getRelativePath(
-                            file,
-                            sourceFolders.find { VfsUtil.isAncestor(it, file, false) }!!
-                        ) ?: file.name
+                val fileToTargetPath = createVirtualFileToTargetPathMap(
+                    filesToUpload.toSet(),
+                    targetDestination,
+                    relativeToFolders,
+                    sourceFolders,
+                    projectDir
+                )
 
-                        else -> projectDir?.let { VfsUtil.getRelativePath(file, it) } ?: file.name
+                val folderToTargetPath = createVirtualFileToTargetPathMap(
+                    foldersToCreate,
+                    targetDestination,
+                    relativeToFolders,
+                    sourceFolders,
+                    projectDir
+                )
+
+                // Collect the target paths of directories that must be created
+                val sortedFolderTargetPaths = folderToTargetPath.values
+                    .sortedBy { it.split("/").filter { it.isNotEmpty() }.size }
+                    .toMutableList()
+
+                if (fileSystemWidget.deviceInformation.hasBinascii) {
+                    reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
+                    fileSystemWidget.quietHashingRefresh(reporter)
+                } else if (shouldSynchronize) {
+                    reporter.text("Synchronizing...")
+                    fileSystemWidget.refresh(reporter)
+                }
+
+                if (shouldSynchronize) {
+                    val allNodes = mutableListOf<FileSystemNode>()
+                    val root = fileSystemWidget.tree.model.root as DirNode
+                    TreeUtil.treeNodeTraverser(root)
+                        .traverse(TreeTraversal.POST_ORDER_DFS)
+                        .mapNotNull {
+                            when (val node = it) {
+                                is DirNode -> node
+                                is FileNode -> node
+                                else -> null
+                            }
+                        }
+                        .toCollection(allNodes)
+
+                    val deviceFileMap = mutableMapOf<String, FileSystemNode>()
+                    allNodes.forEach { node ->
+                        deviceFileMap[node.fullName] = node
                     }
 
-                    fileToTargetPath[file] = if (path.startsWith("/")) path else "/$path"
-                }
+                    val commands = mutableListOf("import os")
 
-                val hasBinascii = fileSystemWidget.deviceInformation.hasBinascii
+                    val filePathsToRemove = allNodes
+                        .filter { it is FileNode }
+                        .map { it.fullName }
+                        .toMutableSet()
 
-                val scriptProgressText = if (hasBinascii) {
-                    if (shouldSynchronize) {
-                        "Syncing and skipping already uploaded files..."
-                    } else {
-                        "Detecting already uploaded files..."
+                    val directoryPathsToRemove = allNodes
+                        .filter { it is DirNode }
+                        .map { it.fullName }
+                        .toMutableSet()
+
+                    val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
+                    fileToTargetPath.keys.forEach { file ->
+                        val path = fileToTargetPath[file]
+                        val size = file.length.toInt()
+                        val hash = calculateCRC32(file)
+
+                        val matchingNode = deviceFileMap[path]
+
+                        if (matchingNode != null) {
+                            if (matchingNode is FileNode) {
+                                if (size == matchingNode.size && hash == matchingNode.hash) {
+                                    // If binascii is missing the hash is "0"
+                                    if (matchingNode.hash != "0") {
+                                        alreadyUploadedFiles.add(file)
+                                    }
+                                }
+                                filePathsToRemove.remove(matchingNode.fullName)
+                            } else {
+                                directoryPathsToRemove.remove(matchingNode.fullName)
+                            }
+                        }
                     }
-                } else {
-                    "Synchronizing..."
+
+                    filePathsToRemove.forEach {
+                        if (!shouldExcludePaths || !excludedPaths.contains(it)) {
+                            commands.add("os.remove('$it')")
+                        }
+                    }
+
+                    directoryPathsToRemove.removeAll(sortedFolderTargetPaths)
+                    directoryPathsToRemove.forEach {
+                        if (!shouldExcludePaths || !excludedPaths.contains(it)) {
+                            commands.add("os.rmdir('$it')")
+                        }
+                    }
+
+                    fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
+                    fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                 }
 
-                reporter.text(scriptProgressText)
-                reporter.fraction(null)
-
-                // If neither of these two flags is true then running the script is pointless
-                val alreadyUploadedFiles = if (shouldSynchronize || hasBinascii) {
-                    synchronizeAndGetAlreadyUploadedFiles(
-                        fileToTargetPath,
-                        excludedPaths,
-                        shouldSynchronize,
-                        shouldExcludePaths
-                    )
-                } else {
-                    emptyList()
+                // Prepare the dir creation command
+                val mkdirCommands = mutableListOf(
+                    "import os, gc",
+                    "def ___m(p):",
+                    "   try:",
+                    "       os.mkdir(p)",
+                    "   except:",
+                    "       pass"
+                )
+                sortedFolderTargetPaths.forEach {
+                    mkdirCommands.add("___m('$it')")
                 }
-                fileToTargetPath.keys.removeAll(alreadyUploadedFiles.toSet())
+                mkdirCommands.add("del ___m")
+                mkdirCommands.add("gc.collect()")
 
-                if (useFTP && fileToTargetPath.isNotEmpty()) {
-                    if (ssid.isEmpty()) {
+                // Create the directories
+                fileSystemWidget.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray()).extractResponse()
+
+                val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
+
+                if (shouldUseFTP(project, totalBytes) && fileToTargetPath.isNotEmpty()) {
+                    reporter.text("Retrieving FTP credentials...")
+
+                    val wifiCredentials = settings.retrieveWifiCredentials()
+                    val ssid = wifiCredentials.userName
+                    val password = wifiCredentials.getPasswordAsString()
+
+                    if (ssid.isNullOrBlank()) {
                         Notifications.Bus.notify(
                             Notification(
                                 NOTIFICATION_GROUP,
-                                "Cannot upload over FTP, no SSID was provided in settings! Falling back to normal communication.",
+                                "Cannot upload over FTP, no SSID was provided in settings! Falling back to REPL uploads.",
                                 NotificationType.ERROR
                             ), project
                         )
                     } else {
+                        val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
+                        val cachedFtpScriptImportPath = cachedFtpScriptPath
+                            .replace("/", ".")
+                            .removePrefix("/")
+                            .removeSuffix(".py")
+                            .trim('.')
+
+                        if (settings.state.cacheFTPScript) {
+                            reporter.text("Validating the cached FTP script...")
+
+                            val commands = mutableListOf<String>(
+                                "try:",
+                                "   import $cachedFtpScriptImportPath",
+                                "   print('valid')",
+                                "except ImportError:",
+                                "   pass"
+                            )
+
+                            val isUftpdAvailable = fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
+                                .extractSingleResponse() == "valid"
+
+                            if (!isUftpdAvailable) {
+                                val ftpFile = pythonService.retrieveMpyScriptAsVirtualFile("uftpd.py")
+                                val ftpTotalBytes = ftpFile.length.toDouble()
+                                var uploadedFTPKB = 0.0
+                                var uploadFtpProgress = 0.0
+
+                                fun ftpUploadProgressCallbackHandler(uploadedBytes: Int) {
+                                    uploadedFTPKB += (uploadedBytes.toDouble() / 1000)
+                                    // Convert to double for maximal accuracy
+                                    uploadFtpProgress += (uploadedBytes.toDouble() / ftpTotalBytes.toDouble())
+                                    // Ensure that uploadProgress never goes over 1.0
+                                    // as floating point arithmetic can have minor inaccuracies
+                                    uploadFtpProgress = uploadFtpProgress.coerceIn(0.0, 1.0)
+                                    reporter.text("Uploading ftp script... ${"%.2f".format(uploadedFTPKB)} KB of ${"%.2f".format(ftpTotalBytes / 1000)} KB")
+                                    reporter.fraction(uploadFtpProgress)
+                                }
+
+                                fileSystemWidget.upload(cachedFtpScriptPath, ftpFile.contentsToByteArray(), ::ftpUploadProgressCallbackHandler)
+                            }
+                        }
+
                         reporter.text("Establishing an FTP server connection...")
-                        reporter.fraction(null)
 
-                        val scriptFileName = "ftp.py"
+                        val cleanupScriptName = "ftp_cleanup.py"
+                        val cleanupScript = pythonService.retrieveMpyScriptAsString(cleanupScriptName)
+                        val commands = mutableListOf<String>(cleanupScript)
 
-                        val ftpScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
-
-                        val formattedScript = ftpScript.format(
+                        val wifiConnectScriptName = "connect_to_wifi.py"
+                        val wifiConnectScript = pythonService.retrieveMpyScriptAsString(wifiConnectScriptName)
+                        val formattedWifiConnectScript = wifiConnectScript.format(
                             """"$ssid"""",
                             """"$password"""",
-                            20 // Wi-Fi connection timeout
+                            20, // Wi-Fi connection timeout
                         )
+                        commands.add(formattedWifiConnectScript)
 
-                        val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, formattedScript)
+                        if (settings.state.cacheFTPScript) {
+                            commands.add("import $cachedFtpScriptImportPath")
+                            commands.add("uftpd.start()")
+                        } else {
+                            val miniUftpdScript = pythonService.retrieveMpyScriptAsString("mini_uftpd.py")
+
+                            commands.add(miniUftpdScript)
+                            commands.add(
+                                "___ftp().start()"
+                            )
+                        }
+
+                        val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
                             .extractSingleResponse().trim()
 
-                        if (scriptResponse.contains("ERROR") || !scriptResponse.startsWith("IP: ")) {
+                        if (scriptResponse.contains("ERROR")) {
                             Notifications.Bus.notify(
                                 Notification(
                                     NOTIFICATION_GROUP,
-                                    "Ran into an error establishing an FTP connection, falling back to normal communication: $scriptResponse",
+                                    "Ran into an error establishing an FTP connection, falling back to REPL uploads: $scriptResponse",
                                     NotificationType.ERROR
                                 ), project
                             )
                         } else {
                             try {
-                                val ip = scriptResponse.removePrefix("IP: ")
+                                val ip = scriptResponse
+                                    .removePrefix("FTP server started on ")
+                                    .removeSuffix(":21")
 
                                 ftpUploadClient = MpyFTPClient()
                                 ftpUploadClient.connect(ip, "", "") // No credentials are used
@@ -405,7 +549,7 @@ class MpyTransferService(private val project: Project) {
                                 Notifications.Bus.notify(
                                     Notification(
                                         NOTIFICATION_GROUP,
-                                        "Connecting to FTP server failed: $e",
+                                        "Connecting to FTP server failed, falling back to REPL uploads: $e",
                                         NotificationType.ERROR
                                     ), project
                                 )
@@ -413,8 +557,6 @@ class MpyTransferService(private val project: Project) {
                         }
                     }
                 }
-
-                val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
                 var uploadProgress = 0.0
                 var uploadedKB = 0.0
@@ -427,7 +569,7 @@ class MpyTransferService(private val project: Project) {
                     // Ensure that uploadProgress never goes over 1.0
                     // as floating point arithmetic can have minor inaccuracies
                     uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
-                    reporter.text("Uploading: file $uploadedFiles of ${fileToTargetPath.size} | ${"%.2f".format(uploadedKB)} KB of ${totalBytes / 1000} KB")
+                    reporter.text("Uploading: file $uploadedFiles of ${fileToTargetPath.size} | ${"%.2f".format(uploadedKB)} KB of ${"%.2f".format(totalBytes / 1000)} KB")
                     reporter.fraction(uploadProgress)
                 }
 
@@ -459,17 +601,24 @@ class MpyTransferService(private val project: Project) {
 
             cleanUpAction = { fileSystemWidget, reporter ->
                 if (fileSystemWidget.state == State.CONNECTED) {
-                    ftpUploadClient?.disconnect()
+                    if (shouldUseFTP(project)) {
+                        reporter.text("Cleaning up after FTP upload...")
+                        reporter.fraction(null)
 
-                    reporter.text("Cleaning up after FTP upload...")
-                    reporter.fraction(null)
+                        ftpUploadClient?.disconnect()
 
-                    if (useFTP) {
                         val scriptFileName = "ftp_cleanup.py"
 
                         val ftpCleanupScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
 
-                        fileSystemWidget(project)?.blindExecute(TIMEOUT, ftpCleanupScript)
+                        fileSystemWidget(project)?.blindExecute(SHORT_TIMEOUT, ftpCleanupScript)
+                    } else {
+                        // Run garbage collection after REPL based uploads
+                        val commands = mutableListOf<String>(
+                            "import gc",
+                            "gc.collect()"
+                        )
+                        fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
                     }
                 }
             }

@@ -15,29 +15,21 @@
 """
 
 
-import network, gc
+import network, time,gc
 def ___c():
-    for i in [network.STA_IF, network.AP_IF]:
-        w = network.WLAN(i)
-
-        if not w.active():
-            continue
-
-        try:
-            w.disconnect()
-        except:
-            pass
-
-        w.active(False)
-
-    try:
-        uftpd.stop()
-    except:
-        try:
-            ___ftp.stop()
-            del ___ftp
-        except:
-            pass
+    s = %s
+    p = %s
+    t = %s
+    w = network.WLAN(network.STA_IF)
+    w.active(True)
+    w.connect(s, p)
+    i = 0
+    while not w.isconnected():
+        time.sleep(1)
+        i+= 1
+        if i > t:
+            print(f"ERROR: Connecting to \"{s}\" failed, connection timed out. Check your network settings.")
+            break
 ___c()
 del ___c
 gc.collect()

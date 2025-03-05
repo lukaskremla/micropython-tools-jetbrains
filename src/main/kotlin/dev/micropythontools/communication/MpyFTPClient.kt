@@ -16,6 +16,9 @@
 
 package dev.micropythontools.communication
 
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import dev.micropythontools.settings.MpySettingsService
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.io.CopyStreamEvent
@@ -44,31 +47,6 @@ class MpyFTPClient {
     }
 
     fun uploadFile(path: String, bytes: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {
-        val unixPath = if (!path.startsWith("/")) {
-            "/$path"
-        } else {
-            path
-        }
-
-        val fileName = unixPath.substringAfterLast("/")
-        val filePath = unixPath.substringBeforeLast("/")
-
-        if (filePath != "/") {
-            val dirs = filePath.split("/").filter { it.isNotEmpty() }
-            var currentPath = ""
-
-            for (dir in dirs) {
-                currentPath += "/$dir"
-                try {
-                    ftpClient.makeDirectory(currentPath)
-                } catch (_: Exception) {
-                    // Directory might already exist, continue
-                }
-            }
-        }
-
-        ftpClient.changeWorkingDirectory(filePath)
-
         ftpClient.copyStreamListener = object : CopyStreamListener {
             override fun bytesTransferred(event: CopyStreamEvent) {}
 
@@ -78,7 +56,15 @@ class MpyFTPClient {
         }
 
         ByteArrayInputStream(bytes).use { inputStream ->
-            ftpClient.storeFile(fileName, inputStream)
+            ftpClient.storeFile(path, inputStream)
         }
+    }
+}
+
+fun shouldUseFTP(project: Project, uploadSizeBytes: Double? = null): Boolean {
+    val settings = project.service<MpySettingsService>()
+
+    with(settings.state) {
+        return useFTP && (!requireMinimumFTPUploadSize || uploadSizeBytes == null || uploadSizeBytes > minimumFTPUploadSize * 1000)
     }
 }

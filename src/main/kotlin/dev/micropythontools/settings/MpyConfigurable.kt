@@ -23,16 +23,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.TextFieldWithAutoCompletion
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.communication.State
 import dev.micropythontools.ui.fileSystemWidget
+import dev.micropythontools.ui.performReplAction
 import dev.micropythontools.util.MpyPythonService
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
@@ -47,6 +51,11 @@ private data class ConfigurableParameters(
     var portName: String,
     var webReplUrl: String,
     var webReplPassword: String,
+    var useFTP: Boolean,
+    var cacheFTPScript: Boolean,
+    var cachedFTPScriptPath: String,
+    var requireMinimumFTPUploadSize: Boolean,
+    var minimumFTPUploadSize: Int,
     var ssid: String,
     var wifiPassword: String,
     var areStubsEnabled: Boolean,
@@ -57,9 +66,13 @@ private data class ConfigurableParameters(
  * @author Lukas Kremla
  */
 class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
+    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", MpyConfigurable::class.java)
     private val settings = project.service<MpySettingsService>()
     private val pythonService = project.service<MpyPythonService>()
     private val transferService = project.service<MpyTransferService>()
+
+    private fun isDisconnected() = (fileSystemWidget(project)?.state == State.DISCONNECTED ||
+            fileSystemWidget(project)?.state == State.DISCONNECTING)
 
     private val parameters = with(settings.state) {
         runWithModalProgressBlocking(project, "Retrieving settings...") {
@@ -72,6 +85,11 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                 portName = if (portName.isNullOrBlank()) EMPTY_PORT_NAME_TEXT else portName.toString(),
                 webReplUrl = webReplUrl ?: DEFAULT_WEBREPL_URL,
                 webReplPassword = settings.retrieveWebReplPassword(),
+                useFTP = useFTP,
+                cacheFTPScript = cacheFTPScript,
+                cachedFTPScriptPath = cachedFTPScriptPath ?: "",
+                requireMinimumFTPUploadSize = requireMinimumFTPUploadSize,
+                minimumFTPUploadSize = minimumFTPUploadSize,
                 ssid = wifiCredentials.userName ?: "",
                 wifiPassword = wifiCredentials.getPasswordAsString() ?: "",
                 areStubsEnabled = areStubsEnabled,
@@ -80,8 +98,11 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         }
     }
 
+    private lateinit var settingsPanel: DialogPanel
+
     private lateinit var pluginEnabledCheckBox: Cell<JBCheckBox>
-    private lateinit var areStubsEnabled: Cell<JBCheckBox>
+
+    private lateinit var connectionGroup: Row
 
     private lateinit var serialRadioButton: Cell<JBRadioButton>
     private lateinit var webReplRadioButton: Cell<JBRadioButton>
@@ -89,20 +110,27 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
+    private lateinit var useFTPCheckBox: Cell<JBCheckBox>
+    private lateinit var cacheFTPScriptCheckBox: Cell<JBCheckBox>
+    private lateinit var cacheFTPScriptPathTextField: Cell<JBTextField>
+    private lateinit var minimumFTPUploadSizeCheckBox: Cell<JBCheckBox>
+
+    private lateinit var areStubsEnabled: Cell<JBCheckBox>
+
     override fun createPanel(): DialogPanel {
         val portSelectModel = MutableCollectionComboBoxModel<String>()
         updatePortSelectModel(portSelectModel, true)
 
         val availableStubs = pythonService.getAvailableStubs()
 
-        return panel {
+        settingsPanel = panel {
             row {
                 pluginEnabledCheckBox = checkBox("Enable MicroPython support")
                     .bindSelected(parameters::isPluginEnabled)
             }
 
             panel {
-                group("Connection") {
+                connectionGroup = group("Connection") {
                     buttonsGroup {
                         row {
                             label("Type: ")
@@ -114,7 +142,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                         }
                     }
 
-                    panel {
+                    indent {
                         row {
                             filterManufacturersCheckBox = checkBox("Filter out devices with unknown manufacturers")
                                 .bindSelected(parameters::filterManufacturers)
@@ -143,49 +171,142 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                         }
                     }.visibleIf(serialRadioButton.selected)
 
-                    panel {
-                        row {
+                    indent {
+                        row("URL: ") {
                             textField()
                                 .bindText(parameters::webReplUrl)
-                                .label("URL: ")
-                                .columns(40)
+                                .columns(25)
                                 .validationInfo { field ->
                                     val msg = messageForBrokenUrl(field.text)
                                     msg?.let { error(it).withOKEnabled() }
                                 }
-                        }.layout(RowLayout.LABEL_ALIGNED)
-                        row {
+                        }
+                        row("Password: ") {
                             passwordField()
                                 .bindText(parameters::webReplPassword)
-                                .label("Password: ")
                                 .comment("(4-9 symbols)")
-                                .columns(40)
+                                .columns(25)
                                 .validationInfo { field ->
                                     if (field.password.size !in WEBREPL_PASSWORD_LENGTH_RANGE) {
                                         error("Allowed password length is $WEBREPL_PASSWORD_LENGTH_RANGE").withOKEnabled()
                                     } else null
                                 }
-                        }.layout(RowLayout.LABEL_ALIGNED)
-                    }.visibleIf(webReplRadioButton.selected)
-                }.enabled(
-                    (fileSystemWidget(project)?.state == State.DISCONNECTED ||
-                            fileSystemWidget(project)?.state == State.DISCONNECTING)
-                )
+                        }
+                        row {
+                            comment("WebREPL is temporarily disabled due to a bug. It will be reinstated in a later release.")
+                        }
+                    }.visibleIf(webReplRadioButton.selected).enabled(false)
+                }.bottomGap(BottomGap.NONE).enabled(isDisconnected())
 
-                group("FTP Upload Wi-Fi Credentials") {
+                indent {
+                    indent {
+                        row {
+                            comment("A board is currently connected. <a>Disconnect</a>", action = {
+                                performReplAction(
+                                    project,
+                                    false,
+                                    "Disconnecting...",
+                                    false,
+                                    { _, reporter -> fileSystemWidget(project)?.disconnect(reporter) }
+                                )
+
+                                connectionGroup.enabled(true)
+
+                                this.visible(false)
+                            })
+                        }
+                    }
+                }.visible(!isDisconnected())
+
+                group("FTP Uploads") {
                     row {
-                        textField()
-                            .bindText(parameters::ssid)
-                            .label("SSID: ")
-                            .columns(40)
-                    }.layout(RowLayout.LABEL_ALIGNED)
-                    row {
-                        passwordField()
-                            .bindText(parameters::wifiPassword)
-                            .label("Password: ")
-                            .columns(40)
-                    }.layout(RowLayout.LABEL_ALIGNED)
-                }
+                        useFTPCheckBox = checkBox("Use FTP for uploads")
+                            .bindSelected(parameters::useFTP)
+                            .gap(RightGap.SMALL)
+
+                        cell(JBLabel(questionMarkIcon).apply {
+                            toolTipText = "An FTP server will be established on the board. FTP uploads are faster and more reliable for large uploads."
+                        })
+                    }
+
+                    indent {
+                        indent {
+                            row("SSID: ") {
+                                textField()
+                                    .bindText(parameters::ssid)
+                                    .columns(25)
+                            }
+                            row("Password: ") {
+                                passwordField()
+                                    .bindText(parameters::wifiPassword)
+                                    .columns(25)
+                            }
+                            row {
+                                comment(
+                                    "These credentials will be used to establish a network connection over serial communication.<br>" +
+                                            "FTP uploads currently do not support webREPL"
+                                )
+                            }
+                        }
+
+                        /*
+                         *"These credentials will be used to establish a network connection over serial communication.<br>" +
+                         *"If WebREPL is active, its URL is used instead."
+                         */
+
+                        row {
+                            cacheFTPScriptCheckBox = checkBox("Cache FTP script on device")
+                                .bindSelected(parameters::cacheFTPScript)
+                                .gap(RightGap.SMALL)
+
+                            cell(JBLabel(questionMarkIcon).apply {
+                                toolTipText = "The required uftpd script will be cached on the configured path to save time."
+                            })
+                        }
+
+                        indent {
+                            row("Path: ") {
+                                cacheFTPScriptPathTextField = textField()
+                                    .bindText(parameters::cachedFTPScriptPath)
+                                    .columns(15)
+                                    .gap(RightGap.SMALL)
+                                    .validationInfo { field ->
+                                        val validationResult = isUftpdPathValid(field.text)
+
+                                        if (validationResult != null) {
+                                            error(validationResult)
+                                        } else null
+                                    }
+
+                                label("/uftpd.py")
+                            }
+                            row {
+                                comment("Leave path empty if your MicroPython port includes the ufptd library as frozen bytecode.")
+                            }
+                        }.visibleIf(cacheFTPScriptCheckBox.selected)
+
+                        row {
+                            minimumFTPUploadSizeCheckBox = checkBox("FTP upload size threshold")
+                                .bindSelected(parameters::requireMinimumFTPUploadSize)
+                                .gap(RightGap.SMALL)
+
+                            cell(JBLabel(questionMarkIcon).apply {
+                                toolTipText = "FTP uploads will only be used if the total upload size is over the set threshold."
+                            })
+                        }
+
+                        indent {
+                            row("Size: ") {
+                                intTextField()
+                                    .bindIntText(parameters::minimumFTPUploadSize)
+                                    .columns(5)
+                                    .gap(RightGap.SMALL)
+
+                                label("KB")
+                            }
+                        }.visibleIf(minimumFTPUploadSizeCheckBox.selected)
+                    }.visibleIf(useFTPCheckBox.selected)
+                }.bottomGap(BottomGap.NONE).topGap(TopGap.SMALL)
 
                 group("MicroPython Stubs") {
                     row {
@@ -236,11 +357,13 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                 toolTipText = "Type \"micropython\" to browse available packages"
                             }
                     }.enabledIf(areStubsEnabled.selected)
-                }
+                }.topGap(TopGap.SMALL)
             }.enabledIf(pluginEnabledCheckBox.selected)
         }.apply {
             validateAll()
         }
+
+        return settingsPanel
     }
 
     override fun reset() {
@@ -260,6 +383,17 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
             settings.state.filterManufacturers = filterManufacturers
             settings.state.portName = portName.takeUnless { it == EMPTY_PORT_NAME_TEXT }
             settings.state.webReplUrl = webReplUrl
+            settings.state.useFTP = useFTP
+            settings.state.cacheFTPScript = cacheFTPScript
+
+            val normalizedFTPScriptPath = normalizeMPYPath(cachedFTPScriptPath)
+
+            cacheFTPScriptPathTextField.component.text = normalizedFTPScriptPath
+            cachedFTPScriptPath = normalizedFTPScriptPath
+
+            settings.state.cachedFTPScriptPath = normalizedFTPScriptPath
+            settings.state.requireMinimumFTPUploadSize = requireMinimumFTPUploadSize
+            settings.state.minimumFTPUploadSize = minimumFTPUploadSize
             settings.state.areStubsEnabled = areStubsEnabled
             settings.state.activeStubsPackage = activeStubsPackage
 
