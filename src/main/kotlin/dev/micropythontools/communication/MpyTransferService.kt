@@ -347,7 +347,7 @@ class MpyTransferService(private val project: Project) {
                     fileSystemWidget.quietHashingRefresh(reporter)
                 } else if (shouldSynchronize) {
                     reporter.text("Synchronizing...")
-                    fileSystemWidget.refresh(reporter)
+                    fileSystemWidget.quietRefresh(reporter)
                 }
 
                 if (shouldSynchronize) {
@@ -417,7 +417,7 @@ class MpyTransferService(private val project: Project) {
                         }
                     }
 
-                    fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
+                    fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray()).extractSingleResponse()
                     fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                 }
 
@@ -437,7 +437,7 @@ class MpyTransferService(private val project: Project) {
                 mkdirCommands.add("gc.collect()")
 
                 // Create the directories
-                fileSystemWidget.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray()).extractResponse()
+                fileSystemWidget.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray()).extractSingleResponse()
 
                 val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
