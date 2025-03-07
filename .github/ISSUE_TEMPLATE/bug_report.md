@@ -26,14 +26,14 @@ Providing a video of the bug depicting how to reproduce it will allow me to fix 
 **Desktop (please provide the following information):**
  - OS: [e.g. macOS / Windows]
  - IDE [e.g. PyCharm Community / PyCharm Professional]
- - IDE Version [e.g. 2024.]
+ - IDE Version [e.g. 2024.3]
 
 **MicroPython Board information (please complete the following information):**
  - Board: [e.g. ESP32, ESP8266, ESP32 S3]
  - Version: [e.g. 1.24.1]
 
 **MicroPython Tools plugin**
- - Version
+ - Version: [e.g. 0.3.0]
  - Used connection type (Serial, WebREPL, Serial + FTP)
 
 
