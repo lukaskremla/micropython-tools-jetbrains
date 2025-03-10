@@ -70,7 +70,7 @@ intellijPlatform {
     }
 
     pluginVerification {
-        cliPath = file("verifier-cli-1.381-all.jar")
+        cliPath = file("verifier-cli-1.383-all.jar")
 
         ides {
             select {
