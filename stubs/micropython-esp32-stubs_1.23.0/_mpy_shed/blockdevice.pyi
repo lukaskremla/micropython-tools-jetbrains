@@ -19,7 +19,7 @@ https://docs.micropython.org/en/v1.24.0/reference/filesystem.html?highlight=abst
 - https://docs.micropython.org/en/latest/library/esp32.html#esp32.Partition.ioctl
 """
 
-from typing import Any, Literal, Protocol, overload, runtime_checkable
+from typing import Any, Final, Literal, Protocol, Tuple, Type, final, overload, runtime_checkable
 
 from _typeshed import AnyStr_co, Incomplete, structseq
 from typing_extensions import TypeAlias, TypeVar
@@ -71,30 +71,18 @@ class _BlockDeviceProtocol(Protocol):
         """
 
     @overload
-    def readblocks(self, block_num: int, buf: bytearray, /) -> None:
+    def readblocks(self, block_num: int, buf: bytearray, /) -> bool:
         """
         The first form reads aligned, multiples of blocks.
         Starting at the block given by the index *block_num*, read blocks from
         the device into *buf* (an array of bytes).
         The number of blocks to read is given by the length of *buf*,
         which will be a multiple of the block size.
-
-        The second form allows reading at arbitrary locations within a block,
-        and arbitrary lengths.
-        Starting at block index *block_num*, and byte offset within that block
-        of *offset*, read bytes from the device into *buf* (an array of bytes).
-        The number of bytes to read is given by the length of *buf*.
         """
 
     @overload
-    def readblocks(self, block_num: int, buf: bytearray, offset: int, /) -> None:
+    def readblocks(self, block_num: int, buf: bytearray, offset: int, /) -> bool:
         """
-        The first form reads aligned, multiples of blocks.
-        Starting at the block given by the index *block_num*, read blocks from
-        the device into *buf* (an array of bytes).
-        The number of blocks to read is given by the length of *buf*,
-        which will be a multiple of the block size.
-
         The second form allows reading at arbitrary locations within a block,
         and arbitrary lengths.
         Starting at block index *block_num*, and byte offset within that block

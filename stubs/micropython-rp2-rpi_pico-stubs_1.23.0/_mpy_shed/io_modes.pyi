@@ -49,7 +49,9 @@ _OpenTextModeUpdating: TypeAlias = Literal[
     "+tx",
 ]
 _OpenTextModeWriting: TypeAlias = Literal["w", "wt", "tw", "a", "at", "ta", "x", "xt", "tx"]
-_OpenTextModeReading: TypeAlias = Literal["r", "rt", "tr", "U", "rU", "Ur", "rtU", "rUt", "Urt", "trU", "tUr", "Utr"]
+_OpenTextModeReading: TypeAlias = Literal[
+    "r", "rt", "tr", "U", "rU", "Ur", "rtU", "rUt", "Urt", "trU", "tUr", "Utr"
+]
 _OpenTextMode: TypeAlias = _OpenTextModeUpdating | _OpenTextModeWriting | _OpenTextModeReading
 
 _OpenBinaryModeUpdating: TypeAlias = Literal[
@@ -80,4 +82,6 @@ _OpenBinaryModeUpdating: TypeAlias = Literal[
 ]
 _OpenBinaryModeWriting: TypeAlias = Literal["wb", "bw", "ab", "ba", "xb", "bx"]
 _OpenBinaryModeReading: TypeAlias = Literal["rb", "br", "rbU", "rUb", "Urb", "brU", "bUr", "Ubr"]
-_OpenBinaryMode: TypeAlias = _OpenBinaryModeUpdating | _OpenBinaryModeReading | _OpenBinaryModeWriting
+_OpenBinaryMode: TypeAlias = (
+    _OpenBinaryModeUpdating | _OpenBinaryModeReading | _OpenBinaryModeWriting
+)

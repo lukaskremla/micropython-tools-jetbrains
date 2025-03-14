@@ -4,7 +4,7 @@ copied from typeshed/stdlib/os.pyi as os.pyi cannot import from a module with th
 """
 
 import abc
-from typing import Protocol, runtime_checkable
+from typing import Protocol, Tuple, runtime_checkable
 
 from _typeshed import AnyStr_co
 
