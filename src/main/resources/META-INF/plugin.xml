@@ -36,7 +36,7 @@
                              displayName="MicroPython Tools"
                              instance="dev.micropythontools.settings.MpyConfigurable"/>
 
-        <configurationType implementation="dev.micropythontools.run.MpyRunConfigurationType"/>
+        <configurationType implementation="dev.micropythontools.run.MpyRunConfType"/>
 
         <localInspection language="Python"
                          displayName="MicroPython requirements inspection"
@@ -52,7 +52,12 @@
                     icon="/icons/micropythonTw.svg"
                     canCloseContents="false"/>
 
-        <postStartupActivity implementation="dev.micropythontools.util.MpyFacetMigrationActivity"/>
+        <jps.plugin/>
+
+        <projectStructure.sourceRootEditHandler
+                implementation="dev.micropythontools.sourceroots.MpyModuleMpySourceRootEditHandler"/>
+
+        <postStartupActivity implementation="dev.micropythontools.util.MpyConfigurationMigrationActivity"/>
     </extensions>
 
     <actions>
@@ -128,5 +133,10 @@
             <add-to-group group-id="EditorPopupMenu" anchor="before"
                           relative-to-action="micropythontools.repl.InstantRun"/>
         </action>
+
+        <group id="MarkMpySourceRootGroup">
+            <action id="MarkMpySourceRoot" class="dev.micropythontools.sourceroots.MarkMpySourceRootAction"/>
+            <add-to-group group-id="MarkRootGroup"/>
+        </group>
     </actions>
 </idea-plugin>
