@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.and
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
@@ -439,7 +440,7 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
                 }
             }.apply {
                 this.expanded = true
-            }.visibleIf(excludePathsCheckbox.selected)
+            }.visibleIf(synchronizeCheckbox.selected.and(excludePathsCheckbox.selected))
         }
 
         return configurationPanel
