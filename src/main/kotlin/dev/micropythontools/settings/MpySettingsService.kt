@@ -114,7 +114,7 @@ fun messageForBrokenUrl(url: String): @Nls String? {
     }
 }
 
-fun validateMPYPath(path: String, isEmptyPathValid: Boolean = false): String? {
+fun validateMpyPath(path: String, isEmptyPathValid: Boolean = false): String? {
     val forbiddenCharacters = listOf("<", ">", ":", "\"", "|", "?", "*")
     val foundForbiddenCharacters = mutableListOf<String>()
 
@@ -140,7 +140,7 @@ fun validateMPYPath(path: String, isEmptyPathValid: Boolean = false): String? {
     return null
 }
 
-fun normalizeMPYPath(path: String, isEmptyPathValid: Boolean = false): String {
+fun normalizeMpyPath(path: String, isEmptyPathValid: Boolean = false): String {
     var normalizedPath = path
 
     // Replace slash format to fit MicroPython file system
@@ -166,7 +166,7 @@ fun normalizeMPYPath(path: String, isEmptyPathValid: Boolean = false): String {
 }
 
 fun isUftpdPathValid(uftpdPath: String): String? {
-    val validationResult = validateMPYPath(uftpdPath, true)
+    val validationResult = validateMpyPath(uftpdPath, true)
 
     return validationResult
         ?: if (uftpdPath.contains(".")) {

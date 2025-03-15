@@ -386,7 +386,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
             settings.state.useFTP = useFTP
             settings.state.cacheFTPScript = cacheFTPScript
 
-            val normalizedFTPScriptPath = normalizeMPYPath(cachedFTPScriptPath)
+            val normalizedFTPScriptPath = normalizeMpyPath(cachedFTPScriptPath)
 
             cacheFTPScriptPathTextField.component.text = normalizedFTPScriptPath
             cachedFTPScriptPath = normalizedFTPScriptPath

@@ -48,8 +48,7 @@ class MpyRunConfExecute(
 
     private fun getFileName(): String {
         val path = options.path ?: return ""
-        val parts = path.split("/")
-        return parts[parts.size - 1]
+        return path.substringAfterLast("/")
     }
 
     override fun suggestedName(): String {
@@ -138,14 +137,12 @@ class MpyRunConfExecute(
         val path = options.path
         if (path == null || StandardFileSystems.local().findFileByPath(path) == null) {
             val message = when {
-                path.isNullOrEmpty() -> "No file path specified. Please select a file to execute."
-                else -> "File not found: $path. Please select a valid file."
+                path.isNullOrEmpty() -> "No file path specified. Please select a file to execute"
+                !path.endsWith(".py") && !path.endsWith(".mpy") -> "The specified path is not a valid \".py\" or \".mpy\" file"
+                else -> "File not found: \"$path\". Please select a valid file"
             }
 
-            throw RuntimeConfigurationError(
-                message,
-                Runnable { ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java) }
-            )
+            throw RuntimeConfigurationError(message)
         }
     }
 
