@@ -17,6 +17,7 @@
 package dev.micropythontools.sourceroots
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler
 import com.intellij.openapi.vfs.VirtualFile
+import dev.micropythontools.settings.MpySettingsService
 import java.util.*
 
 class MarkMpySourceRootAction : MarkRootActionBase() {
@@ -50,7 +52,9 @@ class MarkMpySourceRootAction : MarkRootActionBase() {
     override fun isEnabled(selection: RootsSelection, module: Module): Boolean {
         val moduleType = ModuleType.get(module)
 
-        if (ModuleSourceRootEditHandler.getEditHandler(rootType) == null || (selection.myHaveSelectedFilesUnderSourceRoots && !moduleType.isMarkInnerSupportedFor(rootType))) {
+        val settings = module.project.service<MpySettingsService>()
+
+        if (!settings.state.isPluginEnabled || ModuleSourceRootEditHandler.getEditHandler(rootType) == null || (selection.myHaveSelectedFilesUnderSourceRoots && !moduleType.isMarkInnerSupportedFor(rootType))) {
             return false
         }
 
