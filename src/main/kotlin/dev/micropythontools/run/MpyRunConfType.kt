@@ -22,15 +22,16 @@ import com.intellij.openapi.util.IconLoader
 /**
  * @author Lukas Kremla
  */
-class MpyRunConfigurationType : ConfigurationTypeBase(
+class MpyRunConfType : ConfigurationTypeBase(
     ID,
     "MicroPython Tools",
     "MicroPython Tools Run Configuration Type",
-    IconLoader.getIcon("/icons/pluginIcon.svg", MpyRunConfigurationType::class.java)
+    IconLoader.getIcon("/icons/pluginIcon.svg", MpyRunConfType::class.java)
 ) {
     init {
         // Multiple factories can be added here to achieve similar behavior to, for example docker, configurations
-        addFactory(MpyRunConfigurationFactory(this))
+        addFactory(MpyRunConfUploadFactory(this))
+        addFactory(MpyRunConfExecuteFactory(this))
     }
 
     companion object {
