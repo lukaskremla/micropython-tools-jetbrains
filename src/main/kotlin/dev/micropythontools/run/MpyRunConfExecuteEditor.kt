@@ -29,8 +29,7 @@ import javax.swing.JComponent
  */
 private data class ExecuteParameters(
     var path: String,
-    var switchToReplOnSuccess: Boolean,
-    var resetOnSuccess: Boolean
+    var switchToReplOnSuccess: Boolean
 )
 
 /**
@@ -40,8 +39,7 @@ class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfExecute) :
     private val parameters = with(runConfiguration.options) {
         ExecuteParameters(
             path = path ?: "",
-            switchToReplOnSuccess = switchToReplOnSuccess,
-            resetOnSuccess = resetOnSuccess
+            switchToReplOnSuccess = switchToReplOnSuccess
         )
     }
 
@@ -70,10 +68,6 @@ class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfExecute) :
                 checkBox("Switch to REPL tab on success")
                     .bindSelected(parameters::switchToReplOnSuccess)
             }
-            row {
-                checkBox("Reset on success")
-                    .bindSelected(parameters::resetOnSuccess)
-            }
         }
 
         return configurationPanel
@@ -85,8 +79,7 @@ class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfExecute) :
         with(parameters) {
             runConfiguration.saveOptions(
                 path = path,
-                switchToReplOnSuccess = switchToReplOnSuccess,
-                resetOnSuccess = resetOnSuccess
+                switchToReplOnSuccess = switchToReplOnSuccess
             )
         }
     }
