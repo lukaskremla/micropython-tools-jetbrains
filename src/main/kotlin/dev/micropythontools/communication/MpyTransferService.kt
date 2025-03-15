@@ -44,6 +44,7 @@ import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.settings.MpySettingsService
+import dev.micropythontools.sourceroots.MpySourceRootType
 import dev.micropythontools.ui.*
 import dev.micropythontools.util.MpyPythonService
 import kotlinx.coroutines.Dispatchers
@@ -138,7 +139,18 @@ class MpyTransferService(private val project: Project) {
         return excludes
     }
 
-    private fun collectSourceRoots(): Set<VirtualFile> {
+    private fun collectMpySourceRoots(): Set<VirtualFile> {
+        return project.modules.flatMap { module ->
+            module.rootManager.contentEntries
+                .flatMap { entry -> entry.getSourceFolders(MpySourceRootType.SOURCE).toList() }
+                .filter { mpySourceFolder ->
+                    mpySourceFolder.file?.let { !it.leadingDot() } == true
+                }
+                .mapNotNull { it.file }
+        }.toSet()
+    }
+
+    /*private fun collectSourceRoots(): Set<VirtualFile> {
         return project.modules.flatMap { module ->
             module.rootManager.contentEntries
                 .flatMap { entry -> entry.sourceFolders.toList() }
@@ -147,7 +159,7 @@ class MpyTransferService(private val project: Project) {
                 }
                 .mapNotNull { it.file }
         }.toSet()
-    }
+    }*/
 
     private fun collectTestRoots(): Set<VirtualFile> {
         return project.modules.flatMap { module ->
@@ -264,7 +276,7 @@ class MpyTransferService(private val project: Project) {
         var foldersToCreate = mutableSetOf<VirtualFile>()
 
         val excludedFolders = collectExcluded()
-        val sourceFolders = collectSourceRoots()
+        val sourceFolders = collectMpySourceRoots()
         val testFolders = collectTestRoots()
         val projectDir = project.guessProjectDir() ?: return false
 
