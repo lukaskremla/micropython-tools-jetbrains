@@ -139,7 +139,7 @@ class MpyTransferService(private val project: Project) {
         return excludes
     }
 
-    private fun collectMpySourceRoots(): Set<VirtualFile> {
+    fun collectMpySourceRoots(): Set<VirtualFile> {
         return project.modules.flatMap { module ->
             module.rootManager.contentEntries
                 .flatMap { entry -> entry.getSourceFolders(MpySourceRootType.SOURCE).toList() }
@@ -149,17 +149,6 @@ class MpyTransferService(private val project: Project) {
                 .mapNotNull { it.file }
         }.toSet()
     }
-
-    /*private fun collectSourceRoots(): Set<VirtualFile> {
-        return project.modules.flatMap { module ->
-            module.rootManager.contentEntries
-                .flatMap { entry -> entry.sourceFolders.toList() }
-                .filter { sourceFolder ->
-                    !sourceFolder.isTestSource && sourceFolder.file?.let { !it.leadingDot() } == true
-                }
-                .mapNotNull { it.file }
-        }.toSet()
-    }*/
 
     private fun collectTestRoots(): Set<VirtualFile> {
         return project.modules.flatMap { module ->
