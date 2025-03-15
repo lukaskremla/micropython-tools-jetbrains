@@ -10,3 +10,4 @@ publish-token.txt
 # IntelliJ Platform Gradle Plugin
 .intellijPlatform/
 .kotlin
+/.stubs/
