@@ -216,7 +216,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             }
         }
         tree.model = null
-
         tree.dragEnabled = true
         tree.dropMode = DropMode.ON
 

@@ -18,9 +18,11 @@ package dev.micropythontools.run
 
 import com.intellij.execution.configurations.RunConfigurationOptions
 
-class MpyRunConfigurationOptions : RunConfigurationOptions() {
+class MpyRunConfUploadOptions : RunConfigurationOptions() {
+    var uploadMode by property(0)
+    var selectedPaths by list<String>()
     var path by string("")
-    var runReplOnSuccess by property(false)
+    var switchToReplOnSuccess by property(false)
     var resetOnSuccess by property(true)
     var synchronize by property(false)
     var excludePaths by property(false)
