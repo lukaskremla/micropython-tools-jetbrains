@@ -21,5 +21,4 @@ import com.intellij.execution.configurations.RunConfigurationOptions
 class MpyRunConfExecuteOptions : RunConfigurationOptions() {
     var path by string("")
     var switchToReplOnSuccess by property(true)
-    var resetOnSuccess by property(true)
 }

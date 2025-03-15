@@ -77,12 +77,10 @@ class MpyRunConfExecute(
 
     fun saveOptions(
         path: String,
-        resetOnSuccess: Boolean,
         switchToReplOnSuccess: Boolean,
     ) {
         options.path = path
         options.switchToReplOnSuccess = switchToReplOnSuccess
-        options.resetOnSuccess = resetOnSuccess
     }
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
@@ -101,7 +99,6 @@ class MpyRunConfExecute(
 
         val path = options.path!!
         val switchToReplOnSuccess = options.switchToReplOnSuccess
-        val resetOnSuccess = options.resetOnSuccess
 
         try {
             FileDocumentManager.getInstance().saveAllDocuments()
@@ -112,7 +109,6 @@ class MpyRunConfExecute(
             })
 
             val fileSystemWidget = fileSystemWidget(project)
-            if (resetOnSuccess) fileSystemWidget?.reset()
             if (switchToReplOnSuccess) fileSystemWidget?.activateRepl()
 
             return EmptyRunProfileState.INSTANCE
