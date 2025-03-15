@@ -70,7 +70,7 @@ intellijPlatform {
     }
 
     pluginVerification {
-        cliPath = file("verifier-cli-1.383-all.jar")
+        cliPath = file("verifier-cli-1.383.jar")
 
         ides {
             select {
@@ -83,7 +83,7 @@ intellijPlatform {
                     ProductRelease.Channel.RELEASE,
                     ProductRelease.Channel.EAP
                 )
-                sinceBuild = "243.*"
+                sinceBuild = "241.*"
                 untilBuild = "251.*"
             }
         }
