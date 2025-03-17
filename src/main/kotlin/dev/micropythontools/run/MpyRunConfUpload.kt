@@ -121,7 +121,7 @@ class MpyRunConfUpload(
         with(options) {
             if (options.uploadMode == 0) {
                 success = transferService.uploadProject(
-                    excludedPaths,
+                    excludedPaths.toSet(),
                     synchronize,
                     excludePaths
                 )
@@ -132,7 +132,7 @@ class MpyRunConfUpload(
 
                 success = transferService.uploadItems(
                     toUpload,
-                    excludedPaths,
+                    excludedPaths.toSet(),
                     synchronize,
                     excludePaths,
                 )
@@ -141,7 +141,7 @@ class MpyRunConfUpload(
 
                 success = transferService.uploadFileOrFolder(
                     file,
-                    excludedPaths,
+                    excludedPaths.toSet(),
                     synchronize,
                     excludePaths,
                 )
