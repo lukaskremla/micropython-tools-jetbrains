@@ -25,7 +25,7 @@ def ___i():
         d = s[4]
 
         try:
-            import binascii
+            from binascii import crc32
         except ImportError:
             b = False
 

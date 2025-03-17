@@ -458,7 +458,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
             deviceInformation = DeviceInformation(version, description, hasBinascii == "True")
         } else {
-            x
             deviceInformation = DeviceInformation()
         }
 
