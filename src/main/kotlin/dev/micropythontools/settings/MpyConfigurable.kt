@@ -377,6 +377,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     override fun apply() {
         super.apply()
 
+        val oldStubPackage = settings.state.activeStubsPackage ?: ""
+
         with(parameters) {
             settings.state.isPluginEnabled = isPluginEnabled
             settings.state.usingUart = usingUart
@@ -404,6 +406,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         }
 
         pythonService.updateLibrary()
+
+        //notifyStubsChanged(project, oldStubPackage, parameters.activeStubsPackage)
     }
 
     fun updatePortSelectModel(portSelectModel: MutableCollectionComboBoxModel<String>, isInitialUpdate: Boolean = false) {
