@@ -73,7 +73,7 @@ class MpyTransferService(private val project: Project) {
         return filteredPorts
     }
 
-    suspend fun recursivelyDeletePaths(paths: List<String>) {
+    suspend fun recursivelySafeDeletePaths(paths: Set<String>) {
         val commands = mutableListOf(
             "import os, gc",
             "def ___d(p):",
@@ -98,7 +98,14 @@ class MpyTransferService(private val project: Project) {
             "       pass"
         )
 
-        paths.forEach {
+        val filteredPaths = paths.filter { path ->
+            // Keep this path only if no other path is a prefix of it
+            paths.none { otherPath ->
+                otherPath != path && path.startsWith("$otherPath/")
+            }
+        }
+
+        filteredPaths.forEach {
             commands.add("___d('${it}')")
         }
 
@@ -106,6 +113,30 @@ class MpyTransferService(private val project: Project) {
         commands.add("gc.collect()")
 
         fileSystemWidget(project)?.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())?.extractResponse()
+    }
+
+    suspend fun safeCreateDirectories(paths: Set<String>) {
+        val mkdirCommands = mutableListOf(
+            "import os, gc",
+            "def ___m(p):",
+            "   try:",
+            "       os.mkdir(p)",
+            "   except:",
+            "       pass"
+        )
+
+        val sortedPaths = paths
+            // Sort shortest paths first, ensures parents are created before children
+            .sortedBy { it.split("/").filter { it.isNotEmpty() }.size }
+            .toList()
+
+        sortedPaths.forEach {
+            mkdirCommands.add("___m('$it')")
+        }
+        mkdirCommands.add("del ___m")
+        mkdirCommands.add("gc.collect()")
+
+        fileSystemWidget(project)?.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray())?.extractSingleResponse()
     }
 
     private fun calculateCRC32(file: VirtualFile): String {
@@ -191,69 +222,56 @@ class MpyTransferService(private val project: Project) {
     }
 
     fun uploadProject(
-        excludedPaths: List<String> = emptyList(),
+        excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false
     ): Boolean {
 
-        FileDocumentManager.getInstance().saveAllDocuments()
-        val filesToUpload = collectProjectUploadables()
-
         return performUpload(
-            filesToUpload,
-            null,
-            null,
-            excludedPaths,
-            shouldSynchronize,
-            shouldExcludePaths,
-            true
+            excludedPaths = excludedPaths,
+            shouldSynchronize = shouldSynchronize,
+            shouldExcludePaths = shouldExcludePaths,
         )
     }
 
     fun uploadFileOrFolder(
-        toUpload: VirtualFile,
-        excludedPaths: List<String> = emptyList(),
+        filesToUpload: VirtualFile,
+        excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false
     ): Boolean {
 
         return performUpload(
-            setOf(toUpload),
-            null,
-            null,
-            excludedPaths,
-            shouldSynchronize,
-            shouldExcludePaths,
-            false
+            initialFilesToUpload = setOf(filesToUpload),
+            excludedPaths = excludedPaths,
+            shouldSynchronize = shouldSynchronize,
+            shouldExcludePaths = shouldExcludePaths
         )
     }
 
     fun uploadItems(
-        toUpload: Set<VirtualFile>,
-        excludedPaths: List<String> = emptyList(),
+        filesToUpload: Set<VirtualFile>,
+        excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false
     ): Boolean {
 
         return performUpload(
-            toUpload,
-            null,
-            null,
-            excludedPaths,
-            shouldSynchronize,
-            shouldExcludePaths,
-            false
+            initialFilesToUpload = filesToUpload,
+            excludedPaths = excludedPaths,
+            shouldSynchronize = shouldSynchronize,
+            shouldExcludePaths = shouldExcludePaths
         )
     }
 
     fun performUpload(
-        initialFilesToUpload: Set<VirtualFile>,
-        targetDestination: String? = "/",
-        relativeToFolders: Set<VirtualFile>? = null,
-        excludedPaths: List<String> = emptyList(),
+        initialFilesToUpload: Set<VirtualFile> = emptySet(),
+        initialIsProjectUpload: Boolean = false,
+        relativeToFolders: Set<VirtualFile> = emptySet(),
+        targetDestination: String = "/",
+        excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false,
-        initialIsProjectUpload: Boolean = false
     ): Boolean {
 
         FileDocumentManager.getInstance().saveAllDocuments()
@@ -338,11 +356,6 @@ class MpyTransferService(private val project: Project) {
                     projectDir
                 )
 
-                // Collect the target paths of directories that must be created
-                val sortedFolderTargetPaths = folderToTargetPath.values
-                    .sortedBy { it.split("/").filter { it.isNotEmpty() }.size }
-                    .toMutableList()
-
                 if (fileSystemWidget.deviceInformation.hasBinascii) {
                     reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
                     fileSystemWidget.quietHashingRefresh(reporter)
@@ -351,7 +364,8 @@ class MpyTransferService(private val project: Project) {
                     fileSystemWidget.quietRefresh(reporter)
                 }
 
-                if (shouldSynchronize) {
+                if (shouldSynchronize || fileSystemWidget.deviceInformation.hasBinascii) {
+                    // Traverse and collect all file system nodes
                     val allNodes = mutableListOf<FileSystemNode>()
                     val root = fileSystemWidget.tree.model.root as DirNode
                     TreeUtil.treeNodeTraverser(root)
@@ -365,80 +379,55 @@ class MpyTransferService(private val project: Project) {
                         }
                         .toCollection(allNodes)
 
-                    val deviceFileMap = mutableMapOf<String, FileSystemNode>()
+                    // Map target paths to file system nodes
+                    val targetPathToNode = mutableMapOf<String, FileSystemNode>()
                     allNodes.forEach { node ->
-                        deviceFileMap[node.fullName] = node
+                        targetPathToNode[node.fullName] = node
                     }
 
-                    val commands = mutableListOf("import os")
-
-                    val filePathsToRemove = allNodes
-                        .filter { it is FileNode }
+                    // Map all existing target paths
+                    val targetPathsToRemove = allNodes
                         .map { it.fullName }
                         .toMutableSet()
 
-                    val directoryPathsToRemove = allNodes
-                        .filter { it is DirNode }
-                        .map { it.fullName }
-                        .toMutableSet()
-
-                    val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
+                    // Iterate over files that are being uploaded
+                    // exempt them from synchronization
+                    // and remove those that are already uploaded
                     fileToTargetPath.keys.forEach { file ->
                         val path = fileToTargetPath[file]
                         val size = file.length.toInt()
                         val hash = calculateCRC32(file)
 
-                        val matchingNode = deviceFileMap[path]
+                        val matchingNode = targetPathToNode[path]
 
                         if (matchingNode != null) {
                             if (matchingNode is FileNode) {
                                 if (size == matchingNode.size && hash == matchingNode.hash) {
                                     // If binascii is missing the hash is "0"
                                     if (matchingNode.hash != "0") {
-                                        alreadyUploadedFiles.add(file)
+                                        // Remove already uploaded files
+                                        fileToTargetPath.remove(file)
                                     }
                                 }
-                                filePathsToRemove.remove(matchingNode.fullName)
-                            } else {
-                                directoryPathsToRemove.remove(matchingNode.fullName)
                             }
+
+                            // This target path is being uploaded, it shouldn't be deleted by synchronization
+                            targetPathsToRemove.remove(matchingNode.fullName)
                         }
                     }
 
-                    filePathsToRemove.forEach {
-                        if (!shouldExcludePaths || !excludedPaths.contains(it)) {
-                            commands.add("os.remove('$it')")
+                    if (shouldSynchronize) {
+                        if (shouldExcludePaths && excludedPaths.isNotEmpty()) {
+                            targetPathsToRemove.removeAll(excludedPaths)
                         }
-                    }
 
-                    directoryPathsToRemove.removeAll(sortedFolderTargetPaths)
-                    directoryPathsToRemove.forEach {
-                        if (!shouldExcludePaths || !excludedPaths.contains(it)) {
-                            commands.add("os.rmdir('$it')")
-                        }
+                        // Delete remaining existing target paths that aren't a part of the upload
+                        recursivelySafeDeletePaths(targetPathsToRemove)
                     }
-
-                    fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray()).extractSingleResponse()
-                    fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                 }
 
-                // Prepare the dir creation command
-                val mkdirCommands = mutableListOf(
-                    "import os, gc",
-                    "def ___m(p):",
-                    "   try:",
-                    "       os.mkdir(p)",
-                    "   except:",
-                    "       pass"
-                )
-                sortedFolderTargetPaths.forEach {
-                    mkdirCommands.add("___m('$it')")
-                }
-                mkdirCommands.add("del ___m")
-                mkdirCommands.add("gc.collect()")
-
-                // Create the directories
-                fileSystemWidget.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray()).extractSingleResponse()
+                // Create all directories
+                safeCreateDirectories(folderToTargetPath.values.toSet())
 
                 val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 

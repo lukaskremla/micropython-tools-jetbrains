@@ -364,7 +364,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                                 val commands = mutableListOf("import os")
 
                                 val currentPathToNewPath = mutableMapOf<String, String>()
-                                val pathsToRemove = mutableListOf<String>()
+                                val pathsToRemove = mutableSetOf<String>()
                                 nodes.forEach { node ->
                                     val newPath = "${targetNode.fullName}/${node.name}"
                                     currentPathToNewPath[node.fullName] = newPath
@@ -373,7 +373,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                                     commands.add("os.rename(\"${node.fullName}\", \"$newPath\")")
                                 }
 
-                                transferService.recursivelyDeletePaths(pathsToRemove)
+                                transferService.recursivelySafeDeletePaths(pathsToRemove)
 
                                 blindExecute(LONG_TIMEOUT, *commands.toTypedArray()).extractResponse()
 
@@ -424,7 +424,11 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                             .map { it.parent }
                             .toSet()
 
-                        transferService.performUpload(sanitizedFiles, targetNode.fullName, parentFolders)
+                        transferService.performUpload(
+                            initialFilesToUpload = sanitizedFiles,
+                            relativeToFolders = parentFolders,
+                            targetDestination = targetNode.fullName
+                        )
                     }
                 }
                 return true
@@ -672,16 +676,11 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             if (sure) fileSystemNodes else emptyList()
         }
 
-        // Filter out child nodes that have parent nodes in the selection
-        val filteredNodes = confirmedFileSystemNodes.filter { node ->
-            confirmedFileSystemNodes.none { potentialParent ->
-                potentialParent != node && node.fullName.startsWith(potentialParent.fullName + "/")
-            }
-        }
+        val pathsToDelete = confirmedFileSystemNodes
+            .map { it.fullName }
+            .toSet()
 
-        val topLevelPathsToRemove = filteredNodes.map { it.fullName }
-
-        transferService.recursivelyDeletePaths(topLevelPathsToRemove)
+        transferService.recursivelySafeDeletePaths(pathsToDelete)
     }
 
     fun selectedFiles(): Collection<FileSystemNode> {
