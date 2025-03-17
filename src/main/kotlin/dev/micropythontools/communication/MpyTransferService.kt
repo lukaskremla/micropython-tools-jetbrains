@@ -421,6 +421,10 @@ class MpyTransferService(private val project: Project) {
                             targetPathsToRemove.removeAll(excludedPaths)
                         }
 
+                        if (settings.state.useFTP && settings.state.cacheFTPScript) {
+                            targetPathsToRemove.remove(settings.state.cachedFTPScriptPath)
+                        }
+
                         // Delete remaining existing target paths that aren't a part of the upload
                         recursivelySafeDeletePaths(targetPathsToRemove)
                     }
