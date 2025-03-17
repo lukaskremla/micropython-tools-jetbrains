@@ -21,9 +21,13 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener
+import com.intellij.openapi.vfs.LocalFileSystem
+import dev.micropythontools.util.MpyPythonService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
@@ -99,6 +103,40 @@ class MpySettingsService(private val project: Project) : SimplePersistentStateCo
         return withContext(Dispatchers.IO) {
             PasswordSafe.instance.get(attributes) ?: Credentials("", "")
         }
+    }
+}
+
+fun notifyStubsChanged(project: Project, oldStubPackage: String, newStubPackage: String) {
+    val settings = project.service<MpySettingsService>()
+    val pythonService = project.service<MpyPythonService>()
+
+    val oldRoots = if (pythonService.getAvailableStubs().contains(oldStubPackage)) {
+        println("got into old condition")
+        val oldVirtualFile = LocalFileSystem.getInstance().findFileByPath("${MpyPythonService.stubsPath}/$oldStubPackage")
+        println(oldVirtualFile)
+        if (oldVirtualFile != null) listOf(oldVirtualFile) else emptyList()
+    } else emptyList()
+
+    val stubsEnabled = settings.state.areStubsEnabled
+
+    val newRoots = if (stubsEnabled && pythonService.getAvailableStubs().contains(newStubPackage)) {
+        println("got into new condition")
+        val newVirtualFile = LocalFileSystem.getInstance().findFileByPath("${MpyPythonService.stubsPath}/$newStubPackage")
+        println(newVirtualFile)
+        if (newVirtualFile != null) listOf(newVirtualFile) else emptyList()
+    } else emptyList()
+
+    println("Removing old roots: $oldRoots")
+    println("Adding new roots: $newRoots")
+
+    ApplicationManager.getApplication().runWriteAction {
+        AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(
+            project,
+            "MicroPython Stubs",
+            oldRoots,
+            newRoots,
+            "MicroPythonLibraryProvider"
+        )
     }
 }
 
