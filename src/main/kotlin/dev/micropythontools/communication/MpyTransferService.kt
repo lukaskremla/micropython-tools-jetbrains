@@ -606,13 +606,6 @@ class MpyTransferService(private val project: Project) {
                         val ftpCleanupScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
 
                         fileSystemWidget(project)?.blindExecute(SHORT_TIMEOUT, ftpCleanupScript)
-                    } else {
-                        // Run garbage collection after REPL based uploads
-                        val commands = mutableListOf<String>(
-                            "import gc",
-                            "gc.collect()"
-                        )
-                        fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
                     }
                 }
             }
