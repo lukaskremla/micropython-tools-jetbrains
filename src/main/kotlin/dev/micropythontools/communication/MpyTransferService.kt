@@ -535,8 +535,16 @@ class MpyTransferService(private val project: Project) {
                             )
                         }
 
-                        val scriptResponse = fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
-                            .extractSingleResponse().trim()
+                        // Catch all exceptions to avoid showing the wi-fi credentials as a notification
+                        val scriptResponse = try {
+                            delay(500)
+                            fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
+                                .extractSingleResponse().trim()
+                        } catch (_: TimeoutCancellationException) {
+                            "ERROR: FTP Connection attempt timed out"
+                        } catch (_: Throwable) {
+                            "ERROR: There was a problem attempting to establish the FTP connection"
+                        }
 
                         if (scriptResponse.contains("ERROR")) {
                             Notifications.Bus.notify(
