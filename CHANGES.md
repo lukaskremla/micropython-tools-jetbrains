@@ -1,6 +1,23 @@
 The Changelog
 =============
 
+0.4.0 - 18-3-2025
+------------------
+
+* Added "mark as MicroPython Sources Roots" functionality to the plugin, normal sources root are no longer considered
+* Added a new "Execute in REPL" run configuration
+* Added an icon provider for .mpy files
+* Added new stubs, they are now downloaded directly from pip during the build process, meaning they should be more
+  reliable
+* Upload run configurations were heavily reworked, their UI is now more robust and they allow selecting specific
+  MicroPython Sources Roots to be upload
+* Fixed a bug where the plugin would disconnect from the board while uploading and stop working until the entire IDE is
+  restarted
+* Fixed a bug where the file system would be refreshed even after a drag and drop or a delete action was cancelled
+* Fixed a bug where the plugin wouldn't properly detect missing CRC32 binascii support
+* Added logic to make sure that the FTP wi-fi credentials don't appear in a notification when an exception occurs while
+  connecting to the FTP server
+
 0.3.0 - 14-2-2025
 ------------------
 
