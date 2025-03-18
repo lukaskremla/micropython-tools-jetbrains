@@ -540,10 +540,12 @@ class MpyTransferService(private val project: Project) {
                             delay(500)
                             fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
                                 .extractSingleResponse().trim()
-                        } catch (_: TimeoutCancellationException) {
-                            "ERROR: FTP Connection attempt timed out"
-                        } catch (_: Throwable) {
-                            "ERROR: There was a problem attempting to establish the FTP connection"
+                        } catch (e: Throwable) {
+                            if (e.localizedMessage.contains("timed")) {
+                                "ERROR: FTP Connection attempt timed out"
+                            } else {
+                                "ERROR: There was a problem attempting to establish the FTP connection $e"
+                            }
                         }
 
                         if (scriptResponse.contains("ERROR")) {
