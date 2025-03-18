@@ -19,15 +19,12 @@ package dev.micropythontools.util
 import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.MessageDialogBuilder
 import dev.micropythontools.run.MpyRunConfType
@@ -60,8 +57,7 @@ class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
                 configuration.writeExternal(element)
 
                 if (!element.attributes.toString().contains("micropython-tools-flash-configuration")) return@forEach
-
-                val savedName = element.getAttributeValue("name")
+                
                 val path = element.getChild("option")?.getAttributeValue("path") ?: element.getChildren("option").find { it.getAttributeValue("name") == "path" }?.getAttributeValue("value")
                 val runReplOnSuccess = element.getChildren("option").find { it.getAttributeValue("name") == "runReplOnSuccess" }?.getAttributeValue("value") == "true"
                 val resetOnSuccess = element.getChildren("option").find { it.getAttributeValue("name") == "resetOnSuccess" }?.getAttributeValue("value") == "true"
@@ -78,13 +74,7 @@ class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
                 }
 
                 // Try to preserve the original name, but re-create it up to new standards if necessary
-                val name = when {
-                    !savedName.isNullOrBlank() -> savedName
-
-                    !path.isNullOrBlank() -> "Flash $path"
-
-                    else -> "Flash Project"
-                }
+                val name = "Upload Project"
 
                 val factory = MpyRunConfUploadFactory(MpyRunConfType())
 
@@ -97,7 +87,7 @@ class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
                     saveOptions(
                         uploadMode = 0,
                         selectedPaths = emptyList<String>().toMutableList(),
-                        path = "",
+                        path = path ?: "",
                         resetOnSuccess = resetOnSuccess,
                         switchToReplOnSuccess = runReplOnSuccess,
                         synchronize = synchronize,
@@ -128,29 +118,20 @@ class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
                         NOTIFICATION_GROUP,
                         "MicroPython tools update",
                         "MicroPython Tools run configurations have been automatically updated.<br><br>" +
-                                "For the changes to take effect, the IDE needs to be restarted.<br><br>" +
-                                "NOTE: If your run configurations were stored in a file, you'll need to reconfigure them after restart.",
+                                "The plugin no longer uses basic Sources Roots but now requires MicroPython Sources roots..<br><br>" +
+                                "NOTE: If your run configurations were stored in a file, you'll need to reconfigure them.",
                         NotificationType.WARNING
-                    ).addAction(object : NotificationAction("Restart IDE") {
-                        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                            ProjectManager.getInstance().reloadProject(project)
-                            notification.expire()
-                        }
-                    }),
+                    ),
                     project
                 )
 
                 withContext(Dispatchers.EDT) {
-                    val clickResult = MessageDialogBuilder.Message(
+                    MessageDialogBuilder.Message(
                         "MicroPython Tools Update",
                         "MicroPython Tools run configurations have been automatically updated.\n\n" +
-                                "For the changes to take effect, the IDE needs to be restarted.\n\n" +
-                                "NOTE: If your run configurations were stored in a file, you'll need to reconfigure them after restart.",
-                    ).buttons("Restart", "Cancel").defaultButton("Restart").show(project)
-
-                    if (clickResult == "Restart") {
-                        ProjectManager.getInstance().reloadProject(project)
-                    }
+                                "The plugin no longer uses basic Sources Roots but now requires MicroPython Sources roots.\n\n" +
+                                "NOTE: If your run configurations were stored in a file, you'll need to reconfigure.",
+                    ).buttons("Ok").defaultButton("Ok").show(project)
                 }
             }
         }
