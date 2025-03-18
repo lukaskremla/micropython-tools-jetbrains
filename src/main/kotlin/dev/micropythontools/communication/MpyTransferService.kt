@@ -47,10 +47,7 @@ import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.sourceroots.MpySourceRootType
 import dev.micropythontools.ui.*
 import dev.micropythontools.util.MpyPythonService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import java.io.IOException
 
 @Service(Service.Level.PROJECT)
@@ -228,6 +225,7 @@ class MpyTransferService(private val project: Project) {
     ): Boolean {
 
         return performUpload(
+            initialIsProjectUpload = true,
             excludedPaths = excludedPaths,
             shouldSynchronize = shouldSynchronize,
             shouldExcludePaths = shouldExcludePaths,
@@ -279,15 +277,16 @@ class MpyTransferService(private val project: Project) {
         val settings = project.service<MpySettingsService>()
         val pythonService = project.service<MpyPythonService>()
 
-        var filesToUpload = initialFilesToUpload.toMutableList()
-        var foldersToCreate = mutableSetOf<VirtualFile>()
-
         val excludedFolders = collectExcluded()
         val sourceFolders = collectMpySourceRoots()
         val testFolders = collectTestRoots()
         val projectDir = project.guessProjectDir() ?: return false
 
         var isProjectUpload = initialIsProjectUpload
+
+        var filesToUpload = if (initialIsProjectUpload) collectProjectUploadables().toMutableList() else initialFilesToUpload.toMutableList()
+        var foldersToCreate = mutableSetOf<VirtualFile>()
+        println(filesToUpload)
 
         var ftpUploadClient: MpyFTPClient? = null
         var uploadedSuccessfully = false
@@ -340,6 +339,8 @@ class MpyTransferService(private val project: Project) {
                     }
                 }
 
+                println(filesToUpload)
+
                 val fileToTargetPath = createVirtualFileToTargetPathMap(
                     filesToUpload.toSet(),
                     targetDestination,
@@ -347,6 +348,8 @@ class MpyTransferService(private val project: Project) {
                     sourceFolders,
                     projectDir
                 )
+
+                println(fileToTargetPath)
 
                 val folderToTargetPath = createVirtualFileToTargetPathMap(
                     foldersToCreate,
@@ -357,12 +360,16 @@ class MpyTransferService(private val project: Project) {
                 )
 
                 if (fileSystemWidget.deviceInformation.hasBinascii) {
+                    println("Before quiet binascii refresh")
                     reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
                     fileSystemWidget.quietHashingRefresh(reporter)
                 } else if (shouldSynchronize) {
+                    println("Before normal quiet refresh")
                     reporter.text("Synchronizing...")
                     fileSystemWidget.quietRefresh(reporter)
                 }
+
+                println("After refresh")
 
                 if (shouldSynchronize || fileSystemWidget.deviceInformation.hasBinascii) {
                     // Traverse and collect all file system nodes
@@ -393,6 +400,7 @@ class MpyTransferService(private val project: Project) {
                     // Iterate over files that are being uploaded
                     // exempt them from synchronization
                     // and remove those that are already uploaded
+                    val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
                     fileToTargetPath.keys.forEach { file ->
                         val path = fileToTargetPath[file]
                         val size = file.length.toInt()
@@ -406,7 +414,7 @@ class MpyTransferService(private val project: Project) {
                                     // If binascii is missing the hash is "0"
                                     if (matchingNode.hash != "0") {
                                         // Remove already uploaded files
-                                        fileToTargetPath.remove(file)
+                                        alreadyUploadedFiles.add(file)
                                     }
                                 }
                             }
@@ -426,12 +434,18 @@ class MpyTransferService(private val project: Project) {
                         }
 
                         // Delete remaining existing target paths that aren't a part of the upload
+                        delay(500)
                         recursivelySafeDeletePaths(targetPathsToRemove)
                     }
+
+                    fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                 }
 
                 // Create all directories
+                println("Before creating directories")
+                delay(500)
                 safeCreateDirectories(folderToTargetPath.values.toSet())
+                println("After creating directories")
 
                 val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
@@ -469,6 +483,7 @@ class MpyTransferService(private val project: Project) {
                                 "   pass"
                             )
 
+                            delay(500)
                             val isUftpdAvailable = fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
                                 .extractSingleResponse() == "valid"
 
