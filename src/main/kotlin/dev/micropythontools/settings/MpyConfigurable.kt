@@ -344,7 +344,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             .comment(
                                 "Note: Library changes may not take effect immediately after IDE startup. " +
                                         "If the changes don't appear right away, close the settings, wait a few seconds and try again.<br>" +
-                                        "Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubber\">Jos Verlinde</a>", maxLineLength = 60
+                                        "Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubs\">Jos Verlinde</a>", maxLineLength = 60
                             )
                             .validationInfo { field ->
                                 val text = field.text
