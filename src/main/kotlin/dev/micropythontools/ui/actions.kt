@@ -79,7 +79,14 @@ fun fileSystemWidget(project: Project?): FileSystemWidget? {
         ?.firstNotNullOfOrNull { it.component.asSafely<FileSystemWidget>() }
 }
 
-abstract class ReplAction(
+class PerformReplActionResult<T>(
+    val result: T? = null,
+    val shouldRefresh: Boolean = false
+)
+
+abstract
+
+class ReplAction(
     text: String,
     private val connectionRequired: Boolean,
     private val requiresRefreshAfter: Boolean,
@@ -210,7 +217,16 @@ fun <T> performReplAction(
                     try {
                         cleanUpAction?.let { cleanUpAction(fileSystemWidget, reporter) }
 
-                        if (requiresRefreshAfter) {
+                        val finalResult = result
+                        val shouldRefresh = when {
+                            finalResult is PerformReplActionResult<*> ->
+                                @Suppress("UNCHECKED_CAST")
+                                (finalResult as PerformReplActionResult<T>).shouldRefresh
+
+                            else -> true
+                        }
+
+                        if (requiresRefreshAfter && shouldRefresh) {
                             fileSystemWidget(project)?.refresh(reporter)
                         }
                     } catch (e: Throwable) {
@@ -237,7 +253,16 @@ fun <T> performReplAction(
             }
         }
     }
-    return result
+
+    // At the end of performReplAction function
+    val finalResult = result
+    return when {
+        finalResult is PerformReplActionResult<*> ->
+            @Suppress("UNCHECKED_CAST")
+            (finalResult as PerformReplActionResult<T>).result
+
+        else -> finalResult
+    }
 }
 
 class ConnectAction(text: String = "Connect") : ReplAction(

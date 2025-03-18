@@ -325,7 +325,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                                     ).ask(project)
                                 }
 
-                                if (!sure) return@performReplAction false
+                                if (!sure) return@performReplAction PerformReplActionResult(null, false)
 
                                 reporter.text("Checking for move conflicts...")
                                 reporter.fraction(null)
@@ -467,7 +467,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         if (!deviceInformation.hasBinascii) {
             MessageDialogBuilder.Message(
-                "Missing MicroPython Libraries", "The connected board is missing the binascii " +
+                "Missing MicroPython Libraries", "The connected board is missing the full binascii " +
                         "library. The already uploaded files check won't work and uploads may be slower."
             ).asWarning().buttons("Acknowledge").show(project)
         }
@@ -675,6 +675,8 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             val sure = MessageDialogBuilder.yesNo(title, message).ask(project)
             if (sure) fileSystemNodes else emptyList()
         }
+
+        if (confirmedFileSystemNodes.isEmpty()) return
 
         val pathsToDelete = confirmedFileSystemNodes
             .map { it.fullName }
