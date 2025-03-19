@@ -29,6 +29,5 @@ jobs:
         with:
           files: |
             build/distributions/*.zip
-            build/distributions/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
