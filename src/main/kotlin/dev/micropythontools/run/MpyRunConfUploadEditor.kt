@@ -39,6 +39,7 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.normalizeMpyPath
 import dev.micropythontools.settings.validateMpyPath
 import java.awt.BorderLayout
@@ -103,6 +104,7 @@ private data class ExcludedItem(val path: String) {
  * @authors Lukas Kremla
  */
 class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : SettingsEditor<MpyRunConfUpload>() {
+    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", MpyConfigurable::class.java)
     val transferService = runConfiguration.project.service<MpyTransferService>()
 
     private val parameters = with(runConfiguration.options) {
@@ -208,8 +210,8 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
         preferredScrollableViewportSize = Dimension(250, 150)
     }
 
-    private val availableSourcesTable = sourcesTable("No available MicroPython sources")
-    private val selectedSourcesTable = sourcesTable("No selected MicroPython sources")
+    private val availableSourcesTable = sourcesTable("No available MicroPython Sources Roots")
+    private val selectedSourcesTable = sourcesTable("No selected MicroPython Sources Roots")
 
     private val excludedPathsTable = TableView<ExcludedItem>().apply {
         val column = object : ColumnInfo<ExcludedItem, String>("Excluded Path") {
@@ -315,6 +317,7 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
     private lateinit var configurationPanel: DialogPanel
     private lateinit var synchronizeCheckbox: Cell<JBCheckBox>
     private lateinit var excludePathsCheckbox: Cell<JBCheckBox>
+    private lateinit var uploadProjectRadioButton: Cell<JBRadioButton>
     private lateinit var useSelectedPathsRadioButton: Cell<JBRadioButton>
     private lateinit var usePathRadiobutton: Cell<JBRadioButton>
     private lateinit var availableToSelectedButton: Cell<JButton>
@@ -327,7 +330,7 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
             buttonsGroup {
                 row {
                     label("Type: ")
-                    radioButton("Project")
+                    uploadProjectRadioButton = radioButton("Project")
                         .bindSelected({ parameters.uploadMode == 0 }, { if (it) parameters.uploadMode = 0 })
                         .applyToComponent {
                             addActionListener {
@@ -405,6 +408,10 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
             }.visibleIf(usePathRadiobutton.selected)
 
             row {
+                comment("All MicroPython Sources Roots will be uploaded")
+            }.visibleIf(uploadProjectRadioButton.selected)
+
+            row {
                 checkBox("Reset on success")
                     .bindSelected(parameters::resetOnSuccess)
             }
@@ -419,8 +426,8 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
                     .bindSelected(parameters::synchronize)
                     .gap(RightGap.SMALL)
 
-                cell(JBLabel(AllIcons.General.Information).apply {
-                    toolTipText = "Synchronize device file system to only contain flashed files (deletes empty folders)"
+                cell(JBLabel(questionMarkIcon).apply {
+                    toolTipText = "Synchronize device file system to only contain uploaded files and folders"
                 })
             }
 
@@ -429,8 +436,8 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
                     .bindSelected(parameters::excludePaths)
                     .gap(RightGap.SMALL)
 
-                cell(JBLabel(AllIcons.General.Information).apply {
-                    toolTipText = "Exclude listed on-device paths from synchronization"
+                cell(JBLabel(questionMarkIcon).apply {
+                    toolTipText = "Exclude on-device paths from synchronization"
                 })
             }.visibleIf(synchronizeCheckbox.selected)
 

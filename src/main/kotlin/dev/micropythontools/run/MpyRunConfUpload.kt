@@ -171,7 +171,7 @@ class MpyRunConfUpload(
 
         // When the whole project is being uploaded
         if (options.uploadMode == 0 && mpySourceFolders.isEmpty()) {
-            throw RuntimeConfigurationError("No folders were marked as MicroPython Sources Roots")
+            throw RuntimeConfigurationError("No folders were marked as MicroPython Sources Roots <a href=\"https://google.com\">FInd out more</a>")
         }
 
         // When a selection is being uploaded

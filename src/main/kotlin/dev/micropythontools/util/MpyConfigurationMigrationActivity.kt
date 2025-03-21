@@ -18,23 +18,20 @@ package dev.micropythontools.util
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.ide.BrowserUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.ui.MessageDialogBuilder
 import dev.micropythontools.run.MpyRunConfType
 import dev.micropythontools.run.MpyRunConfUpload
 import dev.micropythontools.run.MpyRunConfUploadFactory
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.NOTIFICATION_GROUP
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 
 /**
  * @author Lukas Kremla
@@ -57,7 +54,7 @@ class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
                 configuration.writeExternal(element)
 
                 if (!element.attributes.toString().contains("micropython-tools-flash-configuration")) return@forEach
-                
+
                 val path = element.getChild("option")?.getAttributeValue("path") ?: element.getChildren("option").find { it.getAttributeValue("name") == "path" }?.getAttributeValue("value")
                 val runReplOnSuccess = element.getChildren("option").find { it.getAttributeValue("name") == "runReplOnSuccess" }?.getAttributeValue("value") == "true"
                 val resetOnSuccess = element.getChildren("option").find { it.getAttributeValue("name") == "resetOnSuccess" }?.getAttributeValue("value") == "true"
@@ -119,20 +116,16 @@ class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
                         "MicroPython tools update",
                         "MicroPython Tools run configurations have been automatically updated.<br><br>" +
                                 "The plugin no longer uses basic Sources Roots but now requires MicroPython Sources roots..<br><br>" +
-                                "NOTE: If your run configurations were stored in a file, you'll need to reconfigure them.",
+                                "NOTE: If your run configurations were stored in a file, you'll need to reconfigure them. " +
+                                "More info <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/releases/tag/0.4.1\">here</a>",
                         NotificationType.WARNING
-                    ),
+                    ).setListener { notification, event ->
+                        if (event.description == "https://github.com/lukaskremla/micropython-tools-jetbrains/releases/tag/0.4.1") {
+                            BrowserUtil.browse(event.description)
+                        }
+                    },
                     project
                 )
-
-                withContext(Dispatchers.EDT) {
-                    MessageDialogBuilder.Message(
-                        "MicroPython Tools Update",
-                        "MicroPython Tools run configurations have been automatically updated.\n\n" +
-                                "The plugin no longer uses basic Sources Roots but now requires MicroPython Sources roots.\n\n" +
-                                "NOTE: If your run configurations were stored in a file, you'll need to reconfigure.",
-                    ).buttons("Ok").defaultButton("Ok").show(project)
-                }
             }
         }
 
