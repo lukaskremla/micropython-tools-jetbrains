@@ -5,8 +5,8 @@ Credits to [Andrey Vlasovskikh](https://github.com/vlasovskikh) for creating the
 to [Ilia Motornyi](https://github.com/elmot) for rewriting the communication layer to kotlin and for developing the file
 system view, which serves as the foundation for this project.
 
-Many thanks also go to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for developing and maintaining the MicroPython stubs
-that this plugin uses and to [Robert Hammelrath](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) for developing the uftpd library utilized for the FTP uploads.
+Many thanks also go to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for creating and maintaining the MicroPython stubs
+that this plugin uses and to [Robert Hammelrath](https://github.com/robert-hh/FTP-Server-for-ESP8266-ESP32-and-PYBD) for developing the uftpd library utilized by the FTP uploads.
 
 I have decided fork the original jetbrains plugin as its development had slowed and I wanted to focus on implementing
 more advanced features that I deem invaluable based on my professional experience working with MicroPython
