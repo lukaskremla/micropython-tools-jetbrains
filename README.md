@@ -1,10 +1,13 @@
-# MicroPython Tools for PyCharm
+# MicroPython Tools for PyCharm, CLion and other JetBrains IDEs
 
-This is a fork of the [jetbrains intellij micropython plugin](https://github.com/JetBrains/intellij-micropython).
+This is a fork of the [JetBrains IntelliJ MicroPython plugin](https://github.com/JetBrains/intellij-micropython).
 Credits to [Andrey Vlasovskikh](https://github.com/vlasovskikh) for creating the original plugin and
-to [Ilia Motornyi](https://github.com/elmot) for rewriting the communication layer to kotlin and for developing the file system view, which serves as the foundation for this project.
+to [Ilia Motornyi](https://github.com/elmot) for rewriting the communication layer to kotlin and for developing the file
+system view, which serves as the foundation for this project.
 
-Many thanks also go to all of the contributors who helped maintain and improve the plugin in the past and to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for developing and maintaining the MicroPython stubs that this plugin uses.
+Many thanks also go to all of the contributors who helped maintain and improve the plugin in the past and
+to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for developing and maintaining the MicroPython stubs
+that this plugin uses.
 
 I have decided fork the original jetbrains plugin as its development had slowed and I wanted to focus on implementing
 more advanced features that I deem invaluable based on my professional experience working with MicroPython
@@ -18,80 +21,91 @@ requests, feel free to start a discussion.
 
 Some of the features you can expect soon include:
 
-- Availability in CLion plugin marketplace
-- Drag and drop file system interaction
+- Built-in MicroPython firmware flashing support
 - Integration with mpy-cross to allow compiling to bytecode
 
 Long term plans:
 
-- Built-in MicroPython firmware flashing support
 - After the full-release of this plugin I might consider also developing MicroPython plugins for VSCode
   and possibly Visual Studio 2022
 
-## Usage tips
+## Quick start
 
-To access all of the features this plugin offers always create a MicroPython Tools run configuration in a new project
-and leave the path empty.
+To access all of the features this plugin offers I recommend always creating a Project upload configuration in every
+project.
 
-If no folder is marked as a sources root, the project root contents will be uploaded, if at least one folder is marked
-as a source root, only source root contents will be uploaded. In all cases files/folders with a leading dot in their
-name, excluded folders, and test
-source roots are skipped. If you want to upload a test source root marked folder, or its contents, you can do so via
-the context menu actions.
+After enabling MicroPython support in the "Languages & Frameworks" section of settings you will be able to mark
+directories as MicroPython Sources Roots. The upload project run configuration uploads contents of the top most
+MicroPython Sources Roots marked folders. So you can treat these folders as the root "/" of the device's MicroPython
+file system when structuring your project.
 
-I also recommend enabling the synchronize option, this way you don't have to worry about cleaning up the File System
-if you make large changes to your project. When flashing, all empty folders and files that were not apart of the
-flashing operation will be deleted - you can also simply configure excluded target (MicroPython) paths, that will be
+I also recommend enabling the synchronize run configuration option, that way you don't have to worry about cleaning up
+the File System
+if you make large changes to your project. When running the upload run configuration, all folders and files that were
+not apart of the
+upload will be deleted - you can also simply configure excluded target (MicroPython) paths, that will be
 ignored by the synchronization feature.
 
-For projects which involve flashing large files *(For MicoPython standards)*, FTP uploads might help speed things up,
+For projects which involve uploading large files *(For MicoPython standards)*, FTP uploads might help speed things up,
 especially if you're using serial communication.
+
+Finally, don't forget to select the appropriate stubs package for your device. You can do so in the plugin's settings.
+Start typing "micropython" in the "Stubs package" text field and you can browse all available packages via autocomplete.
 
 ## Features
 
-### Expanded File System widget
+### File System widget
 
-- With new connection selector for easily switching between devices
+- Easily view and interact with the MicroPython device file system
+- Upload to or reorganize the file system via drag and drop
   ![File System Widget](media/file_system.png)
 
-### Expanded run configuration options
+### REPL Widget
 
-- Synchronization - automatically clean up the device file system when flashing
-- Except device paths from synchronization (avoid deleting persistent data such as logs)
-- FTP uploads for large projects - increased upload speed and reliability
-- New tooltips
-  ![Run Configuration](media/run_configuration.png)
+- Observe code execution via REPL
+  ![REPL Widget](media/repl.png)
 
-### Context sensitive menu actions
+### Run Configurations
 
-- Tooltip descriptions dynamically change based on your selection
-- You can now select multiple items for the upload action
-  ![Context Menu Actions](media/context_actions.png)
+- #### Upload
+    - Comfortably select what gets uploaded
+    - Synchronize device file system to only contain uploaded files and folders
+    - Exclude on-device paths from synchronization
+      ![Upload Run Configuration](media/run_configuration_upload.png)
+- #### Execute in REPL
+    - Execute selected ".py", ".mpy" file or code in REPL without uploading it to the device
+      ![Execute in REPL Run Configuration](media/run_configuration_execute.png)
 
-### Cleaned up settings menu
+### Context Menu Actions
 
-- Removed old unused device type dropdowns
-- Updated the settings persistence system to use a more modern approach
-- Added a Target Wi-Fi AP configuration for FTP upload functionality (The password is safely stored in
-  the [Jetbrains password
-  safe](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html#storage))
-  ![Context Menu Actions](media/settings.png)
+- Quickly upload or execute selected files
+  ![Context Menu File Actions](media/file_actions.png)
+- Custom "Mark as MicroPython Sources Root" action that allows compatibility many different JetBrains IDEs
+  ![Context Menu MicroPython Sources Actions](media/micropython_sources.png)
+
+### Settings
+
+![Settings](media/settings.png)
+
+#### FTP Uploads
+
+- Speed up large or unstable serial communication uploads via built-in FTP support
+- Just enter the wi-fi credentials of the network your computer is connected to. The plugin will automatically handle
+  starting the FTP server and establishing a connection over serial communication
+
+#### MicroPython Stubs
+
+- Built-in stubs management Integrates all available MicroPython stubs packages
+  by [Jos Verlinde](https://github.com/Josverl/micropython-stubs)
 
 ### Other
 
-- Automatically skips already uploaded files (on boards offering binascii library)
-- Several bug fixes, new edge case handling, removed most of the old deprecated code, new python library management
-  system and more backend changes
-
-## Supported devices
-
-Most MicroPython devices should be supported. However, this plugin wasn't tested with highly 
-resource constrained microcontrollers such as the ESP8266 and with MicroPython versions below 1.20.
+- Automatically skips already uploaded files (on boards with the required crc32 binascii capabilities)
 
 ## Requirements
 
-* A valid Python interpreter (3.10 is recommended for most accurate code analysis)
-* Python plugin (IntelliJ only)
-* A development board with MicroPython installed (If possible latest release, otherwise at least 1.20 is recommended)
+* A valid Python interpreter 3.10+
+* Python Community plugin (For non-PyCharm IDEs)
+* A development board with MicroPython installed (1.20+ is recommended)
 
 The plugin is licensed under the terms of the Apache 2 license.
