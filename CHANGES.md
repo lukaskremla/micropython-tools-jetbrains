@@ -1,6 +1,14 @@
 The Changelog
 =============
 
+0.4.1 - 22-3-2025
+------------------
+
+* Fixed several bugs in the 0.4.0-added upload algorithm
+* Improved and cleaned up several dialogs, tool tips and descriptions
+* New documentation and README.md
+* Overall this is a polished and publicly releasable 0.4.0
+
 0.4.0 - 18-3-2025
 ------------------
 

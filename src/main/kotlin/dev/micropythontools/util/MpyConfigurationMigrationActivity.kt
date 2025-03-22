@@ -116,10 +116,10 @@ class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
                         "MicroPython Tools run configurations have been automatically updated.<br><br>" +
                                 "The plugin no longer uses basic Sources Roots but now requires MicroPython Sources roots..<br><br>" +
                                 "NOTE: If your run configurations were stored in a file, you'll need to reconfigure them. " +
-                                "More info <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/releases/tag/0.4.1\">here</a>",
+                                "More info <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/releases/tag/0.4.0\">here</a>",
                         NotificationType.WARNING
                     ).setListener { notification, event ->
-                        if (event.description == "https://github.com/lukaskremla/micropython-tools-jetbrains/releases/tag/0.4.1") {
+                        if (event.description == "https://github.com/lukaskremla/micropython-tools-jetbrains/releases/tag/0.4.0") {
                             BrowserUtil.browse(event.description)
                         }
                     },
