@@ -338,7 +338,10 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
                                     runConfiguration.suggestedName()
                                 }
                             }
-                        }
+                        }.gap(RightGap.SMALL)
+                    cell(JBLabel(questionMarkIcon).apply {
+                        toolTipText = "All MicroPython Sources Roots will be uploaded"
+                    })
                     useSelectedPathsRadioButton = radioButton("Selected")
                         .bindSelected({ parameters.uploadMode == 1 }, { if (it) parameters.uploadMode = 1 })
                         .applyToComponent {
@@ -406,10 +409,6 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
                     }.align(AlignX.FILL)
                 }
             }.visibleIf(usePathRadiobutton.selected)
-
-            row {
-                comment("All MicroPython Sources Roots will be uploaded")
-            }.visibleIf(uploadProjectRadioButton.selected)
 
             row {
                 checkBox("Reset on success")
