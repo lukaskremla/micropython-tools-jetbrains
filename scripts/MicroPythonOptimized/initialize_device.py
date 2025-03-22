@@ -18,18 +18,20 @@
 import os, gc
 def ___i():
     try:
+        c = True
         b = True
-
         s = os.uname()
         v = s[3]
         d = s[4]
-
         try:
             from binascii import crc32
         except ImportError:
+            c = False
+        try:
+            from binascii import a2b_base64
+        except ImportError:
             b = False
-
-        print(v, d, b, sep="&")
+        print(v, d, c, b, sep="&")
     except Exception as e:
         print(f"ERROR: {e}")
 ___i()

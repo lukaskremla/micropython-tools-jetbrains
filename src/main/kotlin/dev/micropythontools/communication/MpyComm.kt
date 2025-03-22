@@ -127,7 +127,7 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
     suspend fun upload(fullName: @NonNls String, content: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {
         checkConnected()
         val commands = mutableListOf<Any>("import os")
-        if (fileSystemWidget.deviceInformation.hasBinascii && content.size > 100 && content.count { b -> b in 32..127 } < content.size / 2) {
+        if (fileSystemWidget.deviceInformation.hasBase64 && content.size > 100 && content.count { b -> b in 32..127 } < content.size / 2) {
             commands.addAll(binUpload(fullName, content))
         } else {
             commands.addAll(txtUpload(fullName, content))

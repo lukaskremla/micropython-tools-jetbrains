@@ -85,7 +85,8 @@ import javax.swing.tree.DefaultTreeModel
 data class DeviceInformation(
     var version: String = "Unknown",
     var description: String = "Unknown",
-    var hasBinascii: Boolean = false
+    var hasCRC32: Boolean = false,
+    var hasBase64: Boolean = false
 )
 
 data class ConnectionParameters(
@@ -458,19 +459,40 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         val scriptResponse = blindExecute(SHORT_TIMEOUT, initializeDeviceScript).extractSingleResponse()
 
         if (!scriptResponse.contains("ERROR")) {
-            val (version, description, hasBinascii) = scriptResponse.split("&")
+            val (version, description, hasCRC32, hasBase64) = scriptResponse.split("&")
 
-            deviceInformation = DeviceInformation(version, description, hasBinascii == "True")
+            deviceInformation = DeviceInformation(
+                version,
+                description,
+                hasCRC32 == "True",
+                hasBase64 == "True"
+            )
         } else {
             deviceInformation = DeviceInformation()
         }
 
-        if (!deviceInformation.hasBinascii) {
+        var message: String? = if (!deviceInformation.hasCRC32) {
+            if (!deviceInformation.hasBase64) {
+                "The connected board is missing the crc32 and a2b_base64 binascii functions. " +
+                        "The already uploaded files check won't work and uploads may be slower."
+            } else {
+                "The connected board is missing the crc32 binascii function." +
+                        "The already uploaded files check won't work."
+            }
+        } else if (!deviceInformation.hasBase64) {
+            "The connected board is missing the a2b_base64 binascii function. " +
+                    "Uploads may be slower."
+        } else {
+            null
+        }
+
+        if (message != null) {
             MessageDialogBuilder.Message(
-                "Missing MicroPython Libraries", "The connected board is missing the full binascii " +
-                        "library. The already uploaded files check won't work and uploads may be slower."
+                "Missing MicroPython Libraries",
+                message
             ).asWarning().buttons("Acknowledge").show(project)
         }
+
     }
 
     suspend fun doConnect(reporter: RawProgressReporter) {
