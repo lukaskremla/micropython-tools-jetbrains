@@ -70,7 +70,6 @@ class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
                     }
                 }
 
-                // Try to preserve the original name, but re-create it up to new standards if necessary
                 val name = "Upload Project"
 
                 val factory = MpyRunConfUploadFactory(MpyRunConfType())
