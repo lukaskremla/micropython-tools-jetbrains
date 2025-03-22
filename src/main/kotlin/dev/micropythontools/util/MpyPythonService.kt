@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-//@file:Suppress("DEPRECATION", "REMOVAL")
-
 package dev.micropythontools.util
 
 import com.intellij.facet.ui.FacetConfigurationQuickFix

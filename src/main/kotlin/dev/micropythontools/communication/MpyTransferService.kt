@@ -356,7 +356,7 @@ class MpyTransferService(private val project: Project) {
                     projectDir
                 )
 
-                if (fileSystemWidget.deviceInformation.hasBinascii) {
+                if (fileSystemWidget.deviceInformation.hasCRC32) {
                     reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
                     fileSystemWidget.quietHashingRefresh(reporter)
                 } else if (shouldSynchronize) {
@@ -364,7 +364,7 @@ class MpyTransferService(private val project: Project) {
                     fileSystemWidget.quietRefresh(reporter)
                 }
 
-                if (shouldSynchronize || fileSystemWidget.deviceInformation.hasBinascii) {
+                if (shouldSynchronize || fileSystemWidget.deviceInformation.hasCRC32) {
                     // Traverse and collect all file system nodes
                     val allNodes = mutableListOf<FileSystemNode>()
                     val root = fileSystemWidget.tree.model.root as DirNode
