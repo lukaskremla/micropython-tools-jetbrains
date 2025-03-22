@@ -286,9 +286,10 @@ class MpyTransferService(private val project: Project) {
 
         var filesToUpload = if (initialIsProjectUpload) collectProjectUploadables().toMutableList() else initialFilesToUpload.toMutableList()
         var foldersToCreate = mutableSetOf<VirtualFile>()
-        println(filesToUpload)
 
         var ftpUploadClient: MpyFTPClient? = null
+        var shouldCleanUpFTP = false
+
         var uploadedSuccessfully = false
 
         performReplAction(
@@ -339,8 +340,6 @@ class MpyTransferService(private val project: Project) {
                     }
                 }
 
-                println(filesToUpload)
-
                 val fileToTargetPath = createVirtualFileToTargetPathMap(
                     filesToUpload.toSet(),
                     targetDestination,
@@ -348,8 +347,6 @@ class MpyTransferService(private val project: Project) {
                     sourceFolders,
                     projectDir
                 )
-
-                println(fileToTargetPath)
 
                 val folderToTargetPath = createVirtualFileToTargetPathMap(
                     foldersToCreate,
@@ -360,16 +357,12 @@ class MpyTransferService(private val project: Project) {
                 )
 
                 if (fileSystemWidget.deviceInformation.hasBinascii) {
-                    println("Before quiet binascii refresh")
                     reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
                     fileSystemWidget.quietHashingRefresh(reporter)
                 } else if (shouldSynchronize) {
-                    println("Before normal quiet refresh")
                     reporter.text("Synchronizing...")
                     fileSystemWidget.quietRefresh(reporter)
                 }
-
-                println("After refresh")
 
                 if (shouldSynchronize || fileSystemWidget.deviceInformation.hasBinascii) {
                     // Traverse and collect all file system nodes
@@ -418,11 +411,25 @@ class MpyTransferService(private val project: Project) {
                                     }
                                 }
                             }
-
                             // This target path is being uploaded, it shouldn't be deleted by synchronization
                             targetPathsToRemove.remove(matchingNode.fullName)
                         }
                     }
+
+                    val alreadyExistingFolders = mutableSetOf<VirtualFile>()
+                    folderToTargetPath.keys.forEach { folder ->
+                        val path = folderToTargetPath[folder]
+
+                        val matchingNode = targetPathToNode[path]
+
+                        if (matchingNode != null) {
+                            alreadyExistingFolders.add(folder)
+                            targetPathsToRemove.remove(matchingNode.fullName)
+                        }
+                    }
+
+                    fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
+                    folderToTargetPath.keys.removeAll(alreadyExistingFolders)
 
                     if (shouldSynchronize) {
                         if (shouldExcludePaths && excludedPaths.isNotEmpty()) {
@@ -430,26 +437,28 @@ class MpyTransferService(private val project: Project) {
                         }
 
                         if (settings.state.useFTP && settings.state.cacheFTPScript) {
-                            targetPathsToRemove.remove(settings.state.cachedFTPScriptPath)
+                            val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
+                            targetPathsToRemove.remove(cachedFtpScriptPath)
                         }
 
                         // Delete remaining existing target paths that aren't a part of the upload
                         delay(500)
                         recursivelySafeDeletePaths(targetPathsToRemove)
                     }
-
-                    fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                 }
 
                 // Create all directories
-                println("Before creating directories")
-                delay(500)
-                safeCreateDirectories(folderToTargetPath.values.toSet())
-                println("After creating directories")
+                if (folderToTargetPath.isNotEmpty()) {
+                    reporter.text("Creating directories...")
+                    delay(500)
+                    safeCreateDirectories(folderToTargetPath.values.toSet())
+                }
 
                 val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
                 if (shouldUseFTP(project, totalBytes) && fileToTargetPath.isNotEmpty()) {
+                    shouldCleanUpFTP = true
+
                     reporter.text("Retrieving FTP credentials...")
 
                     val wifiCredentials = settings.retrieveWifiCredentials()
@@ -468,7 +477,6 @@ class MpyTransferService(private val project: Project) {
                         val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
                         val cachedFtpScriptImportPath = cachedFtpScriptPath
                             .replace("/", ".")
-                            .removePrefix("/")
                             .removeSuffix(".py")
                             .trim('.')
 
@@ -619,7 +627,7 @@ class MpyTransferService(private val project: Project) {
             },
 
             cleanUpAction = { fileSystemWidget, reporter ->
-                if (fileSystemWidget.state == State.CONNECTED) {
+                if (shouldCleanUpFTP) {
                     if (shouldUseFTP(project)) {
                         reporter.text("Cleaning up after FTP upload...")
                         reporter.fraction(null)
