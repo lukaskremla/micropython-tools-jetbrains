@@ -14,6 +14,7 @@
             <li>Fixed a bug where the plugin wouldn't properly detect missing CRC32 binascii support</li>
             <li>Added logic to make sure that the FTP Wi-Fi credentials don't appear in a notification when an exception occurs while connecting to the FTP server</li>
         </ul>
+        <br>
       <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
     ]]></change-notes>
     <description><![CDATA[
