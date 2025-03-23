@@ -16,7 +16,8 @@
 
 
 import network, gc
-def ___clean_up():
+
+def clean_up():
     for interface in [network.STA_IF, network.AP_IF]:
         wlan = network.WLAN(interface)
 
@@ -33,11 +34,7 @@ def ___clean_up():
     try:
         stop()
     except:
-        try:
-            ___ftp.stop()
-            del ___ftp
-        except:
-            pass
-___clean_up()
-del ___clean_up
-gc.collect()
+        pass
+
+clean_up()
+del clean_up

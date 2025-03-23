@@ -17,27 +17,14 @@
 
 import os, gc
 
-class ___list_files_class:
-    def __init__(self):
-        self.stats_to_volume_id = {}
-        self.i = 0
 
-    def list_files(self, path):
-        for result in os.ilistdir(path):
-            file_path = f"{path}/{result[0]}" if path != "/" else f"/{result[0]}"
-            stats = os.statvfs(file_path)
+def list_files(self, path):
+    for result in os.ilistdir(path):
+        file_path = f"{path}/{result[0]}" if path != "/" else f"/{result[0]}"
 
-            if stats in self.stats_to_volume_id:
-                volume_id = self.stats_to_volume_id[stats]
-            else:
-                volume_id = self.stats_to_volume_id[stats] = self.i
-                self.i += 1
+        print(result[1], result[3] if len(result) > 3 else -1, file_path, 0, 0, sep="&")
+        if result[1] & 0x4000:
+            self.list_files(file_path)
 
-            hash = 0
-            print(result[1], result[3] if len(result) > 3 else -1, file_path, volume_id, hash, sep="&")
-            if result[1] & 0x4000:
-                self.list_files(file_path)
-
-___list_files_class().list_files("/")
-del ___list_files_class
-gc.collect()
+list_files("/")
+del list_files
