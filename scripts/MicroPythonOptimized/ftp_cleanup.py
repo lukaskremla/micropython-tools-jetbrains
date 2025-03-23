@@ -15,26 +15,16 @@
 """
 
 
-import network, gc
-
-def clean_up():
-    for interface in [network.STA_IF, network.AP_IF]:
-        wlan = network.WLAN(interface)
-
-        if not wlan.active():
-            continue
-
-        try:
-            wlan.disconnect()
-        except:
-            pass
-
-        wlan.active(False)
-
-    try:
-        ___stop()
-    except:
-        pass
-
-clean_up()
-del clean_up
+import network as ___A,gc
+def ___B():
+	for C in[___A.STA_IF,___A.AP_IF]:
+		___B=___A.WLAN(C)
+		if not ___B.active():continue
+		try:___B.disconnect()
+		except:pass
+		___B.active(False)
+	try:___stop()
+	except:pass
+___B()
+del ___B
+gc.collect()

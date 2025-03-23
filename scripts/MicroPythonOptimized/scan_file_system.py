@@ -1,5 +1,5 @@
 """
-* Copyright 2024-2025 Lukas Kremla
+* Copyright 2024-2025 Lukas Kremla, Copyright 2000-2024 JetBrains s.r.o.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -15,26 +15,12 @@
 """
 
 
-import network, gc
-
-def clean_up():
-    for interface in [network.STA_IF, network.AP_IF]:
-        wlan = network.WLAN(interface)
-
-        if not wlan.active():
-            continue
-
-        try:
-            wlan.disconnect()
-        except:
-            pass
-
-        wlan.active(False)
-
-    try:
-        ___stop()
-    except:
-        pass
-
-clean_up()
-del clean_up
+import os,gc
+def ___A(self,path):
+	B=path
+	for ___A in os.ilistdir(B):
+		C=f"{B}/{___A[0]}"if B!='/'else f"/{___A[0]}";print(___A[1],___A[3]if len(___A)>3 else-1,C,0,0,sep='&')
+		if ___A[1]&16384:self.list_files(C)
+___A('/')
+del ___A
+gc.collect()
