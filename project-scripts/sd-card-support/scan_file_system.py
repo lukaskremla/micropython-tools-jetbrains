@@ -16,23 +16,26 @@
 
 
 import os, gc
-class ___c:
+
+class ListFilesClass:
     def __init__(self):
-        self.d = {}
+        self.s_to_id = {}
         self.i = 0
-    def l(self, p):
-        for r in os.ilistdir(p):
-            f = f"{p}/{r[0]}" if p != "/" else f"/{r[0]}"
-            s = os.statvfs(f)
-            if s in self.d:
-                v = self.d[s]
+
+    def list_files(self, path):
+        for result in os.ilistdir(path):
+            file_path = f"{path}/{result[0]}" if path != "/" else f"/{result[0]}"
+            stats = os.statvfs(file_path)
+
+            if stats in self.s_to_id:
+                volume_id = self.s_to_id[stats]
             else:
-                v = self.d[s] = self.i
+                volume_id = self.s_to_id[stats] = self.i
                 self.i += 1
-            h = 0
-            print(r[1], r[3] if len(r) > 3 else -1, f, v, h, sep="&")
-            if r[1] & 0x4000:
-                self.l(f)
-___c().l("/")
-del ___c
-gc.collect()
+
+            print(result[1], result[3] if len(result) > 3 else -1, file_path, volume_id, 0, sep="&")
+            if result[1] & 0x4000:
+                self.list_files(file_path)
+
+ListFilesClass().list_files("/")
+del ListFilesClass

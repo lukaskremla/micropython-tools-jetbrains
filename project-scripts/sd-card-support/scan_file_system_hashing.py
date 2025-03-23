@@ -15,36 +15,43 @@
 """
 
 
+
 import os, gc, binascii
-class ___c:
+
+
+class ListFilesClass:
     def __init__(self):
-        self.d = {}
+        self.s_to_id = {}
         self.b = bytearray(1024)
         self.i = 0
-    def l(self, p):
-        for r in os.ilistdir(p):
-            f = f"{p}/{r[0]}" if p != "/" else f"/{r[0]}"
-            s = os.statvfs(f)
-            if s in self.d:
-                v = self.d[s]
+
+    def list_files(self, path):
+        for result in os.ilistdir(path):
+            file_path = f"{path}/{result[0]}" if path != "/" else f"/{result[0]}"
+            stats = os.statvfs(file_path)
+
+            if stats in self.s_to_id:
+                volume_id = self.s_to_id[stats]
             else:
-                v = self.d[s] = self.i
+                volume_id = self.s_to_id[stats] = self.i
                 self.i += 1
-            h = 0
-            if not r[1] & 0x4000:
-                with open(f, "rb") as o:
+
+            crc32 = 0
+            if not result[1] & 0x4000:
+                with open(file_path, "rb") as f:
                     while True:
-                        n = o.readinto(self.b)
+                        n = f.readinto(self.b)
                         if n == 0:
                             break
                         if n < 1024:
-                            h = binascii.crc32(self.b[:n], h)
+                            crc32 = binascii.crc32(self.b[:n], crc32)
                         else:
-                            h = binascii.crc32(self.b, h)
-                    h = "%08x" % (h & 0xffffffff)
-            print(r[1], r[3] if len(r) > 3 else -1, f, v, h, sep="&")
-            if r[1] & 0x4000:
-                self.l(f)
-___c().l("/")
-del ___c
-gc.collect()
+                            crc32 = binascii.crc32(self.b, crc32)
+                    crc32 = "%08x" % (crc32 & 0xffffffff)
+
+            print(result[1], result[3] if len(result) > 3 else -1, file_path, volume_id, crc32, sep="&")
+            if result[1] & 0x4000:
+                self.list_files(file_path)
+
+ListFilesClass().list_files("/")
+del ListFilesClass

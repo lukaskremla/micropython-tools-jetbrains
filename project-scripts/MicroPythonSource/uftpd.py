@@ -29,11 +29,11 @@ from micropython import alloc_emergency_exception_buf, const
 from time import sleep_ms, localtime
 
 # constant definitions
-_CHUNK_SIZE = const(1024)
-_SO_REGISTER_HANDLER = const(20)
-_COMMAND_TIMEOUT = const(300)
-_DATA_TIMEOUT = const(100)
-_DATA_PORT = const(13333)
+CHUNK_SIZE = const(1024)
+SO_REGISTER_HANDLER = const(20)
+COMMAND_TIMEOUT = const(300)
+DATA_TIMEOUT = const(100)
+DATA_PORT = const(13333)
 
 # Global variables
 ftp_sockets = []
@@ -43,7 +43,7 @@ verbose_l = 0
 client_busy = False
 # Interfaces: (IP-Address (string), IP-Address (integer), Netmask (integer))
 
-_month_name = ("", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+month_name = ("", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 
@@ -52,10 +52,10 @@ class FTPClient:
     def __init__(self, ftp_socket, local_addr):
         self.command_client, self.remote_addr = ftp_socket.accept()
         self.remote_addr = self.remote_addr[0]
-        self.command_client.settimeout(_COMMAND_TIMEOUT)
+        self.command_client.settimeout(COMMAND_TIMEOUT)
         log_msg(1, "FTP Command connection from:", self.remote_addr)
         self.command_client.setsockopt(socket.SOL_SOCKET,
-                                       _SO_REGISTER_HANDLER,
+                                       SO_REGISTER_HANDLER,
                                        self.exec_ftp_command)
         self.command_client.sendall("220 Hello, this is the {}.\r\n".format(sys.platform))
         self.cwd = '/'
@@ -81,7 +81,7 @@ class FTPClient:
                 pass
 
     def make_description(self, path, f_name, full):
-        global _month_name
+        global month_name
         if full:
             stat = uos.stat(self.get_absolute_path(path, f_name))
             file_permissions = ("drwxr-xr-x"
@@ -93,18 +93,18 @@ class FTPClient:
             if tm[0] != localtime()[0]:
                 description = "{} 1 owner group {:>10} {} {:2} {:>5} {}\r\n". \
                     format(file_permissions, file_size,
-                           _month_name[tm[1]], tm[2], tm[0], f_name)
+                           month_name[tm[1]], tm[2], tm[0], f_name)
             else:
                 description = "{} 1 owner group {:>10} {} {:2} {:02}:{:02} {}\r\n". \
                     format(file_permissions, file_size,
-                           _month_name[tm[1]], tm[2], tm[3], tm[4], f_name)
+                           month_name[tm[1]], tm[2], tm[3], tm[4], f_name)
         else:
             description = f_name + "\r\n"
         return description
 
     @staticmethod
     def send_file_data(path, data_client):
-        buffer = bytearray(_CHUNK_SIZE)
+        buffer = bytearray(CHUNK_SIZE)
         mv = memoryview(buffer)
         with open(path, "rb") as file:
             bytes_read = file.readinto(buffer)
@@ -115,7 +115,7 @@ class FTPClient:
 
     @staticmethod
     def save_file_data(path, data_client, mode):
-        buffer = bytearray(_CHUNK_SIZE)
+        buffer = bytearray(CHUNK_SIZE)
         mv = memoryview(buffer)
         with open(path, mode) as file:
             bytes_read = data_client.readinto(buffer)
@@ -175,7 +175,7 @@ class FTPClient:
     def open_dataclient(self):
         if self.active:  # active mode
             data_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            data_client.settimeout(_DATA_TIMEOUT)
+            data_client.settimeout(DATA_TIMEOUT)
             data_client.connect((self.act_data_addr, self.DATA_PORT))
             log_msg(1, "FTP Data connection with:", self.act_data_addr)
         else:  # passive mode
@@ -255,7 +255,7 @@ class FTPClient:
             elif command == "PASV":
                 cl.sendall('227 Entering Passive Mode ({},{},{}).\r\n'.format(
                     self.pasv_data_addr.replace('.', ','),
-                    _DATA_PORT >> 8, _DATA_PORT % 256))
+                    DATA_PORT >> 8, DATA_PORT % 256))
                 self.active = False
             elif command == "PORT":
                 items = payload.split(",")
@@ -333,7 +333,7 @@ class FTPClient:
                                "    Session timeout {}\r\n"
                                "211 Client count is {}\r\n".format(
                         self.remote_addr, self.pasv_data_addr,
-                        _COMMAND_TIMEOUT, len(client_list)))
+                        COMMAND_TIMEOUT, len(client_list)))
                 else:
                     cl.sendall("213-Directory listing:\r\n")
                     self.send_list_data(path, cl, True)
@@ -404,7 +404,7 @@ def log_msg(level, *args):
 
 # close client and remove it from the list
 def close_client(cl):
-    cl.setsockopt(socket.SOL_SOCKET, _SO_REGISTER_HANDLER, None)
+    cl.setsockopt(socket.SOL_SOCKET, SO_REGISTER_HANDLER, None)
     cl.close()
     for i, client in enumerate(client_list):
         if client.command_client == cl:
@@ -436,13 +436,13 @@ def stop():
 
     for client in client_list:
         client.command_client.setsockopt(socket.SOL_SOCKET,
-                                         _SO_REGISTER_HANDLER, None)
+                                         SO_REGISTER_HANDLER, None)
         client.command_client.close()
     del client_list
     client_list = []
     client_busy = False
     for sock in ftp_sockets:
-        sock.setsockopt(socket.SOL_SOCKET, _SO_REGISTER_HANDLER, None)
+        sock.setsockopt(socket.SOL_SOCKET, SO_REGISTER_HANDLER, None)
         sock.close()
     ftp_sockets = []
     if data_socket is not None:
@@ -473,7 +473,7 @@ def start(port=21, verbose=0, splash=True):
         sock.bind(addr[0][4])
         sock.listen(1)
         sock.setsockopt(socket.SOL_SOCKET,
-                        _SO_REGISTER_HANDLER,
+                        SO_REGISTER_HANDLER,
                         lambda s: accept_ftp_connect(s, ifconfig[0]))
         ftp_sockets.append(sock)
         if splash:
@@ -481,11 +481,6 @@ def start(port=21, verbose=0, splash=True):
 
     data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    data_socket.bind(('0.0.0.0', _DATA_PORT))
+    data_socket.bind(('0.0.0.0', DATA_PORT))
     data_socket.listen(1)
     data_socket.settimeout(10)
-
-def restart(port=21, verbose=0, splash=True):
-    stop()
-    sleep_ms(200)
-    start(port, verbose, splash)

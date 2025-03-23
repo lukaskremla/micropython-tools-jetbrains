@@ -15,17 +15,17 @@
 """
 
 
-import network, time,gc
+import network, time, gc
 
-def ___connect_to_wifi():
-    ssid = %s
-    password = %s
-    wifi_timeout = %s
+def connect_to_wifi():
+    ssid = "%s"
+    password = "%s"
+    wifi_timeout = "%s"
     sta = network.WLAN(network.STA_IF)
     sta.active(True)
     sta.connect(ssid, password)
     i = 0
-    while not i.isconnected():
+    while not sta.isconnected():
         time.sleep(1)
         i+= 1
         if i > wifi_timeout:
@@ -33,6 +33,5 @@ def ___connect_to_wifi():
             break
     print(f"IP: {sta.ifconfig()[0]}")
 
-___connect_to_wifi()
-del ___connect_to_wifi
-gc.collect()
+connect_to_wifi()
+del connect_to_wifi

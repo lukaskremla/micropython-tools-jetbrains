@@ -17,23 +17,27 @@
 
 import os, gc
 
-def ___initialize():
+def initialize():
     try:
-        has_binascii = True
+        has_crc32 = True
+        has_a2b_base64 = True
 
         system_info = os.uname()
         version = system_info[3]
         description = system_info[4]
 
         try:
-            import binascii
+            from binascii import crc32
         except ImportError:
-            has_binascii = False
+            has_crc32 = False
+        try:
+            from binascii import a2b_base64
+        except ImportError:
+            has_a2b_base64 = False
 
-        print(version, description, has_binascii, sep="&")
+        print(version, description, has_crc32, has_a2b_base64, sep="&")
     except Exception as e:
         print(f"ERROR: {e}")
 
-___initialize()
-del ___initialize
-gc.collect()
+initialize()
+del initialize

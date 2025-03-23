@@ -15,44 +15,33 @@
 """
 
 
-
 import os, gc, binascii
 
 
-class ___list_files_class:
+class ListFilesClass:
     def __init__(self):
-        self.stats_to_volume_id = {}
-        self.buffer = bytearray(1024)
-        self.i = 0
+        self.b = bytearray(1024)
 
     def list_files(self, path):
         for result in os.ilistdir(path):
             file_path = f"{path}/{result[0]}" if path != "/" else f"/{result[0]}"
-            stats = os.statvfs(file_path)
 
-            if stats in self.stats_to_volume_id:
-                volume_id = self.stats_to_volume_id[stats]
-            else:
-                volume_id = self.stats_to_volume_id[stats] = self.i
-                self.i += 1
-
-            hash = 0
+            crc32 = 0
             if not result[1] & 0x4000:
                 with open(file_path, "rb") as f:
                     while True:
-                        n = f.readinto(self.buffer)
+                        n = f.readinto(self.b)
                         if n == 0:
                             break
                         if n < 1024:
-                            hash = binascii.crc32(self.buffer[:n], hash)
+                            crc32 = binascii.crc32(self.b[:n], crc32)
                         else:
-                            hash = binascii.crc32(self.buffer, hash)
-                    hash = "%08x" % (hash & 0xffffffff)
+                            crc32 = binascii.crc32(self.b, crc32)
+                    crc32 = "%08x" % (crc32 & 0xffffffff)
 
-            print(result[1], result[3] if len(result) > 3 else -1, file_path, volume_id, hash, sep="&")
+            print(result[1], result[3] if len(result) > 3 else -1, file_path, 0, crc32, sep="&")
             if result[1] & 0x4000:
                 self.list_files(file_path)
 
-___list_files_class().list_files("/")
-del ___list_files_class
-gc.collect()
+ListFilesClass().list_files("/")
+del ListFilesClass
