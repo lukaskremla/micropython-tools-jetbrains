@@ -15,26 +15,15 @@
 """
 
 
-import network, gc
-
-def clean_up():
-    for interface in [network.STA_IF, network.AP_IF]:
-        wlan = network.WLAN(interface)
-
-        if not wlan.active():
-            continue
-
-        try:
-            wlan.disconnect()
-        except:
-            pass
-
-        wlan.active(False)
-
-    try:
-        ___stop()
-    except:
-        pass
-
-clean_up()
-del clean_up
+___D=print
+import network as ___C,time,gc
+def ___A():
+	B=%s;E=B;G=B;H=B;___A=___C.WLAN(___C.STA_IF);___A.active(True);___A.connect(E,G);F=0
+	while not ___A.isconnected():
+		time.sleep(1);F+=1
+		if F>H:___D(f'ERROR: Connecting to "{E}" failed, connection timed out. Check your network settings.');break
+	___D(f"IP: {___A.ifconfig()[0]}")
+___A()
+del ___A
+del ___D
+gc.collect()

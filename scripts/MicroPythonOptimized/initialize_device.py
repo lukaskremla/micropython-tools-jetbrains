@@ -15,26 +15,21 @@
 """
 
 
-import network, gc
-
-def clean_up():
-    for interface in [network.STA_IF, network.AP_IF]:
-        wlan = network.WLAN(interface)
-
-        if not wlan.active():
-            continue
-
-        try:
-            wlan.disconnect()
-        except:
-            pass
-
-        wlan.active(False)
-
-    try:
-        ___stop()
-    except:
-        pass
-
-clean_up()
-del clean_up
+___C=print
+___B=ImportError
+import os,gc
+def ___A():
+	F=False
+	try:
+		___A=True;D=True;E=os.uname();G=E[3];H=E[4]
+		try:from binascii import crc32
+		except ___B:___A=F
+		try:from binascii import a2b_base64
+		except ___B:D=F
+		___C(G,H,___A,D,sep='&')
+	except Exception as ___I:___C(f"ERROR: {___I}")
+___A()
+del ___A
+del ___C
+del ___B
+gc.collect()
