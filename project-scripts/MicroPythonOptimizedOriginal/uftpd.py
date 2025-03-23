@@ -43,7 +43,7 @@ verbose_l = 0
 client_busy = False
 # Interfaces: (IP-Address (string), IP-Address (integer), Netmask (integer))
 
-_month_name = ("", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+month_name = ("", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 
@@ -81,7 +81,7 @@ class FTPClient:
                 pass
 
     def make_description(self, path, f_name, full):
-        global _month_name
+        global month_name
         if full:
             stat = uos.stat(self.get_absolute_path(path, f_name))
             file_permissions = ("drwxr-xr-x"
