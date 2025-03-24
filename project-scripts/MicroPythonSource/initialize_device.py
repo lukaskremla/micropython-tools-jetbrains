@@ -17,7 +17,7 @@
 
 import os, gc
 
-def initialize():
+def m():
     try:
         has_crc32 = True
         has_a2b_base64 = True
@@ -39,5 +39,5 @@ def initialize():
     except Exception as e:
         print(f"ERROR: {e}")
 
-initialize()
-del initialize
+m()
+del m

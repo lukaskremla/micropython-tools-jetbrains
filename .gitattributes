@@ -1,11 +1,4 @@
-stubs/* linguist-vendored
-stubs/** linguist-vendored
-stubs/**/*.pyi linguist-vendored
-*.pyi linguist-vendored
-test-projects/* linguist-vendored
-test-projects/** linguist-vendored
-project-scripts/* linguist-vendored
-project-scripts/** linguist-vendored
 src/main/resources/inspectionDescriptions/* linguist-vendored
 src/main/resources/inspectionDescriptions/** linguist-vendored
-src/main/resources/inspectionDescriptions/**/*.html linguist-vendored
+test-projects/* linguist-vendored
+test-projects/** linguist-vendored

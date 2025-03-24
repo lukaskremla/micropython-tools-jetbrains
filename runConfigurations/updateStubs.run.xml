@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="updateStubs" type="PythonConfigurationType" factoryName="Python">
-    <module name="Java.micropython-tools-jetbrains.test" />
+    <module name="Kotlin Scripts.KotlinBuildScript.build.gradle.kts" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />

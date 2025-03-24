@@ -70,14 +70,23 @@ intellijPlatform {
     }
 
     pluginVerification {
-        cliPath = file("verifier-cli-1.383.jar")
+        cliPath = file("verifier-cli-1.384-all.jar")
 
         ides {
             select {
                 types = listOf(
+                    IntelliJPlatformType.CLion,
+                    IntelliJPlatformType.AndroidStudio,
+                    IntelliJPlatformType.Aqua,
+                    IntelliJPlatformType.CLion,
+                    IntelliJPlatformType.DataGrip,
+                    IntelliJPlatformType.DataSpell,
+                    IntelliJPlatformType.GoLand,
                     IntelliJPlatformType.PyCharmProfessional,
                     IntelliJPlatformType.PyCharmCommunity,
-                    IntelliJPlatformType.CLion
+                    IntelliJPlatformType.Rider,
+                    IntelliJPlatformType.RustRover,
+                    IntelliJPlatformType.WebStorm
                 )
                 channels = listOf(
                     ProductRelease.Channel.RELEASE,

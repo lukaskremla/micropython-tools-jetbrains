@@ -18,13 +18,13 @@
 import os, gc, binascii
 
 
-class ListFilesClass:
+class t:
     def __init__(self):
         self.b = bytearray(1024)
 
-    def list_files(self, path):
-        for result in os.ilistdir(path):
-            file_path = f"{path}/{result[0]}" if path != "/" else f"/{result[0]}"
+    def m(self, p):
+        for result in os.ilistdir(p):
+            file_path = f"{p}/{result[0]}" if p != "/" else f"/{result[0]}"
 
             crc32 = 0
             if not result[1] & 0x4000:
@@ -41,7 +41,7 @@ class ListFilesClass:
 
             print(result[1], result[3] if len(result) > 3 else -1, file_path, 0, crc32, sep="&")
             if result[1] & 0x4000:
-                self.list_files(file_path)
+                self.m(file_path)
 
-ListFilesClass().list_files("/")
-del ListFilesClass
+t().m("/")
+del t

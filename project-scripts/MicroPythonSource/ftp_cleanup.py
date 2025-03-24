@@ -17,7 +17,7 @@
 
 import network, gc
 
-def clean_up():
+def m():
     for interface in [network.STA_IF, network.AP_IF]:
         wlan = network.WLAN(interface)
 
@@ -36,5 +36,5 @@ def clean_up():
     except:
         pass
 
-clean_up()
-del clean_up
+m()
+del m
