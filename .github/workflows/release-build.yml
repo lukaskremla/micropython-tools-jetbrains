@@ -52,7 +52,7 @@ jobs:
       - name: Build plugin
         run: ./gradlew clean :buildPlugin -Pversion=${{ github.ref_name }}
 
-      - name: Create Release
+      - name: Create release
         id: create_release
         uses: actions/create-release@v1
         env:
