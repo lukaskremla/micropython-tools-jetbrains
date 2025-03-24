@@ -26,8 +26,12 @@ try:
     url = "https://raw.githubusercontent.com/Josverl/micropython-stubs/main/data/stub-packages.json"
 
     subprocess.run(["pip", "install", "--upgrade", "pip"])
+    subprocess.run(["pip", "install", "--upgrade", "uv"])
 
-    stubs_dir = "../stubs"
+    path = os.path.abspath(__file__)
+    current_dir = os.path.dirname(path)
+    project_dir = os.path.dirname(current_dir)
+    stubs_dir = os.path.join(project_dir, "stubs")
 
     if os.path.exists(stubs_dir):
         shutil.rmtree(stubs_dir)
@@ -53,7 +57,7 @@ try:
             os.mkdir(stub_package_path)
 
             subprocess.run(
-                ["pip", "install", f"{package_name}~={version}", "--no-user", "--target", stub_package_path]
+                ["uv", "pip", "install", f"{package_name}~={version}", "--target", stub_package_path]
             )
 
     else:

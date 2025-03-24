@@ -1,0 +1,75 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-plugin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run scripts
+        run: |
+          python project-scripts/minify_scripts.py
+          python project-scripts/update_stubs.py
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 21
+
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Verify plugin
+        run: ./gradlew clean :verifyPlugin
+
+      - name: Upload plugin to marketplace
+        run: ./gradlew clean :uploadPlugin -PintellijPlatformPublishingToken=${{ secrets.PUBLISH_KEY }}
+
+      - name: Build plugin
+        run: ./gradlew clean :buildPlugin -Pversion=${{ github.ref_name }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: true
+          prerelease: false
+
+      - name: Upload plugin archive
+        if: success()
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            build/distributions/*.zip
+          tag_name: ${{ github.ref_name }}
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

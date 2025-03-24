@@ -1,7 +1,9 @@
-/.idea/
-!/.idea/runConfigurations/
+*.idea/
+*.venv/
 .gradle/
 build/
+scripts/
+stubs/
 venv/
 tmp/
 out/
@@ -10,4 +12,3 @@ publish-token.txt
 # IntelliJ Platform Gradle Plugin
 .intellijPlatform/
 .kotlin
-/.stubs/

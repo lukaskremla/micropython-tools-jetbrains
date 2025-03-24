@@ -57,7 +57,7 @@ class MpyPythonService(private val project: Project) {
             get() = "${pluginDescriptor.pluginPath}/scripts/Python"*/
 
         val microPythonScriptsPath: String
-            get() = "${pluginDescriptor.pluginPath}/scripts/MicroPythonOptimized"
+            get() = "${pluginDescriptor.pluginPath}/scripts/MicroPythonMinified"
 
         val stubsPath: String
             get() = "${pluginDescriptor.pluginPath}/stubs"

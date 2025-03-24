@@ -18,13 +18,13 @@
 import os, gc
 
 
-def list_files(self, path):
-    for result in os.ilistdir(path):
-        file_path = f"{path}/{result[0]}" if path != "/" else f"/{result[0]}"
+def m(p):
+    for result in os.ilistdir(p):
+        file_path = f"{p}/{result[0]}" if p != "/" else f"/{result[0]}"
 
         print(result[1], result[3] if len(result) > 3 else -1, file_path, 0, 0, sep="&")
         if result[1] & 0x4000:
-            self.list_files(file_path)
+            m(file_path)
 
-list_files("/")
-del list_files
+m("/")
+del m

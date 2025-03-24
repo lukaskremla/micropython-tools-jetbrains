@@ -17,7 +17,7 @@
 
 import network, time, gc
 
-def connect_to_wifi():
+def m():
     ssid = "%s"
     password = "%s"
     wifi_timeout = "%s"
@@ -33,5 +33,5 @@ def connect_to_wifi():
             break
     print(f"IP: {sta.ifconfig()[0]}")
 
-connect_to_wifi()
-del connect_to_wifi
+m()
+del m
