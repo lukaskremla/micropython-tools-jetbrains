@@ -1,9 +1,9 @@
 name: Release Build
 
 on:
-  push:
-    tags:
-      - '*.*.*'
+  release:
+    types:
+      - created
 
 permissions:
   contents: write
@@ -11,7 +11,7 @@ permissions:
 jobs:
   build-plugin:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -43,33 +43,11 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
 
-      - name: Verify plugin
-        run: ./gradlew clean :verifyPlugin
-
-      - name: Upload plugin to marketplace
-        run: ./gradlew clean :uploadPlugin -PintellijPlatformPublishingToken=${{ secrets.PUBLISH_KEY }}
-
       - name: Build plugin
         run: ./gradlew clean :buildPlugin -Pversion=${{ github.ref_name }}
 
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          draft: true
-          prerelease: false
-
-      - name: Upload plugin archive
-        if: success()
+      - name: Upload plugin to release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            build/distributions/*.zip
-          tag_name: ${{ github.ref_name }}
-          draft: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: build/distributions/*.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
