@@ -1,6 +1,12 @@
 The Changelog
 =============
 
+0.4.2 - 25.3.2025
+------------------
+
+* Integrated mpflash to allow installing MicroPython directly from the IDE
+* Added GitHub notices to settings and FileSystem emptyText to guide users towards help resources
+
 0.4.1 - 22-3-2025
 ------------------
 

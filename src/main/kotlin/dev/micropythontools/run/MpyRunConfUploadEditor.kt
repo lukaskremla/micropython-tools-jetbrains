@@ -104,7 +104,7 @@ private data class ExcludedItem(val path: String) {
  * @authors Lukas Kremla
  */
 class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : SettingsEditor<MpyRunConfUpload>() {
-    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", MpyConfigurable::class.java)
+    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", this::class.java)
     val transferService = runConfiguration.project.service<MpyTransferService>()
 
     private val parameters = with(runConfiguration.options) {

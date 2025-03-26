@@ -147,12 +147,12 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         if (!settings.state.isPluginEnabled) {
             tree.emptyText.appendText("MicroPython support is disabled")
-            tree.emptyText.appendLine("Change settings...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+            tree.emptyText.appendLine("Change settings", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
             }
         } else {
-            tree.emptyText.appendText("No board is connected")
-            tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+            tree.emptyText.appendText("No device connected")
+            tree.emptyText.appendLine("Connect device", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 performReplAction(
                     project,
                     false,
@@ -163,6 +163,16 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                         doConnect(reporter)
                     }
                 )
+            }
+            tree.emptyText.appendText(" or ")
+            tree.emptyText.appendText("Install MicroPython", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                // Open dialog
+            }
+
+            tree.emptyText.appendLine("")
+            tree.emptyText.appendLine("Find usage tips, report bugs or ask questions on our   ")
+            tree.emptyText.appendText("GitHub", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+
             }
         }
     }

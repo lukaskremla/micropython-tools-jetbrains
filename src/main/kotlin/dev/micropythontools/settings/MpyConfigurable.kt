@@ -66,7 +66,7 @@ private data class ConfigurableParameters(
  * @author Lukas Kremla
  */
 class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
-    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", MpyConfigurable::class.java)
+    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", this::class.java)
     private val settings = project.service<MpySettingsService>()
     private val pythonService = project.service<MpyPythonService>()
     private val transferService = project.service<MpyTransferService>()
@@ -104,6 +104,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
     private lateinit var connectionGroup: Row
 
+    private lateinit var installMicroPythonIndent: RowsRange
+
     private lateinit var serialRadioButton: Cell<JBRadioButton>
     private lateinit var webReplRadioButton: Cell<JBRadioButton>
 
@@ -127,6 +129,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
             row {
                 pluginEnabledCheckBox = checkBox("Enable MicroPython support")
                     .bindSelected(parameters::isPluginEnabled)
+            }
+
+            row {
+                comment("Find usage tips, report bugs or ask questions on our <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains\">GitHub</a>")
             }
 
             panel {
@@ -195,13 +201,23 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                         row {
                             comment("WebREPL is temporarily disabled due to a bug. It will be reinstated in a later release.")
                         }
-                    }.visibleIf(webReplRadioButton.selected).enabled(false)
+                    }.visibleIf(webReplRadioButton.selected)//.enabled(false)
                 }.bottomGap(BottomGap.NONE).enabled(isDisconnected())
+
+                installMicroPythonIndent = indent {
+                    indent {
+                        row {
+                            comment("<a>Install or Update MicroPython</a>", action = {
+                                // Open dialog
+                            })
+                        }
+                    }
+                }.visible(isDisconnected())
 
                 indent {
                     indent {
                         row {
-                            comment("A board is currently connected. <a>Disconnect</a>", action = {
+                            comment("A device is currently connected. <a>Disconnect</a>", action = {
                                 performReplAction(
                                     project,
                                     false,

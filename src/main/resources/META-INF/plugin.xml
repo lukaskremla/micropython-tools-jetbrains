@@ -74,6 +74,15 @@
                 implementation="dev.micropythontools.sourceroots.MpyModuleMpySourceRootEditHandler"/>
 
         <postStartupActivity implementation="dev.micropythontools.util.MpyConfigurationMigrationActivity"/>
+
+        <moduleType
+                id="MPY_TOOLS_PROJECT_TEMPLATE_MODULE_BUILDER_TYPE"
+                implementationClass="dev.micropythontools.templates.MpyModuleType"/>
+
+        <moduleBuilder
+                builderClass="dev.micropythontools.templates.MpyModuleBuilder"
+                id="MPY_TOOLS_PROJECT_TEMPLATE_MODULE_BUILDER"
+                order="first"/>
     </extensions>
 
     <actions>
