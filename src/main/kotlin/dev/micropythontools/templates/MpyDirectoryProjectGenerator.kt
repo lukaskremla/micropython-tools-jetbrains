@@ -16,7 +16,7 @@
 
 package dev.micropythontools.templates
 
-import com.intellij.platform.DirectoryProjectGeneratorBase
+/*import com.intellij.platform.DirectoryProjectGeneratorBase
 
 class MpyDirectoryProjectGenerator : DirectoryProjectGeneratorBase() {
-}
+}*/
