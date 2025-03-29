@@ -142,6 +142,7 @@ class MpyRunConfUpload(
 
                 success = transferService.uploadFileOrFolder(
                     file,
+                    true,
                     excludedPaths.toSet(),
                     synchronize,
                     excludePaths,

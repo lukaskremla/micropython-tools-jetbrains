@@ -128,7 +128,22 @@ class MpyTransferService(private val project: Project) {
             "       pass"
         )
 
-        val sortedPaths = paths
+        println(paths)
+
+        val allPaths = buildSet {
+            paths.forEach { path ->
+                // Generate and add all parent directories
+                val parts = path.split("/")
+                var currentPath = ""
+                for (part in parts) {
+                    if (part.isEmpty()) continue
+                    currentPath += "/$part"
+                    add(currentPath)
+                }
+            }
+        }
+
+        val sortedPaths = allPaths
             // Sort shortest paths first, ensures parents are created before children
             .sortedBy { it.split("/").filter { it.isNotEmpty() }.size }
             .toList()
@@ -239,14 +254,22 @@ class MpyTransferService(private val project: Project) {
     }
 
     fun uploadFileOrFolder(
-        filesToUpload: VirtualFile,
+        fileToUpload: VirtualFile,
+        shouldGoToRoot: Boolean = false,
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false
     ): Boolean {
 
+        val relativeToFolders = when {
+            shouldGoToRoot -> setOf(fileToUpload.parent)
+
+            else -> emptySet<VirtualFile>()
+        }
+
         return performUpload(
-            initialFilesToUpload = setOf(filesToUpload),
+            initialFilesToUpload = setOf(fileToUpload),
+            relativeToFolders = relativeToFolders,
             excludedPaths = excludedPaths,
             shouldSynchronize = shouldSynchronize,
             shouldExcludePaths = shouldExcludePaths
@@ -362,6 +385,9 @@ class MpyTransferService(private val project: Project) {
                     sourceFolders,
                     projectDir
                 )
+
+                println(fileToTargetPath)
+                println(folderToTargetPath)
 
                 if (fileSystemWidget.deviceInformation.hasCRC32) {
                     reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
