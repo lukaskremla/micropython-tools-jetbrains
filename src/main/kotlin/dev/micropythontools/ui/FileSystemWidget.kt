@@ -192,7 +192,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                 if (value is FileNode) {
                     append("  ${value.size} bytes", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
                 }
-
             }
         })
         val actionManager = ActionManager.getInstance()
@@ -463,7 +462,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         )*/
 
         // Try to sync the RTC, temporary feature, might not work on all boards and port versions
-        val scriptResponse = blindExecute(SHORT_TIMEOUT, initializeDeviceScript).extractSingleResponse()
+        val scriptResponse = blindExecute(TIMEOUT, initializeDeviceScript).extractSingleResponse()
 
         if (!scriptResponse.contains("ERROR")) {
             val (version, description, hasCRC32, hasBase64) = scriptResponse.split("&")

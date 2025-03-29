@@ -51,6 +51,7 @@ import kotlin.properties.Delegates
 private const val BOUNDARY = "*********FSOP************"
 
 internal const val SHORT_TIMEOUT = 2000L
+internal const val TIMEOUT = 5000L
 internal const val LONG_TIMEOUT = 20000L
 internal const val LONG_LONG_TIMEOUT = 600000L
 internal const val SHORT_DELAY = 20L
@@ -232,33 +233,46 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
             offTtyBuffer.clear()
             val result = mutableListOf<SingleExecResponse>()
 
-            //println("Commands to execute: ${commands.joinToString(separator = "\n")}\n")
             for (command in commands) {
                 try {
-                    withTimeout(commandTimeout) {
-                        when (command) {
-                            is String -> {
-                                sendCommand(command)
-                            }
+                    var toExecute = when (command) {
+                        is String -> {
+                            command
+                        }
 
-                            is Pair<*, *> -> {
-                                val cmd = command.first
-                                val size = command.second
+                        is Pair<*, *> -> {
+                            val cmd = command.first
+                            val size = command.second
 
-                                if (cmd is String && (size == null || size is Int)) {
-                                    sendCommand(cmd)
-                                    if (size != null && progressCallback != null) {
-                                        progressCallback(size)
-                                    }
-                                } else {
-                                    throw IllegalArgumentException("Expected Pair<String, Int?> but got ${command::class.java}")
+                            if (cmd is String && (size == null || size is Int)) {
+                                if (size != null && progressCallback != null) {
+                                    progressCallback(size)
                                 }
-                            }
-
-                            else -> {
-                                throw IllegalArgumentException("Unexpected command type: ${command::class.java}")
+                                cmd
+                            } else {
+                                throw IllegalArgumentException("Expected Pair<String, Int?> but got ${command::class.java}")
                             }
                         }
+
+                        else -> {
+                            throw IllegalArgumentException("Unexpected command type: ${command::class.java}")
+                        }
+                    }
+
+                    // Increase the timeout dynamically using WebREPL
+                    val adjustedTimeout = when {
+                        !settings.state.usingUart -> {
+                            // The timeout should accommodate for the additional time WebREPL requires
+                            // due to the MPY WebREPL overflow-preventing delays
+                            // Add an extra 200 ms tolerance at the end for good measure
+                            commandTimeout + (toExecute.toByteArray(Charsets.UTF_8).size / 255 * 300) + 200
+                        }
+
+                        else -> commandTimeout
+                    }
+
+                    withTimeout(adjustedTimeout) {
+                        sendCommand(toExecute)
 
                         while (!(offTtyBuffer.startsWith("OK") && offTtyBuffer.endsWith("\u0004>") && offTtyBuffer.count { it == '\u0004' } == 2)) {
                             delay(SHORT_DELAY)
@@ -293,11 +307,10 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
     // Helper method to send a command line by line
     private suspend fun sendCommand(command: String) {
         if (settings.state.usingUart) {
-            mpyClient?.send(command)
-            /*command.lines().forEach { line ->
-                mpyClient?.send(line)
-                //delay(SHORT_DELAY)
-            }*/
+            command.lines().forEach { line ->
+                mpyClient?.send("$line\n")
+                delay(SHORT_DELAY)
+            }
         } else {
             command.lines().map { "$it\n" }.forEach { line ->
                 // Convert to bytes for precise measuring
@@ -379,7 +392,6 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
             }
         }
     }
-
 
     override fun dispose() {
         close()

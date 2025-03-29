@@ -197,9 +197,9 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                 }
                         }
                         row {
-                            comment("WebREPL is temporarily disabled due to a bug. It will be reinstated in a later release.")
+                            comment("WebREPL support is currently highly experimental. Learn more <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains\">here</a>")
                         }
-                    }.visibleIf(webReplRadioButton.selected).enabled(false)
+                    }.visibleIf(webReplRadioButton.selected)
                 }.bottomGap(BottomGap.NONE).enabled(isDisconnected())
 
                 indent {
@@ -245,18 +245,13 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                     .bindText(parameters::wifiPassword)
                                     .columns(25)
                             }
-                            row {
-                                comment(
-                                    "These credentials will be used to establish a network connection over serial communication.<br>" +
-                                            "FTP uploads currently do not support webREPL"
-                                )
-                            }
                         }
 
-                        /*
-                         *"These credentials will be used to establish a network connection over serial communication.<br>" +
-                         *"If WebREPL is active, its URL is used instead."
-                         */
+                        indent {
+                            row {
+                                comment("WebREPL doesn't require wi-fi credentials, its URL is used automatically")
+                            }
+                        }
 
                         row {
                             cacheFTPScriptCheckBox = checkBox("Cache FTP script on device")
