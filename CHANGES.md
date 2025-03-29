@@ -1,6 +1,16 @@
 The Changelog
 =============
 
+0.4.2 - 29.3.2025
+------------------
+
+* Added more help text and links to the documentation in our GitHub repo
+* Fixed incorrect run configuration naming on Windows
+* Fixed several FTP related issues, overall the resiliency and efficiency of FTP uploads is now increased, they also
+  support WebREPL
+* Re-enabled WebREPL, currently it will be slow and it might also be fragile, this should be further improved in future
+  versions, it is recommended to use FTP uploads in combination with WebREPL to alleviate the slowness problems
+
 0.4.1 - 22-3-2025
 ------------------
 

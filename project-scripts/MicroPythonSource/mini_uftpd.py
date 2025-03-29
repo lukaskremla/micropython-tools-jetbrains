@@ -1,5 +1,12 @@
-import errno, gc, network, socket, sys, uos
+import errno
+import gc
+import socket
+import sys
+
+import network
+import uos
 from micropython import alloc_emergency_exception_buf, const
+
 
 class ___ftp:
     CHUNK_SIZE = const(1024)
@@ -234,20 +241,27 @@ class ___ftp:
                 continue
 
             ifconfig = wlan.ifconfig()
-            addr = socket.getaddrinfo(ifconfig[0], port)
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.bind(addr[0][4])
-            sock.listen(1)
-            sock.setsockopt(socket.SOL_SOCKET,
-                            self.SO_REGISTER_HANDLER,
-                            lambda s: self.accept_ftp_connect(s, ifconfig[0]))
-            self.ftp_sockets.append(sock)
+            try:
+                addr = socket.getaddrinfo(ifconfig[0], port)
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                sock.bind(addr[0][4])
+                sock.listen(1)
+                sock.setsockopt(socket.SOL_SOCKET,
+                                self.SO_REGISTER_HANDLER,
+                                lambda s: self.accept_ftp_connect(s, ifconfig[0]))
+                self.ftp_sockets.append(sock)
+            except Exception:
+                pass
+
             if splash:
                 print("FTP server started on {}:{}".format(ifconfig[0], port))
 
-        self.data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.data_socket.bind(('0.0.0.0', self.DATA_PORT))
-        self.data_socket.listen(1)
-        self.data_socket.settimeout(10)
+        try:
+            self.data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.data_socket.bind(('0.0.0.0', self.DATA_PORT))
+            self.data_socket.listen(1)
+            self.data_socket.settimeout(10)
+        except:
+            pass

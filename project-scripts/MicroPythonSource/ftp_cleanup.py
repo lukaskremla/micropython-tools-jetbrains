@@ -14,27 +14,36 @@
 * limitations under the License.
 """
 
-
-import network, gc
+import network
 
 def m():
-    for interface in [network.STA_IF, network.AP_IF]:
-        wlan = network.WLAN(interface)
+    clean_wifi = %s
 
-        if not wlan.active():
-            continue
+    if clean_wifi:
+        for interface in [network.STA_IF, network.AP_IF]:
+            wlan = network.WLAN(interface)
 
-        try:
-            wlan.disconnect()
-        except:
-            pass
+            if not wlan.active():
+                continue
 
-        wlan.active(False)
+            try:
+                wlan.disconnect()
+            except:
+                pass
+
+            wlan.active(False)
 
     try:
-        ___stop()
+        uftpd.stop()
     except:
         pass
+
+    try:
+        ___ftp().stop()
+        del ___ftp
+    except:
+        pass
+
 
 m()
 del m

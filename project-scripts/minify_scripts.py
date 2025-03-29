@@ -14,13 +14,11 @@
 * limitations under the License.
 """
 
-
 import os
-import shutil
 import re
+import shutil
 
 import python_minifier
-
 
 path = os.path.abspath(__file__)
 current_dir = os.path.dirname(path)
@@ -38,6 +36,7 @@ except FileNotFoundError:
 os.mkdir(scripts_dir)
 os.mkdir(target_dir)
 
+
 def do_minification(source_directory, target_directory):
     for file in os.listdir(source_directory):
         print(f"Processing {file}")
@@ -50,8 +49,8 @@ def do_minification(source_directory, target_directory):
             do_minification(source_path, target_path)
             continue
 
-    # Temporarily avoid minifying uftpd, there are too many edge cases that must be handled
-        if file.startswith("uftpd") or file.startswith("mini_uftpd"):
+        # Temporarily avoid minifying uftpd, there are too many edge cases that must be handled
+        if file.startswith("uftpd") or file.startswith("mini_uftpd") or file.startswith("ftp_cleanup"):
             with open(source_path) as f:
                 with open(target_path, "w") as t:
                     t.write(f.read())
@@ -89,16 +88,16 @@ def do_minification(source_directory, target_directory):
             found_as_patterns = re.findall(import_as_pattern, minified_code)
 
             # Avoid mangling start() and stop() uftpd methods as they need to be consistent for other parts of the code
-            #if file.startswith("uftpd") or file.startswith("mini_uftpd"):
+            # if file.startswith("uftpd") or file.startswith("mini_uftpd"):
             #    found_def_patterns.remove("start")
             #    found_def_patterns.remove("stop")
 
             # Join the collected patterns to a list
             names_to_mangle = (
-                found_global_patterns +
-                found_def_patterns +
-                found_class_patterns +
-                found_as_patterns
+                    found_global_patterns +
+                    found_def_patterns +
+                    found_class_patterns +
+                    found_as_patterns
             )
 
             # Prepare a list for saving global names that should be deleted at the end
@@ -117,7 +116,14 @@ def do_minification(source_directory, target_directory):
                         global_names_to_del.append(mangled_name)
 
             # De-stringify templates, these are later replaced with real values during command execution
-            minified_code = minified_code.replace("\'%s\'", "%s")
+            # Each string template has a custom integer value in the source code
+            # This is to prevent the minifier from only defining one variable as "%s" and then defining all other variables
+            # To be this variable
+            for i in range(10):
+                minified_code = minified_code.replace(f"\'%s{i}\'", "%s")
+
+            # Also handle the case where just one template is used without an index
+            minified_code = minified_code.replace(f"\'%s\'", "%s")
 
             # Map the global name del statements
             del_statements = [f"del {name}" for name in global_names_to_del]
@@ -131,5 +137,6 @@ def do_minification(source_directory, target_directory):
                     t.write("\n" + del_statements)
                 # Append gc.collect() at the end to assure proper garbage collection
                 t.write("\n" + "gc.collect()")
+
 
 do_minification(mpy_source_dir, target_dir)

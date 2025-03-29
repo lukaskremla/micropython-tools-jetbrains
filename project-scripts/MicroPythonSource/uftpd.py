@@ -21,12 +21,13 @@
 #
 import errno
 import gc
-import network
 import socket
 import sys
+from time import sleep_ms, localtime
+
+import network
 import uos
 from micropython import alloc_emergency_exception_buf, const
-from time import sleep_ms, localtime
 
 # constant definitions
 CHUNK_SIZE = const(1024)
@@ -44,7 +45,7 @@ client_busy = False
 # Interfaces: (IP-Address (string), IP-Address (integer), Netmask (integer))
 
 month_name = ("", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 
 class FTPClient:
@@ -397,10 +398,12 @@ class FTPClient:
         # tidy up before leaving
         client_busy = False
 
+
 def log_msg(level, *args):
     global verbose_l
     if verbose_l >= level:
         print(*args)
+
 
 # close client and remove it from the list
 def close_client(cl):
@@ -410,6 +413,7 @@ def close_client(cl):
         if client.command_client == cl:
             del client_list[i]
             break
+
 
 def accept_ftp_connect(ftp_socket, local_addr):
     # Accept new calls for the server
@@ -424,10 +428,12 @@ def accept_ftp_connect(ftp_socket, local_addr):
         except:
             pass
 
+
 def num_ip(ip):
     items = ip.split(".")
     return (int(items[0]) << 24 | int(items[1]) << 16 |
             int(items[2]) << 8 | int(items[3]))
+
 
 def stop():
     global ftp_sockets, data_socket
@@ -449,6 +455,7 @@ def stop():
         data_socket.close()
         data_socket = None
 
+
 # start listening for ftp connections on port 21
 def start(port=21, verbose=0, splash=True):
     global ftp_sockets, data_socket
@@ -467,20 +474,27 @@ def start(port=21, verbose=0, splash=True):
             continue
 
         ifconfig = wlan.ifconfig()
-        addr = socket.getaddrinfo(ifconfig[0], port)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(addr[0][4])
-        sock.listen(1)
-        sock.setsockopt(socket.SOL_SOCKET,
-                        SO_REGISTER_HANDLER,
-                        lambda s: accept_ftp_connect(s, ifconfig[0]))
-        ftp_sockets.append(sock)
+        try:
+            addr = socket.getaddrinfo(ifconfig[0], port)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind(addr[0][4])
+            sock.listen(1)
+            sock.setsockopt(socket.SOL_SOCKET,
+                            SO_REGISTER_HANDLER,
+                            lambda s: accept_ftp_connect(s, ifconfig[0]))
+            ftp_sockets.append(sock)
+        except Exception:
+            pass
+
         if splash:
             print("FTP server started on {}:{}".format(ifconfig[0], port))
 
-    data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    data_socket.bind(('0.0.0.0', DATA_PORT))
-    data_socket.listen(1)
-    data_socket.settimeout(10)
+    try:
+        data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        data_socket.bind(('0.0.0.0', DATA_PORT))
+        data_socket.listen(1)
+        data_socket.settimeout(10)
+    except:
+        pass

@@ -133,7 +133,7 @@ class MpyTransferService(private val project: Project) {
         mkdirCommands.add("del ___m")
         mkdirCommands.add("gc.collect()")
 
-        fileSystemWidget(project)?.blindExecute(SHORT_TIMEOUT, *mkdirCommands.toTypedArray())?.extractSingleResponse()
+        fileSystemWidget(project)?.blindExecute(LONG_TIMEOUT, *mkdirCommands.toTypedArray())?.extractSingleResponse()
     }
 
     private fun calculateCRC32(file: VirtualFile): String {
@@ -289,6 +289,7 @@ class MpyTransferService(private val project: Project) {
 
         var ftpUploadClient: MpyFTPClient? = null
         var shouldCleanUpFTP = false
+        var hasUftpdCached: Boolean? = null
 
         var uploadedSuccessfully = false
 
@@ -416,6 +417,8 @@ class MpyTransferService(private val project: Project) {
                         }
                     }
 
+                    // Iterate over files that are being uploaded
+                    // exempt them from synchronization
                     val alreadyExistingFolders = mutableSetOf<VirtualFile>()
                     folderToTargetPath.keys.forEach { folder ->
                         val path = folderToTargetPath[folder]
@@ -428,16 +431,25 @@ class MpyTransferService(private val project: Project) {
                         }
                     }
 
+                    val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
+
+                    // Check if uftpd is cached
+                    if (fileToTargetPath.values.any { it == cachedFtpScriptPath }) {
+                        hasUftpdCached = true
+                    }
+
+                    // Remove already existing file system entries
                     fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                     folderToTargetPath.keys.removeAll(alreadyExistingFolders)
 
                     if (shouldSynchronize) {
+                        // Remove explicitly excluded paths
                         if (shouldExcludePaths && excludedPaths.isNotEmpty()) {
                             targetPathsToRemove.removeAll(excludedPaths)
                         }
 
+                        // Special handling for cached FTP scripts
                         if (settings.state.useFTP && settings.state.cacheFTPScript) {
-                            val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
                             targetPathsToRemove.remove(cachedFtpScriptPath)
                         }
 
@@ -483,17 +495,28 @@ class MpyTransferService(private val project: Project) {
                         if (settings.state.cacheFTPScript) {
                             reporter.text("Validating the cached FTP script...")
 
-                            val commands = mutableListOf<String>(
-                                "try:",
-                                "   import $cachedFtpScriptImportPath",
-                                "   print('valid')",
-                                "except ImportError:",
-                                "   pass"
-                            )
+                            val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
+                            val cachedFtpScriptImportPath = cachedFtpScriptPath
+                                .replace("/", ".")
+                                .removeSuffix(".py")
+                                .trim('.')
 
-                            delay(500)
-                            val isUftpdAvailable = fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
-                                .extractSingleResponse() == "valid"
+                            val isUftpdAvailable: Boolean = when {
+                                hasUftpdCached != null -> hasUftpdCached
+                                else -> {
+                                    val commands = mutableListOf<String>(
+                                        "try:",
+                                        "   import $cachedFtpScriptImportPath",
+                                        "   print('valid')",
+                                        "except ImportError:",
+                                        "   pass"
+                                    )
+
+                                    delay(500)
+                                    fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
+                                        .extractSingleResponse() == "valid"
+                                }
+                            }
 
                             if (!isUftpdAvailable) {
                                 val ftpFile = pythonService.retrieveMpyScriptAsVirtualFile("uftpd.py")
@@ -512,27 +535,59 @@ class MpyTransferService(private val project: Project) {
                                     reporter.fraction(uploadFtpProgress)
                                 }
 
-                                fileSystemWidget.upload(cachedFtpScriptPath, ftpFile.contentsToByteArray(), ::ftpUploadProgressCallbackHandler)
+                                val scriptPath = settings.state.cachedFTPScriptPath
+
+                                val parentDirectories = when {
+                                    scriptPath == null -> setOf("")
+                                    else -> {
+                                        val parts = scriptPath.split("/")
+                                        buildSet {
+                                            var currentPath = ""
+                                            for (part in parts) {
+                                                if (part.isEmpty()) continue
+                                                currentPath += "/$part"
+                                                add(currentPath)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Create the parent directories
+                                safeCreateDirectories(parentDirectories)
+
+                                try {
+                                    fileSystemWidget.upload(cachedFtpScriptPath, ftpFile.contentsToByteArray(), ::ftpUploadProgressCallbackHandler)
+                                } catch (e: Throwable) {
+                                    print(e)
+                                }
                             }
                         }
 
                         reporter.text("Establishing an FTP server connection...")
 
-                        val cleanupScriptName = "ftp_cleanup.py"
-                        val cleanupScript = pythonService.retrieveMpyScriptAsString(cleanupScriptName)
-                        val commands = mutableListOf<String>(cleanupScript)
+                        val commands = mutableListOf<String>()
 
-                        val wifiConnectScriptName = "connect_to_wifi.py"
-                        val wifiConnectScript = pythonService.retrieveMpyScriptAsString(wifiConnectScriptName)
-                        val formattedWifiConnectScript = wifiConnectScript.format(
-                            """"$ssid"""",
-                            """"$password"""",
-                            20, // Wi-Fi connection timeout
+                        commands.add("import $cachedFtpScriptImportPath as uftpd")
+                        val cleanUpScriptName = "ftp_cleanup.py"
+                        val cleanupScriptName = pythonService.retrieveMpyScriptAsString(cleanUpScriptName)
+                        val formattedCleanUpScript = cleanupScriptName.format(
+                            if (settings.state.usingUart) "True" else "False"
                         )
-                        commands.add(formattedWifiConnectScript)
+                        commands.add(formattedCleanUpScript)
+
+                        if (settings.state.usingUart) {
+                            val wifiConnectScriptName = "connect_to_wifi.py"
+                            val wifiConnectScript = pythonService.retrieveMpyScriptAsString(wifiConnectScriptName)
+                            val formattedWifiConnectScript = wifiConnectScript.format(
+                                """"$ssid"""",
+                                """"$password"""",
+                                20, // Wi-Fi connection timeout
+                            )
+                            commands.add(formattedWifiConnectScript)
+                        }
 
                         if (settings.state.cacheFTPScript) {
-                            commands.add("import $cachedFtpScriptImportPath")
+                            commands.add("import $cachedFtpScriptImportPath as uftpd")
                             commands.add("uftpd.start()")
                         } else {
                             val miniUftpdScript = pythonService.retrieveMpyScriptAsString("mini_uftpd.py")
@@ -566,9 +621,17 @@ class MpyTransferService(private val project: Project) {
                             )
                         } else {
                             try {
-                                val ip = scriptResponse
-                                    .removePrefix("FTP server started on ")
-                                    .removeSuffix(":21")
+                                val ip = when {
+                                    settings.state.usingUart -> scriptResponse
+                                        .removePrefix("FTP server started on ")
+                                        .removeSuffix(":21")
+
+                                    else -> settings.state.webReplUrl
+                                        ?.removePrefix("ws://")
+                                        ?.removePrefix("wss://")
+                                        ?.split(":")[0]
+                                        ?: ""
+                                }
 
                                 ftpUploadClient = MpyFTPClient()
                                 ftpUploadClient.connect(ip, "", "") // No credentials are used
@@ -634,11 +697,25 @@ class MpyTransferService(private val project: Project) {
 
                         ftpUploadClient?.disconnect()
 
-                        val scriptFileName = "ftp_cleanup.py"
+                        val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
+                        val cachedFtpScriptImportPath = cachedFtpScriptPath
+                            .replace("/", ".")
+                            .removeSuffix(".py")
+                            .trim('.')
 
-                        val ftpCleanupScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
+                        val commands = mutableListOf<String>()
 
-                        fileSystemWidget(project)?.blindExecute(SHORT_TIMEOUT, ftpCleanupScript)
+                        commands.add("import $cachedFtpScriptImportPath as uftpd")
+                        val cleanUpScriptName = "ftp_cleanup.py"
+                        val cleanupScriptName = pythonService.retrieveMpyScriptAsString(cleanUpScriptName)
+                        val formattedCleanUpScript = cleanupScriptName.format(
+                            if (settings.state.usingUart) "True" else "False"
+                        )
+                        commands.add(formattedCleanUpScript)
+
+                        commands.add(formattedCleanUpScript)
+
+                        fileSystemWidget(project)?.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
                     }
                 }
             }
