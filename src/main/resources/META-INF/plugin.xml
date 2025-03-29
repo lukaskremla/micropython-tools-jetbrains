@@ -6,6 +6,7 @@
         <ul>
             <li>Added more help text and links to the documentation in our GitHub repo</li>
             <li>Fixed incorrect run configuration naming on Windows</li>
+            <li>Fixed a bug with "path" upload configuration type</li>
             <li>Cleaned up port name displaying on Windows</li>
             <li>Fixed several FTP related issues, overall the resiliency and efficiency of FTP uploads is now increased, they also support WebREPL</li>
             <li>Re-enabled WebREPL, currently it will be slow and it might also be fragile, this should be further improved in future versions, it is recommended to use FTP uploads in combination with WebREPL to alleviate the slowness problems</li>
