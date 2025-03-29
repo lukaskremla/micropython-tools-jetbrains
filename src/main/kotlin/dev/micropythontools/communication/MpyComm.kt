@@ -20,6 +20,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.Strings
@@ -27,6 +28,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.text.nullize
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
+import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.ConnectionParameters
 import dev.micropythontools.ui.FileSystemWidget
 import dev.micropythontools.ui.NOTIFICATION_GROUP
@@ -84,6 +86,8 @@ fun ExecResponse.extractResponse(): String {
 }
 
 open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable, Closeable {
+    private val settings = fileSystemWidget.project.service<MpySettingsService>()
+
     val stateListeners = mutableListOf<StateListener>()
 
     @Volatile
@@ -288,12 +292,38 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
 
     // Helper method to send a command line by line
     private suspend fun sendCommand(command: String) {
-        command.lines().forEachIndexed { index, line ->
-            if (index > 0) {
-                delay(SHORT_DELAY)
+        if (settings.state.usingUart) {
+            mpyClient?.send(command)
+            /*command.lines().forEach { line ->
+                mpyClient?.send(line)
+                //delay(SHORT_DELAY)
+            }*/
+        } else {
+            command.lines().map { "$it\n" }.forEach { line ->
+                // Convert to bytes for precise measuring
+                val bytes = line.toByteArray(Charsets.UTF_8)
+                var index = 0
+
+                while (index < bytes.size) {
+                    // Iterate over chunks of 255 bytes or whatever size remains
+                    val endIndex = minOf(index + 255, bytes.size)
+
+                    // Get chunk
+                    val chunk = bytes.copyOfRange(index, endIndex)
+
+                    // Convert back to string before sending
+                    val chunkStr = String(chunk, Charsets.UTF_8)
+
+                    // Send and wait
+                    mpyClient?.send(chunkStr)
+                    print(chunkStr)
+                    delay(200)
+
+                    index = endIndex
+                }
             }
-            mpyClient?.send("$line\n")
         }
+
         mpyClient?.send("\u0004")
     }
 
