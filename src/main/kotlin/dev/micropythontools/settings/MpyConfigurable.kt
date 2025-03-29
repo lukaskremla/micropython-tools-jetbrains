@@ -129,6 +129,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                     .bindSelected(parameters::isPluginEnabled)
             }
 
+            row {
+                comment("Find usage tips, report bugs or ask questions on our <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains\">GitHub</a>")
+            }
+
             panel {
                 connectionGroup = group("Connection") {
                     buttonsGroup {
