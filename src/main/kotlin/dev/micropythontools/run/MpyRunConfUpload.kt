@@ -51,8 +51,9 @@ class MpyRunConfUpload(
     private val transferService = project.service<MpyTransferService>()
 
     private fun getFileName(): String {
-        val path = options.path ?: return ""
-        return path.substringAfterLast("/")
+        val path = options.path ?: return "Unknown"
+        val file = StandardFileSystems.local().findFileByPath(path) ?: return "Unknown"
+        return file.name
     }
 
     override fun suggestedName(): String {
