@@ -14,24 +14,26 @@
 * limitations under the License.
 """
 
+import time
 
-import network, time, gc
+import network
+
 
 def m():
-    ssid = "%s"
-    password = "%s"
-    wifi_timeout = "%s"
+    ssid = "%s1"
+    password = "%s2"
+    wifi_timeout = "%s3"
     sta = network.WLAN(network.STA_IF)
     sta.active(True)
     sta.connect(ssid, password)
     i = 0
     while not sta.isconnected():
         time.sleep(1)
-        i+= 1
+        i += 1
         if i > wifi_timeout:
             print(f"ERROR: Connecting to \"{ssid}\" failed, connection timed out. Check your network settings.")
             break
-    print(f"IP: {sta.ifconfig()[0]}")
+
 
 m()
 del m
