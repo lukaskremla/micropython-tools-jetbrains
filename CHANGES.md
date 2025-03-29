@@ -6,6 +6,7 @@ The Changelog
 
 * Added more help text and links to the documentation in our GitHub repo
 * Fixed incorrect run configuration naming on Windows
+* Cleaned up port name displaying on Windows
 * Fixed several FTP related issues, overall the resiliency and efficiency of FTP uploads is now increased, they also
   support WebREPL
 * Re-enabled WebREPL, currently it will be slow and it might also be fragile, this should be further improved in future

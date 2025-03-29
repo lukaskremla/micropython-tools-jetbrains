@@ -56,15 +56,21 @@ import java.io.IOException
  */
 class MpyTransferService(private val project: Project) {
     fun listSerialPorts(filterManufacturers: Boolean = project.service<MpySettingsService>().state.filterManufacturers): MutableList<String> {
+        val os = System.getProperty("os.name").lowercase()
+
+        val isWindows = os.contains("win")
+
         val filteredPorts = mutableListOf<String>()
-
         val ports = SerialPort.getCommPorts()
-        for (port in ports) {
-            if ((filterManufacturers && port.manufacturer == "Unknown") ||
-                port.systemPortPath.startsWith("/dev/tty.")
-            ) continue
 
-            filteredPorts.add(port.systemPortPath)
+        for (port in ports) {
+            if ((filterManufacturers && port.manufacturer == "Unknown") || port.systemPortPath.startsWith("/dev/tty.")) continue
+
+            if (isWindows) {
+                filteredPorts.add(port.systemPortName)
+            } else {
+                filteredPorts.add(port.systemPortPath)
+            }
         }
 
         return filteredPorts
