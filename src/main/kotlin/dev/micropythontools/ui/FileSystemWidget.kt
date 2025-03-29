@@ -19,6 +19,7 @@ package dev.micropythontools.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -151,8 +152,8 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                 ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
             }
         } else {
-            tree.emptyText.appendText("No board is connected")
-            tree.emptyText.appendLine("Connect...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+            tree.emptyText.appendText("No device connected")
+            tree.emptyText.appendLine("Connect device", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 performReplAction(
                     project,
                     false,
@@ -163,6 +164,12 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                         doConnect(reporter)
                     }
                 )
+            }
+
+            tree.emptyText.appendLine("")
+            tree.emptyText.appendLine("Find usage tips, report bugs or ask questions on our ")
+            tree.emptyText.appendText("GitHub", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                BrowserUtil.browse("https://github.com/lukaskremla/micropython-tools-jetbrains")
             }
         }
     }
