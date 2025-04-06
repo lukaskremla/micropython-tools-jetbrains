@@ -39,7 +39,6 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyTransferService
-import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.normalizeMpyPath
 import dev.micropythontools.settings.validateMpyPath
 import java.awt.BorderLayout
@@ -82,7 +81,7 @@ private data class SourceItem(
     }
 
     val icon = if (isValid)
-        IconLoader.getIcon("icons/MpySource.svg", MpyRunConfUploadEditor::class.java)
+        IconLoader.getIcon("icons/MpySource.svg", this::class.java)
     else AllIcons.General.Error
 }
 
@@ -104,8 +103,9 @@ private data class ExcludedItem(val path: String) {
  * @authors Lukas Kremla
  */
 class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : SettingsEditor<MpyRunConfUpload>() {
-    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", MpyConfigurable::class.java)
-    val transferService = runConfiguration.project.service<MpyTransferService>()
+    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", this::class.java)
+
+    private val transferService = runConfiguration.project.service<MpyTransferService>()
 
     private val parameters = with(runConfiguration.options) {
         FlashParameters(
