@@ -17,7 +17,6 @@
 
 package dev.micropythontools.communication
 
-import com.fazecast.jSerialComm.SerialPort
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -40,131 +39,31 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.project.stateStore
-import com.intellij.util.containers.TreeTraversal
-import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.sourceroots.MpySourceRootType
 import dev.micropythontools.ui.*
-import dev.micropythontools.util.MpyPythonService
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.IOException
+
 
 @Service(Service.Level.PROJECT)
 /**
  * @author Lukas Kremla, elmot
  */
 class MpyTransferService(private val project: Project) {
-    fun listSerialPorts(filterManufacturers: Boolean = project.service<MpySettingsService>().state.filterManufacturers): MutableList<String> {
-        val os = System.getProperty("os.name").lowercase()
-
-        val isWindows = os.contains("win")
-
-        val filteredPorts = mutableListOf<String>()
-        val ports = SerialPort.getCommPorts()
-
-        for (port in ports) {
-            if ((filterManufacturers && port.manufacturer == "Unknown") || port.systemPortPath.startsWith("/dev/tty.")) continue
-
-            if (isWindows) {
-                filteredPorts.add(port.systemPortName)
-            } else {
-                filteredPorts.add(port.systemPortPath)
-            }
-        }
-
-        return filteredPorts
-    }
-
-    suspend fun recursivelySafeDeletePaths(paths: Set<String>) {
-        val commands = mutableListOf(
-            "import os, gc",
-            "def ___d(p):",
-            "   try:",
-            "       os.stat(p)",
-            "   except:",
-            "       return",
-            "   try:",
-            "       os.remove(p)",
-            "       return",
-            "   except:",
-            "       pass",
-            "   for r in os.ilistdir(p):",
-            "       f = f'{p}/{r[0]}' if p != '/' else f'/{r[0]}'",
-            "       if r[1] & 0x4000:",
-            "           ___d(f)",
-            "       else:",
-            "           os.remove(f)",
-            "   try:",
-            "       os.rmdir(p)",
-            "   except:",
-            "       pass"
-        )
-
-        val filteredPaths = paths.filter { path ->
-            // Keep this path only if no other path is a prefix of it
-            paths.none { otherPath ->
-                otherPath != path && path.startsWith("$otherPath/")
-            }
-        }
-
-        filteredPaths.forEach {
-            commands.add("___d('${it}')")
-        }
-
-        commands.add("del ___d")
-        commands.add("gc.collect()")
-
-        fileSystemWidget(project)?.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())?.extractResponse()
-    }
-
-    suspend fun safeCreateDirectories(paths: Set<String>) {
-        val mkdirCommands = mutableListOf(
-            "import os, gc",
-            "def ___m(p):",
-            "   try:",
-            "       os.mkdir(p)",
-            "   except:",
-            "       pass"
-        )
-
-        println(paths)
-
-        val allPaths = buildSet {
-            paths.forEach { path ->
-                // Generate and add all parent directories
-                val parts = path.split("/")
-                var currentPath = ""
-                for (part in parts) {
-                    if (part.isEmpty()) continue
-                    currentPath += "/$part"
-                    add(currentPath)
-                }
-            }
-        }
-
-        val sortedPaths = allPaths
-            // Sort shortest paths first, ensures parents are created before children
-            .sortedBy { it.split("/").filter { it.isNotEmpty() }.size }
-            .toList()
-
-        sortedPaths.forEach {
-            mkdirCommands.add("___m('$it')")
-        }
-        mkdirCommands.add("del ___m")
-        mkdirCommands.add("gc.collect()")
-
-        fileSystemWidget(project)?.blindExecute(LONG_TIMEOUT, *mkdirCommands.toTypedArray())?.extractSingleResponse()
-    }
-
-    private fun calculateCRC32(file: VirtualFile): String {
-        val localFileBytes = file.contentsToByteArray()
-        val crc = java.util.zip.CRC32()
-        crc.update(localFileBytes)
-        return String.format("%08x", crc.value)
-    }
-
     private fun VirtualFile.leadingDot() = this.name.startsWith(".")
+
+    val VirtualFile.crc32: String
+        get() {
+            val localFileBytes = this.contentsToByteArray()
+            val crc = java.util.zip.CRC32()
+            crc.update(localFileBytes)
+            return "%08x".format(crc.value)
+        }
 
     private fun collectProjectUploadables(): Set<VirtualFile> {
         return project.modules.flatMap { module ->
@@ -304,7 +203,7 @@ class MpyTransferService(private val project: Project) {
         FileDocumentManager.getInstance().saveAllDocuments()
 
         val settings = project.service<MpySettingsService>()
-        val pythonService = project.service<MpyPythonService>()
+        val deviceService = project.service<MpyDeviceService>()
 
         val excludedFolders = collectExcluded()
         val sourceFolders = collectMpySourceRoots()
@@ -322,12 +221,16 @@ class MpyTransferService(private val project: Project) {
 
         var uploadedSuccessfully = false
 
+        // Define the initially collected maps here to allow final verification in the clean-up action
+        var fileToTargetPath = mutableMapOf<VirtualFile, String>()
+        var folderToTargetPath = mutableMapOf<VirtualFile, String>()
+
         performReplAction(
             project = project,
             connectionRequired = true,
             description = "Upload",
-            requiresRefreshAfter = true,
-            action = { fileSystemWidget, reporter ->
+            requiresRefreshAfter = false,
+            action = { reporter ->
                 reporter.text("collecting files and creating directories...")
                 reporter.fraction(null)
 
@@ -370,7 +273,7 @@ class MpyTransferService(private val project: Project) {
                     }
                 }
 
-                val fileToTargetPath = createVirtualFileToTargetPathMap(
+                fileToTargetPath = createVirtualFileToTargetPathMap(
                     filesToUpload.toSet(),
                     targetDestination,
                     relativeToFolders,
@@ -378,7 +281,7 @@ class MpyTransferService(private val project: Project) {
                     projectDir
                 )
 
-                val folderToTargetPath = createVirtualFileToTargetPathMap(
+                folderToTargetPath = createVirtualFileToTargetPathMap(
                     foldersToCreate,
                     targetDestination,
                     relativeToFolders,
@@ -386,31 +289,17 @@ class MpyTransferService(private val project: Project) {
                     projectDir
                 )
 
-                println(fileToTargetPath)
-                println(folderToTargetPath)
-
-                if (fileSystemWidget.deviceInformation.hasCRC32) {
+                if (deviceService.deviceInformation.hasCRC32) {
                     reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
-                    fileSystemWidget.quietHashingRefresh(reporter)
+                    deviceService.fileSystemWidget?.quietHashingRefresh(reporter)
                 } else if (shouldSynchronize) {
                     reporter.text("Synchronizing...")
-                    fileSystemWidget.quietRefresh(reporter)
+                    deviceService.fileSystemWidget?.quietRefresh(reporter)
                 }
 
-                if (shouldSynchronize || fileSystemWidget.deviceInformation.hasCRC32) {
+                if (shouldSynchronize || deviceService.deviceInformation.hasCRC32) {
                     // Traverse and collect all file system nodes
-                    val allNodes = mutableListOf<FileSystemNode>()
-                    val root = fileSystemWidget.tree.model.root as DirNode
-                    TreeUtil.treeNodeTraverser(root)
-                        .traverse(TreeTraversal.POST_ORDER_DFS)
-                        .mapNotNull {
-                            when (val node = it) {
-                                is DirNode -> node
-                                is FileNode -> node
-                                else -> null
-                            }
-                        }
-                        .toCollection(allNodes)
+                    val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
 
                     // Map target paths to file system nodes
                     val targetPathToNode = mutableMapOf<String, FileSystemNode>()
@@ -430,7 +319,7 @@ class MpyTransferService(private val project: Project) {
                     fileToTargetPath.keys.forEach { file ->
                         val path = fileToTargetPath[file]
                         val size = file.length.toInt()
-                        val hash = calculateCRC32(file)
+                        val hash = file.crc32
 
                         val matchingNode = targetPathToNode[path]
 
@@ -486,16 +375,14 @@ class MpyTransferService(private val project: Project) {
                         }
 
                         // Delete remaining existing target paths that aren't a part of the upload
-                        delay(500)
-                        recursivelySafeDeletePaths(targetPathsToRemove)
+                        deviceService.recursivelySafeDeletePaths(targetPathsToRemove)
                     }
                 }
 
                 // Create all directories
                 if (folderToTargetPath.isNotEmpty()) {
                     reporter.text("Creating directories...")
-                    delay(500)
-                    safeCreateDirectories(folderToTargetPath.values.toSet())
+                    deviceService.safeCreateDirectories(folderToTargetPath.values.toSet())
                 }
 
                 val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
@@ -503,180 +390,18 @@ class MpyTransferService(private val project: Project) {
                 if (shouldUseFTP(project, totalBytes) && fileToTargetPath.isNotEmpty()) {
                     shouldCleanUpFTP = true
 
-                    reporter.text("Retrieving FTP credentials...")
-
-                    val wifiCredentials = settings.retrieveWifiCredentials()
-                    val ssid = wifiCredentials.userName
-                    val password = wifiCredentials.getPasswordAsString()
-
-                    if (ssid.isNullOrBlank()) {
+                    try {
+                        ftpUploadClient = MpyFTPClient(project)
+                        val ip = ftpUploadClient.setupFtpServer(reporter, hasUftpdCached)
+                        ftpUploadClient.connect(ip, "", "")
+                    } catch (e: Throwable) {
                         Notifications.Bus.notify(
                             Notification(
                                 NOTIFICATION_GROUP,
-                                "Cannot upload over FTP, no SSID was provided in settings! Falling back to REPL uploads.",
+                                e.localizedMessage,
                                 NotificationType.ERROR
                             ), project
                         )
-                    } else {
-                        val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
-                        val cachedFtpScriptImportPath = cachedFtpScriptPath
-                            .replace("/", ".")
-                            .removeSuffix(".py")
-                            .trim('.')
-
-                        if (settings.state.cacheFTPScript) {
-                            reporter.text("Validating the cached FTP script...")
-
-                            val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
-                            val cachedFtpScriptImportPath = cachedFtpScriptPath
-                                .replace("/", ".")
-                                .removeSuffix(".py")
-                                .trim('.')
-
-                            val isUftpdAvailable: Boolean = when {
-                                hasUftpdCached != null -> hasUftpdCached
-                                else -> {
-                                    val commands = mutableListOf<String>(
-                                        "try:",
-                                        "   import $cachedFtpScriptImportPath",
-                                        "   print('valid')",
-                                        "except ImportError:",
-                                        "   pass"
-                                    )
-
-                                    delay(500)
-                                    fileSystemWidget.blindExecute(SHORT_TIMEOUT, *commands.toTypedArray())
-                                        .extractSingleResponse() == "valid"
-                                }
-                            }
-
-                            if (!isUftpdAvailable) {
-                                val ftpFile = pythonService.retrieveMpyScriptAsVirtualFile("uftpd.py")
-                                val ftpTotalBytes = ftpFile.length.toDouble()
-                                var uploadedFTPKB = 0.0
-                                var uploadFtpProgress = 0.0
-
-                                fun ftpUploadProgressCallbackHandler(uploadedBytes: Int) {
-                                    uploadedFTPKB += (uploadedBytes.toDouble() / 1000)
-                                    // Convert to double for maximal accuracy
-                                    uploadFtpProgress += (uploadedBytes.toDouble() / ftpTotalBytes.toDouble())
-                                    // Ensure that uploadProgress never goes over 1.0
-                                    // as floating point arithmetic can have minor inaccuracies
-                                    uploadFtpProgress = uploadFtpProgress.coerceIn(0.0, 1.0)
-                                    reporter.text("Uploading ftp script... ${"%.2f".format(uploadedFTPKB)} KB of ${"%.2f".format(ftpTotalBytes / 1000)} KB")
-                                    reporter.fraction(uploadFtpProgress)
-                                }
-
-                                val scriptPath = settings.state.cachedFTPScriptPath
-
-                                val parentDirectories = when {
-                                    scriptPath == null -> setOf("")
-                                    else -> {
-                                        val parts = scriptPath.split("/")
-                                        buildSet {
-                                            var currentPath = ""
-                                            for (part in parts) {
-                                                if (part.isEmpty()) continue
-                                                currentPath += "/$part"
-                                                add(currentPath)
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Create the parent directories
-                                safeCreateDirectories(parentDirectories)
-
-                                try {
-                                    fileSystemWidget.upload(cachedFtpScriptPath, ftpFile.contentsToByteArray(), ::ftpUploadProgressCallbackHandler)
-                                } catch (e: Throwable) {
-                                    print(e)
-                                }
-                            }
-                        }
-
-                        reporter.text("Establishing an FTP server connection...")
-
-                        val commands = mutableListOf<String>()
-
-                        commands.add("import $cachedFtpScriptImportPath as uftpd")
-                        val cleanUpScriptName = "ftp_cleanup.py"
-                        val cleanupScriptName = pythonService.retrieveMpyScriptAsString(cleanUpScriptName)
-                        val formattedCleanUpScript = cleanupScriptName.format(
-                            if (settings.state.usingUart) "True" else "False"
-                        )
-                        commands.add(formattedCleanUpScript)
-
-                        if (settings.state.usingUart) {
-                            val wifiConnectScriptName = "connect_to_wifi.py"
-                            val wifiConnectScript = pythonService.retrieveMpyScriptAsString(wifiConnectScriptName)
-                            val formattedWifiConnectScript = wifiConnectScript.format(
-                                """"$ssid"""",
-                                """"$password"""",
-                                20, // Wi-Fi connection timeout
-                            )
-                            commands.add(formattedWifiConnectScript)
-                        }
-
-                        if (settings.state.cacheFTPScript) {
-                            commands.add("import $cachedFtpScriptImportPath as uftpd")
-                            commands.add("uftpd.start()")
-                        } else {
-                            val miniUftpdScript = pythonService.retrieveMpyScriptAsString("mini_uftpd.py")
-
-                            commands.add(miniUftpdScript)
-                            commands.add(
-                                "___ftp().start()"
-                            )
-                        }
-
-                        // Catch all exceptions to avoid showing the wi-fi credentials as a notification
-                        val scriptResponse = try {
-                            delay(500)
-                            fileSystemWidget.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
-                                .extractSingleResponse().trim()
-                        } catch (e: Throwable) {
-                            if (e.localizedMessage.contains("timed")) {
-                                "ERROR: FTP Connection attempt timed out"
-                            } else {
-                                "ERROR: There was a problem attempting to establish the FTP connection $e"
-                            }
-                        }
-
-                        if (scriptResponse.contains("ERROR")) {
-                            Notifications.Bus.notify(
-                                Notification(
-                                    NOTIFICATION_GROUP,
-                                    "Ran into an error establishing an FTP connection, falling back to REPL uploads: $scriptResponse",
-                                    NotificationType.ERROR
-                                ), project
-                            )
-                        } else {
-                            try {
-                                val ip = when {
-                                    settings.state.usingUart -> scriptResponse
-                                        .removePrefix("FTP server started on ")
-                                        .removeSuffix(":21")
-
-                                    else -> settings.state.webReplUrl
-                                        ?.removePrefix("ws://")
-                                        ?.removePrefix("wss://")
-                                        ?.split(":")[0]
-                                        ?: ""
-                                }
-
-                                ftpUploadClient = MpyFTPClient()
-                                ftpUploadClient.connect(ip, "", "") // No credentials are used
-                            } catch (e: Exception) {
-                                Notifications.Bus.notify(
-                                    Notification(
-                                        NOTIFICATION_GROUP,
-                                        "Connecting to FTP server failed, falling back to REPL uploads: $e",
-                                        NotificationType.ERROR
-                                    ), project
-                                )
-                            }
-                        }
                     }
                 }
 
@@ -707,47 +432,55 @@ class MpyTransferService(private val project: Project) {
                             throw IOException("Timed out while uploading a file with FTP")
                         }
                     } else {
-                        fileSystemWidget.upload(path, file.contentsToByteArray(), ::progressCallbackHandler)
+                        deviceService.upload(path, file.contentsToByteArray(), ::progressCallbackHandler)
                     }
 
                     uploadedFiles++
                     checkCanceled()
                 }
 
-                // reporter text and fraction parameters are always set when the reporter is used elsewhere,
-                // but details aren't thus they should be cleaned up
-                reporter.details(null)
-
                 uploadedSuccessfully = true
             },
 
-            cleanUpAction = { fileSystemWidget, reporter ->
+            cleanUpAction = { reporter ->
+                // Reporter text and fraction parameters are always set when the reporter is used elsewhere,
+                // but details aren't thus they should be cleaned up
+                reporter.details(null)
+
                 if (shouldCleanUpFTP) {
-                    if (shouldUseFTP(project)) {
-                        reporter.text("Cleaning up after FTP upload...")
-                        reporter.fraction(null)
+                    reporter.text("Cleaning up after FTP upload...")
+                    reporter.fraction(null)
+                    ftpUploadClient?.teardownFtpServer()
+                }
 
-                        ftpUploadClient?.disconnect()
+                deviceService.fileSystemWidget?.refresh(reporter)
 
-                        val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
-                        val cachedFtpScriptImportPath = cachedFtpScriptPath
-                            .replace("/", ".")
-                            .removeSuffix(".py")
-                            .trim('.')
+                if (uploadedSuccessfully) {
+                    val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
 
-                        val commands = mutableListOf<String>()
+                    for (node in allNodes) {
+                        if (node is FileNode) {
+                            val file = fileToTargetPath.entries.firstOrNull { it.value == node.fullName }?.key ?: continue
+                            if (file.length != node.size.toLong()) continue
 
-                        commands.add("import $cachedFtpScriptImportPath as uftpd")
-                        val cleanUpScriptName = "ftp_cleanup.py"
-                        val cleanupScriptName = pythonService.retrieveMpyScriptAsString(cleanUpScriptName)
-                        val formattedCleanUpScript = cleanupScriptName.format(
-                            if (settings.state.usingUart) "True" else "False"
+                            fileToTargetPath.values.remove(node.fullName)
+                        }
+
+                        if (node is DirNode) {
+                            folderToTargetPath.entries.firstOrNull { it.value == node.fullName }?.key ?: continue
+
+                            folderToTargetPath.values.remove(node.fullName)
+                        }
+                    }
+
+                    if (!fileToTargetPath.isEmpty() || !folderToTargetPath.isEmpty()) {
+                        Notifications.Bus.notify(
+                            Notification(
+                                NOTIFICATION_GROUP,
+                                "Uploaded files don't match with the expected sizes. Please try to re-run the upload to fix this.",
+                                NotificationType.WARNING
+                            ), project
                         )
-                        commands.add(formattedCleanUpScript)
-
-                        commands.add(formattedCleanUpScript)
-
-                        fileSystemWidget(project)?.blindExecute(LONG_TIMEOUT, *commands.toTypedArray())
                     }
                 }
             }
@@ -758,12 +491,13 @@ class MpyTransferService(private val project: Project) {
     @Suppress("UnstableApiUsage")
     private suspend fun writeDown(
         node: FileSystemNode,
-        fileSystemWidget: FileSystemWidget,
         name: String,
         destination: VirtualFile?
     ) {
+        val mpyDeviceService = project.service<MpyDeviceService>()
+
         if (node is FileNode) {
-            val content = fileSystemWidget.download(node.fullName)
+            val content = mpyDeviceService.download(node.fullName)
             writeAction {
                 destination!!.findOrCreateFile(name).setBinaryContent(content)
             }
@@ -780,22 +514,24 @@ class MpyTransferService(private val project: Project) {
             connectionRequired = true,
             description = "Download",
             requiresRefreshAfter = false,
-            action = { fileSystemWidget, reporter ->
+            action = { reporter ->
                 reporter.text("Collecting files to download...")
                 reporter.fraction(null)
 
-                val selectedFiles = fileSystemWidget.selectedFiles()
-                if (selectedFiles.isEmpty()) return@performReplAction
+                val mpyDeviceService = project.service<MpyDeviceService>()
+
+                val selectedFiles = mpyDeviceService.fileSystemWidget?.selectedFiles()
+                if (selectedFiles.isNullOrEmpty()) return@performReplAction
                 var destination: VirtualFile? = null
 
                 withContext(Dispatchers.EDT) {
                     FileChooserFactory.getInstance().createPathChooser(
-                        FileChooserDescriptorFactory.createSingleFolderDescriptor(), fileSystemWidget.project, null
+                        FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null
                     ).choose(null) { folders ->
                         destination = folders.firstOrNull()
                         if (destination?.children?.isNotEmpty() == true) {
                             if (Messages.showOkCancelDialog(
-                                    fileSystemWidget.project,
+                                    project,
                                     "The destination folder is not empty.\nIts contents may be damaged.",
                                     "Warning",
                                     "Continue",
@@ -838,7 +574,7 @@ class MpyTransferService(private val project: Project) {
 
                 parentNameToFile.forEach { (parentName, node) ->
                     val name = if (parentName.isEmpty()) node.name else "$parentName/${node.name}"
-                    writeDown(node, fileSystemWidget, name, destination)
+                    writeDown(node, name, destination)
                     reporter.text("Downloading: file $downloadedFiles of ${parentNameToFile.size}")
                     reporter.fraction(downloadedFiles.toDouble() * singleFileProgress)
                     reporter.details(name)

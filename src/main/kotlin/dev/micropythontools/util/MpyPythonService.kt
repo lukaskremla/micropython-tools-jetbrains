@@ -76,7 +76,7 @@ class MpyPythonService(private val project: Project) {
         if (!scriptFileName.contains("uftpd")) {
             val lines = retrievedScript.lines().toMutableList()
 
-            while (i < 16) {
+            while (i < 15) {
                 lines.removeAt(0)
                 i++
             }

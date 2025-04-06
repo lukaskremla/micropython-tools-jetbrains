@@ -26,7 +26,7 @@ class MpyRunConfType : ConfigurationTypeBase(
     ID,
     "MicroPython Tools",
     "MicroPython Tools Run Configuration Type",
-    IconLoader.getIcon("/icons/pluginIcon.svg", MpyRunConfType::class.java)
+    IconLoader.getIcon("/icons/pluginIcon.svg", this::class.java)
 ) {
     init {
         // Multiple factories can be added here to achieve similar behavior to, for example docker, configurations
