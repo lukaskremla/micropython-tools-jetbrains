@@ -1,6 +1,18 @@
 The Changelog
 =============
 
+0.5.0 -
+------------------
+
+* Implemented raw paste mode for both WebREPL and Serial communication, webREPL should now work reliably and serial
+  communication should be significantly faster
+* Improved the WebREPL / Serial communication download feature, it should be more reliable and faster
+* Added support for .mpy files, they will now be recognized by the IDE, however, editing is not supported due to the
+  nature of the MicroPython bytecode files
+* Reworked and improved how visibility of REPL and context menu actions is handled
+* Reworked and improved naming of several REPL and context menu actions
+* Rewrote and optimized a significant portion of the code base, many small bugs and inconsistencies should be fixed
+
 0.4.3 - 16.4.2025
 ------------------
 
