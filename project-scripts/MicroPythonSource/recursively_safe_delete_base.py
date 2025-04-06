@@ -1,5 +1,5 @@
 """
-* Copyright 2024-2025 Lukas Kremla, Copyright 2000-2024 JetBrains s.r.o.
+* Copyright 2025 Lukas Kremla
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -18,15 +18,23 @@ import gc
 import os
 
 
-def m(p):
+def ___d(p):
+    try:
+        os.stat(p)
+    except:
+        return
+    try:
+        os.remove(p)
+        return
+    except:
+        pass
     for result in os.ilistdir(p):
-        file_path = f"{p}/{result[0]}" if p != "/" else f"/{result[0]}"
-
-        print(result[1], result[3] if len(result) > 3 else -1, file_path, 0, 0, sep="&")
+        file_path = f'{p}/{result[0]}' if p != '/' else f'/{result[0]}'
         if result[1] & 0x4000:
-            m(file_path)
-
-
-m("/")
-del m
-gc.collect()
+            ___d(file_path)
+        else:
+            os.remove(file_path)
+    try:
+        os.rmdir(p)
+    except:
+        pass
