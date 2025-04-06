@@ -37,12 +37,12 @@ dependencies {
         }
     }
 
-    implementation("org.java-websocket:Java-WebSocket:1.5.5")
     implementation("io.github.java-native:jssc:2.9.6") {
         exclude("org.slf4j", "slf4j-api")
     }
-    implementation("commons-net:commons-net:3.9.0")
     implementation("com.fazecast:jSerialComm:2.11.0")
+    implementation(files("libs/Java-WebSocket-1.6.1-CUSTOM_FIX_ver1.jar"))
+    implementation("commons-net:commons-net:3.9.0")
 }
 
 java {
@@ -138,6 +138,11 @@ tasks {
             into("micropython-tools-jetbrains")
             include("stubs/")
             include("scripts/")
+        }
+
+        from("$rootDir/libs") {
+            into("micropython-tools-jetbrains/lib")
+            include("Java-WebSocket-1.6.1-CUSTOM.jar")
         }
     }
     test {
