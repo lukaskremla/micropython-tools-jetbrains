@@ -1,5 +1,5 @@
 """
-* Copyright 2024-2025 Lukas Kremla, Copyright 2000-2024 JetBrains s.r.o.
+* Copyright 2024-2025 Lukas Kremla
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
 * limitations under the License.
 """
 
+import gc
+import os
 
-import os, gc
 
 class t:
     def __init__(self):
@@ -37,5 +38,7 @@ class t:
             if result[1] & 0x4000:
                 self.m(file_path)
 
+
 t().m("/")
 del t
+gc.collect()
