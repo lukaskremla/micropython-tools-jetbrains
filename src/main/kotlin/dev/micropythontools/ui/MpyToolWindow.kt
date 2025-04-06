@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CheckboxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -34,8 +35,9 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TtyConnector
-import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
+import dev.micropythontools.settings.EMPTY_PORT_NAME_TEXT
 import dev.micropythontools.settings.EMPTY_URL_TEXT
 import dev.micropythontools.settings.MpySettingsService
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
@@ -47,20 +49,24 @@ internal const val TOOL_WINDOW_ID = "MicroPython Tools"
 /**
  * @author elmot, Lukas Kremla
  */
-class MpyToolWindow : ToolWindowFactory, DumbAware {
+class MpyToolWindow() : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val newDisposable = Disposer.newDisposable(toolWindow.disposable, "Webrepl")
+        val deviceService = project.service<MpyDeviceService>()
+        val componentRegistryService = project.service<MpyComponentRegistryService>()
 
-        val fileSystemWidget = FileSystemWidget(project, newDisposable)
+        val newDisposable = Disposer.newDisposable(toolWindow.disposable, "MpyToolWindowDisposable")
+
+        val fileSystemWidget = FileSystemWidget(project)
         val fileSystemContent = ContentFactory.getInstance().createContent(fileSystemWidget, "File System", true)
         fileSystemContent.setDisposer(newDisposable)
         toolWindow.contentManager.addContent(fileSystemContent)
+        componentRegistryService.registerFileSystem(fileSystemWidget)
 
-        val jediTermWidget = jediTermWidget(project, newDisposable, fileSystemWidget.ttyConnector)
+        val jediTermWidget = jediTermWidget(project, newDisposable, deviceService.ttyConnector)
         val terminalContent = ContentFactory.getInstance().createContent(jediTermWidget, "REPL", true)
         terminalContent.setDisposer(newDisposable)
         toolWindow.contentManager.addContent(terminalContent)
-        fileSystemWidget.terminalContent = terminalContent
+        componentRegistryService.registerTerminalContent(terminalContent)
     }
 
     private fun jediTermWidget(project: Project, disposable: Disposable, connector: TtyConnector): JComponent {
@@ -86,7 +92,7 @@ class MpyToolWindow : ToolWindowFactory, DumbAware {
 }
 
 class AutoClearAction :
-    CheckboxAction("Auto Clear REPL", "Automatically clear REPL console on device reset/upload", null),
+    CheckboxAction("Auto Clear REPL", "Automatically clear REPL console on upload/reset", null),
     DumbAware {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -120,7 +126,8 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val project = e.project
 
-        val settings = project?.let { MpySettingsService.getInstance(it) }
+        val settings = project?.service<MpySettingsService>()
+        val deviceService = project?.service<MpyDeviceService>()
 
         val isPluginEnabled = settings?.state?.isPluginEnabled == true
         val portName = settings?.state?.portName
@@ -128,15 +135,20 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
         val url = settings?.state?.webReplUrl
 
         if (uart == true || uart == null) {
-            e.presentation.text = if (portName == "" || portName == null) "No Port Selected" else portName
+            e.presentation.text = if (portName == "" || portName == null) EMPTY_PORT_NAME_TEXT else portName
         } else {
             e.presentation.text = if (url == "") EMPTY_URL_TEXT else url
         }
 
         e.presentation.isEnabled =
             isPluginEnabled &&
-                    (fileSystemWidget(project)?.state == State.DISCONNECTED
-                            || fileSystemWidget(project)?.state == State.DISCONNECTING)
+                    (deviceService?.state == State.DISCONNECTED
+                            || deviceService?.state == State.DISCONNECTING)
+
+        // utilize this update method to ensure accurate FileSystemWidget empty text
+        ApplicationManager.getApplication().invokeLater {
+            deviceService?.fileSystemWidget?.updateEmptyText()
+        }
     }
 
     override fun createPopupActionGroup(button: JComponent, dataContext: DataContext): DefaultActionGroup {
@@ -146,9 +158,9 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
 
         val settings = project?.let { MpySettingsService.getInstance(it) }
 
-        val transferService = project?.service<MpyTransferService>()
+        val deviceService = project?.service<MpyDeviceService>()
 
-        val portListing = transferService?.listSerialPorts()
+        val portListing = deviceService?.listSerialPorts()
 
         portListing?.forEach { portName ->
             val action = object : AnAction(portName) {

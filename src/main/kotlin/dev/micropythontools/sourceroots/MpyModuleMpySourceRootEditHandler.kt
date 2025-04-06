@@ -31,7 +31,7 @@ class MpyModuleMpySourceRootEditHandler : ModuleSourceRootEditHandler<JavaSource
     }
 
     override fun getRootIcon(): Icon {
-        return IconLoader.getIcon("/icons/MpySource.svg", MpyModuleMpySourceRootEditHandler::class.java)
+        return IconLoader.getIcon("/icons/MpySource.svg", this::class.java)
     }
 
     override fun getFolderUnderRootIcon(): Icon? {

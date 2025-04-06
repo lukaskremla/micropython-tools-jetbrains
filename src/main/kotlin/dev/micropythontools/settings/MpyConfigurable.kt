@@ -33,10 +33,9 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
-import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
-import dev.micropythontools.ui.fileSystemWidget
-import dev.micropythontools.ui.performReplAction
+import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.util.MpyPythonService
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
@@ -66,13 +65,14 @@ private data class ConfigurableParameters(
  * @author Lukas Kremla
  */
 class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
-    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", MpyConfigurable::class.java)
+    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", this::class.java)
+
     private val settings = project.service<MpySettingsService>()
     private val pythonService = project.service<MpyPythonService>()
-    private val transferService = project.service<MpyTransferService>()
+    private val deviceService = project.service<MpyDeviceService>()
 
-    private fun isDisconnected() = (fileSystemWidget(project)?.state == State.DISCONNECTED ||
-            fileSystemWidget(project)?.state == State.DISCONNECTING)
+    private fun isDisconnected() = (deviceService.state == State.DISCONNECTED ||
+            deviceService.state == State.DISCONNECTING)
 
     private val parameters = with(settings.state) {
         runWithModalProgressBlocking(project, "Retrieving settings...") {
@@ -211,7 +211,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                     false,
                                     "Disconnecting...",
                                     false,
-                                    { _, reporter -> fileSystemWidget(project)?.disconnect(reporter) }
+                                    "Disconnect operation cancelled",
+                                    { reporter -> deviceService.disconnect(reporter) }
                                 )
 
                                 connectionGroup.enabled(true)
@@ -376,7 +377,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     override fun apply() {
         super.apply()
 
-        val oldStubPackage = settings.state.activeStubsPackage ?: ""
+        //val oldStubPackage = settings.state.activeStubsPackage ?: ""
 
         with(parameters) {
             settings.state.isPluginEnabled = isPluginEnabled
@@ -412,7 +413,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     fun updatePortSelectModel(portSelectModel: MutableCollectionComboBoxModel<String>, isInitialUpdate: Boolean = false) {
         val lsPortsParam = if (isInitialUpdate) parameters.filterManufacturers else filterManufacturersCheckBox.component.isSelected
 
-        val ports = transferService.listSerialPorts(lsPortsParam)
+        val ports = deviceService.listSerialPorts(lsPortsParam)
 
         portSelectModel.items
             .filterNot { it in ports || it == portSelectModel.selectedItem }

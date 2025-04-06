@@ -21,6 +21,7 @@ package dev.micropythontools.communication
  */
 interface MpyClient {
     fun send(string: String)
+    fun send(bytes: ByteArray)
     fun hasPendingData(): Boolean
     fun close()
     suspend fun connect(progressIndicatorText: String): MpyClient

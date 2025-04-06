@@ -30,11 +30,11 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.readText
+import dev.micropythontools.communication.MpyDeviceService
+import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.NOTIFICATION_GROUP
-import dev.micropythontools.ui.fileSystemWidget
-import dev.micropythontools.ui.performReplAction
 
 class MpyRunConfExecute(
     project: Project,
@@ -97,6 +97,8 @@ class MpyRunConfExecute(
             return null
         }
 
+        val deviceService = project.service<MpyDeviceService>()
+
         val path = options.path!!
         val switchToReplOnSuccess = options.switchToReplOnSuccess
 
@@ -104,12 +106,11 @@ class MpyRunConfExecute(
             FileDocumentManager.getInstance().saveAllDocuments()
             val file = StandardFileSystems.local().findFileByPath(path)!!
             val code = file.readText()
-            performReplAction(project, true, "Run code", false, { fileSystemWidget, _ ->
-                fileSystemWidget.instantRun(code, false)
+            performReplAction(project, true, "Run code", false, "REPL execution cancelled", { _ ->
+                deviceService.instantRun(code, false)
             })
 
-            val fileSystemWidget = fileSystemWidget(project)
-            if (switchToReplOnSuccess) fileSystemWidget?.activateRepl()
+            if (switchToReplOnSuccess) deviceService.activateRepl()
 
             return EmptyRunProfileState.INSTANCE
         } catch (e: Throwable) {
