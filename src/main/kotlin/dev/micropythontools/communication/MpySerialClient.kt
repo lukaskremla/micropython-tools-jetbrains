@@ -34,6 +34,11 @@ class MpySerialClient(private val comm: MpyComm) : MpyClient {
         port.writeString(string)
     }
 
+    override fun send(bytes: ByteArray) {
+        this@MpySerialClient.thisLogger().debug("< $bytes")
+        port.writeBytes(bytes)
+    }
+
     override fun hasPendingData(): Boolean = port.inputBufferBytesCount > 0
 
     override fun close() = closeBlocking()
@@ -41,9 +46,9 @@ class MpySerialClient(private val comm: MpyComm) : MpyClient {
     private val listener = SerialPortEventListener { event ->
         if (event.eventType and SerialPort.MASK_RXCHAR != 0) {
             val count = event.eventValue
-            val s = port.readBytes(count).toString(StandardCharsets.UTF_8)
-            comm.dataReceived(s)
-            this@MpySerialClient.thisLogger().debug("> $s")
+            val bytes = port.readBytes(count)
+            comm.dataReceived(bytes)
+            this@MpySerialClient.thisLogger().debug("> ${bytes.toString(StandardCharsets.UTF_8)}")
         }
     }
 

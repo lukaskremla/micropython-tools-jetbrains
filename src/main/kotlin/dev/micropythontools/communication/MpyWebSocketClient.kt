@@ -18,6 +18,7 @@ package dev.micropythontools.communication
 
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
@@ -37,7 +38,6 @@ private const val LOGIN_FAIL = "Access denied"
  * @author elmot
  */
 open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
-
     protected open fun open() = Unit
     protected open fun close(code: Int, reason: String, remote: Boolean) = Unit
     protected open fun error(ex: Exception) = Unit
@@ -52,16 +52,26 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
     private val webSocketClient = object : WebSocketClient(URI(comm.connectionParameters.webReplUrl)) {
         override fun onOpen(handshakedata: ServerHandshake) = open() //Nothing to do
 
-        override fun onMessage(message: String) {
-            this@MpyWebSocketClient.message(message)
-            if (connectInProcess) {
-                loginBuffer.append(message)
+        // The custom Java-Websocket modification never uses the onMessage with string param
+        override fun onMessage(p0: String?) = Unit
+
+        override fun onMessage(byteBuffer: ByteBuffer) {
+            val byteArray = byteBuffer.toByteArray()
+
+            val message = try {
+                byteArray.toString(StandardCharsets.UTF_8)
+            } catch (_: Throwable) {
+                null
+            }
+
+            message?.let { this@MpyWebSocketClient.message(it) }
+
+            if (connectInProcess && message != null) {
+                loginBuffer.append(byteArray.toString(StandardCharsets.UTF_8))
             } else {
-                comm.dataReceived(message)
+                comm.dataReceived(byteArray)
             }
         }
-
-        override fun onMessage(bytes: ByteBuffer) = onMessage(String(bytes.array(), StandardCharsets.UTF_8))
 
         override fun onError(ex: Exception) {
             error(ex)
@@ -80,7 +90,6 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                 comm.state = State.DISCONNECTED
             }
         }
-
     }
 
     init {
@@ -156,6 +165,12 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
     override fun closeBlocking() = webSocketClient.closeBlocking()
 
     override fun send(string: String) = webSocketClient.send(string)
+
+    override fun send(bytes: ByteArray) {
+        // The WebSocket send(ByteArray) implementation doesn't work well with WebREPL
+        // Converting the binary data to a string before sending will make sure WebREPL recognizes it
+        webSocketClient.send(String(bytes.map { it.toInt().toChar() }.toCharArray()))
+    }
 
     override fun sendPing() = webSocketClient.sendPing()
 

@@ -28,11 +28,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
+import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.NOTIFICATION_GROUP
-import dev.micropythontools.ui.fileSystemWidget
 
 /**
  * @authors Lukas Kremla
@@ -48,6 +48,7 @@ class MpyRunConfUpload(
 ), LocatableConfiguration {
 
     private val settings = project.service<MpySettingsService>()
+    private val deviceService = project.service<MpyDeviceService>()
     private val transferService = project.service<MpyTransferService>()
 
     private fun getFileName(): String {
@@ -149,9 +150,8 @@ class MpyRunConfUpload(
                 )
             }
             if (success) {
-                val fileSystemWidget = fileSystemWidget(project)
-                if (resetOnSuccess) fileSystemWidget?.reset()
-                if (switchToReplOnSuccess) fileSystemWidget?.activateRepl()
+                if (resetOnSuccess) deviceService.reset()
+                if (switchToReplOnSuccess) deviceService.activateRepl()
                 return EmptyRunProfileState.INSTANCE
             } else {
                 return null

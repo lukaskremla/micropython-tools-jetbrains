@@ -16,22 +16,24 @@
 
 package dev.micropythontools.ui
 
-import com.intellij.ide.FileIconProvider
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.PythonFileType
-import dev.micropythontools.settings.MpySettingsService
-import javax.swing.Icon
+import com.intellij.ui.content.Content
 
-class MpyIconProvider : FileIconProvider {
-    override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
-        val settings = project?.service<MpySettingsService>()
 
-        if (project == null || settings == null || !settings.state.isPluginEnabled) return null
+@Service(Service.Level.PROJECT)
+class MpyComponentRegistryService(private val project: Project) {
+    private var fileSystemWidget: FileSystemWidget? = null
+    private var terminalContent: Content? = null
 
-        return if (file.extension == "mpy")
-            PythonFileType.INSTANCE.icon
-        else null
+    fun registerFileSystem(widget: FileSystemWidget) {
+        fileSystemWidget = widget
     }
+
+    fun registerTerminalContent(content: Content) {
+        terminalContent = content
+    }
+
+    fun getFileSystemWidget() = fileSystemWidget
+    fun getTerminalContent() = terminalContent
 }

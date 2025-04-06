@@ -20,7 +20,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.Strings
@@ -28,32 +27,25 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.text.nullize
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
-import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.ui.ConnectionParameters
-import dev.micropythontools.ui.FileSystemWidget
 import dev.micropythontools.ui.NOTIFICATION_GROUP
-import kotlinx.coroutines.*
+import dev.micropythontools.util.MpyPythonService
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.NonNls
-import java.io.Closeable
-import java.io.IOException
-import java.io.PipedReader
-import java.io.PipedWriter
+import java.io.*
 import java.nio.charset.StandardCharsets
 import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.properties.Delegates
 
-/**
- * @author elmot
- */
-private const val BOUNDARY = "*********FSOP************"
 
 internal const val SHORT_TIMEOUT = 2000L
 internal const val TIMEOUT = 5000L
 internal const val LONG_TIMEOUT = 20000L
-internal const val LONG_LONG_TIMEOUT = 600000L
 internal const val SHORT_DELAY = 20L
 
 data class SingleExecResponse(
@@ -65,8 +57,6 @@ typealias ExecResponse = List<SingleExecResponse>
 enum class State {
     DISCONNECTING, DISCONNECTED, CONNECTING, CONNECTED, TTY_DETACHED
 }
-
-typealias StateListener = (State) -> Unit
 
 fun ExecResponse.extractSingleResponse(): String {
     if (this.size != 1 || this[0].stderr.isNotEmpty()) {
@@ -86,17 +76,18 @@ fun ExecResponse.extractResponse(): String {
     return this.mapNotNull { it.stdout.nullize(true) }.joinToString("\n")
 }
 
-open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable, Closeable {
-    private val settings = fileSystemWidget.project.service<MpySettingsService>()
+fun ByteArrayOutputStream.toUtf8String(): String = this.toString(StandardCharsets.UTF_8)
 
-    val stateListeners = mutableListOf<StateListener>()
-
+/**
+ * @author elmot, Lukas Kremla
+ */
+open class MpyComm(private val deviceService: MpyDeviceService, private val pythonService: MpyPythonService) : Disposable, Closeable {
     @Volatile
     private var mpyClient: MpyClient? = null
 
     protected open fun isTtySuspended(): Boolean = state == State.TTY_DETACHED
 
-    private var offTtyBuffer = StringBuilder()
+    private val offTtyByteBuffer = ByteArrayOutputStream()
 
     private val webSocketMutex = Mutex()
 
@@ -109,7 +100,7 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
     val ttyConnector: TtyConnector = WebSocketTtyConnector()
 
     var state: State by Delegates.observable(State.DISCONNECTED) { _, _, newValue ->
-        stateListeners.forEach { it(newValue) }
+        deviceService.stateListeners.forEach { it(newValue) }
     }
 
     open fun errorLogger(exception: Exception) {
@@ -128,37 +119,29 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
      *
      * This method does not handle directory creation, all necessary directories must be created before hand other wise the upload will fail
      */
-    @Throws(IOException::class, CancellationException::class, TimeoutCancellationException::class)
     suspend fun upload(fullName: @NonNls String, content: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {
         checkConnected()
-        val commands = mutableListOf<Any>("import os")
-        if (fileSystemWidget.deviceInformation.hasBase64 && content.size > 100 && content.count { b -> b in 32..127 } < content.size / 2) {
+        val commands = mutableListOf<Any>("import os, gc")
+        if (deviceService.deviceInformation.canDecodeBase64 && content.size > 256 && content.count { b -> b in 32..127 } < content.size / 2) {
             commands.addAll(binUpload(fullName, content))
         } else {
             commands.addAll(txtUpload(fullName, content))
         }
-
-        commands.add("print(os.stat('$fullName'))")
+        commands.add("gc.collect()")
 
         val result = webSocketMutex.withLock {
-            doBlindExecute(LONG_TIMEOUT, commands, progressCallback = progressCallback)
+            doBlindExecute(commands, progressCallback = progressCallback)
         }
         val error = result.mapNotNull { Strings.nullize(it.stderr) }.joinToString(separator = "\n", limit = 1000)
         if (error.isNotEmpty()) {
             throw IOException(error)
-        }
-        val fileData = result.last().stdout.split('(', ')', ',').map { it.trim().toIntOrNull() }
-        if (fileData.getOrNull(7) != content.size) {
-            throw IOException("Expected size is ${content.size}, uploaded ${fileData[5]}")
-        } else if (fileData.getOrNull(1) != 32768) {
-            throw IOException("Expected type is 32768, uploaded ${fileData[1]}")
         }
     }
 
     private fun txtUpload(fullName: @NonNls String, content: ByteArray): List<Any> {
         val commands = mutableListOf<Any>("___f=open('$fullName','wb')")
         val chunk = StringBuilder()
-        val maxDataChunk = 220
+        val maxDataChunk = 400
         var contentIdx = 0
         while (contentIdx < content.size) {
             chunk.setLength(0)
@@ -190,7 +173,7 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
             "___e=lambda b:___f.write(binascii.a2b_base64(b))",
             "___f=open('$fullName','wb')"
         )
-        val maxDataChunk = 120
+        val maxDataChunk = 384
         assert(maxDataChunk % 4 == 0)
         var contentIdx = 0
         val encoder = Base64.getEncoder()
@@ -205,36 +188,79 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
         return commands
     }
 
+    /**
+     * Method for executing MicroPython scripts and commands over REPL
+     * This method is only intended to be called internally in MpyComm
+     *
+     * @param commands List of commands to join and execute, can be a list of Strings or Pair(String, Int) pairs with uploadedBytes progress
+     * @param captureOutput Whether or not the method should first collect the output of the script before returning
+     * @param progressCallback A callback that will be contained if the commands contain Pair(String, Int) pairs with uploadedBytes progress
+     * @return The execution response
+     */
+    @OptIn(ExperimentalStdlibApi::class)
     @Throws(IOException::class)
     private suspend fun doBlindExecute(
-        commandTimeout: Long,
         commands: List<Any>,
+        captureOutput: Boolean = true,
         progressCallback: ((uploadedBytes: Int) -> Unit)? = null
     ): ExecResponse {
         state = State.TTY_DETACHED
         try {
+            // Enter raw-REPL
             withTimeout(LONG_TIMEOUT) {
+                // Repeatedly attempt to enter raw-REPL
                 do {
                     var promptNotReady = true
+
+                    // Soft reset the device
                     mpyClient?.send("\u0003")
                     mpyClient?.send("\u0003")
                     mpyClient?.send("\u0003")
-                    delay(SHORT_DELAY)
+
+                    // Attempt to enter raw-REPL by sending ctrl-A
                     mpyClient?.send("\u0001")
-                    withTimeoutOrNull(SHORT_TIMEOUT) {
-                        while (!offTtyBuffer.endsWith("\n>")) {
+                    withTimeout(SHORT_TIMEOUT) {
+                        while (!offTtyByteBuffer.toUtf8String().endsWith("\n>")) {
                             delay(SHORT_DELAY)
                         }
                         promptNotReady = false
                     }
                 } while (promptNotReady)
+                offTtyByteBuffer.reset()
+
+                // Enter raw paste mode
+                do {
+                    var pasteModeNotReady = true
+
+                    // Send bytes to initiate raw paste mode
+                    mpyClient?.send("\u0005A\u0001")
+                    withTimeout(SHORT_TIMEOUT) {
+                        // Check if the buffer contains at least 2 bytes
+                        while (offTtyByteBuffer.size() < 2) {
+                            delay(SHORT_DELAY)
+                        }
+
+                        val bytes = readAndDiscardXBytesFromBuffer(2)
+
+                        // Check if the device entered raw paste mode
+                        if (!(bytes[0] == 0x52.toByte() && bytes[1] == 0x01.toByte()))
+                            throw IOException("Device failed to enter raw paste mode")
+
+                        pasteModeNotReady = false
+                    }
+                } while (pasteModeNotReady)
             }
-            delay(SHORT_DELAY)
-            offTtyBuffer.clear()
+
+            if (offTtyByteBuffer.size() < 2) throw IOException("Missing paste mode flow control bytes")
+
+            val bytes = readAndDiscardXBytesFromBuffer(2)
+            val flowControlWindowSize = (bytes[0].toInt() and 0xFF) or ((bytes[1].toInt() and 0xFF) shl 8)
+            var remainingFlowControlWindowSize = flowControlWindowSize
+
             val result = mutableListOf<SingleExecResponse>()
 
-            for (command in commands) {
-                try {
+            try {
+                for (command in commands) {
                     var toExecute = when (command) {
                         is String -> {
                             command
@@ -259,33 +285,82 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
                         }
                     }
 
-                    // Increase the timeout dynamically using WebREPL
-                    val adjustedTimeout = when {
-                        !settings.state.usingUart -> {
-                            // The timeout should accommodate for the additional time WebREPL requires
-                            // due to the MPY WebREPL overflow-preventing delays
-                            // Add an extra 200 ms tolerance at the end for good measure
-                            commandTimeout + (toExecute.toByteArray(Charsets.UTF_8).size / 255 * 300) + 200
+                    if (commands.size > 1) {
+                        toExecute += "\n"
+                    }
+                    val commandBytes = toExecute.toByteArray(Charsets.UTF_8)
+
+                    var index = 0
+
+                    while (index < commandBytes.size) {
+                        if (remainingFlowControlWindowSize <= 0) {
+                            withTimeout(TIMEOUT) {
+                                // Check if the buffer contains exactly 1 byte indicating how to continue
+                                while (offTtyByteBuffer.size() < 1) {
+                                    delay(SHORT_DELAY)
+                                }
+
+                                val bytes = readAndDiscardXBytesFromBuffer(1)
+
+                                if (bytes[0] == 0x01.toByte()) {
+                                    remainingFlowControlWindowSize += flowControlWindowSize
+                                } else if (bytes[0] == 0x04.toByte()) {
+                                    mpyClient?.send(byteArrayOf(0x04.toByte()))
+                                    throw IOException("Device aborted paste")
+                                }
+                            }
                         }
 
-                        else -> commandTimeout
+                        val endIndex = minOf(index + remainingFlowControlWindowSize, commandBytes.size)
+
+                        // Get chunk
+                        val chunk = commandBytes.copyOfRange(index, endIndex)
+
+                        // Send chunk
+                        withTimeout(TIMEOUT) {
+                            mpyClient?.send(chunk)
+                        }
+
+                        // Increment index
+                        index = endIndex
+
+                        // Decrease the remaining flow control window size
+                        remainingFlowControlWindowSize -= chunk.size
                     }
+                }
 
-                    withTimeout(adjustedTimeout) {
-                        sendCommand(toExecute)
+                // Indicate end of transmission
+                withTimeout(TIMEOUT) {
+                    mpyClient?.send("\u0004")
+                }
 
-                        while (!(offTtyBuffer.startsWith("OK") && offTtyBuffer.endsWith("\u0004>") && offTtyBuffer.count { it == '\u0004' } == 2)) {
+                if (captureOutput) {
+                    withTimeout(LONG_TIMEOUT) {
+                        while (!(offTtyByteBuffer.toUtf8String().endsWith("\u0004>") &&
+                                    offTtyByteBuffer.toUtf8String().count { it == '\u0004' } == 3)
+                        ) {
                             delay(SHORT_DELAY)
                         }
-                        val eotPos = offTtyBuffer.indexOf('\u0004')
-                        val stdout = offTtyBuffer.substring(2, eotPos).trim()
-                        val stderr = offTtyBuffer.substring(eotPos + 1, offTtyBuffer.length - 2).trim()
-                        result.add(SingleExecResponse(stdout, stderr))
-                        offTtyBuffer.clear()
                     }
-                } catch (e: TimeoutCancellationException) {
-                    throw IOException("Timeout during command execution:$command", e)
+
+                    var currIndex = 0
+                    val foundEotCharacterIndexes = mutableListOf<Int>()
+                    while (currIndex < offTtyByteBuffer.toUtf8String().length) {
+                        val foundIndex = offTtyByteBuffer.toUtf8String().indexOf("\u0004", currIndex)
+                        if (foundIndex == -1) break
+                        foundEotCharacterIndexes.add(foundIndex)
+                        currIndex = foundIndex + 1
+                    }
+
+                    val stdout = offTtyByteBuffer.toUtf8String().substring(foundEotCharacterIndexes[0] + 1, foundEotCharacterIndexes[1]).trim()
+                    val stderr = offTtyByteBuffer.toUtf8String().substring(foundEotCharacterIndexes[1] + 1, foundEotCharacterIndexes[2]).trim()
+                    result.add(SingleExecResponse(stdout, stderr))
+                } else {
+                    result.add(SingleExecResponse("EXECUTED", ""))
                 }
+                offTtyByteBuffer.reset()
+            } catch (e: TimeoutCancellationException) {
+                throw IOException("Timeout during command execution:$commands", e)
             }
             return result
         } catch (e: CancellationException) {
@@ -296,48 +371,25 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
             mpyClient = null
             throw e
         } finally {
-            mpyClient?.send("\u0002")
-            offTtyBuffer.clear()
+            // Leave raw-REPL
+            if (captureOutput) mpyClient?.send("\u0002")
+            offTtyByteBuffer.reset()
             if (state == State.TTY_DETACHED) {
                 state = State.CONNECTED
             }
         }
     }
 
-    // Helper method to send a command line by line
-    private suspend fun sendCommand(command: String) {
-        if (settings.state.usingUart) {
-            command.lines().forEach { line ->
-                mpyClient?.send("$line\n")
-                delay(SHORT_DELAY)
-            }
-        } else {
-            command.lines().map { "$it\n" }.forEach { line ->
-                // Convert to bytes for precise measuring
-                val bytes = line.toByteArray(Charsets.UTF_8)
-                var index = 0
+    fun readAndDiscardXBytesFromBuffer(byteCount: Int): ByteArray {
+        val readBytes = offTtyByteBuffer.toByteArray().copyOfRange(0, byteCount)
+        val remainingBytes = offTtyByteBuffer.toByteArray().copyOfRange(byteCount, offTtyByteBuffer.toByteArray().size)
 
-                while (index < bytes.size) {
-                    // Iterate over chunks of 255 bytes or whatever size remains
-                    val endIndex = minOf(index + 255, bytes.size)
-
-                    // Get chunk
-                    val chunk = bytes.copyOfRange(index, endIndex)
-
-                    // Convert back to string before sending
-                    val chunkStr = String(chunk, Charsets.UTF_8)
-
-                    // Send and wait
-                    mpyClient?.send(chunkStr)
-                    print(chunkStr)
-                    delay(200)
-
-                    index = endIndex
-                }
-            }
+        offTtyByteBuffer.reset()
+        if (remainingBytes.isNotEmpty()) {
+            offTtyByteBuffer.writeBytes(remainingBytes)
         }
 
-        mpyClient?.send("\u0004")
+        return readBytes
     }
 
     fun checkConnected() {
@@ -349,14 +401,10 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
     }
 
     @Throws(IOException::class)
-    suspend fun blindExecute(commandTimeout: Long, vararg commands: String): ExecResponse {
+    suspend fun blindExecute(command: String): ExecResponse {
         checkConnected()
         webSocketMutex.withLock {
-            if (commands.size > 1) {
-                val scriptContent = commands.joinToString("\n")
-                return doBlindExecute(commandTimeout, listOf(scriptContent))
-            }
-            return doBlindExecute(commandTimeout, commands.toList())
+            return doBlindExecute(listOf(command))
         }
     }
 
@@ -364,32 +412,7 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
     suspend fun instantRun(command: @NonNls String) {
         checkConnected()
         webSocketMutex.withLock {
-            state = State.TTY_DETACHED
-            try {
-                mpyClient?.send("\u0003")
-                mpyClient?.send("\u0003")
-                mpyClient?.send("\u0003")
-                mpyClient?.send("\u0005")
-                while (!offTtyBuffer.contains("===")) {
-                    delay(SHORT_DELAY)
-                }
-                command.lines().forEach {
-                    offTtyBuffer.clear()
-                    mpyClient?.send("$it\n")
-                    offTtyBuffer.clear()
-                    delay(SHORT_DELAY)
-                }
-                mpyClient?.send("#$BOUNDARY\n")
-                while (!offTtyBuffer.contains(BOUNDARY)) {
-                    delay(SHORT_DELAY)
-                }
-                offTtyBuffer.clear()
-            } finally {
-                if (state == State.TTY_DETACHED) {
-                    state = State.CONNECTED
-                }
-                mpyClient?.send("\u0004")
-            }
+            doBlindExecute(listOf(command), captureOutput = false)
         }
     }
 
@@ -457,13 +480,12 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
         return if (connectionParameters.usingUart) MpySerialClient(this) else MpyWebSocketClient(this)
     }
 
-    @Throws(IOException::class)
     suspend fun connect() {
         val name = with(connectionParameters) {
             if (usingUart) portName else webReplUrl
         }
         state = State.CONNECTING
-        offTtyBuffer.clear()
+        offTtyByteBuffer.reset()
         webSocketMutex.withLock {
             try {
                 mpyClient = createClient().connect("Connecting to $name")
@@ -493,12 +515,18 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
         this.connectionParameters = parameters
     }
 
-    open fun dataReceived(s: String) {
+    open fun dataReceived(bytes: ByteArray) {
         when (state) {
-            State.TTY_DETACHED, State.CONNECTING -> offTtyBuffer.append(s)
+            State.TTY_DETACHED, State.CONNECTING -> offTtyByteBuffer.writeBytes(bytes)
             else -> {
                 runBlocking {
-                    outPipe.write(s)
+                    val rawString = bytes.toString(StandardCharsets.UTF_8)
+
+                    val filtered = rawString
+                        .replace("\u0004", "")  // Remove EOT characters
+                        .replace(Regex("\n>\\s*$"), "\n")  // Clean up raw-REPL prompts
+
+                    outPipe.write(filtered)
                     outPipe.flush()
                 }
             }
@@ -516,17 +544,80 @@ open class MpyComm(private val fileSystemWidget: FileSystemWidget) : Disposable,
     }
 
     suspend fun download(fileName: @NonNls String): ByteArray {
-        val command = """
-with open('$fileName','rb') as f:
-    while 1:
-          b=f.read(50)
-          if not b:break
-          print(b.hex())
-"""
-        val result = blindExecute(LONG_LONG_TIMEOUT, command).extractSingleResponse()
-        return result.filter { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }.chunked(2)
-            .map { it.toInt(16).toByte() }
-            .toByteArray()
+        val canEncodeBase64 = deviceService.deviceInformation.canEncodeBase64
+
+        val command = when (canEncodeBase64) {
+            true -> pythonService.retrieveMpyScriptAsString("download_file_base_64.py")
+            else -> pythonService.retrieveMpyScriptAsString("download_file_hex.py")
+        }
+
+        val result = webSocketMutex.withLock {
+            blindExecute(command.format(fileName)).extractSingleResponse()
+        }
+
+        return if (canEncodeBase64) {
+            val cleanOutput = result.replace("\n", "")
+
+            val decoder = Base64.getDecoder()
+            decoder.decode(cleanOutput)
+        } else {
+            result.filter { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }.chunked(2)
+                .map { it.toInt(16).toByte() }
+                .toByteArray()
+        }
     }
 
+    suspend fun recursivelySafeDeletePaths(paths: Set<String>) {
+        val commands = mutableListOf(
+            pythonService.retrieveMpyScriptAsString("recursively_safe_delete_base.py")
+        )
+
+        val filteredPaths = paths.filter { path ->
+            // Keep this path only if no other path is a prefix of it
+            paths.none { otherPath ->
+                otherPath != path && path.startsWith("$otherPath/")
+            }
+        }
+
+        filteredPaths.forEach {
+            commands.add("___d('${it}')")
+        }
+
+        commands.add("del ___d")
+        commands.add("gc.collect()")
+
+        blindExecute(commands.joinToString("\n"))
+    }
+
+    suspend fun safeCreateDirectories(paths: Set<String>) {
+        val commands = mutableListOf(
+            pythonService.retrieveMpyScriptAsString("safe_create_directories_base.py")
+        )
+
+        val allPaths = buildSet {
+            paths.forEach { path ->
+                // Generate and add all parent directories
+                val parts = path.split("/")
+                var currentPath = ""
+                for (part in parts) {
+                    if (part.isEmpty()) continue
+                    currentPath += "/$part"
+                    add(currentPath)
+                }
+            }
+        }
+
+        val sortedPaths = allPaths
+            // Sort shortest paths first, ensures parents are created before children
+            .sortedBy { it.split("/").filter { it.isNotEmpty() }.size }
+            .toList()
+
+        sortedPaths.forEach {
+            commands.add("___m('$it')")
+        }
+        commands.add("del ___m")
+        commands.add("gc.collect()")
+
+        blindExecute(commands.joinToString("\n"))
+    }
 }

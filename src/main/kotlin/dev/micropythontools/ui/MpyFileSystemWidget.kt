@@ -18,13 +18,11 @@
 package dev.micropythontools.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ActivityTracker
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -37,35 +35,23 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.content.Content
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.asSafely
-import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.tree.TreeUtil
-import com.jediterm.terminal.TerminalColor
-import com.jediterm.terminal.TtyConnector
-import com.jediterm.terminal.ui.JediTermWidget
 import dev.micropythontools.communication.*
-import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.settings.messageForBrokenUrl
 import dev.micropythontools.util.MpyPythonService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -83,63 +69,17 @@ import javax.swing.TransferHandler
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-data class DeviceInformation(
-    var version: String = "Unknown",
-    var description: String = "Unknown",
-    var hasCRC32: Boolean = false,
-    var hasBase64: Boolean = false
-)
-
-data class ConnectionParameters(
-    var usingUart: Boolean = true,
-    var portName: String,
-    var webReplUrl: String,
-    var webReplPassword: String,
-    var ssid: String,
-    var wifiPassword: String,
-    var activeStubsPackage: String? = null
-) {
-    constructor(portName: String) : this(
-        usingUart = true,
-        portName = portName,
-        webReplUrl = DEFAULT_WEBREPL_URL,
-        webReplPassword = "",
-        ssid = "",
-        wifiPassword = "",
-        activeStubsPackage = ""
-    )
-
-    constructor(webReplUrl: String, webReplPassword: String) : this(
-        usingUart = false,
-        portName = "",
-        webReplUrl = webReplUrl,
-        webReplPassword = webReplPassword,
-        ssid = "",
-        wifiPassword = "",
-        activeStubsPackage = null
-    )
-}
 
 /**
  * @authors elmot, Lukas Kremla
  */
-class FileSystemWidget(val project: Project, newDisposable: Disposable) :
-    JBPanel<FileSystemWidget>(BorderLayout()) {
-    var terminalContent: Content? = null
-    val ttyConnector: TtyConnector
-        get() = comm.ttyConnector
+class FileSystemWidget(val project: Project) : JBPanel<FileSystemWidget>(BorderLayout()) {
     val tree: Tree = Tree(newTreeModel())
-
-    private val comm: MpyComm = MpyComm(this).also { Disposer.register(newDisposable, it) }
 
     private val settings = project.service<MpySettingsService>()
     private val pythonService = project.service<MpyPythonService>()
+    private val deviceService = project.service<MpyDeviceService>()
     private val transferService = project.service<MpyTransferService>()
-
-    val state: State
-        get() = comm.state
-
-    var deviceInformation: DeviceInformation = DeviceInformation()
 
     private fun newTreeModel() = DefaultTreeModel(DirNode("/", "/"), true)
 
@@ -160,8 +100,8 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                     "Connecting...",
                     false,
                     "Connection attempt cancelled",
-                    { _, reporter ->
-                        doConnect(reporter)
+                    { reporter ->
+                        deviceService.doConnect(reporter)
                     }
                 )
             }
@@ -185,7 +125,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                 value as FileSystemNode
                 icon = when {
                     value is DirNode && !value.isVolume -> AllIcons.Nodes.Folder
-                    value is DirNode && value.isVolume -> IconLoader.getIcon("/icons/volume.svg", FileSystemWidget::class.java)
+                    value is DirNode && value.isVolume -> IconLoader.getIcon("/icons/volume.svg", this::class.java)
                     else -> FileTypeRegistry.getInstance().getFileTypeByFileName(value.name).icon
                 }
                 append(value.name)
@@ -196,7 +136,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         })
         val actionManager = ActionManager.getInstance()
         EditSourceOnDoubleClickHandler.install(tree) {
-            val action = actionManager.getAction("micropythontools.repl.OpenFile")
+            val action = actionManager.getAction("micropythontools.repl.OpenMpyFileAction")
             actionManager.tryToExecute(action, null, tree, TOOLWINDOW_CONTENT, true)
         }
         val popupActions = actionManager.getAction("micropythontools.repl.FSContextMenu") as ActionGroup
@@ -209,7 +149,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
 
         add(JBScrollPane(tree), BorderLayout.CENTER)
         add(actionToolbar.component, BorderLayout.NORTH)
-        comm.stateListeners.add {
+        deviceService.stateListeners.add {
             when (it) {
                 State.CONNECTED, State.TTY_DETACHED -> {
                 }
@@ -322,7 +262,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                             description = "Moving files...",
                             false,
                             cancelledMessage = "Move operation cancelled",
-                            { _, reporter ->
+                            { reporter ->
                                 var sure = false
 
                                 withContext(Dispatchers.EDT) {
@@ -380,13 +320,13 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                                     commands.add("os.rename(\"${node.fullName}\", \"$newPath\")")
                                 }
 
-                                transferService.recursivelySafeDeletePaths(pathsToRemove)
+                                deviceService.recursivelySafeDeletePaths(pathsToRemove)
 
-                                blindExecute(LONG_TIMEOUT, *commands.toTypedArray()).extractResponse()
+                                deviceService.blindExecute(commands).extractResponse()
 
                                 refresh(reporter)
                             },
-                            { _, reporter ->
+                            { reporter ->
                                 refresh(reporter)
                             }
                         )
@@ -443,136 +383,6 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         }
     }
 
-    private suspend fun initializeDevice() {
-        /*val calendar = Calendar.getInstance()
-
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
-        val second = calendar.get(Calendar.SECOND)*/
-
-        val scriptFileName = "initialize_device.py"
-
-        val initializeDeviceScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
-
-        /*val formattedScript = initializeDeviceScript.format(
-            "($year, $month, $day, $hour, $minute, $second, 0, 0)"
-        )*/
-
-        // Try to sync the RTC, temporary feature, might not work on all boards and port versions
-        val scriptResponse = blindExecute(TIMEOUT, initializeDeviceScript).extractSingleResponse()
-
-        if (!scriptResponse.contains("ERROR")) {
-            val (version, description, hasCRC32, hasBase64) = scriptResponse.split("&")
-
-            deviceInformation = DeviceInformation(
-                version,
-                description,
-                hasCRC32 == "True",
-                hasBase64 == "True"
-            )
-        } else {
-            deviceInformation = DeviceInformation()
-        }
-
-        var message: String? = if (!deviceInformation.hasCRC32) {
-            if (!deviceInformation.hasBase64) {
-                "The connected board is missing the crc32 and a2b_base64 binascii functions. " +
-                        "The already uploaded files check won't work and uploads may be slower."
-            } else {
-                "The connected board is missing the crc32 binascii function." +
-                        "The already uploaded files check won't work."
-            }
-        } else if (!deviceInformation.hasBase64) {
-            "The connected board is missing the a2b_base64 binascii function. " +
-                    "Uploads may be slower."
-        } else {
-            null
-        }
-
-        if (message != null) {
-            MessageDialogBuilder.Message(
-                "Missing MicroPython Libraries",
-                message
-            ).asWarning().buttons("Acknowledge").show(project)
-        }
-
-    }
-
-    suspend fun doConnect(reporter: RawProgressReporter) {
-        try {
-            if (state == State.CONNECTED) return
-
-            val settings = project.service<MpySettingsService>()
-
-            val device = if (settings.state.usingUart) settings.state.portName else settings.state.webReplUrl
-            reporter.text("Connecting to $device")
-            reporter.fraction(null)
-
-            var msg: String? = null
-            val connectionParameters: ConnectionParameters?
-            if (settings.state.usingUart) {
-                val portName = settings.state.portName ?: ""
-                if (portName.isBlank()) {
-                    msg = "No port is selected"
-                    connectionParameters = null
-                } else {
-                    connectionParameters = ConnectionParameters(portName)
-                }
-
-            } else {
-                val url = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL
-                val password = withContext(Dispatchers.EDT) {
-                    runWithModalProgressBlocking(project, "Retrieving credentials...") {
-                        project.service<MpySettingsService>().retrieveWebReplPassword()
-                    }
-                }
-
-                msg = messageForBrokenUrl(url)
-                if (password.isBlank()) {
-                    msg = "Empty password"
-                    connectionParameters = null
-                } else {
-                    connectionParameters = ConnectionParameters(url, password)
-                }
-            }
-            if (msg != null) {
-                withContext(Dispatchers.EDT) {
-                    val result = Messages.showIdeaMessageDialog(
-                        project,
-                        msg,
-                        "Cannot Connect",
-                        arrayOf("OK", "Settings..."),
-                        1,
-                        AllIcons.General.ErrorDialog,
-                        null
-                    )
-                    if (result == 1) {
-                        ShowSettingsUtil.getInstance()
-                            .showSettingsDialog(project, MpyConfigurable::class.java)
-                    }
-                }
-            } else {
-                if (connectionParameters != null) {
-                    setConnectionParams(connectionParameters)
-                    connect()
-                    try {
-                        if (state == State.CONNECTED) {
-                            initializeDevice()
-                            initialRefresh(reporter)
-                        }
-                    } finally {
-                        ActivityTracker.getInstance().inc()
-                    }
-                }
-            }
-        } catch (_: CancellationException) {
-            disconnect(reporter)
-        }
-    }
-
     suspend fun refresh(reporter: RawProgressReporter) =
         doRefresh(reporter, hash = false, disconnectOnCancel = true, isInitialRefresh = false, useReporter = true)
 
@@ -582,7 +392,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     suspend fun quietHashingRefresh(reporter: RawProgressReporter) =
         doRefresh(reporter, hash = true, disconnectOnCancel = false, isInitialRefresh = false, useReporter = false)
 
-    private suspend fun initialRefresh(reporter: RawProgressReporter) =
+    suspend fun initialRefresh(reporter: RawProgressReporter) =
         doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = true, useReporter = true)
 
     private suspend fun doRefresh(
@@ -597,7 +407,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             reporter.fraction(null)
         }
 
-        comm.checkConnected()
+        deviceService.checkConnected()
         val newModel = newTreeModel()
         val dirList: String
 
@@ -606,10 +416,10 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
         val fileSystemScanScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
 
         try {
-            dirList = blindExecute(LONG_TIMEOUT, fileSystemScanScript).extractSingleResponse()
+            dirList = deviceService.blindExecute(fileSystemScanScript).extractSingleResponse()
         } catch (e: CancellationException) {
             if (disconnectOnCancel) {
-                disconnect(reporter)
+                deviceService.disconnect(reporter)
             }
             // If this is the initial refresh the cancellation exception should be passed on as is, the user should
             // only be informed about the connection being cancelled. However, if this is not the initial refresh, the
@@ -624,7 +434,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
                 throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
             }
         } catch (e: Throwable) {
-            disconnect(reporter)
+            deviceService.disconnect(reporter)
             throw IOException("Micropython filesystem scan failed, ${e.localizedMessage}", e)
         }
         dirList.lines().filter { it.isNotBlank() }.forEach { line ->
@@ -669,7 +479,7 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
     }
 
     suspend fun deleteCurrent(reporter: RawProgressReporter) {
-        comm.checkConnected()
+        deviceService.checkConnected()
         val confirmedFileSystemNodes = withContext(Dispatchers.EDT) {
             val fileSystemNodes = tree.selectionPaths?.mapNotNull { it.lastPathComponent.asSafely<FileSystemNode>() }
                 ?.filter { it.fullName != "" && it.fullName != "/" } ?: emptyList()
@@ -710,87 +520,28 @@ class FileSystemWidget(val project: Project, newDisposable: Disposable) :
             .map { it.fullName }
             .toSet()
 
-        transferService.recursivelySafeDeletePaths(pathsToDelete)
+        deviceService.recursivelySafeDeletePaths(pathsToDelete)
     }
 
     fun selectedFiles(): Collection<FileSystemNode> {
         return tree.selectionPaths?.mapNotNull { it.lastPathComponent.asSafely<FileSystemNode>() } ?: emptyList()
     }
 
-    suspend fun disconnect(reporter: RawProgressReporter) {
-        val settings = MpySettingsService.getInstance(project)
-
-        reporter.text("Disconnecting from ${settings.state.portName}")
-        reporter.fraction(null)
-        comm.disconnect()
-        deviceInformation = DeviceInformation()
-    }
-
-    @Throws(IOException::class)
-    suspend fun upload(relativeName: @NonNls String, contentsToByteArray: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {
-        comm.upload(relativeName, contentsToByteArray, progressCallback)
-    }
-
-    @Throws(IOException::class)
-    suspend fun download(deviceFileName: @NonNls String): ByteArray =
-        comm.download(deviceFileName)
-
-    @Throws(IOException::class)
-    suspend fun instantRun(code: @NonNls String, showCode: Boolean) {
-        withContext(Dispatchers.EDT) {
-            activateRepl()
-        }
-        if (showCode) {
-            val terminal = UIUtil.findComponentOfType(terminalContent?.component, JediTermWidget::class.java)?.terminal
-            terminal?.apply {
-                carriageReturn()
-                newLine()
-                code.lines().forEach {
-                    val savedStyle = styleState.current
-                    val inactive = NamedColorUtil.getInactiveTextColor()
-                    val color = TerminalColor(inactive.red, inactive.green, inactive.blue)
-                    styleState.reset()
-                    styleState.current = styleState.current.toBuilder().setForeground(color).build()
-                    writeUnwrappedString(it)
-                    carriageReturn()
-                    newLine()
-                    styleState.current = savedStyle
+    fun allNodes(): Collection<FileSystemNode> {
+        val allNodes = mutableListOf<FileSystemNode>()
+        val root = tree.model.root as DirNode
+        TreeUtil.treeNodeTraverser(root)
+            .traverse(TreeTraversal.POST_ORDER_DFS)
+            .mapNotNull {
+                when (val node = it) {
+                    is DirNode -> node
+                    is FileNode -> node
+                    else -> null
                 }
             }
-        }
-        comm.instantRun(code)
-    }
+            .toCollection(allNodes)
 
-    @RequiresEdt
-    fun activateRepl(): Content? = terminalContent?.apply {
-        project.service<ToolWindowManager>().getToolWindow(TOOL_WINDOW_ID)?.activate(null, true, true)
-        manager?.setSelectedContent(this)
-    }
-
-    fun reset() = comm.reset()
-
-    @Throws(IOException::class)
-    suspend fun blindExecute(commandTimeout: Long, vararg commands: String): ExecResponse {
-        clearTerminalIfNeeded()
-        return comm.blindExecute(commandTimeout, *commands)
-    }
-
-    internal suspend fun clearTerminalIfNeeded() {
-        if (AutoClearAction.isAutoClearEnabled) {
-            withContext(Dispatchers.EDT) {
-                val widget =
-                    UIUtil.findComponentOfType(terminalContent?.component, JediTermWidget::class.java)
-                widget?.terminalPanel?.clearBuffer()
-            }
-        }
-    }
-
-    @Throws(IOException::class)
-    suspend fun connect() = comm.connect()
-
-    private fun setConnectionParams(connectionParameters: ConnectionParameters) = comm.setConnectionParams(connectionParameters)
-    fun interrupt() {
-        comm.interrupt()
+        return allNodes
     }
 }
 
