@@ -1,9 +1,8 @@
 import errno
 import gc
+import network
 import socket
 import sys
-
-import network
 import uos
 from micropython import alloc_emergency_exception_buf, const
 

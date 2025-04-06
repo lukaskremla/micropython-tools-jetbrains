@@ -1,5 +1,5 @@
 """
-* Copyright 2024-2025 Lukas Kremla
+* Copyright 2024-2025 Lukas Kremla, Copyright 2000-2024 JetBrains s.r.o.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,36 +14,22 @@
 * limitations under the License.
 """
 
-import network
+import gc
+
 
 def m():
-    clean_wifi = %s
-
-    if clean_wifi:
-        for interface in [network.STA_IF, network.AP_IF]:
-            wlan = network.WLAN(interface)
-
-            if not wlan.active():
-                continue
-
-            try:
-                wlan.disconnect()
-            except:
-                pass
-
-            wlan.active(False)
-
-    try:
-        uftpd.stop()
-    except:
-        pass
-
-    try:
-        ___ftp().stop()
-        del ___ftp
-    except:
-        pass
+    with open("%s", "rb") as f:
+        b = bytearray(256)
+        while True:
+            n = f.readinto(b)
+            if n == 0:
+                break
+            if n < 256:
+                print(b[:n].hex())
+            else:
+                print(b.hex())
 
 
 m()
 del m
+gc.collect()

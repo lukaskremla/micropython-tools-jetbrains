@@ -15,10 +15,9 @@
 """
 
 import os
+import python_minifier
 import re
 import shutil
-
-import python_minifier
 
 path = os.path.abspath(__file__)
 current_dir = os.path.dirname(path)
@@ -60,9 +59,9 @@ def do_minification(source_directory, target_directory):
             all_lines = s.readlines()
 
             # Separate the license header
-            license_header = "".join(all_lines[:17])
+            license_header = "".join(all_lines[:15])
             # Separate the script's code
-            script_content = "".join(all_lines[17:])
+            script_content = "".join(all_lines[15:])
 
             # Conduct minification
             minified_code = python_minifier.minify(
@@ -135,8 +134,9 @@ def do_minification(source_directory, target_directory):
                 # Only write additional del statements if there are any
                 if len(del_statements) > 0:
                     t.write("\n" + del_statements)
-                # Append gc.collect() at the end to assure proper garbage collection
-                t.write("\n" + "gc.collect()")
+                if len(del_statements) > 0 or not minified_code.endswith("gc.collect()"):
+                    # Append gc.collect() at the end to assure proper garbage collection
+                    t.write("\n" + "gc.collect()")
 
 
 do_minification(mpy_source_dir, target_dir)

@@ -14,9 +14,9 @@
 * limitations under the License.
 """
 
-import time
-
+import gc
 import network
+import time
 
 
 def m():
@@ -37,3 +37,4 @@ def m():
 
 m()
 del m
+gc.collect()

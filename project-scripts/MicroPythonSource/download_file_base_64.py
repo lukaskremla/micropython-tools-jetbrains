@@ -1,5 +1,5 @@
 """
-* Copyright 2024-2025 Lukas Kremla, Copyright 2000-2024 JetBrains s.r.o.
+* Copyright 2025 Lukas Kremla
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,19 +14,23 @@
 * limitations under the License.
 """
 
+import binascii
 import gc
-import os
 
 
-def m(p):
-    for result in os.ilistdir(p):
-        file_path = f"{p}/{result[0]}" if p != "/" else f"/{result[0]}"
+def m():
+    with open("%s", "rb") as f:
+        b = bytearray(384)
+        while True:
+            n = f.readinto(b)
+            if n == 0:
+                break
+            if n < 384:
+                print(binascii.b2a_base64(b[:n]))
+            else:
+                print(binascii.b2a_base64(b))
 
-        print(result[1], result[3] if len(result) > 3 else -1, file_path, 0, 0, sep="&")
-        if result[1] & 0x4000:
-            m(file_path)
 
-
-m("/")
+m()
 del m
 gc.collect()
