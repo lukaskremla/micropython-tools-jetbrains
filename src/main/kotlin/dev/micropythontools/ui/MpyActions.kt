@@ -18,11 +18,8 @@
 package dev.micropythontools.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionUpdateThread.BGT
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -36,6 +33,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.InputValidator
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtilRt
@@ -65,6 +63,10 @@ enum class EnabledWhen {
     ALWAYS, PLUGIN_ENABLED, CONNECTED, DISCONNECTED
 }
 
+/**
+ * Data class containing options of MpyActions. [visibleWhen] and [enabledWhen] only affect the default states.
+ * They can be modified as needed by overriding the customUpdate() function
+ */
 data class MpyActionOptions(
     val visibleWhen: VisibleWhen,
     val enabledWhen: EnabledWhen,
@@ -73,9 +75,14 @@ data class MpyActionOptions(
     val cancelledMessage: String? = null
 )
 
+data class DialogResult(
+    val shouldExecute: Boolean,
+    val resultToPass: Any?
+)
+
 abstract class MpyAction(
     text: String,
-    options: MpyActionOptions
+    protected val options: MpyActionOptions
 ) : MpyActionBase(
     text,
     options
@@ -92,7 +99,7 @@ abstract class MpyAction(
 
 abstract class MpyReplAction(
     text: String,
-    private val options: MpyActionOptions
+    protected val options: MpyActionOptions
 ) : MpyActionBase(
     text,
     options
@@ -100,6 +107,10 @@ abstract class MpyReplAction(
     final override fun actionPerformed(e: AnActionEvent) {
         val wasInitialized = initialize(e)
         if (!wasInitialized) return
+
+        val dialogResult = dialogToShowFirst(e)
+
+        if (!dialogResult.shouldExecute) return
 
         performReplAction(
             project,
@@ -111,7 +122,12 @@ abstract class MpyReplAction(
         )
     }
 
-    abstract suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter)
+    open suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) = Unit
+
+    open suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter, dialogResult: Any?) =
+        performAction(e, reporter)
+
+    open fun dialogToShowFirst(e: AnActionEvent): DialogResult = DialogResult(true, null)
 }
 
 abstract class MpyActionBase(
@@ -232,10 +248,92 @@ class DeleteAction : MpyReplAction(
         cancelledMessage = "Deletion operation cancelled"
     )
 ) {
+    private data class AppropriateText(
+        val reporterText: String,
+        val dialogTitle: String,
+        val dialogMessage: String
+    )
+
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        deviceService.fileSystemWidget?.deleteCurrent(reporter)
+        val appropriateText = getAppropriateText()
+
+        reporter.text(appropriateText.reporterText)
+
+        val selectedFiles = deviceService.fileSystemWidget?.selectedFiles() ?: return
+
+        val pathsToDelete = selectedFiles
+            .map { it.fullName }
+            .toSet()
+
+        deviceService.recursivelySafeDeletePaths(pathsToDelete)
+    }
+
+    override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
+        val appropriateText = getAppropriateText()
+
+        return DialogResult(
+            MessageDialogBuilder.yesNo(appropriateText.dialogTitle, appropriateText.dialogMessage).ask(project),
+            null
+        )
+    }
+
+    private fun getAppropriateText(): AppropriateText {
+        val selectedFiles = deviceService.fileSystemWidget?.selectedFiles() ?: emptyList()
+
+        var folderCount = 0
+        var fileCount = 0
+
+        for (file in selectedFiles) {
+            if (file is DirNode) {
+                folderCount++
+            } else {
+                fileCount++
+            }
+        }
+
+        return if (selectedFiles.size == 1 && selectedFiles.first().isRoot) {
+            AppropriateText(
+                reporterText = "Deleting device contents...",
+                dialogTitle = "Delete Device Contents",
+                dialogMessage = "Are you sure you want to permanently delete the device contents?"
+            )
+        } else if (fileCount == 0 && !selectedFiles.any { it.isRoot }) {
+            if (folderCount == 1) {
+                AppropriateText(
+                    reporterText = "Deleting folder...",
+                    dialogTitle = "Delete Folder",
+                    dialogMessage = "Are you sure you want to permanently delete this folder and all its contents?"
+                )
+            } else {
+                AppropriateText(
+                    reporterText = "Deleting folders...",
+                    dialogTitle = "Delete Folders",
+                    dialogMessage = "Are you sure you want to permanently delete these folders and all their contents?"
+                )
+            }
+        } else if (folderCount == 0) {
+            if (fileCount == 1) {
+                AppropriateText(
+                    reporterText = "Deleting file...",
+                    dialogTitle = "Delete File",
+                    dialogMessage = "Are you sure you want to permanently delete this file?"
+                )
+            } else {
+                AppropriateText(
+                    reporterText = "Deleting files...",
+                    dialogTitle = "Delete Files",
+                    dialogMessage = "Are you sure you want to permanently delete these files?"
+                )
+            }
+        } else {
+            AppropriateText(
+                reporterText = "Deleting items...",
+                dialogTitle = "Delete Items",
+                dialogMessage = "Are you sure you want to permanently delete these items?"
+            )
+        }
     }
 }
 
@@ -323,7 +421,7 @@ class ExecuteFragmentInReplAction : MpyReplAction(
         }
         val emptySelection = editor.selectionModel.getSelectedText(true).isNullOrBlank()
         e.presentation.text =
-            if (emptySelection) "Execute Line in Micropython REPL" else "Execute Selection in Micropython REPL"
+            if (emptySelection) "Execute Line in REPL" else "Execute Selection in REPL"
     }
 }
 
@@ -374,31 +472,17 @@ class OpenMpyFileAction : MpyReplAction(
     }
 }
 
-open class UploadAction : MpyAction(
-    "Upload Item(s) to MicroPython Device",
-    MpyActionOptions(
-        visibleWhen = VisibleWhen.PLUGIN_ENABLED,
-        enabledWhen = EnabledWhen.PLUGIN_ENABLED,
-        requiresConnection = true,
-        requiresRefreshAfter = true,
-        cancelledMessage = "Upload operation cancelled"
-    )
-) {
+class MpyUploadActionGroup : ActionGroup("Upload Item(s) to MicroPython Device", true) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
-    override fun performAction(e: AnActionEvent) {
-        FileDocumentManager.getInstance().saveAllDocuments()
-        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
-        if (files != null) {
-            e.project?.service<MpyTransferService>()?.uploadItems(files.toSet())
-        }
-    }
+    override fun update(e: AnActionEvent) {
+        val project = e.project
+        val transferService = e.project?.service<MpyTransferService>()
 
-    override fun customUpdate(e: AnActionEvent) {
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
-        val excludedItems = transferService.collectExcluded()
+        val excludedItems = transferService?.collectExcluded()
 
-        if (files.isNullOrEmpty() || excludedItems.any { excludedItem ->
+        if (project == null || files.isNullOrEmpty() || excludedItems == null || excludedItems.any { excludedItem ->
                 files.any { candidate ->
                     VfsUtil.isAncestor(excludedItem, candidate, false)
                 }
@@ -408,7 +492,7 @@ open class UploadAction : MpyAction(
             return
         }
 
-        var directoryCount = 0
+        var folderCount = 0
         var fileCount = 0
 
         for (file in files.iterator()) {
@@ -417,19 +501,19 @@ open class UploadAction : MpyAction(
             }
 
             if (file.isDirectory) {
-                directoryCount++
+                folderCount++
             } else {
                 fileCount++
             }
         }
 
         if (fileCount == 0) {
-            if (directoryCount == 1) {
+            if (folderCount == 1) {
                 e.presentation.text = "Upload Folder to MicroPython Device"
             } else {
                 e.presentation.text = "Upload Folders to MicroPython Device"
             }
-        } else if (directoryCount == 0) {
+        } else if (folderCount == 0) {
             if (fileCount == 1) {
                 e.presentation.text = "Upload File to MicroPython Device"
             } else {
@@ -439,10 +523,76 @@ open class UploadAction : MpyAction(
             e.presentation.text = "Upload Items to MicroPython Device"
         }
     }
+
+    override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+        return arrayOf(MpyUploadRelativeToDeviceRootAction(), MpyUploadRelativeToParentAction())
+    }
+}
+
+class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload Relative to Device Root \"/\"") {
+    init {
+        templatePresentation.icon = AllIcons.Actions.Upload
+    }
+
+    override fun performAction(e: AnActionEvent) {
+        TODO("Not yet implemented")
+    }
+}
+
+class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to") {
+    init {
+        templatePresentation.icon = AllIcons.Actions.Upload
+    }
+
+    override fun performAction(e: AnActionEvent) {
+        TODO("Not yet implemented")
+    }
+
+    override fun customUpdate(e: AnActionEvent) {
+        val sourcesRoots = transferService.collectMpySourceRoots()
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+
+        if (files.isNullOrEmpty()) {
+            e.presentation.isEnabled = false
+            return
+        }
+
+        if (files.none { candidateFile ->
+                sourcesRoots.any { sourceRoot ->
+                    VfsUtil.isAncestor(sourceRoot, candidateFile, false)
+                }
+            }) {
+            e.presentation.text = "Upload Relative to Project Root"
+        } else if (files.all { candidateFile ->
+                sourcesRoots.any { sourceRoot ->
+                    VfsUtil.isAncestor(sourceRoot, candidateFile, false)
+                }
+            }) {
+            e.presentation.text = "Upload Relative to MicroPython Sources Root(s)"
+        } else {
+            e.presentation.isEnabled = false
+            e.presentation.text = "Upload relative to... (mixed selection)"
+        }
+    }
+}
+
+abstract class MpyUploadActionBase(
+    text: String
+) : MpyAction(
+    text,
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.PLUGIN_ENABLED,
+        enabledWhen = EnabledWhen.PLUGIN_ENABLED,
+        requiresConnection = true,
+        requiresRefreshAfter = true,
+        cancelledMessage = "Upload operation cancelled"
+    )
+) {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
 }
 
 class DownloadAction : MpyAction(
-    "Download Item(s) from MicroPython Device",
+    "Download",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
@@ -461,30 +611,30 @@ class DownloadAction : MpyAction(
 
             if (selectedFiles.isNullOrEmpty()) {
                 e.presentation.isEnabled = false
-                e.presentation.text = "Download Item(s)"
+                e.presentation.text = "Download"
                 return
             }
 
-            var directoryCount = 0
+            var folderCount = 0
             var fileCount = 0
 
             for (file in selectedFiles) {
                 if (file is DirNode) {
-                    directoryCount++
+                    folderCount++
                 } else {
                     fileCount++
                 }
             }
 
-            if (selectedFiles.first().isRoot) {
-                e.presentation.text = "Download Device Content"
-            } else if (fileCount == 0) {
-                if (directoryCount == 1) {
+            if (selectedFiles.size == 1 && selectedFiles.first().isRoot) {
+                e.presentation.text = "Download Device Contents"
+            } else if (fileCount == 0 && !selectedFiles.any { it.isRoot }) {
+                if (folderCount == 1) {
                     e.presentation.text = "Download Folder \"${selectedFiles.first().name}\""
                 } else {
                     e.presentation.text = "Download Folders"
                 }
-            } else if (directoryCount == 0) {
+            } else if (folderCount == 0) {
                 if (fileCount == 1) {
                     e.presentation.text = "Download File \"${selectedFiles.first().name}\""
                 } else {
@@ -565,8 +715,25 @@ class CreateFolderAction : MpyReplAction(
 ) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
-    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        val parent = deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull().asSafely<DirNode>() ?: return
+    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter, dialogResult: Any?) {
+        performReplAction(
+            project,
+            options.requiresConnection,
+            actionDescription,
+            options.requiresRefreshAfter,
+            options.cancelledMessage ?: "$actionDescription cancelled",
+            { reporter ->
+                val newFolderPath = dialogResult as String
+
+                deviceService.safeCreateDirectories(
+                    setOf(newFolderPath)
+                )
+            },
+        )
+    }
+
+    override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
+        val parent = deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull().asSafely<DirNode>() ?: return DialogResult(false, null)
 
         val validator = object : InputValidator {
             override fun checkInput(inputString: String): Boolean {
@@ -577,20 +744,16 @@ class CreateFolderAction : MpyReplAction(
             override fun canClose(inputString: String): Boolean = checkInput(inputString)
         }
 
-        val newName = withContext(Dispatchers.EDT) {
-            Messages.showInputDialog(
-                project,
-                "Name:", "Create New Folder", AllIcons.Actions.AddDirectory,
-                "new_folder", validator
-            )
-        }
+        val newName = Messages.showInputDialog(
+            project,
+            "Name:", "Create New Folder", AllIcons.Actions.AddDirectory,
+            "new_folder", validator
+        )
 
-        if (!newName.isNullOrBlank()) {
-            deviceService.safeCreateDirectories(
-                setOf("${parent.fullName}/$newName")
-            )
-            deviceService.fileSystemWidget?.refresh(reporter)
-        }
+        return DialogResult(
+            !newName.isNullOrEmpty(),
+            "${parent.fullName}/$newName"
+        )
     }
 
     override fun customUpdate(e: AnActionEvent) {

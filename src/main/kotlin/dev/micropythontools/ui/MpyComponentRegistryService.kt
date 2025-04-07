@@ -17,12 +17,11 @@
 package dev.micropythontools.ui
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
 
 
 @Service(Service.Level.PROJECT)
-class MpyComponentRegistryService(private val project: Project) {
+class MpyComponentRegistryService {
     private var fileSystemWidget: FileSystemWidget? = null
     private var terminalContent: Content? = null
 

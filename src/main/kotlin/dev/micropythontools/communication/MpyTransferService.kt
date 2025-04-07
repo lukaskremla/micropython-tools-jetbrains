@@ -42,7 +42,10 @@ import com.intellij.project.stateStore
 import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.sourceroots.MpySourceRootType
-import dev.micropythontools.ui.*
+import dev.micropythontools.ui.DirNode
+import dev.micropythontools.ui.FileNode
+import dev.micropythontools.ui.FileSystemNode
+import dev.micropythontools.ui.NOTIFICATION_GROUP
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
@@ -477,7 +480,7 @@ class MpyTransferService(private val project: Project) {
                         Notifications.Bus.notify(
                             Notification(
                                 NOTIFICATION_GROUP,
-                                "Uploaded files don't match with the expected sizes. Please try to re-run the upload to fix this.",
+                                "Uploaded files don't match with the expected sizes. Please try to re-run the upload.",
                                 NotificationType.WARNING
                             ), project
                         )
