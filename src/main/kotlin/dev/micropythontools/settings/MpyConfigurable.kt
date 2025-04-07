@@ -196,9 +196,6 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                     } else null
                                 }
                         }
-                        row {
-                            comment("WebREPL support is currently highly experimental. Learn more <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/docs/v0.4.2/WEBREPL.md\">here</a>")
-                        }
                     }.visibleIf(webReplRadioButton.selected)
                 }.bottomGap(BottomGap.NONE).enabled(isDisconnected())
 
