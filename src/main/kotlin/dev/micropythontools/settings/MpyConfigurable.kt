@@ -37,6 +37,7 @@ import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
 import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.util.MpyPythonService
+import kotlinx.coroutines.runBlocking
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 
@@ -71,8 +72,9 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     private val pythonService = project.service<MpyPythonService>()
     private val deviceService = project.service<MpyDeviceService>()
 
-    private fun isDisconnected() = (deviceService.state == State.DISCONNECTED ||
-            deviceService.state == State.DISCONNECTING)
+    private val isConnected
+        get() = (deviceService.state == State.CONNECTED || deviceService.state == State.CONNECTING ||
+                deviceService.state == State.TTY_DETACHED)
 
     private val parameters = with(settings.state) {
         runWithModalProgressBlocking(project, "Retrieving settings...") {
@@ -197,7 +199,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                 }
                         }
                     }.visibleIf(webReplRadioButton.selected)
-                }.bottomGap(BottomGap.NONE).enabled(isDisconnected())
+                }.bottomGap(BottomGap.NONE).enabled(!isConnected)
 
                 indent {
                     indent {
@@ -218,7 +220,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             })
                         }
                     }
-                }.visible(!isDisconnected())
+                }.visible(isConnected)
 
                 group("FTP Uploads") {
                     row {
@@ -377,6 +379,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         //val oldStubPackage = settings.state.activeStubsPackage ?: ""
 
         with(parameters) {
+            if (isConnected || !isPluginEnabled) {
+                runBlocking { deviceService.disconnect(null) }
+            }
+
             settings.state.isPluginEnabled = isPluginEnabled
             settings.state.usingUart = usingUart
             settings.state.filterManufacturers = filterManufacturers
