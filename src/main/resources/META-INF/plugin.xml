@@ -74,15 +74,18 @@
 
     <actions>
         <group id="micropythontools.repl.FSToolbar">
-            <action id="micropythontools.repl.ConnectAction" class="dev.micropythontools.ui.ConnectAction"
+            <action id="micropythontools.repl.ConnectAction"
+                    class="dev.micropythontools.ui.ConnectAction"
                     icon="/icons/connectActive.svg"/>
-            <action id="micropythontools.repl.DisconnectAction" class="dev.micropythontools.ui.DisconnectAction"
+            <action id="micropythontools.repl.DisconnectAction"
+                    class="dev.micropythontools.ui.DisconnectAction"
                     icon="/icons/connectActive.svg">
                 <keyboard-shortcut first-keystroke="control CLOSE_BRACKET" keymap="$default"/>
             </action>
             <action id="micropythontools.repl.connectionSelector"
                     class="dev.micropythontools.ui.ConnectionSelectorAction"/>
-            <action id="micropythontools.fs.RefreshAction" class="dev.micropythontools.ui.RefreshAction"
+            <action id="micropythontools.fs.RefreshAction"
+                    class="dev.micropythontools.ui.RefreshAction"
                     icon="AllIcons.Actions.StopRefresh">
                 <keyboard-shortcut first-keystroke="control R" keymap="$default"/>
             </action>
@@ -99,10 +102,12 @@
             <action id="micropythontools.repl.ConnectionParameters"
                     class="dev.micropythontools.ui.OpenSettingsAction"
                     icon="AllIcons.General.GearPlain"/>
-            <action id="micropythontools.repl.AutoClear" class="dev.micropythontools.ui.AutoClearAction"/>
+            <action id="micropythontools.repl.AutoClear"
+                    class="dev.micropythontools.ui.AutoClearAction"/>
         </group>
         <group id="micropythontools.repl.FSContextMenu">
-            <action class="dev.micropythontools.ui.OpenMpyFileAction" id="micropythontools.repl.OpenMpyFileAction"
+            <action class="dev.micropythontools.ui.OpenMpyFileAction"
+                    id="micropythontools.repl.OpenMpyFileAction"
                     icon="AllIcons.Actions.MenuOpen"/>
             <reference ref="micropythontools.fs.RefreshAction"/>
             <reference ref="micropythontools.fs.DownloadAction"/>
@@ -115,28 +120,34 @@
             <reference ref="micropythontools.repl.ConnectAction"/>
             <reference ref="micropythontools.repl.DisconnectAction"/>
             <reference ref="micropythontools.repl.connectionSelector"/>
-            <action id="micropythontools.repl.SoftReset" class="dev.micropythontools.ui.SoftResetAction"
-                    icon="AllIcons.Actions.StopAndRestart" description="Soft reset the board">
+            <action id="micropythontools.repl.SoftReset"
+                    class="dev.micropythontools.ui.SoftResetAction"
+                    icon="AllIcons.Actions.StopAndRestart">
                 <keyboard-shortcut first-keystroke="control D" keymap="$default"/>
             </action>
-            <action id="micropythontools.repl.Interrupt" class="dev.micropythontools.ui.InterruptAction"
-                    icon="AllIcons.Actions.Suspend" description="Interrupt a running program">
+            <action id="micropythontools.repl.Interrupt"
+                    class="dev.micropythontools.ui.InterruptAction"
+                    icon="AllIcons.Actions.Suspend">
             </action>
             <reference ref="micropythontools.repl.ConnectionParameters"/>
             <reference ref="micropythontools.repl.AutoClear"/>
         </group>
 
-        <action id="micropythontools.repl.UploadAction" class="dev.micropythontools.ui.UploadAction"
+        <action id="micropythontools.repl.UploadAction"
+                class="dev.micropythontools.ui.MpyUploadActionGroup"
                 icon="AllIcons.Actions.Upload">
             <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ExecuteInPyConsoleAction"/>
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
             <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>
         </action>
 
         <action id="micropythontools.repl.ExecuteFileInReplAction"
                 class="dev.micropythontools.ui.ExecuteFileInReplAction"
-                text="Execute File in Micropython REPL"
                 icon="AllIcons.Actions.Rerun">
             <add-to-group group-id="EditorPopupMenu"
+                          anchor="before"
+                          relative-to-action="micropythontools.repl.UploadAction"/>
+            <add-to-group group-id="EditorTabPopupMenu"
                           anchor="before"
                           relative-to-action="micropythontools.repl.UploadAction"/>
             <add-to-group group-id="ProjectViewPopupMenuSettingsGroup"
@@ -146,8 +157,9 @@
 
         <action id="micropythontools.repl.ExecuteFragmentInReplAction"
                 class="dev.micropythontools.ui.ExecuteFragmentInReplAction"
-                text="Execute Fragment" icon="AllIcons.Actions.Run_anything">
-            <add-to-group group-id="EditorPopupMenu" anchor="before"
+                icon="AllIcons.Actions.Run_anything">
+            <add-to-group group-id="EditorPopupMenu"
+                          anchor="before"
                           relative-to-action="micropythontools.repl.ExecuteFileInReplAction"/>
         </action>
 

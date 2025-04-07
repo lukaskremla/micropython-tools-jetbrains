@@ -260,7 +260,7 @@ class FileSystemWidget(val project: Project) : JBPanel<FileSystemWidget>(BorderL
                             project = project,
                             connectionRequired = false,
                             description = "Moving files...",
-                            false,
+                            requiresRefreshAfter = true,
                             cancelledMessage = "Move operation cancelled",
                             { reporter ->
                                 var sure = false
@@ -323,11 +323,6 @@ class FileSystemWidget(val project: Project) : JBPanel<FileSystemWidget>(BorderL
                                 deviceService.recursivelySafeDeletePaths(pathsToRemove)
 
                                 deviceService.blindExecute(commands).extractResponse()
-
-                                refresh(reporter)
-                            },
-                            { reporter ->
-                                refresh(reporter)
                             }
                         )
                         if (result == false) return false
@@ -476,51 +471,6 @@ class FileSystemWidget(val project: Project) : JBPanel<FileSystemWidget>(BorderL
             TreeUtil.restoreExpandedPaths(tree, expandedPaths)
             TreeUtil.selectPath(tree, selectedPath)
         }
-    }
-
-    suspend fun deleteCurrent(reporter: RawProgressReporter) {
-        deviceService.checkConnected()
-        val confirmedFileSystemNodes = withContext(Dispatchers.EDT) {
-            val fileSystemNodes = tree.selectionPaths?.mapNotNull { it.lastPathComponent.asSafely<FileSystemNode>() }
-                ?.filter { it.fullName != "" && it.fullName != "/" } ?: emptyList()
-            val title: String
-            val reporterText: String
-            val message: String
-            if (fileSystemNodes.isEmpty()) {
-                return@withContext emptyList()
-            } else if (fileSystemNodes.size == 1) {
-                val fileName = fileSystemNodes[0].fullName
-                if (fileSystemNodes[0] is DirNode) {
-                    reporterText = "Deleting folder..."
-                    title = "Delete folder $fileName"
-                    message =
-                        "Are you sure you want to delete the folder and its subtree?\n\rThis operation cannot be undone!"
-                } else {
-                    reporterText = "Deleting file..."
-                    title = "Delete file $fileName"
-                    message = "Are you sure you want to delete this file?\n\rThis operation cannot be undone!"
-                }
-            } else {
-                reporterText = "Deleting item(s)..."
-                title = "Delete item(s)?"
-                message =
-                    "Are you sure you want to delete ${fileSystemNodes.size} items?\n\rThis operation cannot be undone!"
-            }
-
-            reporter.text(reporterText)
-            reporter.fraction(null)
-
-            val sure = MessageDialogBuilder.yesNo(title, message).ask(project)
-            if (sure) fileSystemNodes else emptyList()
-        }
-
-        if (confirmedFileSystemNodes.isEmpty()) return
-
-        val pathsToDelete = confirmedFileSystemNodes
-            .map { it.fullName }
-            .toSet()
-
-        deviceService.recursivelySafeDeletePaths(pathsToDelete)
     }
 
     fun selectedFiles(): Collection<FileSystemNode> {
