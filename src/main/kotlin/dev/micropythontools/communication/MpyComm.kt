@@ -99,6 +99,9 @@ open class MpyComm(private val deviceService: MpyDeviceService, private val pyth
 
     val ttyConnector: TtyConnector = WebSocketTtyConnector()
 
+    val isConnected
+        get() = mpyClient?.isConnected == true
+
     var state: State by Delegates.observable(State.DISCONNECTED) { _, _, newValue ->
         deviceService.stateListeners.forEach { it(newValue) }
     }

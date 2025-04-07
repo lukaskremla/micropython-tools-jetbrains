@@ -27,6 +27,5 @@ interface MpyClient {
     suspend fun connect(progressIndicatorText: String): MpyClient
     fun closeBlocking()
     fun sendPing()
-
     val isConnected: Boolean
 }
