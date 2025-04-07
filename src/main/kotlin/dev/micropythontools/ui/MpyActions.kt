@@ -55,6 +55,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.charset.StandardCharsets
 
+// ===== ENUMS AND BASE CLASSES =====
+
 enum class VisibleWhen {
     ALWAYS, PLUGIN_ENABLED, CONNECTED, DISCONNECTED
 }
@@ -79,6 +81,56 @@ data class DialogResult(
     val shouldExecute: Boolean,
     val resultToPass: Any?
 )
+
+abstract class MpyActionBase(
+    private val text: String,
+    private val options: MpyActionOptions
+) : DumbAwareAction(text) {
+
+    protected lateinit var project: Project
+    protected lateinit var settings: MpySettingsService
+    protected lateinit var deviceService: MpyDeviceService
+    protected lateinit var transferService: MpyTransferService
+
+    protected fun initialize(event: AnActionEvent): Boolean {
+        val project = event.project ?: return false
+        this.project = project
+        this.settings = project.service<MpySettingsService>()
+        this.deviceService = project.service<MpyDeviceService>()
+        this.transferService = project.service<MpyTransferService>()
+        return true
+    }
+
+    final override fun update(e: AnActionEvent) {
+        super.update(e)
+        val wasInitialized = initialize(e)
+        if (!wasInitialized) return
+
+        val isPluginEnabled = settings.state.isPluginEnabled
+        val isConnected = deviceService.state == State.CONNECTING || deviceService.state == State.CONNECTED || deviceService.state == State.TTY_DETACHED
+
+        e.presentation.isVisible = when (options.visibleWhen) {
+            VisibleWhen.ALWAYS -> true
+            VisibleWhen.PLUGIN_ENABLED -> isPluginEnabled
+            VisibleWhen.CONNECTED -> isConnected
+            VisibleWhen.DISCONNECTED -> !isConnected
+        }
+
+        e.presentation.isEnabled = when (options.enabledWhen) {
+            EnabledWhen.ALWAYS -> true
+            EnabledWhen.PLUGIN_ENABLED -> isPluginEnabled
+            EnabledWhen.CONNECTED -> isConnected && isPluginEnabled
+            EnabledWhen.DISCONNECTED -> !isConnected && isPluginEnabled
+        }
+
+        customUpdate(e)
+    }
+
+    open val actionDescription: @NlsContexts.DialogMessage String
+        get() = text
+
+    open fun customUpdate(e: AnActionEvent) = Unit
+}
 
 abstract class MpyAction(
     text: String,
@@ -130,57 +182,24 @@ abstract class MpyReplAction(
     open fun dialogToShowFirst(e: AnActionEvent): DialogResult = DialogResult(true, null)
 }
 
-abstract class MpyActionBase(
-    private val text: String,
-    private val options: MpyActionOptions
-) : DumbAwareAction(text) {
-
-    protected lateinit var project: Project
-    protected lateinit var settings: MpySettingsService
-    protected lateinit var deviceService: MpyDeviceService
-    protected lateinit var transferService: MpyTransferService
-
-    protected fun initialize(event: AnActionEvent): Boolean {
-        val project = event.project ?: return false
-        this.project = project
-        this.settings = project.service<MpySettingsService>()
-        this.deviceService = project.service<MpyDeviceService>()
-        this.transferService = project.service<MpyTransferService>()
-        return true
-    }
-
-    final override fun update(e: AnActionEvent) {
-        super.update(e)
-        val wasInitialized = initialize(e)
-        if (!wasInitialized) return
-
-        val isPluginEnabled = settings.state.isPluginEnabled
-        val isConnected = deviceService.state == State.CONNECTING || deviceService.state == State.CONNECTED || deviceService.state == State.TTY_DETACHED
-
-        e.presentation.isVisible = when (options.visibleWhen) {
-            VisibleWhen.ALWAYS -> true
-            VisibleWhen.PLUGIN_ENABLED -> isPluginEnabled
-            VisibleWhen.CONNECTED -> isConnected
-            VisibleWhen.DISCONNECTED -> !isConnected
-        }
-
-        e.presentation.isEnabled = when (options.enabledWhen) {
-            EnabledWhen.ALWAYS -> true
-            EnabledWhen.PLUGIN_ENABLED -> isPluginEnabled
-            EnabledWhen.CONNECTED -> isConnected
-            EnabledWhen.DISCONNECTED -> !isConnected
-        }
-
-        customUpdate(e)
-    }
-
-    open val actionDescription: @NlsContexts.DialogMessage String
-        get() = text
-
-    open fun customUpdate(e: AnActionEvent) = Unit
+abstract class MpyUploadActionBase(
+    text: String
+) : MpyAction(
+    text,
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.PLUGIN_ENABLED,
+        enabledWhen = EnabledWhen.PLUGIN_ENABLED,
+        requiresConnection = true,
+        requiresRefreshAfter = true,
+        cancelledMessage = "Upload operation cancelled"
+    )
+) {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
 }
 
-class ConnectAction : MpyReplAction(
+// ===== CONNECTION MANAGEMENT ACTIONS =====
+
+class MpyConnectAction : MpyReplAction(
     "Connect",
     MpyActionOptions(
         visibleWhen = VisibleWhen.DISCONNECTED,
@@ -197,24 +216,7 @@ class ConnectAction : MpyReplAction(
     }
 }
 
-class RefreshAction : MpyReplAction(
-    "Refresh",
-    MpyActionOptions(
-        visibleWhen = VisibleWhen.PLUGIN_ENABLED,
-        enabledWhen = EnabledWhen.CONNECTED,
-        requiresConnection = false,
-        requiresRefreshAfter = false,
-        cancelledMessage = "Refresh operation cancelled"
-    )
-) {
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-
-    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        deviceService.fileSystemWidget?.refresh(reporter)
-    }
-}
-
-class DisconnectAction : MpyReplAction(
+class MpyDisconnectAction : MpyReplAction(
     "Disconnect",
     MpyActionOptions(
         visibleWhen = VisibleWhen.CONNECTED,
@@ -238,7 +240,88 @@ class DisconnectAction : MpyReplAction(
     }
 }
 
-class DeleteAction : MpyReplAction(
+// ===== FILE SYSTEM OPERATIONS | MIXED TOOLBAR ACTIONS =====
+
+class MpyRefreshAction : MpyReplAction(
+    "Refresh",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.PLUGIN_ENABLED,
+        enabledWhen = EnabledWhen.CONNECTED,
+        requiresConnection = false,
+        requiresRefreshAfter = false,
+        cancelledMessage = "Refresh operation cancelled"
+    )
+) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
+        deviceService.fileSystemWidget?.refresh(reporter)
+    }
+}
+
+class MpyCreateFolderAction : MpyReplAction(
+    "New Folder",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.ALWAYS,
+        enabledWhen = EnabledWhen.CONNECTED,
+        requiresConnection = true,
+        requiresRefreshAfter = true,
+        cancelledMessage = "New folder creation cancelled"
+    )
+) {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter, dialogResult: Any?) {
+        performReplAction(
+            project,
+            options.requiresConnection,
+            actionDescription,
+            options.requiresRefreshAfter,
+            options.cancelledMessage ?: "$actionDescription cancelled",
+            { reporter ->
+                val newFolderPath = dialogResult as String
+
+                deviceService.safeCreateDirectories(
+                    setOf(newFolderPath)
+                )
+            },
+        )
+    }
+
+    override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
+        val parent = deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull().asSafely<DirNode>() ?: return DialogResult(false, null)
+
+        val validator = object : InputValidator {
+            override fun checkInput(inputString: String): Boolean {
+                if (!PathUtilRt.isValidFileName(inputString, Platform.UNIX, true, Charsets.US_ASCII)) return false
+                return parent.children().asSequence().none { it.asSafely<FileSystemNode>()?.name == inputString }
+            }
+
+            override fun canClose(inputString: String): Boolean = checkInput(inputString)
+        }
+
+        val newName = Messages.showInputDialog(
+            project,
+            "Name:", "Create New Folder", AllIcons.Actions.AddDirectory,
+            "new_folder", validator
+        )
+
+        return DialogResult(
+            !newName.isNullOrEmpty(),
+            "${parent.fullName}/$newName"
+        )
+    }
+
+    override fun customUpdate(e: AnActionEvent) {
+        val selectedFiles = deviceService.fileSystemWidget?.selectedFiles()
+
+        if (selectedFiles.isNullOrEmpty() || selectedFiles.size > 1 || selectedFiles.first() is FileNode) {
+            e.presentation.isEnabled = false
+        }
+    }
+}
+
+class MpyDeleteAction : MpyReplAction(
     "Delete",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
@@ -337,95 +420,67 @@ class DeleteAction : MpyReplAction(
     }
 }
 
-class ExecuteFileInReplAction : MpyReplAction(
-    "Execute File in REPL",
+class MpyDownloadAction : MpyAction(
+    "Download",
     MpyActionOptions(
-        visibleWhen = VisibleWhen.PLUGIN_ENABLED,
-        enabledWhen = EnabledWhen.PLUGIN_ENABLED,
+        visibleWhen = VisibleWhen.ALWAYS,
+        enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = false,
-        cancelledMessage = "REPL execution cancelled"
+        cancelledMessage = "Download operation cancelled"
     )
 ) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
-    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        FileDocumentManager.getInstance().saveAllDocuments()
-
-        val code = e.getData(CommonDataKeys.VIRTUAL_FILE)?.readText() ?: return
-        deviceService.instantRun(code, false)
-    }
-
     override fun customUpdate(e: AnActionEvent) {
-        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
-        val file = files.firstOrNull() ?: return
-
-        val excludedItems = transferService.collectExcluded()
-
-        if (excludedItems.any { excludedItem ->
-                files.any { candidate ->
-                    VfsUtil.isAncestor(excludedItem, candidate, false)
-                }
-            }
-        ) {
+        if (deviceService.state != State.CONNECTED) {
             e.presentation.isEnabled = false
-            e.presentation.text = "Execute File in REPL"
-            return
-        }
+        } else {
+            val selectedFiles = deviceService.fileSystemWidget?.selectedFiles()
 
-        e.presentation.isEnabled = files.size == 1 && !file.isDirectory &&
-                (file.fileType == PythonFileType.INSTANCE || file.extension == "mpy")
-    }
-}
+            if (selectedFiles.isNullOrEmpty()) {
+                e.presentation.isEnabled = false
+                e.presentation.text = "Download"
+                return
+            }
 
-class ExecuteFragmentInReplAction : MpyReplAction(
-    "Execute Fragment in REPL",
-    MpyActionOptions(
-        visibleWhen = VisibleWhen.PLUGIN_ENABLED,
-        enabledWhen = EnabledWhen.PLUGIN_ENABLED,
-        requiresConnection = true,
-        requiresRefreshAfter = false,
-        cancelledMessage = "REPL execution cancelled"
-    )
-) {
-    private fun editor(project: Project?): Editor? =
-        project?.let { FileEditorManager.getInstance(it).selectedTextEditor }
+            var folderCount = 0
+            var fileCount = 0
 
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-
-    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        val code = withContext(Dispatchers.EDT) {
-            val editor = editor(project) ?: return@withContext null
-            var text = editor.selectionModel.getSelectedText(true)
-            if (text.isNullOrBlank()) {
-                try {
-                    val range = EditorUtil.calcCaretLineTextRange(editor)
-                    if (!range.isEmpty) {
-                        text = editor.document.getText(range).trim()
-                    }
-                } catch (_: Throwable) {
+            for (file in selectedFiles) {
+                if (file is DirNode) {
+                    folderCount++
+                } else {
+                    fileCount++
                 }
             }
-            text
-        }
-        if (!code.isNullOrBlank()) {
-            deviceService.instantRun(code, true)
+
+            if (selectedFiles.size == 1 && selectedFiles.first().isRoot) {
+                e.presentation.text = "Download Device Contents"
+            } else if (fileCount == 0 && !selectedFiles.any { it.isRoot }) {
+                if (folderCount == 1) {
+                    e.presentation.text = "Download Folder \"${selectedFiles.first().name}\""
+                } else {
+                    e.presentation.text = "Download Folders"
+                }
+            } else if (folderCount == 0) {
+                if (fileCount == 1) {
+                    e.presentation.text = "Download File \"${selectedFiles.first().name}\""
+                } else {
+                    e.presentation.text = "Download Files"
+                }
+            } else {
+                e.presentation.text = "Download Items"
+            }
         }
     }
 
-    override fun customUpdate(e: AnActionEvent) {
-        val editor = editor(e.project)
-        if (editor == null) {
-            e.presentation.isEnabledAndVisible = false
-            return
-        }
-        val emptySelection = editor.selectionModel.getSelectedText(true).isNullOrBlank()
-        e.presentation.text =
-            if (emptySelection) "Execute Line in REPL" else "Execute Selection in REPL"
+    override fun performAction(e: AnActionEvent) {
+        e.project?.service<MpyTransferService>()?.downloadDeviceFiles()
     }
 }
 
-class OpenMpyFileAction : MpyReplAction(
+class MpyOpenFileAction : MpyReplAction(
     "Open File",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
@@ -472,17 +527,152 @@ class OpenMpyFileAction : MpyReplAction(
     }
 }
 
+// ===== REPL TOOLBAR ACTIONS =====
+
+class MpyInterruptAction : MpyReplAction(
+    "Interrupt",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.ALWAYS,
+        enabledWhen = EnabledWhen.CONNECTED,
+        requiresConnection = true,
+        requiresRefreshAfter = false
+    )
+) {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
+        reporter.text("Interrupting...")
+        deviceService.interrupt()
+    }
+}
+
+class MpySoftResetAction : MpyReplAction(
+    "Reset",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.ALWAYS,
+        enabledWhen = EnabledWhen.CONNECTED,
+        requiresConnection = true,
+        requiresRefreshAfter = false,
+        cancelledMessage = "Reset cancelled"
+    )
+) {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
+        reporter.text("Resetting...")
+        deviceService.reset()
+        deviceService.clearTerminalIfNeeded()
+    }
+}
+
+// ===== EXECUTE ACTIONS =====
+
+class MpyExecuteFileInReplAction : MpyReplAction(
+    "Execute File in REPL",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.PLUGIN_ENABLED,
+        enabledWhen = EnabledWhen.PLUGIN_ENABLED,
+        requiresConnection = true,
+        requiresRefreshAfter = false,
+        cancelledMessage = "REPL execution cancelled"
+    )
+) {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
+        FileDocumentManager.getInstance().saveAllDocuments()
+
+        val code = e.getData(CommonDataKeys.VIRTUAL_FILE)?.readText() ?: return
+        deviceService.instantRun(code, false)
+    }
+
+    override fun customUpdate(e: AnActionEvent) {
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
+        val file = files.firstOrNull() ?: return
+
+        val excludedItems = transferService.collectExcluded()
+
+        if (excludedItems.any { excludedItem ->
+                files.any { candidate ->
+                    VfsUtil.isAncestor(excludedItem, candidate, false)
+                }
+            }
+        ) {
+            e.presentation.isEnabled = false
+            e.presentation.text = "Execute File in REPL"
+            return
+        }
+
+        e.presentation.isEnabled = files.size == 1 && !file.isDirectory &&
+                (file.fileType == PythonFileType.INSTANCE || file.extension == "mpy")
+    }
+}
+
+class MpyExecuteFragmentInReplAction : MpyReplAction(
+    "Execute Fragment in REPL",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.PLUGIN_ENABLED,
+        enabledWhen = EnabledWhen.PLUGIN_ENABLED,
+        requiresConnection = true,
+        requiresRefreshAfter = false,
+        cancelledMessage = "REPL execution cancelled"
+    )
+) {
+    private fun editor(project: Project?): Editor? =
+        project?.let { FileEditorManager.getInstance(it).selectedTextEditor }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
+        val code = withContext(Dispatchers.EDT) {
+            val editor = editor(project) ?: return@withContext null
+            var text = editor.selectionModel.getSelectedText(true)
+            if (text.isNullOrBlank()) {
+                try {
+                    val range = EditorUtil.calcCaretLineTextRange(editor)
+                    if (!range.isEmpty) {
+                        text = editor.document.getText(range).trim()
+                    }
+                } catch (_: Throwable) {
+                }
+            }
+            text
+        }
+        if (!code.isNullOrBlank()) {
+            deviceService.instantRun(code, true)
+        }
+    }
+
+    override fun customUpdate(e: AnActionEvent) {
+        val editor = editor(e.project)
+        if (editor == null) {
+            e.presentation.isEnabledAndVisible = false
+            return
+        }
+        val emptySelection = editor.selectionModel.getSelectedText(true).isNullOrBlank()
+        e.presentation.text =
+            if (emptySelection) "Execute Line in REPL" else "Execute Selection in REPL"
+    }
+}
+
+// ===== UPLOAD ACTIONS =====
+
 class MpyUploadActionGroup : ActionGroup("Upload Item(s) to MicroPython Device", true) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
         val project = e.project
-        val transferService = e.project?.service<MpyTransferService>()
+        val transferService = project?.service<MpyTransferService>()
 
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val excludedItems = transferService?.collectExcluded()
 
-        if (project == null || files.isNullOrEmpty() || excludedItems == null || excludedItems.any { excludedItem ->
+        if (project?.service<MpySettingsService>()?.state?.isPluginEnabled != true) {
+            e.presentation.isEnabledAndVisible = false
+            return
+        }
+
+        if (files.isNullOrEmpty() || excludedItems == null || excludedItems.any { excludedItem ->
                 files.any { candidate ->
                     VfsUtil.isAncestor(excludedItem, candidate, false)
                 }
@@ -576,82 +766,9 @@ class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to"
     }
 }
 
-abstract class MpyUploadActionBase(
-    text: String
-) : MpyAction(
-    text,
-    MpyActionOptions(
-        visibleWhen = VisibleWhen.PLUGIN_ENABLED,
-        enabledWhen = EnabledWhen.PLUGIN_ENABLED,
-        requiresConnection = true,
-        requiresRefreshAfter = true,
-        cancelledMessage = "Upload operation cancelled"
-    )
-) {
-    override fun getActionUpdateThread(): ActionUpdateThread = BGT
-}
+// ===== SETTINGS ACTIONS =====
 
-class DownloadAction : MpyAction(
-    "Download",
-    MpyActionOptions(
-        visibleWhen = VisibleWhen.ALWAYS,
-        enabledWhen = EnabledWhen.CONNECTED,
-        requiresConnection = true,
-        requiresRefreshAfter = false,
-        cancelledMessage = "Download operation cancelled"
-    )
-) {
-    override fun getActionUpdateThread(): ActionUpdateThread = BGT
-
-    override fun customUpdate(e: AnActionEvent) {
-        if (deviceService.state != State.CONNECTED) {
-            e.presentation.isEnabled = false
-        } else {
-            val selectedFiles = deviceService.fileSystemWidget?.selectedFiles()
-
-            if (selectedFiles.isNullOrEmpty()) {
-                e.presentation.isEnabled = false
-                e.presentation.text = "Download"
-                return
-            }
-
-            var folderCount = 0
-            var fileCount = 0
-
-            for (file in selectedFiles) {
-                if (file is DirNode) {
-                    folderCount++
-                } else {
-                    fileCount++
-                }
-            }
-
-            if (selectedFiles.size == 1 && selectedFiles.first().isRoot) {
-                e.presentation.text = "Download Device Contents"
-            } else if (fileCount == 0 && !selectedFiles.any { it.isRoot }) {
-                if (folderCount == 1) {
-                    e.presentation.text = "Download Folder \"${selectedFiles.first().name}\""
-                } else {
-                    e.presentation.text = "Download Folders"
-                }
-            } else if (folderCount == 0) {
-                if (fileCount == 1) {
-                    e.presentation.text = "Download File \"${selectedFiles.first().name}\""
-                } else {
-                    e.presentation.text = "Download Files"
-                }
-            } else {
-                e.presentation.text = "Download Items"
-            }
-        }
-    }
-
-    override fun performAction(e: AnActionEvent) {
-        e.project?.service<MpyTransferService>()?.downloadDeviceFiles()
-    }
-}
-
-class OpenSettingsAction : MpyAction(
+class MpyOpenSettingsAction : MpyAction(
     "Settings",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
@@ -664,103 +781,5 @@ class OpenSettingsAction : MpyAction(
 
     override fun performAction(e: AnActionEvent) {
         ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
-    }
-}
-
-class InterruptAction : MpyReplAction(
-    "Interrupt",
-    MpyActionOptions(
-        visibleWhen = VisibleWhen.ALWAYS,
-        enabledWhen = EnabledWhen.CONNECTED,
-        requiresConnection = true,
-        requiresRefreshAfter = false
-    )
-) {
-    override fun getActionUpdateThread(): ActionUpdateThread = BGT
-
-    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        reporter.text("Interrupting...")
-        deviceService.interrupt()
-    }
-}
-
-class SoftResetAction : MpyReplAction(
-    "Reset",
-    MpyActionOptions(
-        visibleWhen = VisibleWhen.ALWAYS,
-        enabledWhen = EnabledWhen.CONNECTED,
-        requiresConnection = true,
-        requiresRefreshAfter = false,
-        cancelledMessage = "Reset cancelled"
-    )
-) {
-    override fun getActionUpdateThread(): ActionUpdateThread = BGT
-
-    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        reporter.text("Resetting...")
-        deviceService.reset()
-        deviceService.clearTerminalIfNeeded()
-    }
-}
-
-class CreateFolderAction : MpyReplAction(
-    "New Folder",
-    MpyActionOptions(
-        visibleWhen = VisibleWhen.ALWAYS,
-        enabledWhen = EnabledWhen.CONNECTED,
-        requiresConnection = true,
-        requiresRefreshAfter = true,
-        cancelledMessage = "New folder creation cancelled"
-    )
-) {
-    override fun getActionUpdateThread(): ActionUpdateThread = BGT
-
-    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter, dialogResult: Any?) {
-        performReplAction(
-            project,
-            options.requiresConnection,
-            actionDescription,
-            options.requiresRefreshAfter,
-            options.cancelledMessage ?: "$actionDescription cancelled",
-            { reporter ->
-                val newFolderPath = dialogResult as String
-
-                deviceService.safeCreateDirectories(
-                    setOf(newFolderPath)
-                )
-            },
-        )
-    }
-
-    override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
-        val parent = deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull().asSafely<DirNode>() ?: return DialogResult(false, null)
-
-        val validator = object : InputValidator {
-            override fun checkInput(inputString: String): Boolean {
-                if (!PathUtilRt.isValidFileName(inputString, Platform.UNIX, true, Charsets.US_ASCII)) return false
-                return parent.children().asSequence().none { it.asSafely<FileSystemNode>()?.name == inputString }
-            }
-
-            override fun canClose(inputString: String): Boolean = checkInput(inputString)
-        }
-
-        val newName = Messages.showInputDialog(
-            project,
-            "Name:", "Create New Folder", AllIcons.Actions.AddDirectory,
-            "new_folder", validator
-        )
-
-        return DialogResult(
-            !newName.isNullOrEmpty(),
-            "${parent.fullName}/$newName"
-        )
-    }
-
-    override fun customUpdate(e: AnActionEvent) {
-        val selectedFiles = deviceService.fileSystemWidget?.selectedFiles()
-
-        if (selectedFiles.isNullOrEmpty() || selectedFiles.size > 1 || selectedFiles.first() is FileNode) {
-            e.presentation.isEnabled = false
-        }
     }
 }
