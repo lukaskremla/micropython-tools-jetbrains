@@ -22,6 +22,8 @@ import com.intellij.ide.ActivityTracker
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -47,12 +49,11 @@ import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.settings.messageForBrokenUrl
 import dev.micropythontools.ui.*
 import dev.micropythontools.util.MpyPythonService
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 data class DeviceInformation(
     var version: String = "Unknown",
@@ -136,7 +137,12 @@ data class ConnectionParameters(
 typealias StateListener = (State) -> Unit
 
 @Service(Service.Level.PROJECT)
-class MpyDeviceService(private val project: Project) {
+class MpyDeviceService(private val project: Project) : Disposable {
+    init {
+        val newDisposable = Disposer.newDisposable("MpyDeviceServiceDisposable")
+        Disposer.register(newDisposable, this)
+    }
+
     private val settings = project.service<MpySettingsService>()
     private val pythonService = project.service<MpyPythonService>()
     private val componentRegistryService = project.service<MpyComponentRegistryService>()
@@ -161,6 +167,44 @@ class MpyDeviceService(private val project: Project) {
         get() = comm.state
 
     var deviceInformation: DeviceInformation = DeviceInformation()
+
+    private val connectionChecker = Executors.newSingleThreadScheduledExecutor { r ->
+        val thread = Thread(r, "MPY-Connection-Checker")
+        thread.isDaemon = true
+        thread
+    }
+
+    fun startConnectionMonitoring() {
+        connectionChecker.scheduleAtFixedRate({
+            if (state == State.CONNECTED && !comm.isConnected) {
+                ApplicationManager.getApplication().invokeLater {
+                    Notifications.Bus.notify(
+                        Notification(
+                            NOTIFICATION_GROUP,
+                            "Device to Connection Lost",
+                            "Connection to the device was lost unexpectedly. This may have been caused by a disconnected cable or a network issue.",
+                            NotificationType.ERROR
+                        )
+                    )
+                }
+
+                runBlocking {
+                    try {
+                        disconnect(null)
+                    } catch (e: Exception) {
+                        Notifications.Bus.notify(
+                            Notification(
+                                NOTIFICATION_GROUP,
+                                "Error during disconnect",
+                                e.message ?: "Unknown error",
+                                NotificationType.ERROR
+                            )
+                        )
+                    }
+                }
+            }
+        }, 0, 1, TimeUnit.SECONDS)
+    }
 
     fun listSerialPorts(filterManufacturers: Boolean = settings.state.filterManufacturers): MutableList<String> {
         val os = System.getProperty("os.name").lowercase()
@@ -305,15 +349,19 @@ class MpyDeviceService(private val project: Project) {
         } catch (_: CancellationException) {
             disconnect(reporter)
         }
+
+        startConnectionMonitoring()
     }
 
-    suspend fun disconnect(reporter: RawProgressReporter) {
+    suspend fun disconnect(reporter: RawProgressReporter?) {
         val settings = MpySettingsService.getInstance(project)
 
-        reporter.text("Disconnecting from ${settings.state.portName}")
-        reporter.fraction(null)
+        reporter?.text("Disconnecting from ${settings.state.portName}")
+        reporter?.fraction(null)
         comm.disconnect()
         deviceInformation = DeviceInformation()
+        connectionChecker.shutdown()
+        println("Performed disconnect")
     }
 
     @Throws(IOException::class)
@@ -403,6 +451,17 @@ class MpyDeviceService(private val project: Project) {
                 val widget = UIUtil.findComponentOfType(terminalContent?.component, JediTermWidget::class.java)
                 widget?.terminalPanel?.clearBuffer()
             }
+        }
+    }
+
+    override fun dispose() {
+        connectionChecker.shutdown()
+        try {
+            if (!connectionChecker.awaitTermination(1, TimeUnit.SECONDS)) {
+                connectionChecker.shutdownNow()
+            }
+        } catch (_: InterruptedException) {
+            connectionChecker.shutdownNow()
         }
     }
 }

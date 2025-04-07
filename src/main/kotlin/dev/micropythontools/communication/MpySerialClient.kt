@@ -78,5 +78,10 @@ class MpySerialClient(private val comm: MpyComm) : MpyClient {
     override fun sendPing() = Unit
 
     override val isConnected: Boolean
-        get() = port.isOpened
+        get() = try {
+            port.isOpened && port.getInputBufferBytesCount() >= 0
+            true
+        } catch (_: SerialPortException) {
+            false
+        }
 }
