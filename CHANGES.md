@@ -9,6 +9,8 @@ The Changelog
 * Improved the WebREPL / Serial communication download feature, it should be more reliable and faster
 * Added support for .mpy files, they will now be recognized by the IDE, however, editing is not supported due to the
   nature of the MicroPython bytecode files
+* Added connection integrity checks to catch and handle unexpected connection interruptions such as a cable getting
+  unplugged
 * Reworked and improved how visibility of REPL and context menu actions is handled
 * Reworked and improved naming of several REPL and context menu actions
 * Rewrote and optimized a significant portion of the code base, many small bugs and inconsistencies should be fixed
