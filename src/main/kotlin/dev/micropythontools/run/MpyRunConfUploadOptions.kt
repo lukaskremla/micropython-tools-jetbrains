@@ -22,6 +22,7 @@ class MpyRunConfUploadOptions : RunConfigurationOptions() {
     var uploadMode by property(0)
     var selectedPaths by list<String>()
     var path by string("")
+    var targetPath by string("")
     var switchToReplOnSuccess by property(false)
     var resetOnSuccess by property(true)
     var synchronize by property(false)

@@ -32,6 +32,7 @@ import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
+import dev.micropythontools.settings.isRunConfTargetPathValid
 import dev.micropythontools.ui.NOTIFICATION_GROUP
 
 /**
@@ -51,7 +52,7 @@ class MpyRunConfUpload(
     private val deviceService = project.service<MpyDeviceService>()
     private val transferService = project.service<MpyTransferService>()
 
-    private fun getFileName(): String {
+    fun getFileName(): String {
         val path = options.path ?: return "Unknown"
         val file = StandardFileSystems.local().findFileByPath(path) ?: return "Unknown"
         return file.name
@@ -88,6 +89,7 @@ class MpyRunConfUpload(
         uploadMode: Int,
         selectedPaths: MutableList<String>,
         path: String,
+        targetPath: String,
         resetOnSuccess: Boolean,
         switchToReplOnSuccess: Boolean,
         synchronize: Boolean,
@@ -97,6 +99,7 @@ class MpyRunConfUpload(
         options.uploadMode = uploadMode
         options.selectedPaths = selectedPaths
         options.path = path
+        options.targetPath = targetPath
         options.switchToReplOnSuccess = switchToReplOnSuccess
         options.resetOnSuccess = resetOnSuccess
         options.synchronize = synchronize
@@ -141,12 +144,13 @@ class MpyRunConfUpload(
             } else {
                 val file = StandardFileSystems.local().findFileByPath(options.path!!)!!
 
-                success = transferService.uploadFileOrFolder(
-                    file,
-                    true,
-                    excludedPaths.toSet(),
-                    synchronize,
-                    excludePaths,
+                success = transferService.performUpload(
+                    initialFilesToUpload = setOf(file),
+                    relativeToFolders = setOf(file.parent),
+                    targetDestination = options.targetPath ?: "/",
+                    excludedPaths = excludedPaths.toSet(),
+                    shouldSynchronize = synchronize,
+                    shouldExcludePaths = excludePaths
                 )
             }
             if (success) {
@@ -202,6 +206,13 @@ class MpyRunConfUpload(
             if (path == null || StandardFileSystems.local().findFileByPath(path) == null) {
                 throw RuntimeConfigurationError(
                     "File not found: \"$path\". Please select a valid file or folder"
+                )
+            }
+            val targetPath = options.targetPath
+            val validationResult = isRunConfTargetPathValid(targetPath ?: "/")
+            if (validationResult != null) {
+                throw RuntimeConfigurationError(
+                    validationResult
                 )
             }
         }

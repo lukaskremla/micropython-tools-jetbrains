@@ -44,9 +44,13 @@ class MpyFTPClient(private val project: Project) {
     }
 
     fun disconnect() {
-        ftpClient.logout()
-        ftpClient.disconnect()
-        isConnected = false
+        try {
+            ftpClient.logout()
+            ftpClient.disconnect()
+            isConnected = false
+        } catch (_: Throwable) {
+            //
+        }
     }
 
     suspend fun setupFtpServer(reporter: RawProgressReporter, hasUftpdCached: Boolean?): String {
