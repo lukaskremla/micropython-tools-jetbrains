@@ -20,6 +20,7 @@ package dev.micropythontools.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionUpdateThread.BGT
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -583,7 +584,9 @@ class MpyExecuteFileInReplAction : MpyReplAction(
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        FileDocumentManager.getInstance().saveAllDocuments()
+        ApplicationManager.getApplication().invokeLater {
+            FileDocumentManager.getInstance().saveAllDocuments()
+        }
 
         val code = e.getData(CommonDataKeys.VIRTUAL_FILE)?.readText() ?: return
         reporter.text("Executing file in REPL...")
@@ -646,7 +649,7 @@ class MpyExecuteFragmentInReplAction : MpyReplAction(
             text
         }
         if (!code.isNullOrBlank()) {
-            deviceService.instantRun(code, true)
+            deviceService.instantRun(code, false)
         }
     }
 
