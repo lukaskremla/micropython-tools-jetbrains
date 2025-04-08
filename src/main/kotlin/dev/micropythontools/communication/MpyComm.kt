@@ -428,10 +428,10 @@ open class MpyComm(private val deviceService: MpyDeviceService, private val pyth
     }
 
     @Throws(IOException::class)
-    suspend fun blindExecute(command: String): ExecResponse {
+    suspend fun blindExecute(command: String, captureOutput: Boolean = true): ExecResponse {
         checkConnected()
         webSocketMutex.withLock {
-            return doBlindExecute(listOf(command))
+            return doBlindExecute(listOf(command), captureOutput)
         }
     }
 
