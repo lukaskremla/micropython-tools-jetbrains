@@ -379,7 +379,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         //val oldStubPackage = settings.state.activeStubsPackage ?: ""
 
         with(parameters) {
-            if (isConnected || !isPluginEnabled) {
+            if (isConnected && !isPluginEnabled) {
                 runBlocking { deviceService.disconnect(null) }
             }
 
