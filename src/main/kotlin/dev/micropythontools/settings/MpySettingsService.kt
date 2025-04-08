@@ -213,3 +213,14 @@ fun isUftpdPathValid(uftpdPath: String): String? {
             null
         }
 }
+
+fun isRunConfTargetPathValid(targetPath: String): String? {
+    val validationResult = validateMpyPath(targetPath, true)
+
+    return validationResult
+        ?: if (targetPath.contains(".")) {
+            "The path before file cannot contain a \".\""
+        } else {
+            null
+        }
+}

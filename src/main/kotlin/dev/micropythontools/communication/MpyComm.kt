@@ -309,7 +309,7 @@ open class MpyComm(private val deviceService: MpyDeviceService, private val pyth
                                     remainingFlowControlWindowSize += flowControlWindowSize
                                 } else if (bytes[0] == 0x04.toByte()) {
                                     mpyClient?.send(byteArrayOf(0x04.toByte()))
-                                    throw IOException("Device aborted paste")
+                                    throw IOException("Device aborted raw paste mode")
                                 }
                             }
                         }
