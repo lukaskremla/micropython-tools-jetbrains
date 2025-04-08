@@ -563,7 +563,6 @@ fun <T> performReplAction(
                             deviceService.fileSystemWidget?.refresh(reporter)
                         }
                     } catch (e: CancellationException) {
-                        println("\"${e.localizedMessage}\"")
                         error = "Clean up action cancelled"
                     } catch (e: Throwable) {
                         error = e.localizedMessage ?: e.message
