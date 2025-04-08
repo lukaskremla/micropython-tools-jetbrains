@@ -468,26 +468,6 @@ class MpyTransferService(private val project: Project) {
         return uploadedSuccessfully
     }
 
-    @Suppress("UnstableApiUsage")
-    private suspend fun writeDown(
-        node: FileSystemNode,
-        name: String,
-        destination: VirtualFile?
-    ) {
-        val mpyDeviceService = project.service<MpyDeviceService>()
-
-        if (node is FileNode) {
-            val content = mpyDeviceService.download(node.fullName)
-            writeAction {
-                destination!!.findOrCreateFile(name).setBinaryContent(content)
-            }
-        } else {
-            writeAction {
-                destination!!.findOrCreateDirectory(name)
-            }
-        }
-    }
-
     fun downloadDeviceFiles() {
         performReplAction(
             project = project,
@@ -498,9 +478,9 @@ class MpyTransferService(private val project: Project) {
                 reporter.text("Collecting files to download...")
                 reporter.fraction(null)
 
-                val mpyDeviceService = project.service<MpyDeviceService>()
+                val deviceService = project.service<MpyDeviceService>()
 
-                val selectedFiles = mpyDeviceService.fileSystemWidget?.selectedFiles()
+                val selectedFiles = deviceService.fileSystemWidget?.selectedFiles()
                 if (selectedFiles.isNullOrEmpty()) return@performReplAction
                 var destination: VirtualFile? = null
 
@@ -554,10 +534,34 @@ class MpyTransferService(private val project: Project) {
 
                 parentNameToFile.forEach { (parentName, node) ->
                     val name = if (parentName.isEmpty()) node.name else "$parentName/${node.name}"
-                    writeDown(node, name, destination)
+
                     reporter.text("Downloading: file $downloadedFiles of ${parentNameToFile.size}")
                     reporter.fraction(downloadedFiles.toDouble() * singleFileProgress)
                     reporter.details(name)
+
+                    val content = if (node is FileNode) deviceService.download(node.fullName) else null
+
+                    try {
+                        if (node is FileNode) {
+                            writeAction {
+                                try {
+                                    destination!!.findOrCreateFile(name).setBinaryContent(content!!)
+                                } catch (e: Throwable) {
+                                    throw IOException("Error writing files - ${e.localizedMessage}")
+                                }
+                            }
+                        } else {
+                            writeAction {
+                                try {
+                                    destination!!.findOrCreateDirectory(name)
+                                } catch (e: Throwable) {
+                                    throw IOException("Error writing files - ${e.localizedMessage}")
+                                }
+                            }
+                        }
+                    } catch (e: Throwable) {
+                        throw IOException("Error writing files - ${e.localizedMessage}")
+                    }
 
                     downloadedFiles++
                 }

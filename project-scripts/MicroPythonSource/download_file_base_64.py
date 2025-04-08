@@ -26,9 +26,9 @@ def m():
             if n == 0:
                 break
             if n < 384:
-                print(binascii.b2a_base64(b[:n]))
+                print(binascii.b2a_base64(b[:n]), end="")
             else:
-                print(binascii.b2a_base64(b))
+                print(binascii.b2a_base64(b), end="")
 
 
 m()
