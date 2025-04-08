@@ -155,29 +155,6 @@ class MpyTransferService(private val project: Project) {
         )
     }
 
-    fun uploadFileOrFolder(
-        fileToUpload: VirtualFile,
-        shouldGoToRoot: Boolean = false,
-        excludedPaths: Set<String> = emptySet(),
-        shouldSynchronize: Boolean = false,
-        shouldExcludePaths: Boolean = false
-    ): Boolean {
-
-        val relativeToFolders = when {
-            shouldGoToRoot -> setOf(fileToUpload.parent)
-
-            else -> emptySet<VirtualFile>()
-        }
-
-        return performUpload(
-            initialFilesToUpload = setOf(fileToUpload),
-            relativeToFolders = relativeToFolders,
-            excludedPaths = excludedPaths,
-            shouldSynchronize = shouldSynchronize,
-            shouldExcludePaths = shouldExcludePaths
-        )
-    }
-
     fun uploadItems(
         filesToUpload: Set<VirtualFile>,
         excludedPaths: Set<String> = emptySet(),
