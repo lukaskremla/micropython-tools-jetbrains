@@ -25,9 +25,9 @@ def m():
             if n == 0:
                 break
             if n < 256:
-                print(b[:n].hex())
+                print(b[:n].hex(), end="")
             else:
-                print(b.hex())
+                print(b.hex(), end="")
 
 
 m()

@@ -191,6 +191,30 @@ open class MpyComm(private val deviceService: MpyDeviceService, private val pyth
         return commands
     }
 
+    suspend fun download(fileName: @NonNls String): ByteArray {
+        val canEncodeBase64 = deviceService.deviceInformation.canEncodeBase64
+
+        val command = when (canEncodeBase64) {
+            true -> pythonService.retrieveMpyScriptAsString("download_file_base_64.py")
+            else -> pythonService.retrieveMpyScriptAsString("download_file_hex.py")
+        }
+
+        val result = blindExecute(command.format("\"$fileName\"")).extractSingleResponse()
+
+        return if (canEncodeBase64) {
+            val cleanOutput = result
+                .replace("\\n'", "")
+                .replace("b'", "")
+
+            val decoder = Base64.getDecoder()
+            decoder.decode(cleanOutput)
+        } else {
+            result.filter { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }.chunked(2)
+                .map { it.toInt(16).toByte() }
+                .toByteArray()
+        }
+    }
+
     /**
      * Method for executing MicroPython scripts and commands over REPL
      * This method is only intended to be called internally in MpyComm
@@ -544,30 +568,6 @@ open class MpyComm(private val deviceService: MpyDeviceService, private val pyth
 
     fun interrupt() {
         mpyClient?.send("\u0003")
-    }
-
-    suspend fun download(fileName: @NonNls String): ByteArray {
-        val canEncodeBase64 = deviceService.deviceInformation.canEncodeBase64
-
-        val command = when (canEncodeBase64) {
-            true -> pythonService.retrieveMpyScriptAsString("download_file_base_64.py")
-            else -> pythonService.retrieveMpyScriptAsString("download_file_hex.py")
-        }
-
-        val result = webSocketMutex.withLock {
-            blindExecute(command.format(fileName)).extractSingleResponse()
-        }
-
-        return if (canEncodeBase64) {
-            val cleanOutput = result.replace("\n", "")
-
-            val decoder = Base64.getDecoder()
-            decoder.decode(cleanOutput)
-        } else {
-            result.filter { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }.chunked(2)
-                .map { it.toInt(16).toByte() }
-                .toByteArray()
-        }
     }
 
     suspend fun recursivelySafeDeletePaths(paths: Set<String>) {
