@@ -418,9 +418,9 @@ class MpyDeviceService(private val project: Project) : Disposable {
      * @param command The command or script to execute
      * @return The execution response
      */
-    suspend fun blindExecute(command: String): ExecResponse {
+    suspend fun blindExecute(command: String, captureOutput: Boolean = true): ExecResponse {
         clearTerminalIfNeeded()
-        return comm.blindExecute(command)
+        return comm.blindExecute(command, captureOutput)
     }
 
     /**
