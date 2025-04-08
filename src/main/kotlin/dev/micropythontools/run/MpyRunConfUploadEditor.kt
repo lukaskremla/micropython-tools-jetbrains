@@ -39,6 +39,7 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.settings.isUftpdPathValid
 import dev.micropythontools.settings.normalizeMpyPath
 import dev.micropythontools.settings.validateMpyPath
 import java.awt.BorderLayout
@@ -54,6 +55,7 @@ private data class FlashParameters(
     var uploadMode: Int,
     var selectedPaths: MutableList<String>,
     var path: String,
+    var targetPath: String,
     var switchToReplOnSuccess: Boolean,
     var resetOnSuccess: Boolean,
     var synchronize: Boolean,
@@ -112,6 +114,7 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
             uploadMode = uploadMode,
             selectedPaths = selectedPaths.toMutableList(),
             path = path ?: "",
+            targetPath = targetPath ?: "",
             switchToReplOnSuccess = switchToReplOnSuccess,
             resetOnSuccess = resetOnSuccess,
             synchronize = synchronize,
@@ -320,8 +323,10 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
     private lateinit var uploadProjectRadioButton: Cell<JBRadioButton>
     private lateinit var useSelectedPathsRadioButton: Cell<JBRadioButton>
     private lateinit var usePathRadiobutton: Cell<JBRadioButton>
+    private lateinit var targetPathTextField: Cell<JBTextField>
     private lateinit var availableToSelectedButton: Cell<JButton>
     private lateinit var selectedToAvailableButton: Cell<JButton>
+
 
     override fun createEditor(): JComponent {
         setupTableSelectionListeners()
@@ -391,7 +396,7 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
             }.visibleIf(useSelectedPathsRadioButton.selected)
 
             panel {
-                row("Path:") {
+                row("Source path:  ") {
                     textFieldWithBrowseButton(
                         FileChooserDescriptor(true, true, false, false, false, false).withTitle("Select Path"),
                         runConfiguration.project
@@ -407,6 +412,23 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
                             }
                         })
                     }.align(AlignX.FILL)
+                }
+
+                row("Target path: ") {
+                    targetPathTextField = textField()
+                        .bindText(parameters::targetPath)
+                        .columns(15)
+                        .gap(RightGap.SMALL)
+                        .validationInfo { field ->
+                            val validationResult = isUftpdPathValid(field.text)
+
+                            if (validationResult != null) {
+                                error(validationResult)
+                            } else null
+                        }
+
+                    label("/${runConfiguration.getFileName()}")
+
                 }
             }.visibleIf(usePathRadiobutton.selected)
 
@@ -467,10 +489,15 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
 
             excludedPaths.addAll(excludedPathsTableItemsPaths)
 
+            val normalizedTARGETPath = normalizeMpyPath(targetPath)
+
+            targetPathTextField.component.text = normalizedTARGETPath
+
             runConfiguration.saveOptions(
                 uploadMode = uploadMode,
                 selectedPaths = selectedPaths,
                 path = path,
+                targetPath = normalizedTARGETPath,
                 switchToReplOnSuccess = switchToReplOnSuccess,
                 resetOnSuccess = resetOnSuccess,
                 synchronize = synchronize,

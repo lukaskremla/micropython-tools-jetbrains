@@ -425,8 +425,10 @@ class FileSystemWidget(val project: Project) : JBPanel<FileSystemWidget>(BorderL
             // disconnect from the board and show an error message to the user.
             if (isInitialRefresh || disconnectOnCancel) {
                 throw e
-            } else {
+            } else if (useReporter) {
                 throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
+            } else {
+                return
             }
         } catch (e: Throwable) {
             deviceService.disconnect(reporter)

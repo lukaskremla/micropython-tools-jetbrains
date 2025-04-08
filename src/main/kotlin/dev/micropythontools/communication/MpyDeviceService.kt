@@ -53,6 +53,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 data class DeviceInformation(
@@ -168,14 +169,16 @@ class MpyDeviceService(private val project: Project) : Disposable {
 
     var deviceInformation: DeviceInformation = DeviceInformation()
 
-    private val connectionChecker = Executors.newSingleThreadScheduledExecutor { r ->
-        val thread = Thread(r, "MPY-Connection-Checker")
-        thread.isDaemon = true
-        thread
-    }
+    private var connectionChecker: ScheduledExecutorService? = null
 
     fun startConnectionMonitoring() {
-        connectionChecker.scheduleAtFixedRate({
+        connectionChecker = Executors.newSingleThreadScheduledExecutor { r ->
+            val thread = Thread(r, "MPY-Connection-Checker")
+            thread.isDaemon = true
+            thread
+        }
+
+        connectionChecker?.scheduleAtFixedRate({
             if (state == State.CONNECTED && !comm.isConnected) {
                 ApplicationManager.getApplication().invokeLater {
                     Notifications.Bus.notify(
@@ -360,8 +363,7 @@ class MpyDeviceService(private val project: Project) : Disposable {
         reporter?.fraction(null)
         comm.disconnect()
         deviceInformation = DeviceInformation()
-        connectionChecker.shutdown()
-        println("Performed disconnect")
+        closeMonitoringTask()
     }
 
     @Throws(IOException::class)
@@ -454,15 +456,19 @@ class MpyDeviceService(private val project: Project) : Disposable {
         }
     }
 
-    override fun dispose() {
-        connectionChecker.shutdown()
+    private fun closeMonitoringTask() {
+        connectionChecker?.shutdown()
         try {
-            if (!connectionChecker.awaitTermination(1, TimeUnit.SECONDS)) {
-                connectionChecker.shutdownNow()
+            if (connectionChecker?.awaitTermination(1, TimeUnit.SECONDS) != true) {
+                connectionChecker?.shutdownNow()
             }
         } catch (_: InterruptedException) {
-            connectionChecker.shutdownNow()
+            connectionChecker?.shutdownNow()
         }
+    }
+
+    override fun dispose() {
+        closeMonitoringTask()
     }
 }
 
@@ -518,7 +524,7 @@ fun <T> performReplAction(
                     gotThroughTryBlock = true
                 } catch (_: TimeoutCancellationException) {
                     error = "$description timed out"
-                } catch (_: kotlin.coroutines.cancellation.CancellationException) {
+                } catch (_: CancellationException) {
                     wasCancelled = true
 
                     error = cancelledMessage ?: "$description cancelled"
@@ -556,6 +562,9 @@ fun <T> performReplAction(
                         if (requiresRefreshAfter && shouldRefresh) {
                             deviceService.fileSystemWidget?.refresh(reporter)
                         }
+                    } catch (e: CancellationException) {
+                        println("\"${e.localizedMessage}\"")
+                        error = "Clean up action cancelled"
                     } catch (e: Throwable) {
                         error = e.localizedMessage ?: e.message
                         error = if (error.isNullOrBlank()) {

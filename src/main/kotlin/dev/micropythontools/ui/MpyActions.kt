@@ -281,6 +281,7 @@ class MpyCreateFolderAction : MpyReplAction(
             { reporter ->
                 val newFolderPath = dialogResult as String
 
+                reporter.text("Creating a new folder...")
                 deviceService.safeCreateDirectories(
                     setOf(newFolderPath)
                 )
@@ -496,6 +497,8 @@ class MpyOpenFileAction : MpyReplAction(
         val selectedFiles = withContext(Dispatchers.EDT) {
             deviceService.fileSystemWidget?.selectedFiles()?.mapNotNull { it as? FileNode } ?: emptyList()
         }
+
+        reporter.text(if (selectedFiles.size == 1) "Opening file..." else "Opening files...")
         for (file in selectedFiles) {
             var text = deviceService.download(file.fullName).toString(StandardCharsets.UTF_8)
             withContext(Dispatchers.EDT) {
@@ -583,6 +586,7 @@ class MpyExecuteFileInReplAction : MpyReplAction(
         FileDocumentManager.getInstance().saveAllDocuments()
 
         val code = e.getData(CommonDataKeys.VIRTUAL_FILE)?.readText() ?: return
+        reporter.text("Executing file in REPL...")
         deviceService.instantRun(code, false)
     }
 
@@ -626,6 +630,9 @@ class MpyExecuteFragmentInReplAction : MpyReplAction(
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
         val code = withContext(Dispatchers.EDT) {
             val editor = editor(project) ?: return@withContext null
+            val emptySelection = editor.selectionModel.getSelectedText(true).isNullOrBlank()
+            reporter.text(if (emptySelection) "Executing Line in REPL..." else "Executing Selection in REPL...")
+
             var text = editor.selectionModel.getSelectedText(true)
             if (text.isNullOrBlank()) {
                 try {
@@ -719,13 +726,31 @@ class MpyUploadActionGroup : ActionGroup("Upload Item(s) to MicroPython Device",
     }
 }
 
-class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload Relative to Device Root \"/\"") {
+class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload to Device Root \"/\"") {
     init {
         templatePresentation.icon = AllIcons.Actions.Upload
     }
 
     override fun performAction(e: AnActionEvent) {
-        TODO("Not yet implemented")
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+
+        if (files.isNullOrEmpty()) return
+
+        val sanitizedFiles = files.filter { candidate ->
+            files.none { potentialParent ->
+                VfsUtil.isAncestor(potentialParent, candidate, true)
+            }
+        }.toSet()
+
+        val parentFolders = files
+            .map { it.parent }
+            .toSet()
+
+        transferService.performUpload(
+            initialFilesToUpload = sanitizedFiles,
+            relativeToFolders = parentFolders,
+            targetDestination = "/"
+        )
     }
 }
 
@@ -735,7 +760,11 @@ class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to"
     }
 
     override fun performAction(e: AnActionEvent) {
-        TODO("Not yet implemented")
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+
+        if (files.isNullOrEmpty()) return
+
+        transferService.uploadItems(files.toSet())
     }
 
     override fun customUpdate(e: AnActionEvent) {
@@ -747,6 +776,9 @@ class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to"
             return
         }
 
+        if (files.all { sourcesRoots.contains(it) }) {
+            e.presentation.isEnabledAndVisible = false
+        }
         if (files.none { candidateFile ->
                 sourcesRoots.any { sourceRoot ->
                     VfsUtil.isAncestor(sourceRoot, candidateFile, false)
@@ -760,7 +792,6 @@ class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to"
             }) {
             e.presentation.text = "Upload Relative to MicroPython Sources Root(s)"
         } else {
-            e.presentation.isEnabled = false
             e.presentation.text = "Upload relative to... (mixed selection)"
         }
     }

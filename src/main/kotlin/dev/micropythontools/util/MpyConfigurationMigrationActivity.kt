@@ -84,6 +84,7 @@ class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
                         uploadMode = 0,
                         selectedPaths = emptyList<String>().toMutableList(),
                         path = path ?: "",
+                        targetPath = "/",
                         resetOnSuccess = resetOnSuccess,
                         switchToReplOnSuccess = runReplOnSuccess,
                         synchronize = synchronize,

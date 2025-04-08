@@ -47,7 +47,7 @@ class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfExecute) :
 
     override fun createEditor(): JComponent {
         configurationPanel = panel {
-            row("Path:") {
+            row("Source path: ") {
                 textFieldWithBrowseButton(
                     FileChooserDescriptor(true, true, false, false, false, false).withTitle("Select Path"),
                     runConfiguration.project
