@@ -104,11 +104,14 @@ abstract class MpyActionBase(
 
     final override fun update(e: AnActionEvent) {
         super.update(e)
-        val wasInitialized = initialize(e)
-        if (!wasInitialized) return
 
-        val isPluginEnabled = settings.state.isPluginEnabled
-        val isConnected = deviceService.state == State.CONNECTING || deviceService.state == State.CONNECTED || deviceService.state == State.TTY_DETACHED
+        // Retrieve the services manually to properly handle null states
+        val project = e.project
+        val settings = project?.service<MpySettingsService>()
+        val deviceService = project?.service<MpyDeviceService>()
+
+        val isPluginEnabled = settings?.state?.isPluginEnabled == true
+        val isConnected = deviceService != null && (deviceService.state == State.CONNECTING || deviceService.state == State.CONNECTED || deviceService.state == State.TTY_DETACHED)
 
         e.presentation.isVisible = when (options.visibleWhen) {
             VisibleWhen.ALWAYS -> true
@@ -123,6 +126,10 @@ abstract class MpyActionBase(
             EnabledWhen.CONNECTED -> isConnected && isPluginEnabled
             EnabledWhen.DISCONNECTED -> !isConnected && isPluginEnabled
         }
+
+        // Attempt initialization before the customUpdate method, which relies on the properties being initialized
+        val wasInitialized = initialize(e)
+        if (!wasInitialized) return
 
         customUpdate(e)
     }
