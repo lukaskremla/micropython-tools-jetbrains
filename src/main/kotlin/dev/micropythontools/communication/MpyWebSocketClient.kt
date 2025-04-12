@@ -22,6 +22,7 @@ import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
+import net.schmizz.sshj.connection.ConnectionException
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import java.io.IOException
@@ -107,6 +108,9 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                 while (!isConnected && time > 0) {
                     @Suppress("UnstableApiUsage")
                     checkCanceled()
+                    if (webSocketClient.connectionErrorMessage != null) {
+                        throw ConnectionException("WebREPL connection failed: ${webSocketClient.connectionErrorMessage}")
+                    }
                     delay(SHORT_DELAY)
                     time -= SHORT_DELAY.toInt()
                 }
@@ -151,7 +155,7 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                 is InterruptedException -> throw ConnectException("Connection interrupted")
                 else -> throw e
             }
-
+            webSocketClient.reset()
         } finally {
             connectInProcess = false
             loginBuffer.setLength(0)
