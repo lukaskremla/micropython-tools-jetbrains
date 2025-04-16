@@ -26,6 +26,7 @@ project_dir = os.path.dirname(current_dir)
 mpy_source_dir = os.path.join(project_dir, "project-scripts/MicroPythonSource")
 scripts_dir = os.path.join(project_dir, "scripts")
 target_dir = os.path.join(scripts_dir, "MicroPythonMinified")
+scripts_to_split = ["socket_transfer.py"]
 
 try:
     shutil.rmtree(scripts_dir)
@@ -78,13 +79,11 @@ def do_minification(source_directory, target_directory):
             global_pattern = r"^([a-zA-Z0-9_]+)\s*="
             def_pattern = r"\bdef\s+([a-zA-Z0-9_]+)"
             class_pattern = r"\bclass\s+([a-zA-Z0-9_]+)"
-            import_as_pattern = r"\bas\s+([a-zA-Z0-9_]+)"
 
             # Collect the patterns
             found_global_patterns = re.findall(global_pattern, minified_code, re.MULTILINE)
             found_def_patterns = re.findall(def_pattern, minified_code)
             found_class_patterns = re.findall(class_pattern, minified_code)
-            found_as_patterns = re.findall(import_as_pattern, minified_code)
 
             # Avoid mangling start() and stop() uftpd methods as they need to be consistent for other parts of the code
             # if file.startswith("uftpd") or file.startswith("mini_uftpd"):
@@ -95,8 +94,7 @@ def do_minification(source_directory, target_directory):
             names_to_mangle = (
                     found_global_patterns +
                     found_def_patterns +
-                    found_class_patterns +
-                    found_as_patterns
+                    found_class_patterns
             )
 
             # Prepare a list for saving global names that should be deleted at the end
@@ -137,6 +135,37 @@ def do_minification(source_directory, target_directory):
                 if len(del_statements) > 0 or not minified_code.endswith("gc.collect()"):
                     # Append gc.collect() at the end to assure proper garbage collection
                     t.write("\n" + "gc.collect()")
+
+            # Check for files that are meant to be split into the main and clean up scripts
+            if file in scripts_to_split:
+                with open(target_path, "r+") as ts:
+                    all_lines = ts.readlines()
+
+                    # The cleanup section always starts with a del statement
+                    for line in all_lines:
+                        if not line.startswith("del"):
+                            continue
+
+                        # Get index to split from and split
+                        index = all_lines.index(line)
+                        cleanup_script_content = "".join(all_lines[index:])
+                        # Create the base to which the "_cleanup.py" will be appended
+                        target_path_base = target_path.removesuffix(".py")
+
+                        # Write the cleanup script
+                        with open(f"{target_path_base}_cleanup.py", "w") as cs:
+                            cs.write(license_header)
+                            cs.write(cleanup_script_content)
+
+                        # Remove the clean_up script from the original, also remove a redundant whitespace at the end
+                        new_original_script_content = "".join(all_lines).removesuffix(
+                            cleanup_script_content).removesuffix("\n")
+
+                        ts.seek(0)
+                        ts.truncate(0)
+                        ts.write(new_original_script_content)
+
+                        break
 
 
 do_minification(mpy_source_dir, target_dir)

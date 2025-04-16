@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.project.stateStore
 import com.jetbrains.python.sdk.PythonSdkUtil
-import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.sourceroots.MpySourceRootType
 import dev.micropythontools.ui.DirNode
 import dev.micropythontools.ui.FileNode
@@ -49,7 +48,6 @@ import dev.micropythontools.ui.NOTIFICATION_GROUP
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import java.io.IOException
 
 
@@ -182,7 +180,6 @@ class MpyTransferService(private val project: Project) {
 
         FileDocumentManager.getInstance().saveAllDocuments()
 
-        val settings = project.service<MpySettingsService>()
         val deviceService = project.service<MpyDeviceService>()
 
         val excludedFolders = collectExcluded()
@@ -195,9 +192,8 @@ class MpyTransferService(private val project: Project) {
         var filesToUpload = if (initialIsProjectUpload) collectProjectUploadables().toMutableList() else initialFilesToUpload.toMutableList()
         var foldersToCreate = mutableSetOf<VirtualFile>()
 
-        var ftpUploadClient: MpyFTPClient? = null
-        var shouldCleanUpFTP = false
-        var hasUftpdCached: Boolean? = null
+        var socketServer: MpySocketServer? = null
+        var shouldCleanupSocket = false
 
         var uploadedSuccessfully = false
 
@@ -332,13 +328,6 @@ class MpyTransferService(private val project: Project) {
                         }
                     }
 
-                    val cachedFtpScriptPath = "${settings.state.cachedFTPScriptPath ?: ""}/uftpd.py"
-
-                    // Check if uftpd is cached
-                    if (fileToTargetPath.values.any { it == cachedFtpScriptPath }) {
-                        hasUftpdCached = true
-                    }
-
                     // Remove already existing file system entries
                     fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                     folderToTargetPath.keys.removeAll(alreadyExistingFolders)
@@ -347,11 +336,6 @@ class MpyTransferService(private val project: Project) {
                         // Remove explicitly excluded paths
                         if (shouldExcludePaths && excludedPaths.isNotEmpty()) {
                             targetPathsToRemove.removeAll(excludedPaths)
-                        }
-
-                        // Special handling for cached FTP scripts
-                        if (settings.state.useFTP && settings.state.cacheFTPScript) {
-                            targetPathsToRemove.remove(cachedFtpScriptPath)
                         }
 
                         // Delete remaining existing target paths that aren't a part of the upload
@@ -367,23 +351,26 @@ class MpyTransferService(private val project: Project) {
 
                 val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
-                if (shouldUseFTP(project, totalBytes) && fileToTargetPath.isNotEmpty()) {
-                    shouldCleanUpFTP = true
+                if (shouldUseSockets(project, totalBytes)) {
+                    shouldCleanupSocket = true
 
                     try {
-                        ftpUploadClient = MpyFTPClient(project)
-                        val ip = ftpUploadClient.setupFtpServer(reporter, hasUftpdCached)
-                        ftpUploadClient.connect(ip, "", "")
+                        socketServer = MpySocketServer(project)
+                        socketServer?.establishConnection(reporter)
                     } catch (e: Throwable) {
                         Notifications.Bus.notify(
                             Notification(
                                 NOTIFICATION_GROUP,
-                                e.localizedMessage,
+                                "Failed to establish a socket connection, falling back to normal communication: ${e.localizedMessage}",
                                 NotificationType.ERROR
                             ), project
                         )
+
+                        socketServer = null
                     }
                 }
+
+                println("Before uploading")
 
                 var uploadProgress = 0.0
                 var uploadedKB = 0.0
@@ -403,13 +390,11 @@ class MpyTransferService(private val project: Project) {
                 fileToTargetPath.forEach { (file, path) ->
                     reporter.details(path)
 
-                    if (ftpUploadClient != null && ftpUploadClient.isConnected) {
+                    if (socketServer != null) {
                         try {
-                            withTimeout(10_000) {
-                                ftpUploadClient.uploadFile(path, file.contentsToByteArray(), ::progressCallbackHandler)
-                            }
+                            socketServer?.uploadFile(path, file.contentsToByteArray(), ::progressCallbackHandler)
                         } catch (_: TimeoutCancellationException) {
-                            throw IOException("Timed out while uploading a file with FTP")
+                            throw IOException("Timed out while uploading a file over sockets")
                         }
                     } else {
                         deviceService.upload(path, file.contentsToByteArray(), ::progressCallbackHandler)
@@ -427,13 +412,17 @@ class MpyTransferService(private val project: Project) {
                 // but details aren't thus they should be cleaned up
                 reporter.details(null)
 
-                if (shouldCleanUpFTP) {
-                    reporter.text("Cleaning up after FTP upload...")
+                if (shouldCleanupSocket) {
+                    reporter.text("Cleaning up after socket communication...")
                     reporter.fraction(null)
-                    ftpUploadClient?.teardownFtpServer()
+                    socketServer?.teardownMpyClient()
                 }
 
+                println("After socket clean up")
+
                 deviceService.fileSystemWidget?.refresh(reporter)
+
+                println("After refresh")
 
                 if (uploadedSuccessfully) {
                     val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
@@ -469,6 +458,9 @@ class MpyTransferService(private val project: Project) {
     }
 
     fun downloadDeviceFiles() {
+        var socketServer: MpySocketServer? = null
+        var shouldCleanupSocket = false
+
         performReplAction(
             project = project,
             connectionRequired = true,
@@ -529,6 +521,30 @@ class MpyTransferService(private val project: Project) {
                     }
                 }
 
+                val totalBytes = selectedFiles
+                    .filter { it is FileNode }
+                    .sumOf { (it as FileNode).size }
+                    .toDouble()
+
+                if (shouldUseSockets(project, totalBytes)) {
+                    shouldCleanupSocket = true
+
+                    try {
+                        socketServer = MpySocketServer(project)
+                        socketServer?.establishConnection(reporter)
+                    } catch (e: Throwable) {
+                        Notifications.Bus.notify(
+                            Notification(
+                                NOTIFICATION_GROUP,
+                                "Failed to establish a socket connection, falling back to normal communication: ${e.localizedMessage}",
+                                NotificationType.ERROR
+                            ), project
+                        )
+
+                        socketServer = null
+                    }
+                }
+
                 val singleFileProgress: Double = (1 / parentNameToFile.size.toDouble())
                 var downloadedFiles = 1
 
@@ -539,7 +555,13 @@ class MpyTransferService(private val project: Project) {
                     reporter.fraction(downloadedFiles.toDouble() * singleFileProgress)
                     reporter.details(name)
 
-                    val content = if (node is FileNode) deviceService.download(node.fullName) else null
+                    val content = if (node is FileNode) {
+                        if (socketServer != null) {
+                            socketServer?.downloadFile(node.fullName)
+                        } else {
+                            deviceService.download(node.fullName)
+                        }
+                    } else null
 
                     try {
                         if (node is FileNode) {
@@ -564,6 +586,17 @@ class MpyTransferService(private val project: Project) {
                     }
 
                     downloadedFiles++
+                }
+            },
+            cleanUpAction = { reporter ->
+                // Reporter text and fraction parameters are always set when the reporter is used elsewhere,
+                // but details aren't thus they should be cleaned up
+                reporter.details(null)
+
+                if (shouldCleanupSocket) {
+                    reporter.text("Cleaning up after socket communication...")
+                    reporter.fraction(null)
+                    socketServer?.teardownMpyClient()
                 }
             }
         )
