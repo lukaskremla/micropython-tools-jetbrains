@@ -16,119 +16,15 @@
 
 package dev.micropythontools.util
 
-import com.intellij.execution.RunManager
-import com.intellij.execution.impl.RunManagerImpl
-import com.intellij.ide.BrowserUtil
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import dev.micropythontools.run.MpyRunConfType
-import dev.micropythontools.run.MpyRunConfUpload
-import dev.micropythontools.run.MpyRunConfUploadFactory
-import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.ui.NOTIFICATION_GROUP
-import kotlinx.coroutines.delay
 
 /**
  * @author Lukas Kremla
  */
 class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
     override suspend fun execute(project: Project) {
-        val settings = project.service<MpySettingsService>()
-
-        delay(2000)
-
-        // Avoid running migration code if the settings version is up to date
-        if (settings.state.settingsVersion != 2) {
-            var hasModifiedSomething = false
-
-            val runManagerImpls = RunManagerImpl.getInstanceImpl(project)
-
-            runManagerImpls.allConfigurationsList.forEach { configuration ->
-                // Create a temporary element to which the configuration attributes are dumped and write it
-                val element = org.jdom.Element("temporaryConfig")
-                configuration.writeExternal(element)
-
-                if (!element.attributes.toString().contains("micropython-tools-flash-configuration")) return@forEach
-
-                val path = element.getChild("option")?.getAttributeValue("path") ?: element.getChildren("option").find { it.getAttributeValue("name") == "path" }?.getAttributeValue("value")
-                val runReplOnSuccess = element.getChildren("option").find { it.getAttributeValue("name") == "runReplOnSuccess" }?.getAttributeValue("value") == "true"
-                val resetOnSuccess = element.getChildren("option").find { it.getAttributeValue("name") == "resetOnSuccess" }?.getAttributeValue("value") == "true"
-                val synchronize = element.getChildren("option").find { it.getAttributeValue("name") == "synchronize" }?.getAttributeValue("value") == "true"
-                val excludePaths = element.getChildren("option").find { it.getAttributeValue("name") == "excludePaths" }?.getAttributeValue("value") == "true"
-                val excludedPaths = mutableListOf<String>()
-
-                element.getChildren("option").find { it.getAttributeValue("name") == "excludedPaths" }?.let { excludedPathsElement ->
-                    excludedPathsElement.getChild("list")?.getChildren("option")?.forEach { pathElement ->
-                        pathElement.getAttributeValue("value")?.let { path ->
-                            excludedPaths.add(path)
-                        }
-                    }
-                }
-
-                val name = "Upload Project"
-
-                val factory = MpyRunConfUploadFactory(MpyRunConfType())
-
-                // Instantiate the new flash configuration with the old one's settings
-                val writtenConfiguration = MpyRunConfUpload(
-                    project,
-                    factory,
-                    name
-                ).apply {
-                    saveOptions(
-                        uploadMode = 0,
-                        selectedPaths = emptyList<String>().toMutableList(),
-                        path = path ?: "",
-                        targetPath = "/",
-                        resetOnSuccess = resetOnSuccess,
-                        switchToReplOnSuccess = runReplOnSuccess,
-                        synchronize = synchronize,
-                        excludePaths = excludePaths,
-                        excludedPaths = excludedPaths
-                    )
-                }
-
-                // create the final run configuration that can be added to the project
-                val runnerAndConfigSettings = RunManager.getInstance(project).createConfiguration(
-                    writtenConfiguration,
-                    factory
-                )
-
-                // Add the new migrated configuration and remove the old one
-                runManagerImpls.addConfiguration(runnerAndConfigSettings)
-                runManagerImpls.removeConfiguration(runManagerImpls.findSettings(configuration))
-
-                hasModifiedSomething = true
-            }
-
-            // The migration process has completed fully, the settings version can be saved
-            settings.state.settingsVersion = 2
-
-            if (hasModifiedSomething) {
-                Notifications.Bus.notify(
-                    Notification(
-                        NOTIFICATION_GROUP,
-                        "MicroPython tools update",
-                        "MicroPython Tools run configurations have been automatically updated.<br><br>" +
-                                "The plugin no longer uses basic Sources Roots but now requires MicroPython Sources roots..<br><br>" +
-                                "NOTE: If your run configurations were stored in a file, you'll need to reconfigure them. " +
-                                "More info <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/releases/tag/0.4.0\">here</a>",
-                        NotificationType.WARNING
-                    ).setListener { notification, event ->
-                        if (event.description == "https://github.com/lukaskremla/micropython-tools-jetbrains/releases/tag/0.4.0") {
-                            BrowserUtil.browse(event.description)
-                        }
-                    },
-                    project
-                )
-            }
-        }
-
         // Logic for cleaning-up old MicroPython Tools libraries
         /*delay(20000)
 

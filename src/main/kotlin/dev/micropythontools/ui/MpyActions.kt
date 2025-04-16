@@ -572,7 +572,6 @@ class MpySoftResetAction : MpyReplAction(
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
         reporter.text("Resetting...")
         deviceService.reset()
-        deviceService.clearTerminalIfNeeded()
     }
 }
 
@@ -597,7 +596,7 @@ class MpyExecuteFileInReplAction : MpyReplAction(
 
         val code = e.getData(CommonDataKeys.VIRTUAL_FILE)?.readText() ?: return
         reporter.text("Executing file in REPL...")
-        deviceService.instantRun(code, false)
+        deviceService.instantRun(code)
     }
 
     override fun customUpdate(e: AnActionEvent) {
@@ -656,7 +655,7 @@ class MpyExecuteFragmentInReplAction : MpyReplAction(
             text
         }
         if (!code.isNullOrBlank()) {
-            deviceService.instantRun(code, false)
+            deviceService.instantRun(code)
         }
     }
 
