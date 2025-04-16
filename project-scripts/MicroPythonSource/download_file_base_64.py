@@ -21,6 +21,7 @@ import gc
 def m():
     with open("%s", "rb") as f:
         b = bytearray(384)
+        mw = memoryview(b)
         while True:
             n = f.readinto(b)
             if n == 0:

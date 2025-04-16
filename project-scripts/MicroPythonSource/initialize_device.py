@@ -24,7 +24,7 @@ def m():
     try:
         system_info = os.uname()
 
-        version = system_info[3]
+        version = system_info[2]
         description = system_info[4]
 
         has_crc32 = hasattr(binascii, "crc32")

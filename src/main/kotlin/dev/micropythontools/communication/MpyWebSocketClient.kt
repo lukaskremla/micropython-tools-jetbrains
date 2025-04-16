@@ -16,9 +16,13 @@
 
 package dev.micropythontools.communication
 
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.io.toByteArray
+import dev.micropythontools.ui.NOTIFICATION_GROUP
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
@@ -48,7 +52,10 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
     private val loginBuffer = StringBuffer()
 
     @Volatile
-    private var connectInProcess = true
+    var resetInProgress = false
+
+    @Volatile
+    private var connectInProgress = true
 
     private val webSocketClient = object : WebSocketClient(URI(comm.connectionParameters.webReplUrl)) {
         override fun onOpen(handshakedata: ServerHandshake) = open() //Nothing to do
@@ -67,7 +74,7 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
 
             message?.let { this@MpyWebSocketClient.message(it) }
 
-            if (connectInProcess && message != null) {
+            if (connectInProgress && message != null) {
                 loginBuffer.append(byteArray.toString(StandardCharsets.UTF_8))
             } else {
                 comm.dataReceived(byteArray)
@@ -84,11 +91,20 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
             try {
                 if (remote && comm.state == State.CONNECTED) {
                     //Counterparty closed the connection
+                    Notifications.Bus.notify(
+                        Notification(
+                            NOTIFICATION_GROUP,
+                            "WebREPL connection error - Code:$code ($reason)",
+                            NotificationType.ERROR
+                        ), comm.project
+                    )
                     throw IOException("Connection closed. Code:$code ($reason)")
                 }
             } finally {
-                connectInProcess = false
-                comm.state = State.DISCONNECTED
+                if (!resetInProgress) {
+                    connectInProgress = false
+                    comm.state = State.DISCONNECTED
+                }
             }
         }
     }
@@ -100,10 +116,10 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
 
     override suspend fun connect(progressIndicatorText: String): MpyWebSocketClient {
         loginBuffer.setLength(0)
-        connectInProcess = true
+        connectInProgress = true
         webSocketClient.connect()
         try {
-            var time = LONG_TIMEOUT
+            var time = TIMEOUT
             withProgressText(progressIndicatorText) {
                 while (!isConnected && time > 0) {
                     @Suppress("UnstableApiUsage")
@@ -133,14 +149,14 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                 }
                 loginBuffer.setLength(0)
                 send("${comm.connectionParameters.webReplPassword}\n")
-                while (connectInProcess && isConnected) {
+                while (connectInProgress && isConnected) {
                     when {
                         loginBuffer.contains(LOGIN_SUCCESS) -> break
                         loginBuffer.contains(LOGIN_FAIL) -> throw ConnectException("Access denied")
                         else -> delay(SHORT_DELAY)
                     }
                 }
-                connectInProcess = false
+                connectInProgress = false
                 comm.state = State.CONNECTED
             }
         } catch (e: Exception) {
@@ -148,7 +164,7 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                 close()
             } catch (_: IOException) {
             }
-            connectInProcess = false
+            connectInProgress = false
             comm.state = State.DISCONNECTED
             when (e) {
                 is TimeoutCancellationException -> throw ConnectException("Password exchange timeout. Received prompt: $loginBuffer")
@@ -157,7 +173,7 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
             }
             webSocketClient.reset()
         } finally {
-            connectInProcess = false
+            connectInProgress = false
             loginBuffer.setLength(0)
             loginBuffer.trimToSize()
         }
