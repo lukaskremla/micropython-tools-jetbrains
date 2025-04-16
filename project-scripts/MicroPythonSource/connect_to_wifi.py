@@ -28,9 +28,9 @@ def m():
     sta.connect(ssid, password)
     i = 0
     while not sta.isconnected():
-        time.sleep(1)
+        time.sleep_ms(100)
         i += 1
-        if i > wifi_timeout:
+        if i > wifi_timeout * 10:
             print(f"ERROR: Connecting to \"{ssid}\" failed, connection timed out. Check your network settings.")
             break
 

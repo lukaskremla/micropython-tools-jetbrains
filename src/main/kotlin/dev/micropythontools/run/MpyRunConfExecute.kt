@@ -107,7 +107,7 @@ class MpyRunConfExecute(
             val file = StandardFileSystems.local().findFileByPath(path)!!
             val code = file.readText()
             performReplAction(project, true, "Run code", false, "REPL execution cancelled", { _ ->
-                deviceService.instantRun(code, false)
+                deviceService.instantRun(code)
             })
 
             if (switchToReplOnSuccess) deviceService.activateRepl()

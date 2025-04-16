@@ -31,7 +31,6 @@ import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
@@ -51,11 +50,10 @@ private data class ConfigurableParameters(
     var portName: String,
     var webReplUrl: String,
     var webReplPassword: String,
-    var useFTP: Boolean,
-    var cacheFTPScript: Boolean,
-    var cachedFTPScriptPath: String,
-    var requireMinimumFTPUploadSize: Boolean,
-    var minimumFTPUploadSize: Int,
+    var compileToBytecode: Boolean,
+    var useSockets: Boolean,
+    var requireMinimumSocketTransferSize: Boolean,
+    var minimumSocketTransferSize: Int,
     var ssid: String,
     var wifiPassword: String,
     var areStubsEnabled: Boolean,
@@ -87,11 +85,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                 portName = if (portName.isNullOrBlank()) EMPTY_PORT_NAME_TEXT else portName.toString(),
                 webReplUrl = webReplUrl ?: DEFAULT_WEBREPL_URL,
                 webReplPassword = settings.retrieveWebReplPassword(),
-                useFTP = useFTP,
-                cacheFTPScript = cacheFTPScript,
-                cachedFTPScriptPath = cachedFTPScriptPath ?: "",
-                requireMinimumFTPUploadSize = requireMinimumFTPUploadSize,
-                minimumFTPUploadSize = minimumFTPUploadSize,
+                compileToBytecode = compileToBytecode,
+                useSockets = useSockets,
+                requireMinimumSocketTransferSize = requireMinimumSocketTransferSize,
+                minimumSocketTransferSize = minimumSocketTransferSize,
                 ssid = wifiCredentials.userName ?: "",
                 wifiPassword = wifiCredentials.getPasswordAsString() ?: "",
                 areStubsEnabled = areStubsEnabled,
@@ -112,10 +109,9 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
-    private lateinit var useFTPCheckBox: Cell<JBCheckBox>
-    private lateinit var cacheFTPScriptCheckBox: Cell<JBCheckBox>
-    private lateinit var cacheFTPScriptPathTextField: Cell<JBTextField>
-    private lateinit var minimumFTPUploadSizeCheckBox: Cell<JBCheckBox>
+    private lateinit var compileToBytecodeCheckBox: Cell<JBCheckBox>
+    private lateinit var useSocketsCheckBox: Cell<JBCheckBox>
+    private lateinit var requireMinimumSocketTransferSizeCheckBox: Cell<JBCheckBox>
 
     private lateinit var areStubsEnabled: Cell<JBCheckBox>
 
@@ -222,14 +218,24 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                     }
                 }.visible(isConnected)
 
-                group("FTP Uploads") {
+                group("Communication settings") {
                     row {
-                        useFTPCheckBox = checkBox("Use FTP for uploads")
-                            .bindSelected(parameters::useFTP)
+                        compileToBytecodeCheckBox = checkBox("Compile to .mpy bytecode before uploading")
+                            .bindSelected(parameters::compileToBytecode)
                             .gap(RightGap.SMALL)
 
                         cell(JBLabel(questionMarkIcon).apply {
-                            toolTipText = "An FTP server will be established on the board. FTP uploads are faster and more reliable for large uploads."
+                            toolTipText = "Converting .py files to .mpy bytecode reduces file size and memory usage."
+                        })
+                    }
+
+                    row {
+                        useSocketsCheckBox = checkBox("Establish fast network sockets for file transfers")
+                            .bindSelected(parameters::useSockets)
+                            .gap(RightGap.SMALL)
+
+                        cell(JBLabel(questionMarkIcon).apply {
+                            toolTipText = "The device will be connected to a wi-fi and a socket will be established. WebREPL communication uses this by default."
                         })
                     }
 
@@ -249,62 +255,31 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
                         indent {
                             row {
-                                comment("WebREPL doesn't require wi-fi credentials, its URL is used automatically")
+                                comment("WebREPL doesn't require wi-fi credentials to be set up")
                             }
                         }
 
                         row {
-                            cacheFTPScriptCheckBox = checkBox("Cache FTP script on device")
-                                .bindSelected(parameters::cacheFTPScript)
+                            requireMinimumSocketTransferSizeCheckBox = checkBox("Require minimum socket transfer size")
+                                .bindSelected(parameters::requireMinimumSocketTransferSize)
                                 .gap(RightGap.SMALL)
 
                             cell(JBLabel(questionMarkIcon).apply {
-                                toolTipText = "The required uftpd script will be cached on the configured path to save time."
-                            })
-                        }
-
-                        indent {
-                            row("Path: ") {
-                                cacheFTPScriptPathTextField = textField()
-                                    .bindText(parameters::cachedFTPScriptPath)
-                                    .columns(15)
-                                    .gap(RightGap.SMALL)
-                                    .validationInfo { field ->
-                                        val validationResult = isUftpdPathValid(field.text)
-
-                                        if (validationResult != null) {
-                                            error(validationResult)
-                                        } else null
-                                    }
-
-                                label("/uftpd.py")
-                            }
-                            row {
-                                comment("Leave path empty if your MicroPython port includes the ufptd library as frozen bytecode.")
-                            }
-                        }.visibleIf(cacheFTPScriptCheckBox.selected)
-
-                        row {
-                            minimumFTPUploadSizeCheckBox = checkBox("FTP upload size threshold")
-                                .bindSelected(parameters::requireMinimumFTPUploadSize)
-                                .gap(RightGap.SMALL)
-
-                            cell(JBLabel(questionMarkIcon).apply {
-                                toolTipText = "FTP uploads will only be used if the total upload size is over the set threshold."
+                                toolTipText = "A socket will only be used if the size of the files to transfer goes above this value. Only affects serial."
                             })
                         }
 
                         indent {
                             row("Size: ") {
                                 intTextField()
-                                    .bindIntText(parameters::minimumFTPUploadSize)
+                                    .bindIntText(parameters::minimumSocketTransferSize)
                                     .columns(5)
                                     .gap(RightGap.SMALL)
 
                                 label("KB")
                             }
-                        }.visibleIf(minimumFTPUploadSizeCheckBox.selected)
-                    }.visibleIf(useFTPCheckBox.selected)
+                        }.visibleIf(requireMinimumSocketTransferSizeCheckBox.selected)
+                    }.visibleIf(useSocketsCheckBox.selected)
                 }.bottomGap(BottomGap.NONE).topGap(TopGap.SMALL)
 
                 group("MicroPython Stubs") {
@@ -376,8 +351,6 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     override fun apply() {
         super.apply()
 
-        //val oldStubPackage = settings.state.activeStubsPackage ?: ""
-
         with(parameters) {
             if (isConnected && !isPluginEnabled) {
                 runBlocking { deviceService.disconnect(null) }
@@ -388,17 +361,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
             settings.state.filterManufacturers = filterManufacturers
             settings.state.portName = portName.takeUnless { it == EMPTY_PORT_NAME_TEXT }
             settings.state.webReplUrl = webReplUrl
-            settings.state.useFTP = useFTP
-            settings.state.cacheFTPScript = cacheFTPScript
-
-            val normalizedFTPScriptPath = normalizeMpyPath(cachedFTPScriptPath)
-
-            cacheFTPScriptPathTextField.component.text = normalizedFTPScriptPath
-            cachedFTPScriptPath = normalizedFTPScriptPath
-
-            settings.state.cachedFTPScriptPath = normalizedFTPScriptPath
-            settings.state.requireMinimumFTPUploadSize = requireMinimumFTPUploadSize
-            settings.state.minimumFTPUploadSize = minimumFTPUploadSize
+            settings.state.compileToBytecode = compileToBytecode
+            settings.state.useSockets = useSockets
+            settings.state.requireMinimumSocketTransferSize = requireMinimumSocketTransferSize
+            settings.state.minimumSocketTransferSize = minimumSocketTransferSize
             settings.state.areStubsEnabled = areStubsEnabled
             settings.state.activeStubsPackage = activeStubsPackage
 
@@ -409,8 +375,6 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         }
 
         pythonService.updateLibrary()
-
-        //notifyStubsChanged(project, oldStubPackage, parameters.activeStubsPackage)
     }
 
     fun updatePortSelectModel(portSelectModel: MutableCollectionComboBoxModel<String>, isInitialUpdate: Boolean = false) {
