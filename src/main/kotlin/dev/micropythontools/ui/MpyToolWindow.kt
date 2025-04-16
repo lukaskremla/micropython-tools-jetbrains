@@ -70,8 +70,11 @@ class MpyToolWindow() : ToolWindowFactory, DumbAware {
     }
 
     private fun jediTermWidget(project: Project, disposable: Disposable, connector: TtyConnector): JComponent {
+        val componentRegistryService = project.service<MpyComponentRegistryService>()
+
         val mySettingsProvider = JBTerminalSystemSettingsProvider()
         val terminal = JBTerminalWidget(project, mySettingsProvider, disposable)
+        componentRegistryService.registerTerminal(terminal)
         terminal.isEnabled = false
         with(terminal.terminal) {
             setModeEnabled(TerminalMode.ANSI, true)
