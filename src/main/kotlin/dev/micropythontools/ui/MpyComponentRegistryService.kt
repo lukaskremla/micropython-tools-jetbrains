@@ -17,6 +17,7 @@
 package dev.micropythontools.ui
 
 import com.intellij.openapi.components.Service
+import com.intellij.terminal.JBTerminalWidget
 import com.intellij.ui.content.Content
 
 
@@ -24,15 +25,21 @@ import com.intellij.ui.content.Content
 class MpyComponentRegistryService {
     private var fileSystemWidget: FileSystemWidget? = null
     private var terminalContent: Content? = null
+    private var terminal: JBTerminalWidget? = null
 
-    fun registerFileSystem(widget: FileSystemWidget) {
-        fileSystemWidget = widget
+    fun registerFileSystem(fileSystemWidget: FileSystemWidget) {
+        this.fileSystemWidget = fileSystemWidget
     }
 
-    fun registerTerminalContent(content: Content) {
-        terminalContent = content
+    fun registerTerminalContent(terminalContent: Content) {
+        this.terminalContent = terminalContent
+    }
+
+    fun registerTerminal(terminal: JBTerminalWidget) {
+        this.terminal = terminal
     }
 
     fun getFileSystemWidget() = fileSystemWidget
     fun getTerminalContent() = terminalContent
+    fun getTerminal() = terminal
 }
