@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.settings.isRunConfTargetPathValid
@@ -154,7 +155,15 @@ class MpyRunConfUpload(
                 )
             }
             if (success) {
-                if (resetOnSuccess) deviceService.reset()
+                if (resetOnSuccess) {
+                    performReplAction(
+                        project,
+                        false,
+                        "Soft reset",
+                        false,
+                        "Soft reset cancelled",
+                        { deviceService.reset() })
+                }
                 if (switchToReplOnSuccess) deviceService.activateRepl()
                 return EmptyRunProfileState.INSTANCE
             } else {

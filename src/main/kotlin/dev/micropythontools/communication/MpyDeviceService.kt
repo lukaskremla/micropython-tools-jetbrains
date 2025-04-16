@@ -38,9 +38,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.content.Content
-import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
-import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
 import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
@@ -138,7 +136,7 @@ data class ConnectionParameters(
 typealias StateListener = (State) -> Unit
 
 @Service(Service.Level.PROJECT)
-class MpyDeviceService(private val project: Project) : Disposable {
+class MpyDeviceService(val project: Project, val cs: CoroutineScope) : Disposable {
     init {
         val newDisposable = Disposer.newDisposable("MpyDeviceServiceDisposable")
         Disposer.register(newDisposable, this)
@@ -151,9 +149,13 @@ class MpyDeviceService(private val project: Project) : Disposable {
     val ttyConnector: TtyConnector
         get() = comm.ttyConnector
 
-    private val comm: MpyComm = MpyComm(this, pythonService).also {
-        val newDisposable = Disposer.newDisposable("MpyCommDisposable")
-        Disposer.register(newDisposable, it)
+    private var comm: MpyComm = createMpyComm()
+
+    private fun createMpyComm(): MpyComm {
+        return MpyComm(project, this, pythonService).also {
+            val newDisposable = Disposer.newDisposable("MpyCommDisposable")
+            Disposer.register(newDisposable, it)
+        }
     }
 
     val fileSystemWidget: FileSystemWidget?
@@ -170,44 +172,6 @@ class MpyDeviceService(private val project: Project) : Disposable {
     var deviceInformation: DeviceInformation = DeviceInformation()
 
     private var connectionChecker: ScheduledExecutorService? = null
-
-    fun startConnectionMonitoring() {
-        connectionChecker = Executors.newSingleThreadScheduledExecutor { r ->
-            val thread = Thread(r, "MPY-Connection-Checker")
-            thread.isDaemon = true
-            thread
-        }
-
-        connectionChecker?.scheduleAtFixedRate({
-            if (state == State.CONNECTED && !comm.isConnected) {
-                ApplicationManager.getApplication().invokeLater {
-                    Notifications.Bus.notify(
-                        Notification(
-                            NOTIFICATION_GROUP,
-                            "Device to Connection Lost",
-                            "Connection to the device was lost unexpectedly. This may have been caused by a disconnected cable or a network issue.",
-                            NotificationType.ERROR
-                        )
-                    )
-                }
-
-                runBlocking {
-                    try {
-                        disconnect(null)
-                    } catch (e: Exception) {
-                        Notifications.Bus.notify(
-                            Notification(
-                                NOTIFICATION_GROUP,
-                                "Error during disconnect",
-                                e.message ?: "Unknown error",
-                                NotificationType.ERROR
-                            )
-                        )
-                    }
-                }
-            }
-        }, 0, 1, TimeUnit.SECONDS)
-    }
 
     fun listSerialPorts(filterManufacturers: Boolean = settings.state.filterManufacturers): MutableList<String> {
         val os = System.getProperty("os.name").lowercase()
@@ -280,6 +244,9 @@ class MpyDeviceService(private val project: Project) : Disposable {
                 message
             ).asWarning().buttons("Acknowledge").show(project)
         }
+        //println(deviceInformation)
+        //println(deviceInformation.getMpyCrossArgs())
+        //println(deviceInformation.supportsMpyCompilation())
     }
 
     suspend fun doConnect(reporter: RawProgressReporter) {
@@ -353,17 +320,26 @@ class MpyDeviceService(private val project: Project) : Disposable {
             disconnect(reporter)
         }
 
-        startConnectionMonitoring()
+        if (settings.state.usingUart) {
+            startSerialConnectionMonitoring()
+        }
     }
 
     suspend fun disconnect(reporter: RawProgressReporter?) {
         val settings = MpySettingsService.getInstance(project)
 
-        reporter?.text("Disconnecting from ${settings.state.portName}")
+        if (settings.state.usingUart) {
+            reporter?.text("Disconnecting from ${settings.state.portName}")
+            stopSerialConnectionMonitoring()
+        } else {
+            reporter?.text("Disconnecting from ${settings.state.webReplUrl}")
+        }
+
         reporter?.fraction(null)
+        println("Calling disconnect")
         comm.disconnect()
+        println("After disconnect")
         deviceInformation = DeviceInformation()
-        closeMonitoringTask()
     }
 
     @Throws(IOException::class)
@@ -375,30 +351,12 @@ class MpyDeviceService(private val project: Project) : Disposable {
     suspend fun download(deviceFileName: @NonNls String): ByteArray =
         comm.download(deviceFileName)
 
-    @Throws(IOException::class)
-    suspend fun instantRun(code: @NonNls String, showCode: Boolean) {
+    suspend fun instantRun(code: @NonNls String) {
+        clearTerminalIfNeeded()
+        comm.instantRun(code)
         withContext(Dispatchers.EDT) {
             activateRepl()
         }
-        if (showCode) {
-            val terminal = UIUtil.findComponentOfType(terminalContent?.component, JediTermWidget::class.java)?.terminal
-            terminal?.apply {
-                carriageReturn()
-                newLine()
-                code.lines().forEach {
-                    val savedStyle = styleState.current
-                    val inactive = NamedColorUtil.getInactiveTextColor()
-                    val color = TerminalColor(inactive.red, inactive.green, inactive.blue)
-                    styleState.reset()
-                    styleState.current = styleState.current.toBuilder().setForeground(color).build()
-                    writeUnwrappedString(it)
-                    carriageReturn()
-                    newLine()
-                    styleState.current = savedStyle
-                }
-            }
-        }
-        comm.instantRun(code)
     }
 
     suspend fun safeCreateDirectories(paths: Set<String>) = comm.safeCreateDirectories(paths)
@@ -410,7 +368,10 @@ class MpyDeviceService(private val project: Project) : Disposable {
         manager?.setSelectedContent(this)
     }
 
-    fun reset() = comm.reset()
+    suspend fun reset() {
+        clearTerminalIfNeeded()
+        comm.reset()
+    }
 
     /**
      * Executes a single command/script on the device.
@@ -418,9 +379,9 @@ class MpyDeviceService(private val project: Project) : Disposable {
      * @param command The command or script to execute
      * @return The execution response
      */
-    suspend fun blindExecute(command: String, captureOutput: Boolean = true): ExecResponse {
+    suspend fun blindExecute(command: String): ExecResponse {
         clearTerminalIfNeeded()
-        return comm.blindExecute(command, captureOutput)
+        return comm.blindExecute(command)
     }
 
     /**
@@ -431,7 +392,6 @@ class MpyDeviceService(private val project: Project) : Disposable {
      * @return The execution response
      */
     suspend fun blindExecute(commands: List<String>): ExecResponse {
-        clearTerminalIfNeeded()
         val combinedCommand = commands.joinToString("\n")
         // Instead of passing the command list directly to doBlindExecute this joins them to a string
         // It makes the command as efficient to execute as possible
@@ -441,11 +401,18 @@ class MpyDeviceService(private val project: Project) : Disposable {
     suspend fun connect() = comm.connect()
 
     private fun setConnectionParams(connectionParameters: ConnectionParameters) = comm.setConnectionParams(connectionParameters)
-    fun interrupt() {
+
+    suspend fun interrupt() {
         comm.interrupt()
     }
 
     fun checkConnected() = comm.checkConnected()
+
+    fun recreateTtyConnector() {
+        comm.dispose()
+        comm = createMpyComm()
+        componentRegistryService.getTerminal()?.ttyConnector = ttyConnector
+    }
 
     internal suspend fun clearTerminalIfNeeded() {
         if (AutoClearAction.isAutoClearEnabled) {
@@ -456,7 +423,45 @@ class MpyDeviceService(private val project: Project) : Disposable {
         }
     }
 
-    private fun closeMonitoringTask() {
+    fun startSerialConnectionMonitoring() {
+        connectionChecker = Executors.newSingleThreadScheduledExecutor { r ->
+            val thread = Thread(r, "MPY-Connection-Checker")
+            thread.isDaemon = true
+            thread
+        }
+
+        connectionChecker?.scheduleAtFixedRate({
+            if (state == State.CONNECTED && !comm.isConnected) {
+                ApplicationManager.getApplication().invokeLater {
+                    Notifications.Bus.notify(
+                        Notification(
+                            NOTIFICATION_GROUP,
+                            "Device to Connection Lost",
+                            "Connection to the device was lost unexpectedly. This may have been caused by a disconnected cable or a network issue.",
+                            NotificationType.ERROR
+                        )
+                    )
+                }
+
+                runBlocking {
+                    try {
+                        disconnect(null)
+                    } catch (e: Exception) {
+                        Notifications.Bus.notify(
+                            Notification(
+                                NOTIFICATION_GROUP,
+                                "Error during disconnect",
+                                e.message ?: "Unknown error",
+                                NotificationType.ERROR
+                            )
+                        )
+                    }
+                }
+            }
+        }, 0, 1, TimeUnit.SECONDS)
+    }
+
+    private fun stopSerialConnectionMonitoring() {
         connectionChecker?.shutdown()
         try {
             if (connectionChecker?.awaitTermination(1, TimeUnit.SECONDS) != true) {
@@ -468,7 +473,7 @@ class MpyDeviceService(private val project: Project) : Disposable {
     }
 
     override fun dispose() {
-        closeMonitoringTask()
+        stopSerialConnectionMonitoring()
     }
 }
 
@@ -562,7 +567,7 @@ fun <T> performReplAction(
                         if (requiresRefreshAfter && shouldRefresh) {
                             deviceService.fileSystemWidget?.refresh(reporter)
                         }
-                    } catch (e: CancellationException) {
+                    } catch (_: CancellationException) {
                         error = "Clean up action cancelled"
                     } catch (e: Throwable) {
                         error = e.localizedMessage ?: e.message
