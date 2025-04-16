@@ -47,24 +47,28 @@ import javax.swing.JComponent
  * @author Lukas Kremla
  */
 class MpyPythonService(private val project: Project) {
-    companion object {
+    private val settings = project.service<MpySettingsService>()
 
+    companion object {
         private const val PLUGIN_ID = "micropython-tools-jetbrains"
 
         private const val LIBRARY_NAME = "MicroPythonTools"
 
-        /*val pythonScriptsPath: String
-            get() = "${pluginDescriptor.pluginPath}/scripts/Python"*/
-
-        val microPythonScriptsPath: String
-            get() = "${pluginDescriptor.pluginPath}/scripts/MicroPythonMinified"
-
-        val stubsPath: String
-            get() = "${pluginDescriptor.pluginPath}/stubs"
-
         private val pluginDescriptor: IdeaPluginDescriptor
             get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))
                 ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
+
+        private val sandboxPath: String
+            get() = "${pluginDescriptor.pluginPath}"
+
+        private val scriptsPath: String
+            get() = "$sandboxPath/scripts"
+
+        private val microPythonScriptsPath: String
+            get() = "$scriptsPath/MicroPythonMinified"
+
+        val stubsPath: String
+            get() = "$sandboxPath/stubs"
     }
 
     fun retrieveMpyScriptAsString(scriptFileName: String): String {
@@ -100,7 +104,6 @@ class MpyPythonService(private val project: Project) {
     }
 
     fun updateLibrary() {
-        val settings = project.service<MpySettingsService>()
         val activeStubPackage = settings.state.activeStubsPackage
         val availableStubs = getAvailableStubs()
 
@@ -143,7 +146,6 @@ class MpyPythonService(private val project: Project) {
     }
 
     fun checkStubPackageValidity(): ValidationResult {
-        val settings = project.service<MpySettingsService>()
         val activeStubsPackage = settings.state.activeStubsPackage
 
         var stubValidationText: String? = null
@@ -172,23 +174,56 @@ class MpyPythonService(private val project: Project) {
         }
     }
 
-    // These se are commented out for now, the code below will be salvaged an re-used for planned mpy-cross and
-    // MicroPython firmware flashing pip script integrations
+    /*fun checkInterpreterValidity(): ValidationResult {
+        val sdks = getAllValidSdks()
 
-    /*
-    fun findValidPyhonSdk(): Sdk? {
-        val module = ModuleManager.getInstance(project).modules.first()
-        val sdk = PythonSdkUtil.findPythonSdk(module)
-        val interpreter = sdk?.homeDirectory
-
-        return when {
-            (sdk == null ||
-                    interpreter == null ||
-                    !interpreter.exists() ||
-                    sdk.version.isOlderThan(LanguageLevel.PYTHON310)) -> null
-
-            else -> sdk
+        return if (sdks.isEmpty()) {
+            ValidationResult("MicroPython support requires a valid python 3.10+ interpreter")
+        } else {
+            ValidationResult.OK
         }
+    }
+
+    fun checkPackageValidity(): ValidationResult {
+        val sdks = getAllValidSdks()
+
+        if (sdks.isEmpty()) return ValidationResult.OK
+
+        PyRequirementParser.fromText()
+
+        PythonPackageSpecificationBase("mpflash", "", null, null)
+
+        for (sdk in sdks) {
+            val packageManager = PythonPackageManager.forSdk(project, sdk)
+
+            packageManager.installPackage()
+
+            for (installedPackage in packageManager.installedPackages) {
+                installedPackage.
+            }
+        }
+
+
+    }
+
+    fun packages(sdk: Sdk) {
+        val packageManager = PythonPackageManager.forSdk(project, sdk)
+        packageManager.installedPackages
+    }
+
+    fun getAllValidSdks(): List<Sdk> {
+        val validSdks = mutableListOf<Sdk>()
+
+        for (module in ModuleManager.getInstance(project).modules) {
+            val sdk = PythonSdkUtil.findPythonSdk(module) ?: continue
+            val interpreter = sdk.homeDirectory ?: continue
+
+            if (!interpreter.exists() || sdk.version.isOlderThan(LanguageLevel.PYTHON310)) {
+                validSdks.add(sdk)
+            }
+        }
+
+        return validSdks
     }
 
     fun checkValid(): ValidationResult {
@@ -283,7 +318,7 @@ class MpyPythonService(private val project: Project) {
     fun isPyserialInstalled(): Boolean? {
         val sdk = findValidPyhonSdk() ?: return false
 
-        val packageManager = PyPackageManager.getInstance(sdk)
+        val packageManager = PythonPackageManager.getInstance(sdk)
         val packages = packageManager.packages ?: return null
 
         val requirements = PyRequirementParser.fromText("pyserial==3.5")

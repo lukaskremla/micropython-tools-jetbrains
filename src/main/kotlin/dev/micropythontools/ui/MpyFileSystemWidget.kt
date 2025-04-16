@@ -73,7 +73,7 @@ import javax.swing.tree.DefaultTreeModel
 /**
  * @authors elmot, Lukas Kremla
  */
-class FileSystemWidget(val project: Project) : JBPanel<FileSystemWidget>(BorderLayout()) {
+class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>(BorderLayout()) {
     val tree: Tree = Tree(newTreeModel())
 
     private val settings = project.service<MpySettingsService>()
