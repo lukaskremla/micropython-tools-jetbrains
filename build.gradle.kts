@@ -20,7 +20,6 @@ plugins {
 }
 
 dependencies {
-
     intellijPlatform {
         val type = project.property("platformType").toString()
         val version = project.property("platformVersion").toString()
@@ -41,8 +40,9 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
     }
     implementation("com.fazecast:jSerialComm:2.11.0")
-    implementation(files("libs/Java-WebSocket-1.6.1-CUSTOM_FIX_ver1.jar"))
-    implementation("commons-net:commons-net:3.9.0")
+    // Relies on a custom fork of the Java-Websocket library made for this plugin
+    // https://github.com/lukaskremla/Java-WebSocket
+    implementation(files("libs/Java-WebSocket-1.6.1-CUSTOM_FIX_ver2.jar"))
 }
 
 java {
