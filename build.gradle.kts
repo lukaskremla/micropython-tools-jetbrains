@@ -15,8 +15,8 @@ repositories {
 }
 
 plugins {
-    kotlin("jvm") version "2.0.20"
-    id("org.jetbrains.intellij.platform") version "2.0.1"
+    kotlin("jvm") version "2.1.20"
+    id("org.jetbrains.intellij.platform") version "2.5.0"
 }
 
 dependencies {
@@ -26,6 +26,8 @@ dependencies {
         val pythonPlugin = project.property("pythonPlugin").toString()
 
         create(type, version, useInstaller = false)
+
+        jetbrainsRuntime()
 
         bundledPlugin("org.jetbrains.plugins.terminal")
 
@@ -42,12 +44,19 @@ dependencies {
     implementation("com.fazecast:jSerialComm:2.11.0")
     // Relies on a custom fork of the Java-Websocket library made for this plugin
     // https://github.com/lukaskremla/Java-WebSocket
-    implementation(files("libs/Java-WebSocket-1.6.1-CUSTOM_FIX_ver2.jar"))
+    implementation(files(project.property("javaWebsocket").toString()))
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+kotlin {
+    jvmToolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 intellijPlatform {
@@ -64,7 +73,7 @@ intellijPlatform {
         val tokenFile = file("publish-token.txt")
 
         if (tokenFile.exists()) {
-            val tokenFileContents = tokenFile.readText().toString()
+            val tokenFileContents = tokenFile.readText()
 
             if (tokenFileContents.isNotBlank()) {
                 token = tokenFileContents
@@ -106,17 +115,17 @@ intellijPlatformTesting {
     runIde {
         register("runPyCharmProfessional") {
             type = IntelliJPlatformType.PyCharmProfessional
-            version = project.property("platformVersion").toString()
+            version = project.property("testPlatformVersion").toString()
         }
 
         register("runPyCharmCommunity") {
             type = IntelliJPlatformType.PyCharmCommunity
-            version = project.property("platformVersion").toString()
+            version = project.property("testPlatformVersion").toString()
         }
 
         register("runCLion") {
             type = IntelliJPlatformType.CLion
-            version = project.property("platformVersion").toString()
+            version = project.property("testPlatformVersion").toString()
 
             plugins {
                 plugin(project.property("pythonPlugin").toString())
@@ -142,7 +151,7 @@ tasks {
 
         from("$rootDir/libs") {
             into("micropython-tools-jetbrains/lib")
-            include("Java-WebSocket-1.6.1-CUSTOM.jar")
+            include(project.property("javaWebsocket").toString())
         }
     }
     test {
