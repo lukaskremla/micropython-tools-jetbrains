@@ -57,7 +57,7 @@ class MpyRunConfExecute(
 
         if (name == baseName) return baseName
 
-        val existingNames = project.getService<RunManager>(RunManager::class.java)
+        val existingNames = project.getService(RunManager::class.java)
             .allConfigurationsList
             .map { it.name }
 

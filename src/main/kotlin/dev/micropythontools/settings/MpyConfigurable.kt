@@ -218,7 +218,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                     }
                 }.visible(isConnected)
 
-                group("Communication settings") {
+                group("Communication Settings") {
                     row {
                         compileToBytecodeCheckBox = checkBox("Compile to .mpy bytecode before uploading")
                             .bindSelected(parameters::compileToBytecode)
@@ -310,7 +310,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             }
                         )
                             .bind(
-                                { it.text.takeIf { it.isNotBlank() } ?: "" },
+                                { component -> component.text.takeIf { it.isNotBlank() } ?: "" },
                                 { component, text -> component.text = text },
                                 parameters::activeStubsPackage.toMutableProperty()
                             )
@@ -390,10 +390,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         portSelectModel.addAll(portSelectModel.size, newPorts)
 
         if (isInitialUpdate || portSelectModel.isEmpty) {
-            portSelectModel.selectedItem = if (parameters.portName.isBlank()) {
+            portSelectModel.selectedItem = parameters.portName.ifBlank {
                 EMPTY_PORT_NAME_TEXT
-            } else {
-                parameters.portName
             }
         }
     }
