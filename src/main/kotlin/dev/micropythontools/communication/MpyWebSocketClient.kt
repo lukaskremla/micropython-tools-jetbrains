@@ -166,12 +166,12 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
             }
             connectInProgress = false
             comm.state = State.DISCONNECTED
+            webSocketClient.reset()
             when (e) {
                 is TimeoutCancellationException -> throw ConnectException("Password exchange timeout. Received prompt: $loginBuffer")
                 is InterruptedException -> throw ConnectException("Connection interrupted")
                 else -> throw e
             }
-            webSocketClient.reset()
         } finally {
             connectInProgress = false
             loginBuffer.setLength(0)

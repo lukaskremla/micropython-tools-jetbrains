@@ -108,8 +108,6 @@ class MpySocketServer(project: Project) {
     }
 
     suspend fun teardownMpyClient() {
-        return
-
         val socketUploadCleanupScript = pythonService.retrieveMpyScriptAsString("socket_transfer_cleanup.py")
         val formattedSocketUploadCleanupScript = socketUploadCleanupScript.format(
             if (settings.state.usingUart) "True" else "False"

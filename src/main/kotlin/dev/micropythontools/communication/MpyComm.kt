@@ -25,18 +25,17 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.Strings
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.text.nullize
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import dev.micropythontools.ui.NOTIFICATION_GROUP
 import dev.micropythontools.util.MpyPythonService
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.NonNls
 import java.io.*
 import java.nio.charset.StandardCharsets
@@ -44,7 +43,6 @@ import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.properties.Delegates
 
-private const val BOUNDARY = "*********FSOP************"
 
 internal const val SHORT_DELAY = 20L
 internal const val SHORT_TIMEOUT = 2000L
@@ -87,8 +85,6 @@ fun ByteArrayOutputStream.toUtf8String(): String = this.toString(StandardCharset
 open class MpyComm(val project: Project, private val deviceService: MpyDeviceService, private val pythonService: MpyPythonService) : Disposable, Closeable {
     @Volatile
     private var mpyClient: MpyClient? = null
-
-    protected open fun isTtySuspended(): Boolean = state == State.TTY_DETACHED
 
     private val offTtyByteBuffer = ByteArrayOutputStream()
 
@@ -429,22 +425,24 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
             mpyClient = null
             throw e
         } finally {
-            // Leave raw-REPL
-            // TODO: Raw repl must somehow be exited at the end
-            if (!redirectToRepl) {
-                try {
-                    withTimeout(SHORT_TIMEOUT) {
-                        mpyClient?.send("\u0002")
-                    }
-                } catch (e: TimeoutCancellationException) {
-                    if (state == State.TTY_DETACHED) {
-                        throw IOException("Timed out while leaving raw-REPL", e)
+            withContext(NonCancellable) {
+                // Leave raw-REPL
+                // TODO: Raw repl must somehow be exited at the end
+                if (!redirectToRepl) {
+                    try {
+                        withTimeout(SHORT_TIMEOUT) {
+                            mpyClient?.send("\u0002")
+                        }
+                    } catch (e: TimeoutCancellationException) {
+                        if (state == State.TTY_DETACHED) {
+                            throw IOException("Timed out while leaving raw-REPL", e)
+                        }
                     }
                 }
-            }
-            offTtyByteBuffer.reset()
-            if (state == State.TTY_DETACHED) {
-                state = State.CONNECTED
+                offTtyByteBuffer.reset()
+                if (state == State.TTY_DETACHED) {
+                    state = State.CONNECTED
+                }
             }
         }
     }
@@ -498,6 +496,8 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
                 delay(delayToUse)
                 codeToRetry()
                 return
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Throwable) {
                 if (exception == null) exception = e
             }
@@ -528,6 +528,14 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
 
         override fun write(text: String) {
             if (state == State.CONNECTED) {
+                // Soft reset will terminate the WebREPL session
+                if (text.contains('\u0004') && mpyClient is MpyWebSocketClient) {
+                    runWithModalProgressBlocking(project, "Soft Resetting Device...") {
+                        reset()
+                    }
+                    return
+                }
+
                 mpyClient?.send(text)
             }
         }
@@ -598,12 +606,6 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
         }
     }
 
-    fun ping() {
-        if (state == State.CONNECTED) {
-            mpyClient?.sendPing()
-        }
-    }
-
     fun setConnectionParams(parameters: ConnectionParameters) {
         this.connectionParameters = parameters
     }
@@ -639,6 +641,12 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
     suspend fun reset() {
         checkConnected()
         webSocketMutex.withLock {
+            if (mpyClient is MpyWebSocketClient) {
+                // Hide reset output via TTY_DETACHED and mute disconnect error reporting for WebREPL
+                state = State.TTY_DETACHED
+                (mpyClient as MpyWebSocketClient).resetInProgress = true
+            }
+
             try {
                 withTimeout(SHORT_TIMEOUT) {
                     // Interrupt running code
@@ -648,6 +656,22 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
                 }
             } catch (e: TimeoutCancellationException) {
                 throw IOException("Timed out while performing reset", e)
+            }
+        }
+
+        if (mpyClient is MpyWebSocketClient) {
+            // Disconnect WebREPL after reset
+            deviceService.disconnect(null)
+            // Give the device time to reset
+            delay(3000)
+
+            ApplicationManager.getApplication().invokeLater {
+                runWithModalProgressBlocking(project, "Reconnecting WebREPL After Reset...") {
+                    reportRawProgress { reporter ->
+                        // Reconnect WebREPL
+                        deviceService.doConnect(reporter)
+                    }
+                }
             }
         }
     }
@@ -708,7 +732,7 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
 
         val sortedPaths = allPaths
             // Sort shortest paths first, ensures parents are created before children
-            .sortedBy { it.split("/").filter { it.isNotEmpty() }.size }
+            .sortedBy { it.split("/").filter { subPath -> subPath.isNotEmpty() }.size }
             .toList()
 
         sortedPaths.forEach {
