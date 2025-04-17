@@ -190,7 +190,7 @@ class MpyTransferService(private val project: Project) {
         var isProjectUpload = initialIsProjectUpload
 
         var filesToUpload = if (initialIsProjectUpload) collectProjectUploadables().toMutableList() else initialFilesToUpload.toMutableList()
-        var foldersToCreate = mutableSetOf<VirtualFile>()
+        val foldersToCreate = mutableSetOf<VirtualFile>()
 
         var socketServer: MpySocketServer? = null
         var shouldCleanupSocket = false
@@ -379,7 +379,7 @@ class MpyTransferService(private val project: Project) {
                 fun progressCallbackHandler(uploadedBytes: Int) {
                     uploadedKB += (uploadedBytes.toDouble() / 1000)
                     // Convert to double for maximal accuracy
-                    uploadProgress += (uploadedBytes.toDouble() / totalBytes.toDouble())
+                    uploadProgress += (uploadedBytes.toDouble() / totalBytes)
                     // Ensure that uploadProgress never goes over 1.0
                     // as floating point arithmetic can have minor inaccuracies
                     uploadProgress = uploadProgress.coerceIn(0.0, 1.0)

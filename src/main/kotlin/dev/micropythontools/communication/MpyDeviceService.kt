@@ -136,7 +136,7 @@ data class ConnectionParameters(
 typealias StateListener = (State) -> Unit
 
 @Service(Service.Level.PROJECT)
-class MpyDeviceService(val project: Project, val cs: CoroutineScope) : Disposable {
+class MpyDeviceService(val project: Project) : Disposable {
     init {
         val newDisposable = Disposer.newDisposable("MpyDeviceServiceDisposable")
         Disposer.register(newDisposable, this)
@@ -223,7 +223,7 @@ class MpyDeviceService(val project: Project, val cs: CoroutineScope) : Disposabl
             deviceInformation = DeviceInformation()
         }
 
-        var message: String? = if (!deviceInformation.hasCRC32) {
+        val message: String? = if (!deviceInformation.hasCRC32) {
             if (!deviceInformation.canDecodeBase64) {
                 "The connected board is missing the crc32 and a2b_base64 binascii functions. " +
                         "The already uploaded files check won't work and uploads may be slower."
@@ -316,12 +316,12 @@ class MpyDeviceService(val project: Project, val cs: CoroutineScope) : Disposabl
                     }
                 }
             }
+
+            if (settings.state.usingUart) {
+                startSerialConnectionMonitoring()
+            }
         } catch (_: CancellationException) {
             disconnect(reporter)
-        }
-
-        if (settings.state.usingUart) {
-            startSerialConnectionMonitoring()
         }
     }
 
@@ -336,9 +336,7 @@ class MpyDeviceService(val project: Project, val cs: CoroutineScope) : Disposabl
         }
 
         reporter?.fraction(null)
-        println("Calling disconnect")
         comm.disconnect()
-        println("After disconnect")
         deviceInformation = DeviceInformation()
     }
 
@@ -398,7 +396,7 @@ class MpyDeviceService(val project: Project, val cs: CoroutineScope) : Disposabl
         return blindExecute(combinedCommand)
     }
 
-    suspend fun connect() = comm.connect()
+    private suspend fun connect() = comm.connect()
 
     private fun setConnectionParams(connectionParameters: ConnectionParameters) = comm.setConnectionParams(connectionParameters)
 
@@ -433,10 +431,11 @@ class MpyDeviceService(val project: Project, val cs: CoroutineScope) : Disposabl
         connectionChecker?.scheduleAtFixedRate({
             if (state == State.CONNECTED && !comm.isConnected) {
                 ApplicationManager.getApplication().invokeLater {
+                    @Suppress("DialogTitleCapitalization")
                     Notifications.Bus.notify(
                         Notification(
                             NOTIFICATION_GROUP,
-                            "Device to Connection Lost",
+                            "Connection To Device Lost",
                             "Connection to the device was lost unexpectedly. This may have been caused by a disconnected cable or a network issue.",
                             NotificationType.ERROR
                         )
