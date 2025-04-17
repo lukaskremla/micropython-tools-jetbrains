@@ -673,7 +673,7 @@ class MpyExecuteFragmentInReplAction : MpyReplAction(
 
 // ===== UPLOAD ACTIONS =====
 
-class MpyUploadActionGroup : ActionGroup("Upload Item(s) to MicroPython Device", true) {
+@Suppress("DialogTitleCapitalization") class MpyUploadActionGroup : ActionGroup("Upload Item(s) to MicroPython Device", true) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
@@ -763,7 +763,7 @@ class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload to Devic
     }
 }
 
-class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to") {
+@Suppress("DialogTitleCapitalization") class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to") {
     init {
         templatePresentation.icon = AllIcons.Actions.Upload
     }

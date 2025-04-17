@@ -64,8 +64,6 @@
                     icon="/icons/micropythonTw.svg"
                     canCloseContents="false"/>
 
-        <additionalLibraryRootsProvider implementation="dev.micropythontools.util.MpyAdditionalLibraryRootsProvider"/>
-
         <projectStructure.sourceRootEditHandler
                 implementation="dev.micropythontools.sourceroots.MpyModuleMpySourceRootEditHandler"/>
 
