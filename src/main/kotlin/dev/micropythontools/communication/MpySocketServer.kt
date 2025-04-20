@@ -118,8 +118,8 @@ class MpySocketServer(project: Project) {
         deviceService.instantRun(formattedSocketUploadCleanupScript)
     }
 
-    suspend fun uploadFile(path: String, bytes: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {
-        progressCallback(0) // Initial callback to force UI update before the upload fully sets off
+    suspend fun uploadFile(path: String, bytes: ByteArray, progressCallback: (uploadedBytes: Double) -> Unit) {
+        progressCallback(0.0) // Initial callback to force UI update before the upload fully sets off
         var line = ""
         withTimeout(TIMEOUT * 2) {
             launch {
@@ -146,7 +146,7 @@ class MpySocketServer(project: Project) {
                     if (line.contains("WROTE")) {
                         println("Handling bytes written")
                         val bytesWritten = line.removePrefix("WROTE ").toInt()
-                        progressCallback(bytesWritten)
+                        progressCallback(bytesWritten.toDouble())
                     } else if (line.contains("DONE")) {
                         break
                     } else if (line.contains("ERROR")) {

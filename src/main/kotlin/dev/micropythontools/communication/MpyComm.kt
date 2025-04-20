@@ -119,11 +119,22 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
     /**
      * Uploads the binary file [content] to the [fullName] path. Accepts a [progressCallback] to report back incremental file writes.
      *
-     * This method does not handle directory creation, all necessary directories must be created before hand other wise the upload will fail
+     * This method will create all parent directories if they don't exist
      */
-    suspend fun upload(fullName: @NonNls String, content: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {
+    suspend fun upload(fullName: @NonNls String, content: ByteArray, progressCallback: (uploadedBytes: Double) -> Unit) {
         checkConnected()
         val commands = mutableListOf<Any>("import os, gc")
+
+        var slashIdx = 0
+        while (slashIdx >= 0) {
+            slashIdx = fullName.indexOf('/', slashIdx + 1)
+            if (slashIdx > 0) {
+                val folderName = fullName.substring(0, slashIdx)
+                commands.add("try: os.mkdir(\"$folderName\");")
+                commands.add("except: pass;")
+            }
+        }
+
         if (deviceService.deviceInformation.canDecodeBase64 && content.size > 256 && content.count { b -> b in 32..127 } < content.size / 2) {
             commands.addAll(binUpload(fullName, content))
         } else {
@@ -132,7 +143,7 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
         commands.add("gc.collect()")
 
         val result = webSocketMutex.withLock {
-            doBlindExecute(commands, progressCallback = progressCallback)
+            doBlindExecute(commands, progressCallback = progressCallback, uploadFileSize = content.size)
         }
         val error = result.mapNotNull { Strings.nullize(it.stderr) }.joinToString(separator = "\n", limit = 1000)
         if (error.isNotEmpty()) {
@@ -226,7 +237,8 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
     @Throws(IOException::class)
     private suspend fun doBlindExecute(
         commands: List<Any>,
-        progressCallback: ((uploadedBytes: Int) -> Unit)? = null,
+        progressCallback: ((uploadedBytes: Double) -> Unit)? = null,
+        uploadFileSize: Int = 0,
         redirectToRepl: Boolean = false
     ): ExecResponse {
         state = State.TTY_DETACHED
@@ -314,21 +326,26 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
             val result = mutableListOf<SingleExecResponse>()
 
             try {
+                val commandList = mutableListOf<String>()
+
+                var trackedChunks = 0
+
                 for (command in commands) {
-                    var toExecute = when (command) {
+                    when (command) {
                         is String -> {
-                            command
+                            val formattedCommand = "$command\n"
+                            commandList.add(formattedCommand)
                         }
 
                         is Pair<*, *> -> {
                             val cmd = command.first
-                            val size = command.second
+                            val size = command.second ?: 0
 
-                            if (cmd is String && (size == null || size is Int)) {
-                                if (size != null && progressCallback != null) {
-                                    progressCallback(size)
-                                }
-                                cmd
+                            if (cmd is String && size is Int) {
+                                val formattedCommand = "$cmd\n"
+
+                                trackedChunks += size
+                                commandList.add(formattedCommand)
                             } else {
                                 throw IllegalArgumentException("Expected Pair<String, Int?> but got ${command::class.java}")
                             }
@@ -338,49 +355,68 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
                             throw IllegalArgumentException("Unexpected command type: ${command::class.java}")
                         }
                     }
+                }
 
-                    if (commands.size > 1) {
-                        toExecute += "\n"
-                    }
-                    val commandBytes = toExecute.toByteArray(Charsets.UTF_8)
+                val commandBytes = commandList.joinToString("").toByteArray(Charsets.UTF_8)
 
-                    var index = 0
+                // Precisely accurate progress reporting is impossible without compromising on
+                // maximally utilizing the available flow control window.
+                // This logic divides the size of the uploaded file by the size of the total command, which
+                // is comprised of the minimal setup and cleanup logic and of the inflated encoded data
+                // Every write will push the progress reporting forward a bit even if no actual write command was transferred
+                // This is a minimal inaccuracy and is acceptable in the context of this plugin, where
+                // fast uploads and consistent indication of the progress being made are what matters
+                val singleByteProgress = when {
+                    progressCallback != null && uploadFileSize > 0 -> uploadFileSize.toDouble() / commandBytes.size.toDouble()
+                    else -> null
+                }
 
-                    while (index < commandBytes.size) {
-                        if (remainingFlowControlWindowSize <= 0) {
-                            withTimeout(TIMEOUT) {
-                                // Check if the buffer contains exactly 1 byte indicating how to continue
-                                while (offTtyByteBuffer.size() < 1) {
-                                    delay(SHORT_DELAY)
-                                }
+                var uploadProgress = 0.0
 
-                                val bytes = readAndDiscardXBytesFromBuffer(1)
+                var index = 0
 
-                                if (bytes[0] == 0x01.toByte()) {
-                                    remainingFlowControlWindowSize += flowControlWindowSize
-                                } else if (bytes[0] == 0x04.toByte()) {
-                                    mpyClient?.send(byteArrayOf(0x04.toByte()))
-                                    throw IOException("Device aborted raw paste mode")
-                                }
+                while (index < commandBytes.size) {
+                    if (remainingFlowControlWindowSize <= 0) {
+                        withTimeout(TIMEOUT) {
+                            // Check if the buffer contains at least 1 byte indicating how to continue
+                            while (offTtyByteBuffer.size() < 1) {
+                                delay(SHORT_DELAY)
+                            }
+
+                            val bytes = readAndDiscardXBytesFromBuffer(1)
+
+                            if (bytes[0] == 0x01.toByte()) {
+                                remainingFlowControlWindowSize += flowControlWindowSize
+                            } else if (bytes[0] == 0x04.toByte()) {
+                                mpyClient?.send(byteArrayOf(0x04.toByte()))
+                                throw IOException("Device aborted raw paste mode")
                             }
                         }
-
-                        val endIndex = minOf(index + remainingFlowControlWindowSize, commandBytes.size)
-
-                        // Get chunk
-                        val chunk = commandBytes.copyOfRange(index, endIndex)
-
-                        // Send chunk
-                        withTimeout(TIMEOUT) {
-                            mpyClient?.send(chunk)
-                        }
-
-                        // Increment index
-                        index = endIndex
-
-                        // Decrease the remaining flow control window size
-                        remainingFlowControlWindowSize -= chunk.size
                     }
+
+                    val endIndex = minOf(index + remainingFlowControlWindowSize, commandBytes.size)
+
+                    // Get chunk
+                    val chunk = commandBytes.copyOfRange(index, endIndex)
+
+                    // Report progress if applicable
+                    if (progressCallback != null && singleByteProgress != null) {
+                        val progress = chunk.size * singleByteProgress
+                        val coercedProgress = progress.coerceIn(progress, uploadFileSize.toDouble())
+                        uploadProgress += coercedProgress
+                        progressCallback(coercedProgress)
+                    }
+
+                    // Send chunk
+                    withTimeout(TIMEOUT) {
+                        mpyClient?.send(chunk)
+                    }
+
+                    // Increment index
+                    index = endIndex
+
+                    // Decrease the remaining flow control window size
+                    remainingFlowControlWindowSize -= chunk.size
                 }
 
                 // Indicate end of transmission
@@ -472,9 +508,6 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
         checkConnected()
         webSocketMutex.withLock {
             return doBlindExecute(listOf(command))
-            // Wait for a bit after executing the command
-            // Fast subsequent code executions can be error prone
-            // delay(100)
         }
     }
 
