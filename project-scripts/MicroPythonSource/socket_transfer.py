@@ -59,6 +59,19 @@ def w(p, s):
 
     i = 0
     try:
+        dp = "/".join(p.split("/")[:-1])
+        if dp:
+            parts = dp.split("/")
+            curr = ""
+            for part in parts:
+                if not part:
+                    continue
+                curr += "/" + part
+                try:
+                    os.mkdir(curr)
+                except OSError:
+                    pass
+
         with open(p, "wb") as f:
             while True:
                 if s - i < 1024:
@@ -120,14 +133,19 @@ def d(p):
 
 l()
 
-# TODO: try catch blocks
-
 # This will be split into a separate script during minification, global names will be added automatically
 # Del first so that the minifier splits correctly
-del l
-del w
-ds.close()
-ds = None
+try:
+    del l
+    del w
+    ds.close()
+except:
+    pass
+try:
+    ds = None
+    del ds
+except:
+    pass
 import network
 
 
