@@ -54,6 +54,7 @@ private data class ConfigurableParameters(
     var useSockets: Boolean,
     var requireMinimumSocketTransferSize: Boolean,
     var minimumSocketTransferSize: Int,
+    var showUploadPreviewDialog: Boolean,
     var ssid: String,
     var wifiPassword: String,
     var areStubsEnabled: Boolean,
@@ -89,6 +90,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                 useSockets = useSockets,
                 requireMinimumSocketTransferSize = requireMinimumSocketTransferSize,
                 minimumSocketTransferSize = minimumSocketTransferSize,
+                showUploadPreviewDialog = showUploadPreviewDialog,
                 ssid = wifiCredentials.userName ?: "",
                 wifiPassword = wifiCredentials.getPasswordAsString() ?: "",
                 areStubsEnabled = areStubsEnabled,
@@ -109,9 +111,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
-    private lateinit var compileToBytecodeCheckBox: Cell<JBCheckBox>
+    //private lateinit var compileToBytecodeCheckBox: Cell<JBCheckBox>
     private lateinit var useSocketsCheckBox: Cell<JBCheckBox>
     private lateinit var requireMinimumSocketTransferSizeCheckBox: Cell<JBCheckBox>
+    private lateinit var showUploadPreviewDialogCheckBox: Cell<JBCheckBox>
 
     private lateinit var areStubsEnabled: Cell<JBCheckBox>
 
@@ -219,7 +222,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                 }.visible(isConnected)
 
                 group("Communication Settings") {
-                    row {
+                    /*row {
                         compileToBytecodeCheckBox = checkBox("Compile to .mpy bytecode before uploading")
                             .bindSelected(parameters::compileToBytecode)
                             .gap(RightGap.SMALL)
@@ -227,7 +230,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                         cell(JBLabel(questionMarkIcon).apply {
                             toolTipText = "Converting .py files to .mpy bytecode reduces file size and memory usage."
                         })
-                    }
+                    }*/
 
                     row {
                         useSocketsCheckBox = checkBox("Establish fast network sockets for file transfers")
@@ -237,6 +240,10 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                         cell(JBLabel(questionMarkIcon).apply {
                             toolTipText = "The device will be connected to a wi-fi and a socket will be established. WebREPL communication uses this by default."
                         })
+                    }
+                    row {
+                        showUploadPreviewDialogCheckBox = checkBox("Show upload preview dialog")
+                            .bindSelected(parameters::showUploadPreviewDialog)
                     }
 
                     indent {
@@ -364,6 +371,7 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
             settings.state.compileToBytecode = compileToBytecode
             settings.state.useSockets = useSockets
             settings.state.requireMinimumSocketTransferSize = requireMinimumSocketTransferSize
+            settings.state.showUploadPreviewDialog = showUploadPreviewDialog
             settings.state.minimumSocketTransferSize = minimumSocketTransferSize
             settings.state.areStubsEnabled = areStubsEnabled
             settings.state.activeStubsPackage = activeStubsPackage

@@ -326,8 +326,6 @@ class MpyDeviceService(val project: Project) : Disposable {
     }
 
     suspend fun disconnect(reporter: RawProgressReporter?) {
-        val settings = MpySettingsService.getInstance(project)
-
         if (settings.state.usingUart) {
             reporter?.text("Disconnecting from ${settings.state.portName}")
             stopSerialConnectionMonitoring()
@@ -341,7 +339,7 @@ class MpyDeviceService(val project: Project) : Disposable {
     }
 
     @Throws(IOException::class)
-    suspend fun upload(relativeName: @NonNls String, contentsToByteArray: ByteArray, progressCallback: (uploadedBytes: Int) -> Unit) {
+    suspend fun upload(relativeName: @NonNls String, contentsToByteArray: ByteArray, progressCallback: (uploadedBytes: Double) -> Unit) {
         comm.upload(relativeName, contentsToByteArray, progressCallback)
     }
 

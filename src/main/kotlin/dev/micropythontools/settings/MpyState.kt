@@ -22,7 +22,6 @@ import com.intellij.openapi.components.BaseState
  * @author Lukas Kremla
  */
 class MpyState : BaseState() {
-    var settingsVersion by property(0)
     var isPluginEnabled by property(false)
     var usingUart by property(true)
     var filterManufacturers by property(true)
@@ -31,10 +30,8 @@ class MpyState : BaseState() {
     var compileToBytecode by property(false)
     var useSockets by property(false)
     var requireMinimumSocketTransferSize by property(false)
-    var minimumSocketTransferSize by property(200)
-    var useFTP by property(false) // TODO: Delete in 0.6.0
-    var requireMinimumFTPUploadSize by property(false) // TODO: Delete in 0.6.0
-    var minimumFTPUploadSize by property(200) // TODO: Delete in 0.6.0
+    var minimumSocketTransferSize by property(100)
+    var showUploadPreviewDialog by property(true)
     var areStubsEnabled by property(true)
     var activeStubsPackage by string("")
 }

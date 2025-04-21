@@ -349,10 +349,14 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
 
                         val transferService = project.service<MpyTransferService>()
 
-                        val sure = MessageDialogBuilder.yesNo(
-                            "Upload Dropped Item(s)",
-                            "Are you sure you want to upload the dropped items?"
-                        ).ask(project)
+                        val sure = if (!settings.state.showUploadPreviewDialog) {
+                            MessageDialogBuilder.yesNo(
+                                "Upload Dropped Item(s)",
+                                "Are you sure you want to upload the dropped items?"
+                            ).ask(project)
+                        } else {
+                            true
+                        }
 
                         if (!sure) return false
 
@@ -512,11 +516,27 @@ sealed class FileSystemNode(@NonNls val fullName: String, @NonNls val name: Stri
     }
 }
 
-class FileNode(fullName: String, name: String, val size: Int, val volumeID: Int, val hash: String) : FileSystemNode(fullName, name) {
+class FileNode(
+    fullName: String,
+    name: String,
+    val size: Int,
+    val volumeID: Int,
+    val hash: String
+) : FileSystemNode(
+    fullName,
+    name
+) {
     override fun getAllowsChildren(): Boolean = false
     override fun isLeaf(): Boolean = true
 }
 
-class DirNode(fullName: String, name: String, val isVolume: Boolean = false) : FileSystemNode(fullName, name) {
+class DirNode(
+    fullName: String,
+    name: String,
+    val isVolume: Boolean = false
+) : FileSystemNode(
+    fullName,
+    name
+) {
     override fun getAllowsChildren(): Boolean = true
 }

@@ -40,11 +40,9 @@ import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.project.stateStore
 import com.jetbrains.python.sdk.PythonSdkUtil
+import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.sourceroots.MpySourceRootType
-import dev.micropythontools.ui.DirNode
-import dev.micropythontools.ui.FileNode
-import dev.micropythontools.ui.FileSystemNode
-import dev.micropythontools.ui.NOTIFICATION_GROUP
+import dev.micropythontools.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
@@ -99,7 +97,7 @@ class MpyTransferService(private val project: Project) {
         }.toSet()
     }
 
-    private fun collectTestRoots(): Set<VirtualFile> {
+    fun collectTestRoots(): Set<VirtualFile> {
         return project.modules.flatMap { module ->
             module.rootManager.contentEntries
                 .flatMap { entry -> entry.sourceFolders.toList() }
@@ -180,6 +178,7 @@ class MpyTransferService(private val project: Project) {
 
         FileDocumentManager.getInstance().saveAllDocuments()
 
+        val settings = project.service<MpySettingsService>()
         val deviceService = project.service<MpyDeviceService>()
 
         val excludedFolders = collectExcluded()
@@ -190,12 +189,13 @@ class MpyTransferService(private val project: Project) {
         var isProjectUpload = initialIsProjectUpload
 
         var filesToUpload = if (initialIsProjectUpload) collectProjectUploadables().toMutableList() else initialFilesToUpload.toMutableList()
-        val foldersToCreate = mutableSetOf<VirtualFile>()
+        val foldersToUpload = mutableSetOf<VirtualFile>()
 
         var socketServer: MpySocketServer? = null
         var shouldCleanupSocket = false
 
         var uploadedSuccessfully = false
+        var shouldRefresh = false
 
         // Define the initially collected maps here to allow final verification in the clean-up action
         var fileToTargetPath = mutableMapOf<VirtualFile, String>()
@@ -218,11 +218,15 @@ class MpyTransferService(private val project: Project) {
                             // Only skip leading dot files unless it's a project dir
                             // or unless it's in the initial list, which means the user explicitly selected it
                             (file.leadingDot() && file != projectDir && !initialFilesToUpload.contains(file)) ||
+                            // Skip files explicitly ignored by the IDE
                             FileTypeRegistry.getInstance().isFileIgnored(file) ||
-                            excludedFolders.any { VfsUtil.isAncestor(it, file, true) } ||
-                            // Test folders are only uploaded if explicitly selected or if a parent folder was explicitly selected
-                            ((isProjectUpload || !initialFilesToUpload.any { VfsUtil.isAncestor(it, file, true) }) &&
-                                    testFolders.any { VfsUtil.isAncestor(it, file, true) }) ||
+                            // All excluded folders and their children are always meant to be skipped
+                            excludedFolders.any { VfsUtil.isAncestor(it, file, false) } ||
+                            // Skip test folders and their children if it's a project upload or if they weren't explicitly selected by the user
+                            (testFolders.any { VfsUtil.isAncestor(it, file, false) } &&
+                                    (isProjectUpload || !initialFilesToUpload.any { VfsUtil.isAncestor(it, file, false) })) ||
+                            // For project uploads, if at least one MicroPython Sources Root was selected
+                            // then only contents of MicroPython Sources Roots are to be uploaded
                             (isProjectUpload && sourceFolders.isNotEmpty() &&
                                     !sourceFolders.any { VfsUtil.isAncestor(it, file, false) })
 
@@ -232,6 +236,7 @@ class MpyTransferService(private val project: Project) {
                         }
 
                         file == projectDir -> {
+                            // If a project root is found start over and treat this as a project upload
                             i = 0
                             filesToUpload.clear()
                             filesToUpload = collectProjectUploadables().toMutableList()
@@ -242,12 +247,14 @@ class MpyTransferService(private val project: Project) {
                             filesToUpload.addAll(file.children)
                             filesToUpload.removeAt(i)
 
-                            foldersToCreate.add(file)
+                            foldersToUpload.add(file)
                         }
 
                         else -> i++
                     }
                 }
+
+                val allFilesToUpload = filesToUpload.toSet() + foldersToUpload
 
                 fileToTargetPath = createVirtualFileToTargetPathMap(
                     filesToUpload.toSet(),
@@ -258,99 +265,137 @@ class MpyTransferService(private val project: Project) {
                 )
 
                 folderToTargetPath = createVirtualFileToTargetPathMap(
-                    foldersToCreate,
+                    foldersToUpload,
                     targetDestination,
                     relativeToFolders,
                     sourceFolders,
                     projectDir
                 )
 
+                println(shouldSynchronize)
+
+                reporter.text("Analyzing device files and preparing upload...")
                 if (deviceService.deviceInformation.hasCRC32) {
-                    reporter.text(if (shouldSynchronize) "Syncing and skipping already uploaded files..." else "Detecting already uploaded files...")
                     deviceService.fileSystemWidget?.quietHashingRefresh(reporter)
-                } else if (shouldSynchronize) {
-                    reporter.text("Synchronizing...")
+                } else {
                     deviceService.fileSystemWidget?.quietRefresh(reporter)
                 }
 
-                if (shouldSynchronize || deviceService.deviceInformation.hasCRC32) {
-                    // Traverse and collect all file system nodes
-                    val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
+                //if (shouldSynchronize || deviceService.deviceInformation.hasCRC32) {
+                // Traverse and collect all file system nodes
+                val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
 
-                    // Map target paths to file system nodes
-                    val targetPathToNode = mutableMapOf<String, FileSystemNode>()
-                    allNodes.forEach { node ->
-                        targetPathToNode[node.fullName] = node
-                    }
+                // Map target paths to file system nodes
+                val targetPathToNode = mutableMapOf<String, FileSystemNode>()
+                allNodes.forEach { node ->
+                    targetPathToNode[node.fullName] = node
+                }
 
-                    // Map all existing target paths
-                    val targetPathsToRemove = allNodes
+                // Map all existing target paths
+                val targetPathsToRemove = if (shouldSynchronize) {
+                    allNodes
                         .map { it.fullName }
                         .toMutableSet()
+                } else {
+                    mutableSetOf()
+                }
 
-                    // Iterate over files that are being uploaded
-                    // exempt them from synchronization
-                    // and remove those that are already uploaded
-                    val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
-                    fileToTargetPath.keys.forEach { file ->
-                        val path = fileToTargetPath[file]
-                        val size = file.length.toInt()
-                        val hash = file.crc32
+                // Iterate over files that are being uploaded
+                // exempt them from synchronization
+                // and remove those that are already uploaded
+                val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
+                fileToTargetPath.keys.forEach { file ->
+                    val path = fileToTargetPath[file]
+                    val size = file.length.toInt()
+                    val hash = file.crc32
 
-                        val matchingNode = targetPathToNode[path]
+                    val matchingNode = targetPathToNode[path]
 
-                        if (matchingNode != null) {
-                            if (matchingNode is FileNode) {
-                                if (size == matchingNode.size && hash == matchingNode.hash) {
-                                    // If binascii is missing the hash is "0"
-                                    if (matchingNode.hash != "0") {
-                                        // Remove already uploaded files
-                                        alreadyUploadedFiles.add(file)
-                                    }
+                    if (matchingNode != null) {
+                        if (matchingNode is FileNode) {
+                            if (size == matchingNode.size && hash == matchingNode.hash) {
+                                // If binascii is missing the hash is "0"
+                                if (matchingNode.hash != "0") {
+                                    // Remove already uploaded files
+                                    alreadyUploadedFiles.add(file)
                                 }
                             }
-                            // This target path is being uploaded, it shouldn't be deleted by synchronization
-                            targetPathsToRemove.remove(matchingNode.fullName)
                         }
-                    }
-
-                    // Iterate over files that are being uploaded
-                    // exempt them from synchronization
-                    val alreadyExistingFolders = mutableSetOf<VirtualFile>()
-                    folderToTargetPath.keys.forEach { folder ->
-                        val path = folderToTargetPath[folder]
-
-                        val matchingNode = targetPathToNode[path]
-
-                        if (matchingNode != null) {
-                            alreadyExistingFolders.add(folder)
-                            targetPathsToRemove.remove(matchingNode.fullName)
-                        }
-                    }
-
-                    // Remove already existing file system entries
-                    fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
-                    folderToTargetPath.keys.removeAll(alreadyExistingFolders)
-
-                    if (shouldSynchronize) {
-                        // Remove explicitly excluded paths
-                        if (shouldExcludePaths && excludedPaths.isNotEmpty()) {
-                            targetPathsToRemove.removeAll(excludedPaths)
-                        }
-
-                        // Delete remaining existing target paths that aren't a part of the upload
-                        deviceService.recursivelySafeDeletePaths(targetPathsToRemove)
+                        // This target path is being uploaded, it shouldn't be deleted by synchronization
+                        targetPathsToRemove.remove(matchingNode.fullName)
                     }
                 }
 
-                // Create all directories
-                if (folderToTargetPath.isNotEmpty()) {
-                    reporter.text("Creating directories...")
-                    deviceService.safeCreateDirectories(folderToTargetPath.values.toSet())
+                // Iterate over folders that are being uploaded and exempt them from synchronization
+                val alreadyExistingFolders = mutableSetOf<VirtualFile>()
+                folderToTargetPath.keys.forEach { folder ->
+                    val path = folderToTargetPath[folder]
+
+                    val matchingNode = targetPathToNode[path]
+
+                    if (matchingNode != null) {
+                        alreadyExistingFolders.add(folder)
+                        targetPathsToRemove.remove(matchingNode.fullName)
+                    }
                 }
 
+                // Remove already existing file system entries
+                fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
+                folderToTargetPath.keys.removeAll(alreadyExistingFolders)
+                //}
+
+                if (fileToTargetPath.isEmpty() && folderToTargetPath.isEmpty()) {
+                    Notifications.Bus.notify(
+                        Notification(
+                            NOTIFICATION_GROUP,
+                            "All files are up to date",
+                            NotificationType.INFORMATION
+                        ), project
+                    )
+
+                    shouldRefresh = false
+                    return@performReplAction
+                }
+
+                // Calculate the total binary size of the upload
                 val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
+                if (settings.state.showUploadPreviewDialog) {
+                    val shouldContinue = withContext(Dispatchers.EDT) {
+                        val uploadPreview = MpyUploadPreview(
+                            project,
+                            allFilesToUpload,
+                            fileToTargetPath,
+                            folderToTargetPath,
+                            targetPathsToRemove
+                        )
+
+                        return@withContext uploadPreview.showAndGet()
+                    }
+
+                    if (!shouldContinue) {
+                        shouldRefresh = false
+                        return@performReplAction
+                    }
+                }
+
+                // Only set the shouldRefresh flag before actual file system changes start happening
+                shouldRefresh = true
+
+                // Perform synchronization
+                if (shouldSynchronize) {
+                    reporter.text("Performing synchronization...")
+
+                    // Remove explicitly excluded paths
+                    if (shouldExcludePaths && excludedPaths.isNotEmpty()) {
+                        targetPathsToRemove.removeAll(excludedPaths)
+                    }
+
+                    // Delete remaining existing target paths that aren't a part of the upload
+                    deviceService.recursivelySafeDeletePaths(targetPathsToRemove)
+                }
+
+                // Establish a socket connection if supposed to
                 if (shouldUseSockets(project, totalBytes)) {
                     shouldCleanupSocket = true
 
@@ -376,13 +421,16 @@ class MpyTransferService(private val project: Project) {
                 var uploadedKB = 0.0
                 var uploadedFiles = 1
 
-                fun progressCallbackHandler(uploadedBytes: Int) {
-                    uploadedKB += (uploadedBytes.toDouble() / 1000)
+                fun progressCallbackHandler(uploadedBytes: Double) {
+                    // Floating point arithmetic can be inaccurate,
+                    // ensures the uploaded size won't go over the actual file size
+                    uploadedKB += (uploadedBytes / 1000).coerceIn((uploadedBytes / 1000), totalBytes / 1000)
                     // Convert to double for maximal accuracy
-                    uploadProgress += (uploadedBytes.toDouble() / totalBytes)
+                    uploadProgress += (uploadedBytes / totalBytes)
                     // Ensure that uploadProgress never goes over 1.0
                     // as floating point arithmetic can have minor inaccuracies
                     uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
+
                     reporter.text("Uploading: file $uploadedFiles of ${fileToTargetPath.size} | ${"%.2f".format(uploadedKB)} KB of ${"%.2f".format(totalBytes / 1000)} KB")
                     reporter.fraction(uploadProgress)
                 }
@@ -404,6 +452,13 @@ class MpyTransferService(private val project: Project) {
                     checkCanceled()
                 }
 
+                // The upload methods handle creating parent files internally,
+                // however, this is necessary to ensure that empty folders get created too
+                if (folderToTargetPath.isNotEmpty()) {
+                    reporter.text("Creating directories...")
+                    deviceService.safeCreateDirectories(folderToTargetPath.values.toSet())
+                }
+
                 uploadedSuccessfully = true
             },
 
@@ -420,7 +475,9 @@ class MpyTransferService(private val project: Project) {
 
                 println("After socket clean up")
 
-                deviceService.fileSystemWidget?.refresh(reporter)
+                if (shouldRefresh) {
+                    deviceService.fileSystemWidget?.refresh(reporter)
+                }
 
                 println("After refresh")
 
