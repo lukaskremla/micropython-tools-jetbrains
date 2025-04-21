@@ -131,6 +131,13 @@
             <reference ref="micropythontools.repl.AutoClear"/>
         </group>
 
+        <action id="micropythontools.repl.UploadProjectAction"
+                class="dev.micropythontools.ui.MpyUploadProjectAction"
+                icon="AllIcons.Actions.Upload">
+
+            <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>
+        </action>
+
         <group id="micropythontools.repl.UploadAction"
                class="dev.micropythontools.ui.MpyUploadActionGroup"
                icon="AllIcons.Actions.Upload">

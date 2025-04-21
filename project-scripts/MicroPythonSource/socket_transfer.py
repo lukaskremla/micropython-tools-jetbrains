@@ -134,7 +134,6 @@ def d(p):
 l()
 
 # This will be split into a separate script during minification, global names will be added automatically
-# Del first so that the minifier splits correctly
 try:
     del l
     del w

@@ -33,6 +33,7 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -202,6 +203,10 @@ abstract class MpyUploadActionBase(
         cancelledMessage = "Upload operation cancelled"
     )
 ) {
+    init {
+        templatePresentation.icon = AllIcons.Actions.Upload
+    }
+
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 }
 
@@ -564,7 +569,7 @@ class MpySoftResetAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = false,
-        cancelledMessage = "Reset cancelled"
+        cancelledMessage = "Reset ccancelled"
     )
 ) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
@@ -605,18 +610,17 @@ class MpyExecuteFileInReplAction : MpyReplAction(
 
         val excludedItems = transferService.collectExcluded()
 
-        if (excludedItems.any { excludedItem ->
+        if (files.any { it.isDirectory } || excludedItems.any { excludedItem ->
                 files.any { candidate ->
                     VfsUtil.isAncestor(excludedItem, candidate, false)
                 }
             }
         ) {
-            e.presentation.isEnabled = false
-            e.presentation.text = "Execute File in REPL"
+            e.presentation.isEnabledAndVisible = false
             return
         }
 
-        e.presentation.isEnabled = files.size == 1 && !file.isDirectory &&
+        e.presentation.isEnabled = files.size == 1 &&
                 (file.fileType == PythonFileType.INSTANCE || file.extension == "mpy")
     }
 }
@@ -679,22 +683,22 @@ class MpyExecuteFragmentInReplAction : MpyReplAction(
     override fun update(e: AnActionEvent) {
         val project = e.project
         val transferService = project?.service<MpyTransferService>()
+        val projectDir = project?.guessProjectDir() ?: return
 
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
         val excludedItems = transferService?.collectExcluded()
 
-        if (project?.service<MpySettingsService>()?.state?.isPluginEnabled != true) {
-            e.presentation.isEnabledAndVisible = false
-            return
-        }
-
-        if (files.isNullOrEmpty() || excludedItems == null || excludedItems.any { excludedItem ->
+        // If the plugin is disabled
+        // if files are empty or the selection contains excluded items
+        // If the selection contains the project directory
+        if (!project.service<MpySettingsService>().state.isPluginEnabled ||
+            files.isNullOrEmpty() || excludedItems == null || excludedItems.any { excludedItem ->
                 files.any { candidate ->
                     VfsUtil.isAncestor(excludedItem, candidate, false)
                 }
-            }) {
-            e.presentation.isEnabled = false
-            e.presentation.text = "Upload Item(s) to MicroPython Device"
+            } || files.any { it == projectDir }
+        ) {
+            e.presentation.isEnabledAndVisible = false
             return
         }
 
@@ -736,10 +740,6 @@ class MpyExecuteFragmentInReplAction : MpyReplAction(
 }
 
 class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload to Device Root \"/\"") {
-    init {
-        templatePresentation.icon = AllIcons.Actions.Upload
-    }
-
     override fun performAction(e: AnActionEvent) {
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
 
@@ -763,11 +763,8 @@ class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload to Devic
     }
 }
 
-@Suppress("DialogTitleCapitalization") class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to") {
-    init {
-        templatePresentation.icon = AllIcons.Actions.Upload
-    }
-
+@Suppress("DialogTitleCapitalization")
+class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to") {
     override fun performAction(e: AnActionEvent) {
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
 
@@ -802,6 +799,21 @@ class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload to Devic
             e.presentation.text = "Upload Relative to MicroPython Sources Root(s)"
         } else {
             e.presentation.text = "Upload relative to... (mixed selection)"
+        }
+    }
+}
+
+class MpyUploadProjectAction : MpyUploadActionBase("Upload Project") {
+    override fun performAction(e: AnActionEvent) {
+        transferService.uploadProject()
+    }
+
+    override fun customUpdate(e: AnActionEvent) {
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+        val projectDir = e.project?.guessProjectDir() ?: return
+
+        if (files?.any { it == projectDir } == false) {
+            e.presentation.isEnabledAndVisible = false
         }
     }
 }

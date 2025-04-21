@@ -141,9 +141,9 @@ def do_minification(source_directory, target_directory):
                 with open(target_path, "r+") as ts:
                     all_lines = ts.readlines()
 
-                    # The cleanup section always starts with a del statement
+                    # The cleanup section always starts with a try:del statement
                     for line in all_lines:
-                        if not line.startswith("del"):
+                        if not line.startswith("try:del"):
                             continue
 
                         # Get index to split from and split
