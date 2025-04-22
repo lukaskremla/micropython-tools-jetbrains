@@ -21,6 +21,7 @@
     <RunAsTest>false</RunAsTest>
     <method v="2">
       <option name="RunConfigurationTask" enabled="true" run_configuration_name="minifyScripts" run_configuration_type="PythonConfigurationType" />
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="updateStubs" run_configuration_type="PythonConfigurationType" />
     </method>
   </configuration>
 </component>
