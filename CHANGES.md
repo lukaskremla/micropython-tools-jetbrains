@@ -1,21 +1,24 @@
 The Changelog
 =============
 
-0.5.0 -
+0.5.0 - 22.4.2025
 ------------------
 
+* Added upload preview dialog
+* Added available MicroPython 1.25.0 stubs
 * Implemented raw paste mode for both WebREPL and Serial communication, webREPL should now work reliably and serial
   communication should be significantly faster
 * Improved the WebREPL / Serial communication download feature, it should be more reliable and faster
-* Replaced FTP communication with new pure-socket communication which is more stable and faster
 * Added support for .mpy files, they will now be recognized by the IDE, however, editing is not supported due to the
   nature of the MicroPython bytecode files
 * Added serial connection integrity checks to catch and handle unexpected connection interruptions such as a cable
   getting
   unplugged
+* Switched back to allowing project uploads without selected MicroPython Sources Roots
 * Reworked and improved how visibility of REPL and context menu actions is handled
 * Reworked and improved naming of several REPL and context menu actions
 * Rewrote and optimized a significant portion of the code base, many small bugs and inconsistencies should be fixed
+* Removed FTP uploads, will be replaced with a custom socket based implementation in a later minor version
 
 0.4.3 - 16.4.2025
 ------------------

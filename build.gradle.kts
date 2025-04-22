@@ -45,6 +45,12 @@ dependencies {
     // Relies on a custom fork of the Java-Websocket library made for this plugin
     // https://github.com/lukaskremla/Java-WebSocket
     implementation(files(project.property("javaWebsocket").toString()))
+    /*runtimeOnly("io.ktor:ktor-network:2.3.7") {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    }
+    runtimeOnly("io.ktor:ktor-io:2.3.7") {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    }*/
 }
 
 java {

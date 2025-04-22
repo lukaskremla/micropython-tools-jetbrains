@@ -21,20 +21,27 @@ class MpySocketServer(project: Project) {
     private val pythonService = project.service<MpyPythonService>()
     private val deviceService = project.service<MpyDeviceService>()
 
-    private var server: ServerSocket? = null
     private var client: Socket? = null
     private var reader: ByteReadChannel? = null
     private var writer: ByteWriteChannel? = null
 
+    // Connection state
+    private var isConnected = false
+
     suspend fun establishConnection(reporter: RawProgressReporter) {
+        // Close any existing connection before starting a new one
+        closeResources()
+
         withTimeout(TIMEOUT * 2) {
             establishMpyClient(reporter)
 
-            server = aSocket(ActorSelectorManager(Dispatchers.IO))
+            if (deviceService.serverSocket == null) {
+                deviceService.serverSocket = aSocket(ActorSelectorManager(Dispatchers.IO))
                 .tcp()
                 .bind("0.0.0.0", 8765)
+            }
 
-            client = server?.accept()
+            client = deviceService.serverSocket?.accept()
 
             reader = client?.openReadChannel()
             writer = client?.openWriteChannel(true)
@@ -47,7 +54,9 @@ class MpySocketServer(project: Project) {
 
             if (line == "PONG") {
                 println("Received pong")
+                isConnected = true
             } else {
+                closeResources()
                 throw IOException("Did not receive PONG response")
             }
         }
@@ -118,7 +127,38 @@ class MpySocketServer(project: Project) {
         deviceService.instantRun(formattedSocketUploadCleanupScript)
     }
 
+    /**
+     * Closes all server resources safely
+     */
+    suspend fun closeConnection() {
+        teardownMpyClient()
+        closeResources()
+    }
+
+    /**
+     * Closes local socket resources
+     */
+    private fun closeResources() {
+        writer?.close()
+        writer = null
+
+        reader = null
+
+        try {
+            client?.close()
+        } catch (e: Exception) {
+            println("Error closing client: ${e.message}")
+        }
+        client = null
+        
+        isConnected = false
+    }
+
     suspend fun uploadFile(path: String, bytes: ByteArray, progressCallback: (uploadedBytes: Double) -> Unit) {
+        if (!isConnected) {
+            throw IOException("Socket connection not established")
+        }
+
         progressCallback(0.0) // Initial callback to force UI update before the upload fully sets off
         var line = ""
         withTimeout(TIMEOUT * 2) {
@@ -160,6 +200,10 @@ class MpySocketServer(project: Project) {
     }
 
     suspend fun downloadFile(path: String): ByteArray? {
+        if (!isConnected) {
+            throw IOException("Socket connection not established")
+        }
+
         var fileData: ByteArray? = null
 
         withTimeout(LONG_TIMEOUT) {
@@ -208,6 +252,8 @@ class MpySocketServer(project: Project) {
 fun shouldUseSockets(project: Project, uploadSizeBytes: Double? = null): Boolean {
     val settings = project.service<MpySettingsService>()
 
+    // TODO: Remove once socket upload functionality is finalized
+    return false
     with(settings.state) {
         return useSockets && (!requireMinimumSocketTransferSize || uploadSizeBytes == null || uploadSizeBytes > minimumSocketTransferSize * 1000)
     }

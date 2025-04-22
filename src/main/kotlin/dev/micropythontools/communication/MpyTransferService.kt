@@ -272,8 +272,6 @@ class MpyTransferService(private val project: Project) {
                     projectDir
                 )
 
-                println(shouldSynchronize)
-
                 reporter.text("Analyzing device files and preparing upload...")
                 if (deviceService.deviceInformation.hasCRC32) {
                     deviceService.fileSystemWidget?.quietHashingRefresh(reporter)
@@ -414,8 +412,6 @@ class MpyTransferService(private val project: Project) {
                         socketServer = null
                     }
                 }
-
-                println("Before uploading")
 
                 var uploadProgress = 0.0
                 var uploadedKB = 0.0

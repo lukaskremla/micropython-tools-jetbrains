@@ -153,7 +153,6 @@ class MpyUploadPreview(
 
             // Update directory status if it contains changes
             if (hasChanges && currentNode.fileStatus == FileStatus.DELETED_FROM_FS && currentNode.fullName != projectDir.name) {
-                println("Changing to modified: $currentNode")
                 currentNode.fileStatus = FileStatus.NOT_CHANGED
             }
 
@@ -275,7 +274,6 @@ class MpyUploadPreview(
 
             // Update directory status if it contains changes
             if (hasChanges && currentNode.fileStatus == FileStatus.NOT_CHANGED && currentNode.fullName != "/") {
-                println("Changing to modified: $currentNode")
                 currentNode.fileStatus = FileStatus.MODIFIED
             }
 

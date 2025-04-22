@@ -47,6 +47,7 @@ import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.settings.messageForBrokenUrl
 import dev.micropythontools.ui.*
 import dev.micropythontools.util.MpyPythonService
+import io.ktor.network.sockets.ServerSocket
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -172,6 +173,8 @@ class MpyDeviceService(val project: Project) : Disposable {
     var deviceInformation: DeviceInformation = DeviceInformation()
 
     private var connectionChecker: ScheduledExecutorService? = null
+
+    var serverSocket: ServerSocket? = null
 
     fun listSerialPorts(filterManufacturers: Boolean = settings.state.filterManufacturers): MutableList<String> {
         val os = System.getProperty("os.name").lowercase()
@@ -471,6 +474,7 @@ class MpyDeviceService(val project: Project) : Disposable {
 
     override fun dispose() {
         stopSerialConnectionMonitoring()
+        //serverSocket?.close()
     }
 }
 

@@ -112,8 +112,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
     //private lateinit var compileToBytecodeCheckBox: Cell<JBCheckBox>
-    private lateinit var useSocketsCheckBox: Cell<JBCheckBox>
-    private lateinit var requireMinimumSocketTransferSizeCheckBox: Cell<JBCheckBox>
+    //private lateinit var useSocketsCheckBox: Cell<JBCheckBox>
+    //private lateinit var requireMinimumSocketTransferSizeCheckBox: Cell<JBCheckBox>
     private lateinit var showUploadPreviewDialogCheckBox: Cell<JBCheckBox>
 
     private lateinit var areStubsEnabled: Cell<JBCheckBox>
@@ -232,18 +232,14 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                         })
                     }*/
 
-                    row {
+                    /*row {
                         useSocketsCheckBox = checkBox("Establish fast network sockets for file transfers")
                             .bindSelected(parameters::useSockets)
                             .gap(RightGap.SMALL)
 
                         cell(JBLabel(questionMarkIcon).apply {
-                            toolTipText = "The device will be connected to a wi-fi and a socket will be established. WebREPL communication uses this by default."
+                            toolTipText = "The device will be connected to a wi-fi and a socket will be established."
                         })
-                    }
-                    row {
-                        showUploadPreviewDialogCheckBox = checkBox("Show upload preview dialog")
-                            .bindSelected(parameters::showUploadPreviewDialog)
                     }
 
                     indent {
@@ -286,7 +282,11 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                                 label("KB")
                             }
                         }.visibleIf(requireMinimumSocketTransferSizeCheckBox.selected)
-                    }.visibleIf(useSocketsCheckBox.selected)
+                    }.visibleIf(useSocketsCheckBox.selected)*/
+                    row {
+                        showUploadPreviewDialogCheckBox = checkBox("Show upload preview dialog")
+                            .bindSelected(parameters::showUploadPreviewDialog)
+                    }
                 }.bottomGap(BottomGap.NONE).topGap(TopGap.SMALL)
 
                 group("MicroPython Stubs") {

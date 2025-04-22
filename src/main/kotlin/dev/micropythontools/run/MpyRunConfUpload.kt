@@ -68,7 +68,7 @@ class MpyRunConfUpload(
 
         if (name == baseName) return baseName
 
-        val existingNames = project.getService<RunManager>(RunManager::class.java)
+        val existingNames = project.getService(RunManager::class.java)
             .allConfigurationsList
             .map { it.name }
 
@@ -125,34 +125,38 @@ class MpyRunConfUpload(
         val success: Boolean
 
         with(options) {
-            if (options.uploadMode == 0) {
-                success = transferService.uploadProject(
-                    excludedPaths.toSet(),
-                    synchronize,
-                    excludePaths
-                )
-            } else if (options.uploadMode == 1) {
-                val toUpload = selectedPaths.mapNotNull { path ->
-                    StandardFileSystems.local().findFileByPath(path)
-                }.toSet()
+            when (options.uploadMode) {
+                0 -> {
+                    success = transferService.uploadProject(
+                        excludedPaths.toSet(),
+                        synchronize,
+                        excludePaths
+                    )
+                }
+                1 -> {
+                    val toUpload = selectedPaths.mapNotNull { path ->
+                        StandardFileSystems.local().findFileByPath(path)
+                    }.toSet()
 
-                success = transferService.uploadItems(
-                    toUpload,
-                    excludedPaths.toSet(),
-                    synchronize,
-                    excludePaths,
-                )
-            } else {
-                val file = StandardFileSystems.local().findFileByPath(options.path!!)!!
+                    success = transferService.uploadItems(
+                        toUpload,
+                        excludedPaths.toSet(),
+                        synchronize,
+                        excludePaths,
+                    )
+                }
+                else -> {
+                    val file = StandardFileSystems.local().findFileByPath(options.path!!)!!
 
-                success = transferService.performUpload(
-                    initialFilesToUpload = setOf(file),
-                    relativeToFolders = setOf(file.parent),
-                    targetDestination = options.targetPath ?: "/",
-                    excludedPaths = excludedPaths.toSet(),
-                    shouldSynchronize = synchronize,
-                    shouldExcludePaths = excludePaths
-                )
+                    success = transferService.performUpload(
+                        initialFilesToUpload = setOf(file),
+                        relativeToFolders = setOf(file.parent),
+                        targetDestination = options.targetPath ?: "/",
+                        excludedPaths = excludedPaths.toSet(),
+                        shouldSynchronize = synchronize,
+                        shouldExcludePaths = excludePaths
+                    )
+                }
             }
             if (success) {
                 if (resetOnSuccess) {
@@ -184,11 +188,6 @@ class MpyRunConfUpload(
             )
         }
 
-        // When the whole project is being uploaded
-        if (options.uploadMode == 0 && mpySourceFolders.isEmpty()) {
-            throw RuntimeConfigurationError("No folders were marked as MicroPython Sources Roots <a href=\"https://google.com\">FInd out more</a>")
-        }
-
         // When a selection is being uploaded
         if (options.uploadMode == 1) {
             if (options.selectedPaths.any { StandardFileSystems.local().findFileByPath(it) == null }) {
@@ -212,9 +211,15 @@ class MpyRunConfUpload(
         // When a custom path is being uploaded
         if (options.uploadMode == 2) {
             val path = options.path
-            if (path == null || StandardFileSystems.local().findFileByPath(path) == null) {
+            val file = StandardFileSystems.local().findFileByPath(path ?: "")
+            if (path == null || file == null) {
                 throw RuntimeConfigurationError(
                     "File not found: \"$path\". Please select a valid file or folder"
+                )
+            }
+            if (transferService.collectExcluded().contains(file)) {
+                throw RuntimeConfigurationError(
+                    "File excluded: \"$path\". Excluded folders and their children can't be uploaded"
                 )
             }
             val targetPath = options.targetPath

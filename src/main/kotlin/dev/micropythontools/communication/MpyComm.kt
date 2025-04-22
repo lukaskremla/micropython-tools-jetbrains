@@ -105,6 +105,15 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
         deviceService.stateListeners.forEach { it(newValue) }
     }
 
+    // These variables are used by instantRun functionality
+    // It works by redirecting the raw paste mode output directly to REPL when the commands starts getting executed
+    // This means that for the entire duration of the scripts execution the terminal remains in raw REPL
+    // This should be exited either after all 3 EOT characters are captured - indicating the code finished executing
+    // Or when invoking interrupt or soft reset
+    // Alternatively any doBlindExecute call will re-establish raw REPL and then clean up, also exiting it.
+    private var shouldExitRawRepl = false
+    private var foundEotCharacters = 0
+
     open fun errorLogger(exception: Exception) {
         thisLogger().warn(exception)
         Notifications.Bus.notify(
@@ -242,6 +251,11 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
         redirectToRepl: Boolean = false
     ): ExecResponse {
         state = State.TTY_DETACHED
+
+        // Reset raw repl instantRun state variables
+        shouldExitRawRepl = false
+        foundEotCharacters = 0
+
         try {
             // Enter raw-REPL
             withTimeout(LONG_TIMEOUT) {
@@ -463,7 +477,6 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
         } finally {
             withContext(NonCancellable) {
                 // Leave raw-REPL
-                // TODO: Raw repl must somehow be exited at the end
                 if (!redirectToRepl) {
                     try {
                         withTimeout(SHORT_TIMEOUT) {
@@ -474,6 +487,8 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
                             throw IOException("Timed out while leaving raw-REPL", e)
                         }
                     }
+                } else {
+                    shouldExitRawRepl = true
                 }
                 offTtyByteBuffer.reset()
                 if (state == State.TTY_DETACHED) {
@@ -647,23 +662,50 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
         when (state) {
             State.TTY_DETACHED, State.CONNECTING -> offTtyByteBuffer.writeBytes(bytes)
             else -> {
-                runBlocking {
-                    try {
-                        outPipe.write(bytes.toString(StandardCharsets.UTF_8))
-                        outPipe.flush()
-                    } catch (_: Throwable) {
-                        disconnect()
+                if (shouldExitRawRepl) {
+                    val count = bytes.toString(StandardCharsets.UTF_8).count { it == '\u0004' }
+                    foundEotCharacters += count
 
-                        Notifications.Bus.notify(
-                            Notification(
-                                NOTIFICATION_GROUP,
-                                "Error writing to the IDE terminal widget. Please connect again and retry.",
-                                NotificationType.ERROR
-                            ), deviceService.project
-                        )
+                    if (foundEotCharacters > 2) {
 
                         ApplicationManager.getApplication().invokeLater {
-                            deviceService.recreateTtyConnector()
+                            runWithModalProgressBlocking(project, "Leaving instant run raw REPL") {
+                                withTimeout(SHORT_TIMEOUT) {
+                                    state = State.TTY_DETACHED
+                                    // Interrupt running code
+                                    mpyClient?.send("\u0003")
+                                    mpyClient?.send("\u0002")
+                                    if (state == State.TTY_DETACHED) {
+                                        state = State.CONNECTED
+                                    }
+                                }
+                            }
+                        }
+
+                        shouldExitRawRepl = false
+                        foundEotCharacters = 0
+                    }
+                }
+
+                ApplicationManager.getApplication().invokeLater {
+                    runBlocking {
+                        try {
+                            outPipe.write(bytes.toString(StandardCharsets.UTF_8))
+                            outPipe.flush()
+                        } catch (_: Throwable) {
+                            disconnect()
+
+                            Notifications.Bus.notify(
+                                Notification(
+                                    NOTIFICATION_GROUP,
+                                    "Error writing to the IDE terminal widget. Please connect again and retry.",
+                                    NotificationType.ERROR
+                                ), deviceService.project
+                            )
+
+                            ApplicationManager.getApplication().invokeLater {
+                                deviceService.recreateTtyConnector()
+                            }
                         }
                     }
                 }
@@ -684,6 +726,17 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
                 withTimeout(SHORT_TIMEOUT) {
                     // Interrupt running code
                     mpyClient?.send("\u0003")
+
+                    if (shouldExitRawRepl) {
+                        state = State.TTY_DETACHED
+                        mpyClient?.send("\u0002")
+                        if (state == State.TTY_DETACHED) {
+                            state = State.CONNECTED
+                        }
+                        shouldExitRawRepl = false
+                        foundEotCharacters = 0
+                    }
+
                     // Soft reset
                     mpyClient?.send("\u0004")
                 }
@@ -712,10 +765,23 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
     suspend fun interrupt() {
         checkConnected()
         webSocketMutex.withLock {
+            state = State.TTY_DETACHED
+
             try {
                 withTimeout(SHORT_TIMEOUT) {
                     // Interrupt running code
                     mpyClient?.send("\u0003")
+
+                    if (shouldExitRawRepl) {
+                        state = State.TTY_DETACHED
+                        mpyClient?.send("\u0002")
+                        if (state == State.TTY_DETACHED) {
+                            state = State.CONNECTED
+                        }
+
+                        shouldExitRawRepl = false
+                        foundEotCharacters = 0
+                    }
                 }
             } catch (e: TimeoutCancellationException) {
                 throw IOException("Timed out while interrupting running code", e)
