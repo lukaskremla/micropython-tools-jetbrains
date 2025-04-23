@@ -1,6 +1,10 @@
 The Changelog
 =============
 
+0.5.1 - 23.4.2025
+------------------
+* Fixed a bug where the upload preview dialog prevented modified files from getting uploaded
+
 0.5.0 - 22.4.2025
 ------------------
 
