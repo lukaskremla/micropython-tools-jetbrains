@@ -50,8 +50,8 @@ import javax.swing.tree.DefaultTreeModel
 class MpyUploadPreview(
     project: Project,
     private val allItemsToUpload: Set<VirtualFile>,
-    private val fileToTargetPath: MutableMap<VirtualFile, String>,
-    private val folderToTargetPath: MutableMap<VirtualFile, String>,
+    private val fileToTargetPath: Map<VirtualFile, String>,
+    private val folderToTargetPath: Map<VirtualFile, String>,
     private val targetPathsToRemove: Set<String>
 ) : DialogWrapper(true) {
 
@@ -206,14 +206,19 @@ class MpyUploadPreview(
             }
         }.toMutableSet()
 
-        fileToTargetPath.values.removeAll(existingTargeUploadPaths)
-        folderToTargetPath.values.removeAll(existingTargeUploadPaths)
+        val mutableFileToTargetPath = fileToTargetPath.toMutableMap()
+        val mutableFolderToTargetPath = folderToTargetPath.toMutableMap()
+        
+        existingTargeUploadPaths.forEach { path ->
+            mutableFileToTargetPath.entries.removeIf { it.value == path }
+            mutableFolderToTargetPath.entries.removeIf { it.value == path }
+        }
 
-        fileToTargetPath.forEach { file, targetPath ->
+        mutableFileToTargetPath.forEach { file, targetPath ->
             previewNodes.add(PreviewFileNode(targetPath, file.name, FileStatus.ADDED))
         }
 
-        folderToTargetPath.forEach { file, targetPath ->
+        mutableFolderToTargetPath.forEach { file, targetPath ->
             previewNodes.add(PreviewDirNode(targetPath, file.name, FileStatus.ADDED, AllIcons.Nodes.Folder))
         }
 

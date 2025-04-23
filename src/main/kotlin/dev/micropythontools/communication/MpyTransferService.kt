@@ -279,7 +279,6 @@ class MpyTransferService(private val project: Project) {
                     deviceService.fileSystemWidget?.quietRefresh(reporter)
                 }
 
-                //if (shouldSynchronize || deviceService.deviceInformation.hasCRC32) {
                 // Traverse and collect all file system nodes
                 val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
 
@@ -340,7 +339,6 @@ class MpyTransferService(private val project: Project) {
                 // Remove already existing file system entries
                 fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                 folderToTargetPath.keys.removeAll(alreadyExistingFolders)
-                //}
 
                 if (fileToTargetPath.isEmpty() && folderToTargetPath.isEmpty()) {
                     Notifications.Bus.notify(
