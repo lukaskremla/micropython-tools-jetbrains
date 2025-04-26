@@ -323,7 +323,17 @@ class MpyDeviceService(val project: Project) : Disposable {
             if (settings.state.usingUart) {
                 startSerialConnectionMonitoring()
             }
-        } catch (_: CancellationException) {
+
+        } catch (_: TimeoutCancellationException) {
+            Notifications.Bus.notify(
+                Notification(
+                    NOTIFICATION_GROUP,
+                    "Connection attempt cancelled",
+                    NotificationType.ERROR
+                ), project
+            )
+        }
+        catch (_: CancellationException) {
             disconnect(reporter)
         }
     }

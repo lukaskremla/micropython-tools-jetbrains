@@ -544,6 +544,8 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
                 delay(delayToUse)
                 codeToRetry()
                 return
+            } catch (e: TimeoutCancellationException) {
+                if (exception == null) exception = e
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
