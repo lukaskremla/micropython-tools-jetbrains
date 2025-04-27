@@ -47,6 +47,7 @@ import kotlin.properties.Delegates
 internal const val SHORT_DELAY = 20L
 internal const val SHORT_TIMEOUT = 2000L
 internal const val TIMEOUT = 5000L
+internal const val MEDIUM_TIMEOUT = 10000L
 internal const val LONG_TIMEOUT = 20000L
 
 data class SingleExecResponse(
@@ -732,7 +733,7 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
                     if (shouldExitRawRepl) {
                         state = State.TTY_DETACHED
                         mpyClient?.send("\u0002")
-                        if (state == State.TTY_DETACHED) {
+                        if (state == State.TTY_DETACHED && mpyClient !is MpyWebSocketClient) {
                             state = State.CONNECTED
                         }
                         shouldExitRawRepl = false
@@ -748,17 +749,34 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
         }
 
         if (mpyClient is MpyWebSocketClient) {
-            // Disconnect WebREPL after reset
-            deviceService.disconnect(null)
-            // Give the device time to reset
-            delay(3000)
+            val mpyWebsocketClient = (mpyClient as MpyWebSocketClient)
 
-            ApplicationManager.getApplication().invokeLater {
-                runWithModalProgressBlocking(project, "Reconnecting WebREPL After Reset...") {
-                    reportRawProgress { reporter ->
-                        // Reconnect WebREPL
-                        deviceService.doConnect(reporter)
-                    }
+            state = State.TTY_DETACHED
+
+            // Disconnect WebREPL after reset
+            mpyWebsocketClient.closeBlocking()
+
+            reportRawProgress { reporter ->
+                try {
+                    mpyWebsocketClient.connect("Reconnecting WebREPL After Reset...")
+                } catch (e: TimeoutCancellationException) {
+                    Notifications.Bus.notify(
+                        Notification(
+                            NOTIFICATION_GROUP,
+                            "Connection attempt timed out",
+                            NotificationType.ERROR
+                        ), project
+                    )
+                    throw e
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    Notifications.Bus.notify(
+                        Notification(
+                            NOTIFICATION_GROUP,
+                            "Connection attempt cancelled",
+                            NotificationType.ERROR
+                        ), project
+                    )
+                    throw e
                 }
             }
         }

@@ -29,7 +29,6 @@ import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.TextFieldWithAutoCompletion
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
 import dev.micropythontools.communication.MpyDeviceService
@@ -37,6 +36,7 @@ import dev.micropythontools.communication.State
 import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.util.MpyPythonService
 import kotlinx.coroutines.runBlocking
+import java.awt.Dimension
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 
@@ -48,7 +48,8 @@ private data class ConfigurableParameters(
     var usingUart: Boolean,
     var filterManufacturers: Boolean,
     var portName: String,
-    var webReplUrl: String,
+    var webReplIp: String,
+    var webReplPort: Int,
     var webReplPassword: String,
     var compileToBytecode: Boolean,
     var useSockets: Boolean,
@@ -64,7 +65,8 @@ private data class ConfigurableParameters(
 /**
  * @author Lukas Kremla
  */
-class MpyConfigurable(private val project: Project) : BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
+class MpyConfigurable(private val project: Project) :
+    BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
     private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", this::class.java)
 
     private val settings = project.service<MpySettingsService>()
@@ -84,7 +86,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                 usingUart = usingUart,
                 filterManufacturers = filterManufacturers,
                 portName = if (portName.isNullOrBlank()) EMPTY_PORT_NAME_TEXT else portName.toString(),
-                webReplUrl = webReplUrl ?: DEFAULT_WEBREPL_URL,
+                webReplIp = webReplIp ?: DEFAULT_WEBREPL_IP,
+                webReplPort = webReplPort,
                 webReplPassword = settings.retrieveWebReplPassword(),
                 compileToBytecode = compileToBytecode,
                 useSockets = useSockets,
@@ -178,23 +181,47 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
 
                     indent {
                         row("URL: ") {
-                            textField()
-                                .bindText(parameters::webReplUrl)
-                                .columns(25)
+                            cell().apply { }
+                            label("ws://").gap(RightGap.SMALL)
+
+                            cell(object : com.intellij.ui.components.JBTextField(parameters.webReplIp) {
+                                // Width of 201 seems to be the best fit for making the ip and password fields' right edges line up
+                                private val fixedSize = Dimension(201, 34)
+
+                                // Override all size methods to return the fixed size
+                                override fun getPreferredSize(): Dimension = fixedSize
+                                override fun getMinimumSize(): Dimension = fixedSize
+                                override fun getMaximumSize(): Dimension = fixedSize
+                            })
+                                .bindText(parameters::webReplIp)
                                 .validationInfo { field ->
-                                    val msg = messageForBrokenUrl(field.text)
+                                    val msg = messageForBrokenIp(field.text)
                                     msg?.let { error(it).withOKEnabled() }
                                 }
+                                .gap(RightGap.SMALL)
+
+                            label(":").gap(RightGap.SMALL)
+
+                            intTextField()
+                                .bindIntText(parameters::webReplPort)
+                                .validationInfo { field ->
+                                    val msg = messageForBrokenPort(field.text)
+                                    msg?.let { error(it).withOKEnabled() }
+                                }
+                                .applyToComponent {
+                                    toolTipText = "Default WebREPL port is 8266"
+                                }
+                                .columns(6)
                         }
+
                         row("Password: ") {
                             passwordField()
                                 .bindText(parameters::webReplPassword)
                                 .comment("(4-9 symbols)")
-                                .columns(25)
+                                .columns(21)
                                 .validationInfo { field ->
-                                    if (field.password.size !in WEBREPL_PASSWORD_LENGTH_RANGE) {
-                                        error("Allowed password length is $WEBREPL_PASSWORD_LENGTH_RANGE").withOKEnabled()
-                                    } else null
+                                    val msg = messageForBrokenPassword(field.password)
+                                    msg?.let { error(it).withOKEnabled() }
                                 }
                         }
                     }.visibleIf(webReplRadioButton.selected)
@@ -300,11 +327,16 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             TextFieldWithAutoCompletion(
                                 project,
                                 object : TextFieldWithAutoCompletionListProvider<String>(availableStubs) {
-                                    override fun getItems(prefix: String?, cached: Boolean, parameters: CompletionParameters?): MutableCollection<String> {
+                                    override fun getItems(
+                                        prefix: String?,
+                                        cached: Boolean,
+                                        parameters: CompletionParameters?
+                                    ): MutableCollection<String> {
                                         return if (prefix.isNullOrEmpty()) {
                                             availableStubs.toMutableList()
                                         } else {
-                                            availableStubs.filter { it.contains(prefix, ignoreCase = true) }.toMutableList()
+                                            availableStubs.filter { it.contains(prefix, ignoreCase = true) }
+                                                .toMutableList()
                                         }
                                     }
 
@@ -325,7 +357,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
                             .comment(
                                 "Note: Library changes may not take effect immediately after IDE startup. " +
                                         "If the changes don't appear right away, close the settings, wait a few seconds and try again.<br>" +
-                                        "Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubs\">Jos Verlinde</a>", maxLineLength = 60
+                                        "Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubs\">Jos Verlinde</a>",
+                                maxLineLength = 60
                             )
                             .validationInfo { field ->
                                 val text = field.text
@@ -367,7 +400,8 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
             settings.state.usingUart = usingUart
             settings.state.filterManufacturers = filterManufacturers
             settings.state.portName = portName.takeUnless { it == EMPTY_PORT_NAME_TEXT }
-            settings.state.webReplUrl = webReplUrl
+            settings.state.webReplIp = webReplIp
+            settings.state.webReplPort = webReplPort
             settings.state.compileToBytecode = compileToBytecode
             settings.state.useSockets = useSockets
             settings.state.requireMinimumSocketTransferSize = requireMinimumSocketTransferSize
@@ -385,8 +419,12 @@ class MpyConfigurable(private val project: Project) : BoundSearchableConfigurabl
         pythonService.updateLibrary()
     }
 
-    fun updatePortSelectModel(portSelectModel: MutableCollectionComboBoxModel<String>, isInitialUpdate: Boolean = false) {
-        val lsPortsParam = if (isInitialUpdate) parameters.filterManufacturers else filterManufacturersCheckBox.component.isSelected
+    fun updatePortSelectModel(
+        portSelectModel: MutableCollectionComboBoxModel<String>,
+        isInitialUpdate: Boolean = false
+    ) {
+        val lsPortsParam =
+            if (isInitialUpdate) parameters.filterManufacturers else filterManufacturersCheckBox.component.isSelected
 
         val ports = deviceService.listSerialPorts(lsPortsParam)
 

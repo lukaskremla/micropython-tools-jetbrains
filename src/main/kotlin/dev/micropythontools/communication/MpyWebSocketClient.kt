@@ -57,145 +57,169 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
     @Volatile
     private var connectInProgress = true
 
-    private val webSocketClient = object : WebSocketClient(URI(comm.connectionParameters.webReplUrl)) {
-        override fun onOpen(handshakedata: ServerHandshake) = open() //Nothing to do
+    private var webSocketClient: WebSocketClient? = null
 
-        // The custom Java-Websocket modification never uses the onMessage with string param
-        override fun onMessage(p0: String?) = Unit
+    private fun createWebSocketClient(): WebSocketClient {
+        return object : WebSocketClient(URI(comm.connectionParameters.webReplUrl)) {
+            override fun onOpen(handshakedata: ServerHandshake) = open() //Nothing to do
 
-        override fun onMessage(byteBuffer: ByteBuffer) {
-            val byteArray = byteBuffer.toByteArray()
+            // The custom Java-Websocket modification never uses the onMessage with string param
+            override fun onMessage(p0: String?) = Unit
 
-            val message = try {
-                byteArray.toString(StandardCharsets.UTF_8)
-            } catch (_: Throwable) {
-                null
-            }
+            override fun onMessage(byteBuffer: ByteBuffer) {
+                val byteArray = byteBuffer.toByteArray()
 
-            message?.let { this@MpyWebSocketClient.message(it) }
-
-            if (connectInProgress && message != null) {
-                loginBuffer.append(byteArray.toString(StandardCharsets.UTF_8))
-            } else {
-                comm.dataReceived(byteArray)
-            }
-        }
-
-        override fun onError(ex: Exception) {
-            error(ex)
-            comm.errorLogger(ex)
-        }
-
-        override fun onClose(code: Int, reason: String, remote: Boolean) {
-            close(code, reason, remote)
-            try {
-                if (remote && comm.state == State.CONNECTED) {
-                    //Counterparty closed the connection
-                    Notifications.Bus.notify(
-                        Notification(
-                            NOTIFICATION_GROUP,
-                            "WebREPL connection error - Code:$code ($reason)",
-                            NotificationType.ERROR
-                        ), comm.project
-                    )
-                    throw IOException("Connection closed. Code:$code ($reason)")
+                val message = try {
+                    byteArray.toString(StandardCharsets.UTF_8)
+                } catch (_: Throwable) {
+                    null
                 }
-            } finally {
-                if (!resetInProgress) {
-                    connectInProgress = false
-                    comm.state = State.DISCONNECTED
+
+                message?.let { this@MpyWebSocketClient.message(it) }
+
+                if (connectInProgress && message != null) {
+                    loginBuffer.append(byteArray.toString(StandardCharsets.UTF_8))
+                } else {
+                    comm.dataReceived(byteArray)
                 }
             }
-        }
-    }
 
-    init {
-        webSocketClient.isTcpNoDelay = true
-        webSocketClient.connectionLostTimeout = 0
+            override fun onError(ex: Exception) {
+                error(ex)
+                comm.errorLogger(ex)
+            }
+
+            override fun onClose(code: Int, reason: String, remote: Boolean) {
+                close(code, reason, remote)
+                try {
+                    if (remote && comm.state == State.CONNECTED) {
+                        //Counterparty closed the connection
+                        Notifications.Bus.notify(
+                            Notification(
+                                NOTIFICATION_GROUP,
+                                "WebREPL connection error - Code:$code ($reason)",
+                                NotificationType.ERROR
+                            ), comm.project
+                        )
+                        throw IOException("Connection closed. Code:$code ($reason)")
+                    }
+                } finally {
+                    if (!resetInProgress) {
+                        connectInProgress = false
+                        comm.state = State.DISCONNECTED
+                    }
+                }
+            }
+        }
     }
 
     override suspend fun connect(progressIndicatorText: String): MpyWebSocketClient {
-        loginBuffer.setLength(0)
-        connectInProgress = true
-        webSocketClient.connect()
-        try {
-            var time = TIMEOUT
-            withProgressText(progressIndicatorText) {
-                while (!isConnected && time > 0) {
-                    @Suppress("UnstableApiUsage")
-                    checkCanceled()
-                    if (webSocketClient.connectionErrorMessage != null) {
-                        throw ConnectionException("WebREPL connection failed: ${webSocketClient.connectionErrorMessage}")
-                    }
-                    delay(SHORT_DELAY)
-                    time -= SHORT_DELAY.toInt()
-                }
-                if (!isConnected) {
-                    throw ConnectException("WebREPL connection failed")
-                }
-            }
-            withTimeout(SHORT_TIMEOUT) {
-                while (isConnected) {
-                    when {
-                        loginBuffer.length < PASSWORD_PROMPT.length -> delay(SHORT_DELAY)
-                        loginBuffer.length > PASSWORD_PROMPT.length * 2 -> {
-                            loginBuffer.setLength(PASSWORD_PROMPT.length * 2)
-                            throw ConnectException("Password exchange error. Received prompt: $loginBuffer")
-                        }
+        var retryCount = 0
 
-                        loginBuffer.toString().contains(PASSWORD_PROMPT) -> break
-                        else -> throw ConnectException("Password exchange error. Received prompt: $loginBuffer")
+        try {
+            retryCount += 1
+
+            withTimeout(MEDIUM_TIMEOUT) {
+                do {
+                    checkCanceled()
+                    try {
+                        loginBuffer.setLength(0)
+                        connectInProgress = true
+                        webSocketClient = createWebSocketClient()
+                        webSocketClient?.isTcpNoDelay = true
+                        webSocketClient?.connectionLostTimeout = 0
+                        webSocketClient?.connect()
+                        try {
+                            var time = TIMEOUT
+                            withProgressText(progressIndicatorText) {
+                                while (!isConnected && time > 0) {
+                                    checkCanceled()
+                                    if (webSocketClient?.connectionErrorMessage != null) {
+                                        throw ConnectionException("WebREPL connection failed: ${webSocketClient?.connectionErrorMessage}")
+                                    }
+                                    delay(SHORT_DELAY)
+                                    time -= SHORT_DELAY.toInt()
+                                }
+                                if (!isConnected) {
+                                    throw ConnectException("WebREPL connection failed")
+                                }
+                            }
+                            withTimeout(SHORT_TIMEOUT) {
+                                while (isConnected) {
+                                    checkCanceled()
+                                    when {
+                                        loginBuffer.length < PASSWORD_PROMPT.length -> delay(SHORT_DELAY)
+                                        loginBuffer.length > PASSWORD_PROMPT.length * 2 -> {
+                                            loginBuffer.setLength(PASSWORD_PROMPT.length * 2)
+                                            throw ConnectException("Password exchange error. Received prompt: $loginBuffer")
+                                        }
+
+                                        loginBuffer.toString().contains(PASSWORD_PROMPT) -> break
+                                        else -> throw ConnectException("Password exchange error. Received prompt: $loginBuffer")
+                                    }
+                                }
+                                loginBuffer.setLength(0)
+                                send("${comm.connectionParameters.webReplPassword}\n")
+                                while (connectInProgress && isConnected) {
+                                    checkCanceled()
+                                    when {
+                                        loginBuffer.contains(LOGIN_SUCCESS) -> break
+                                        loginBuffer.contains(LOGIN_FAIL) -> throw ConnectException("Access denied")
+                                        else -> delay(SHORT_DELAY)
+                                    }
+                                }
+                                connectInProgress = false
+                                comm.state = State.CONNECTED
+                            }
+                        } catch (e: Exception) {
+                            try {
+                                close()
+                            } catch (_: IOException) {
+                            }
+                            connectInProgress = false
+                            if (!resetInProgress) {
+                                comm.state = State.DISCONNECTED
+                            }
+                            webSocketClient?.reset()
+                            when (e) {
+                                is TimeoutCancellationException -> throw ConnectException("Password exchange timeout. Received prompt: $loginBuffer")
+                                is InterruptedException -> throw ConnectException("Connection interrupted")
+                                else -> throw e
+                            }
+                        } finally {
+                            connectInProgress = false
+                            loginBuffer.setLength(0)
+                            loginBuffer.trimToSize()
+                        }
+                    } catch (_: ConnectException) {
+                        // pass
                     }
-                }
-                loginBuffer.setLength(0)
-                send("${comm.connectionParameters.webReplPassword}\n")
-                while (connectInProgress && isConnected) {
-                    when {
-                        loginBuffer.contains(LOGIN_SUCCESS) -> break
-                        loginBuffer.contains(LOGIN_FAIL) -> throw ConnectException("Access denied")
-                        else -> delay(SHORT_DELAY)
-                    }
-                }
-                connectInProgress = false
-                comm.state = State.CONNECTED
+                } while (webSocketClient?.isOpen != true && comm.state != State.CONNECTED && retryCount < 5)
             }
-        } catch (e: Exception) {
-            try {
-                close()
-            } catch (_: IOException) {
-            }
-            connectInProgress = false
+        } catch (e: Throwable) {
             comm.state = State.DISCONNECTED
-            webSocketClient.reset()
-            when (e) {
-                is TimeoutCancellationException -> throw ConnectException("Password exchange timeout. Received prompt: $loginBuffer")
-                is InterruptedException -> throw ConnectException("Connection interrupted")
-                else -> throw e
-            }
-        } finally {
-            connectInProgress = false
-            loginBuffer.setLength(0)
-            loginBuffer.trimToSize()
+            throw e
         }
+
         return this
     }
 
-    override fun close() = webSocketClient.close()
+    override fun close() = webSocketClient?.close() ?: Unit
 
-    override fun closeBlocking() = webSocketClient.closeBlocking()
+    override fun closeBlocking() = webSocketClient?.closeBlocking() ?: Unit
 
-    override fun send(string: String) = webSocketClient.send(string)
+    override fun send(string: String) = webSocketClient?.send(string) ?: Unit
 
     override fun send(bytes: ByteArray) {
         // The WebSocket send(ByteArray) implementation doesn't work well with WebREPL
         // Converting the binary data to a string before sending will make sure WebREPL recognizes it
-        webSocketClient.send(String(bytes.map { it.toInt().toChar() }.toCharArray()))
+        webSocketClient?.send(String(bytes.map { it.toInt().toChar() }.toCharArray()))
     }
 
-    override fun sendPing() = webSocketClient.sendPing()
+    override fun sendPing() = webSocketClient?.sendPing() ?: Unit
 
-    override fun hasPendingData(): Boolean = webSocketClient.hasBufferedData()
+    override fun hasPendingData(): Boolean = webSocketClient?.hasBufferedData() ?: false
 
     override val isConnected: Boolean
-        get() = webSocketClient.isOpen
+        get() = webSocketClient?.isOpen ?: false
 }

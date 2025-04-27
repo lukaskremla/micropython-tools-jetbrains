@@ -527,10 +527,12 @@ class MpyTransferService(private val project: Project) {
                 if (selectedFiles.isNullOrEmpty()) return@performReplAction
                 var destination: VirtualFile? = null
 
+                val projectDir = project.guessProjectDir()
+
                 withContext(Dispatchers.EDT) {
                     FileChooserFactory.getInstance().createPathChooser(
                         FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null
-                    ).choose(null) { folders ->
+                    ).choose(projectDir) { folders ->
                         destination = folders.firstOrNull()
                         if (destination?.children?.isNotEmpty() == true) {
                             if (Messages.showOkCancelDialog(

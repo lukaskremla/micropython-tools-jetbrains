@@ -38,3 +38,7 @@ if __name__ == '__main__':
     WEBREPL_PASSWORD = "password"
 
     connect_wifi_and_start_webrepl(WIFI_SSID, WIFI_PASSWORD, WEBREPL_PASSWORD)
+
+    while True:
+        print("Le LOOP")
+        time.sleep(1)

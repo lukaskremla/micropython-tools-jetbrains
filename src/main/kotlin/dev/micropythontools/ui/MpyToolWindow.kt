@@ -135,7 +135,7 @@ class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
         val isPluginEnabled = settings?.state?.isPluginEnabled == true
         val portName = settings?.state?.portName
         val uart = settings?.state?.usingUart
-        val url = settings?.state?.webReplUrl
+        val url = settings?.webReplUrl
 
         if (uart == true || uart == null) {
             e.presentation.text = if (portName == "" || portName == null) EMPTY_PORT_NAME_TEXT else portName

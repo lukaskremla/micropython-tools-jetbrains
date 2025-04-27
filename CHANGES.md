@@ -1,11 +1,16 @@
 The Changelog
 =============
 
-0.5.2 - 
+0.5.2 -
 ------------------
 
-* Fixed communication retry logic issues, including mishandled timeout exceptions that caused silent connection failures.
-* Fixed a state transition bug in the interrupt action that could leave the plugin in an inconsistent state after an interrupt.
+* Fixed communication retry logic issues, including mishandled timeout exceptions that caused silent connection
+  failures.
+* Fixed a state transition bug in the interrupt action that could leave the plugin in an inconsistent state after an
+  interrupt.
+* Fixed WebREPL reset reconnection logic
+* Improved WebREPL configuration settings UI
+* Made the download action destination choice dialog open the project directory by default
 
 0.5.1 - 23.4.2025
 ------------------

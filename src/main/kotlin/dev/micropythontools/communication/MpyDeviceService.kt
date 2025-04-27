@@ -41,13 +41,10 @@ import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
-import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
-import dev.micropythontools.settings.MpyConfigurable
-import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.settings.messageForBrokenUrl
+import dev.micropythontools.settings.*
 import dev.micropythontools.ui.*
 import dev.micropythontools.util.MpyPythonService
-import io.ktor.network.sockets.ServerSocket
+import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -258,7 +255,7 @@ class MpyDeviceService(val project: Project) : Disposable {
 
             val settings = project.service<MpySettingsService>()
 
-            val device = if (settings.state.usingUart) settings.state.portName else settings.state.webReplUrl
+            val device = if (settings.state.usingUart) settings.state.portName else settings.webReplUrl
             reporter.text("Connecting to $device")
             reporter.fraction(null)
 
@@ -274,20 +271,27 @@ class MpyDeviceService(val project: Project) : Disposable {
                 }
 
             } else {
-                val url = settings.state.webReplUrl ?: DEFAULT_WEBREPL_URL
+                val url = settings.webReplUrl
                 val password = withContext(Dispatchers.EDT) {
                     runWithModalProgressBlocking(project, "Retrieving credentials...") {
                         project.service<MpySettingsService>().retrieveWebReplPassword()
                     }
                 }
 
-                msg = messageForBrokenUrl(url)
-                if (password.isBlank()) {
-                    msg = "Empty password"
-                    connectionParameters = null
-                } else {
-                    connectionParameters = ConnectionParameters(url, password)
+                val ipMsg = messageForBrokenIp(settings.state.webReplIp ?: "")
+                val portMsg = messageForBrokenPort(settings.state.webReplPort.toString())
+                val passwordMsg = messageForBrokenPassword(password.toCharArray())
+
+                msg = when {
+                    ipMsg.isNullOrBlank() -> ipMsg
+                    portMsg.isNullOrBlank() -> portMsg
+                    passwordMsg.isNullOrBlank() -> passwordMsg
+                    else -> null
                 }
+
+                connectionParameters = if (msg == null) {
+                    ConnectionParameters(url, password)
+                } else null
             }
             if (msg != null) {
                 withContext(Dispatchers.EDT) {
@@ -323,8 +327,16 @@ class MpyDeviceService(val project: Project) : Disposable {
             if (settings.state.usingUart) {
                 startSerialConnectionMonitoring()
             }
-
         } catch (_: TimeoutCancellationException) {
+            Notifications.Bus.notify(
+                Notification(
+                    NOTIFICATION_GROUP,
+                    "Connection attempt timed out",
+                    NotificationType.ERROR
+                ), project
+            )
+            disconnect(reporter)
+        } catch (_: CancellationException) {
             Notifications.Bus.notify(
                 Notification(
                     NOTIFICATION_GROUP,
@@ -332,8 +344,6 @@ class MpyDeviceService(val project: Project) : Disposable {
                     NotificationType.ERROR
                 ), project
             )
-        }
-        catch (_: CancellationException) {
             disconnect(reporter)
         }
     }
@@ -343,7 +353,7 @@ class MpyDeviceService(val project: Project) : Disposable {
             reporter?.text("Disconnecting from ${settings.state.portName}")
             stopSerialConnectionMonitoring()
         } else {
-            reporter?.text("Disconnecting from ${settings.state.webReplUrl}")
+            reporter?.text("Disconnecting from ${settings.webReplUrl}")
         }
 
         reporter?.fraction(null)
@@ -352,7 +362,11 @@ class MpyDeviceService(val project: Project) : Disposable {
     }
 
     @Throws(IOException::class)
-    suspend fun upload(relativeName: @NonNls String, contentsToByteArray: ByteArray, progressCallback: (uploadedBytes: Double) -> Unit) {
+    suspend fun upload(
+        relativeName: @NonNls String,
+        contentsToByteArray: ByteArray,
+        progressCallback: (uploadedBytes: Double) -> Unit
+    ) {
         comm.upload(relativeName, contentsToByteArray, progressCallback)
     }
 
@@ -409,7 +423,8 @@ class MpyDeviceService(val project: Project) : Disposable {
 
     private suspend fun connect() = comm.connect()
 
-    private fun setConnectionParams(connectionParameters: ConnectionParameters) = comm.setConnectionParams(connectionParameters)
+    private fun setConnectionParams(connectionParameters: ConnectionParameters) =
+        comm.setConnectionParams(connectionParameters)
 
     suspend fun interrupt() {
         comm.interrupt()
@@ -505,10 +520,10 @@ fun <T> performReplAction(
     val deviceService = project.service<MpyDeviceService>()
 
     if (connectionRequired && deviceService.state != State.CONNECTED) {
-        val settings = project.service<MpySettingsService>().state
+        val settings = project.service<MpySettingsService>()
 
         val deviceToConnectTo = when {
-            settings.usingUart -> settings.portName
+            settings.state.usingUart -> settings.state.portName
 
             else -> settings.webReplUrl
         }

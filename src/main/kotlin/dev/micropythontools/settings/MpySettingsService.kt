@@ -27,13 +27,14 @@ import com.intellij.openapi.project.guessProjectDir
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import java.net.URI
-import java.net.URISyntaxException
 
-const val EMPTY_URL_TEXT = "No WebREPL URL Selected"
-const val EMPTY_PORT_NAME_TEXT = "No Port Selected"
+internal const val EMPTY_URL_TEXT = "No WebREPL URL Selected"
+internal const val EMPTY_PORT_NAME_TEXT = "No Port Selected"
 
-const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
+internal const val DEFAULT_WEBREPL_IP = "192.168.4.1"
+internal const val DEFAULT_WEBREPL_PORT = 8266
+
+internal const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
 
 val WEBREPL_PASSWORD_LENGTH_RANGE = 4..9
 
@@ -54,6 +55,9 @@ class MpySettingsService(private val project: Project) : SimplePersistentStateCo
         fun getInstance(project: Project): MpySettingsService =
             project.getService(MpySettingsService::class.java)
     }
+
+    val webReplUrl
+        get() = "ws://${state.webReplIp}:${state.webReplPort}"
 
     private fun createCredentialAttributes(key: String): CredentialAttributes {
         val projectIdentifyingElement = project.guessProjectDir()?.path ?: project.name
@@ -102,16 +106,39 @@ class MpySettingsService(private val project: Project) : SimplePersistentStateCo
     }
 }
 
-fun messageForBrokenUrl(url: String): @Nls String? {
-    try {
-        val uri = URI(url)
-        if (uri.scheme !in arrayOf("ws", "wss")) {
-            return "URL format has to be \"ws://host:port\" or \"wss://host:port\"\n but you have entered: \"$url\""
-        }
-        return null
-    } catch (_: URISyntaxException) {
-        return "Malformed URL $url"
+fun messageForBrokenIp(ip: String): @Nls String? {
+    if (ip.isEmpty()) {
+        return "Host/IP address must not be empty."
     }
+
+    val ipPattern = Regex("^\\d{1,3}(\\.\\d{1,3}){3}\$")
+
+    val hostnamePattern = Regex("^[a-zA-Z0-9.-]+$")
+
+    return when {
+        ipPattern.matches(ip) -> null
+        hostnamePattern.matches(ip) -> null
+        else -> "Invalid Host or IP address: \"$ip\""
+    }
+}
+
+fun messageForBrokenPort(port: String): @Nls String? {
+    val portNumber = port.toIntOrNull()
+
+    return when {
+        port.isEmpty() -> "Port must not be empty."
+        portNumber == null -> "Port must be a valid number."
+        portNumber !in 1..65535 -> "Port number must be between 1 and 65535."
+        else -> null
+    }
+}
+
+fun messageForBrokenPassword(password: CharArray): @Nls String? {
+    println(password.size)
+    println(password)
+    return if (password.size !in WEBREPL_PASSWORD_LENGTH_RANGE) {
+        "Allowed password length is $WEBREPL_PASSWORD_LENGTH_RANGE"
+    } else null
 }
 
 fun validateMpyPath(path: String, isEmptyPathValid: Boolean = false): String? {
