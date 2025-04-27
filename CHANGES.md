@@ -1,8 +1,15 @@
 The Changelog
 =============
 
+0.5.2 - 
+------------------
+
+* Fixed communication retry logic issues, including mishandled timeout exceptions that caused silent connection failures.
+* Fixed a state transition bug in the interrupt action that could leave the plugin in an inconsistent state after an interrupt.
+
 0.5.1 - 23.4.2025
 ------------------
+
 * Fixed a bug where the upload preview dialog prevented modified files from getting uploaded
 
 0.5.0 - 22.4.2025

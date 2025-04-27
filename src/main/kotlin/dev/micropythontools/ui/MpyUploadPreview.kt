@@ -415,6 +415,15 @@ class MpyUploadPreview(
             }
         }
     }
+
+    override fun dispose() {
+        SwingUtilities.invokeLater {
+            projectTree.model = DefaultTreeModel(null)
+            deviceTree.model = DefaultTreeModel(null)
+        }
+
+        super.dispose()
+    }
 }
 
 private sealed class PreviewNode(

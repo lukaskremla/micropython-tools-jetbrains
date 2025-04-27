@@ -767,8 +767,6 @@ open class MpyComm(val project: Project, private val deviceService: MpyDeviceSer
     suspend fun interrupt() {
         checkConnected()
         webSocketMutex.withLock {
-            state = State.TTY_DETACHED
-
             try {
                 withTimeout(SHORT_TIMEOUT) {
                     // Interrupt running code
