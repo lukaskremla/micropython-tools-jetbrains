@@ -198,6 +198,9 @@ class MpyConfigurable(private val project: Project) :
                                     val msg = messageForBrokenIp(field.text)
                                     msg?.let { error(it).withOKEnabled() }
                                 }
+                                .applyToComponent {
+                                    toolTipText = "IP of the target device"
+                                }
                                 .gap(RightGap.SMALL)
 
                             label(":").gap(RightGap.SMALL)
@@ -217,7 +220,7 @@ class MpyConfigurable(private val project: Project) :
                         row("Password: ") {
                             passwordField()
                                 .bindText(parameters::webReplPassword)
-                                .comment("(4-9 symbols)")
+                                .comment("(4-9 characters)")
                                 .columns(21)
                                 .validationInfo { field ->
                                     val msg = messageForBrokenPassword(field.password)

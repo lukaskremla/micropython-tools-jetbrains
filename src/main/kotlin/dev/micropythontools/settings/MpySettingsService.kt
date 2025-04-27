@@ -134,8 +134,6 @@ fun messageForBrokenPort(port: String): @Nls String? {
 }
 
 fun messageForBrokenPassword(password: CharArray): @Nls String? {
-    println(password.size)
-    println(password)
     return if (password.size !in WEBREPL_PASSWORD_LENGTH_RANGE) {
         "Allowed password length is $WEBREPL_PASSWORD_LENGTH_RANGE"
     } else null
