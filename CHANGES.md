@@ -1,7 +1,7 @@
 The Changelog
 =============
 
-0.5.2 -
+0.5.2 - 28.4.2025
 ------------------
 
 * Fixed communication retry logic issues, including mishandled timeout exceptions that caused silent connection
