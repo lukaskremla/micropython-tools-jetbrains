@@ -49,7 +49,7 @@ internal const val TOOL_WINDOW_ID = "MicroPython Tools"
 /**
  * @author elmot, Lukas Kremla
  */
-class MpyToolWindow() : ToolWindowFactory, DumbAware {
+internal class MpyToolWindow() : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val deviceService = project.service<MpyDeviceService>()
         val componentRegistryService = project.service<MpyComponentRegistryService>()
@@ -94,7 +94,7 @@ class MpyToolWindow() : ToolWindowFactory, DumbAware {
     }
 }
 
-class AutoClearAction :
+internal class AutoClearAction :
     CheckboxAction("Auto Clear REPL", "Automatically clear REPL console on upload/reset", null),
     DumbAware {
 
@@ -121,7 +121,7 @@ class AutoClearAction :
     }
 }
 
-class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
+internal class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {

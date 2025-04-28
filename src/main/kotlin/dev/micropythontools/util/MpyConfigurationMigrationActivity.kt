@@ -23,7 +23,7 @@ import com.intellij.openapi.startup.ProjectActivity
 /**
  * @author Lukas Kremla
  */
-class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
+internal class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
     override suspend fun execute(project: Project) {
         // Logic for cleaning-up old MicroPython Tools libraries
         /*delay(20000)

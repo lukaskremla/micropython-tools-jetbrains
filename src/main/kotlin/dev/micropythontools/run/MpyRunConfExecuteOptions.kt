@@ -18,7 +18,7 @@ package dev.micropythontools.run
 
 import com.intellij.execution.configurations.RunConfigurationOptions
 
-class MpyRunConfExecuteOptions : RunConfigurationOptions() {
+internal class MpyRunConfExecuteOptions : RunConfigurationOptions() {
     var path by string("")
     var switchToReplOnSuccess by property(true)
 }

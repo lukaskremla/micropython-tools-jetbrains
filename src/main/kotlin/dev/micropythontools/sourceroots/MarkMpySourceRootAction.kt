@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import dev.micropythontools.settings.MpySettingsService
 import java.util.*
 
-class MarkMpySourceRootAction : MarkRootActionBase() {
+internal class MarkMpySourceRootAction : MarkRootActionBase() {
     private val rootType = MpySourceRootType.SOURCE
 
     init {
@@ -54,7 +54,10 @@ class MarkMpySourceRootAction : MarkRootActionBase() {
 
         val settings = module.project.service<MpySettingsService>()
 
-        if (!settings.state.isPluginEnabled || ModuleSourceRootEditHandler.getEditHandler(rootType) == null || (selection.myHaveSelectedFilesUnderSourceRoots && !moduleType.isMarkInnerSupportedFor(rootType))) {
+        if (!settings.state.isPluginEnabled || ModuleSourceRootEditHandler.getEditHandler(rootType) == null || (selection.myHaveSelectedFilesUnderSourceRoots && !moduleType.isMarkInnerSupportedFor(
+                rootType
+            ))
+        ) {
             return false
         }
 

@@ -20,7 +20,7 @@ import org.jdom.Element
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 
-class MpySourceRootPropertiesSerializer :
+internal class MpySourceRootPropertiesSerializer :
     JpsModuleSourceRootPropertiesSerializer<JavaSourceRootProperties>(
         MpySourceRootType.SOURCE, "micropython-source"
     ) {

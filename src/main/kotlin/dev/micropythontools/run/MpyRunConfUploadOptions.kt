@@ -18,7 +18,7 @@ package dev.micropythontools.run
 
 import com.intellij.execution.configurations.RunConfigurationOptions
 
-class MpyRunConfUploadOptions : RunConfigurationOptions() {
+internal class MpyRunConfUploadOptions : RunConfigurationOptions() {
     var uploadMode by property(0)
     var selectedPaths by list<String>()
     var path by string("")

@@ -26,7 +26,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTextArea
 
-class MpyFileEditor(private val file: VirtualFile) :
+internal class MpyFileEditor(private val file: VirtualFile) :
     UserDataHolderBase(), FileEditor {
 
     private val component = JPanel(BorderLayout())

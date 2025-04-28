@@ -36,7 +36,7 @@ import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.NOTIFICATION_GROUP
 
-class MpyRunConfExecute(
+internal class MpyRunConfExecute(
     project: Project,
     factory: ConfigurationFactory,
     name: String

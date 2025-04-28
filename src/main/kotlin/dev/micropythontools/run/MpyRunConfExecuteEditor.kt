@@ -35,7 +35,8 @@ private data class ExecuteParameters(
 /**
  * @authors Lukas Kremla
  */
-class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfExecute) : SettingsEditor<MpyRunConfExecute>() {
+internal class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfExecute) :
+    SettingsEditor<MpyRunConfExecute>() {
     private val parameters = with(runConfiguration.options) {
         ExecuteParameters(
             path = path ?: "",

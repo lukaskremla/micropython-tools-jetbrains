@@ -1,5 +1,6 @@
 /*
  * Copyright 2000-2024 JetBrains s.r.o.
+ * Copyright 2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +36,7 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
+// Constants
 private const val PASSWORD_PROMPT = "Password:"
 private const val LOGIN_SUCCESS = "WebREPL connected"
 private const val LOGIN_FAIL = "Access denied"
@@ -42,14 +44,10 @@ private const val LOGIN_FAIL = "Access denied"
 /**
  * @author elmot
  */
-open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
-    protected open fun open() = Unit
-    protected open fun close(code: Int, reason: String, remote: Boolean) = Unit
-    protected open fun error(ex: Exception) = Unit
-
-    protected open fun message(message: String) = Unit
-
-    private val loginBuffer = StringBuffer()
+internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
+    // Properties
+    override val isConnected: Boolean
+        get() = webSocketClient?.isOpen ?: false
 
     @Volatile
     var resetInProgress = false
@@ -57,62 +55,16 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
     @Volatile
     private var connectInProgress = true
 
+    private val loginBuffer = StringBuffer()
     private var webSocketClient: WebSocketClient? = null
 
-    private fun createWebSocketClient(): WebSocketClient {
-        return object : WebSocketClient(URI(comm.connectionParameters.webReplUrl)) {
-            override fun onOpen(handshakedata: ServerHandshake) = open() //Nothing to do
+    // Protected methods
+    protected open fun open() = Unit
+    protected open fun close(code: Int, reason: String, remote: Boolean) = Unit
+    protected open fun error(ex: Exception) = Unit
+    protected open fun message(message: String) = Unit
 
-            // The custom Java-Websocket modification never uses the onMessage with string param
-            override fun onMessage(p0: String?) = Unit
-
-            override fun onMessage(byteBuffer: ByteBuffer) {
-                val byteArray = byteBuffer.toByteArray()
-
-                val message = try {
-                    byteArray.toString(StandardCharsets.UTF_8)
-                } catch (_: Throwable) {
-                    null
-                }
-
-                message?.let { this@MpyWebSocketClient.message(it) }
-
-                if (connectInProgress && message != null) {
-                    loginBuffer.append(byteArray.toString(StandardCharsets.UTF_8))
-                } else {
-                    comm.dataReceived(byteArray)
-                }
-            }
-
-            override fun onError(ex: Exception) {
-                error(ex)
-                comm.errorLogger(ex)
-            }
-
-            override fun onClose(code: Int, reason: String, remote: Boolean) {
-                close(code, reason, remote)
-                try {
-                    if (remote && comm.state == State.CONNECTED) {
-                        //Counterparty closed the connection
-                        Notifications.Bus.notify(
-                            Notification(
-                                NOTIFICATION_GROUP,
-                                "WebREPL connection error - Code:$code ($reason)",
-                                NotificationType.ERROR
-                            ), comm.project
-                        )
-                        throw IOException("Connection closed. Code:$code ($reason)")
-                    }
-                } finally {
-                    if (!resetInProgress) {
-                        connectInProgress = false
-                        comm.state = State.DISCONNECTED
-                    }
-                }
-            }
-        }
-    }
-
+    // Methods
     override suspend fun connect(progressIndicatorText: String): MpyWebSocketClient {
         var retryCount = 0
 
@@ -204,10 +156,6 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
         return this
     }
 
-    override fun close() = webSocketClient?.close() ?: Unit
-
-    override fun closeBlocking() = webSocketClient?.closeBlocking() ?: Unit
-
     override fun send(string: String) = webSocketClient?.send(string) ?: Unit
 
     override fun send(bytes: ByteArray) {
@@ -216,10 +164,64 @@ open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
         webSocketClient?.send(String(bytes.map { it.toInt().toChar() }.toCharArray()))
     }
 
-    override fun sendPing() = webSocketClient?.sendPing() ?: Unit
-
     override fun hasPendingData(): Boolean = webSocketClient?.hasBufferedData() ?: false
 
-    override val isConnected: Boolean
-        get() = webSocketClient?.isOpen ?: false
+    override fun close() = webSocketClient?.close() ?: Unit
+
+    override fun closeBlocking() = webSocketClient?.closeBlocking() ?: Unit
+
+    // Private methods
+    private fun createWebSocketClient(): WebSocketClient {
+        return object : WebSocketClient(URI(comm.connectionParameters.webReplUrl)) {
+            override fun onOpen(handshakedata: ServerHandshake) = open() //Nothing to do
+
+            // The custom Java-Websocket modification never uses the onMessage with string param
+            override fun onMessage(p0: String?) = Unit
+
+            override fun onMessage(byteBuffer: ByteBuffer) {
+                val byteArray = byteBuffer.toByteArray()
+
+                val message = try {
+                    byteArray.toString(StandardCharsets.UTF_8)
+                } catch (_: Throwable) {
+                    null
+                }
+
+                message?.let { this@MpyWebSocketClient.message(it) }
+
+                if (connectInProgress && message != null) {
+                    loginBuffer.append(byteArray.toString(StandardCharsets.UTF_8))
+                } else {
+                    comm.dataReceived(byteArray)
+                }
+            }
+
+            override fun onError(ex: Exception) {
+                error(ex)
+                comm.errorLogger(ex)
+            }
+
+            override fun onClose(code: Int, reason: String, remote: Boolean) {
+                close(code, reason, remote)
+                try {
+                    if (remote && comm.state == State.CONNECTED) {
+                        //Counterparty closed the connection
+                        Notifications.Bus.notify(
+                            Notification(
+                                NOTIFICATION_GROUP,
+                                "WebREPL connection error - Code:$code ($reason)",
+                                NotificationType.ERROR
+                            ), comm.project
+                        )
+                        throw IOException("Connection closed. Code:$code ($reason)")
+                    }
+                } finally {
+                    if (!resetInProgress) {
+                        connectInProgress = false
+                        comm.state = State.DISCONNECTED
+                    }
+                }
+            }
+        }
+    }
 }

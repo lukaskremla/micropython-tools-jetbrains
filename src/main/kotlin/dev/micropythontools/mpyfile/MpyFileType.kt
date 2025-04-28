@@ -20,7 +20,7 @@ import com.intellij.openapi.fileTypes.UserBinaryFileType
 import com.intellij.openapi.util.IconLoader
 import javax.swing.Icon
 
-class MpyFileType : UserBinaryFileType() {
+internal class MpyFileType : UserBinaryFileType() {
     override fun getName() = "MicroPython Bytecode"
     override fun getDescription() = "MicroPython bytecode file"
     override fun getDefaultExtension() = "mpy"

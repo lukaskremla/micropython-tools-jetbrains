@@ -22,7 +22,7 @@ import com.intellij.ui.content.Content
 
 
 @Service(Service.Level.PROJECT)
-class MpyComponentRegistryService {
+internal class MpyComponentRegistryService {
     private var fileSystemWidget: FileSystemWidget? = null
     private var terminalContent: Content? = null
     private var terminal: JBTerminalWidget? = null

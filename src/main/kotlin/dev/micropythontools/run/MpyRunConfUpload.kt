@@ -39,7 +39,7 @@ import dev.micropythontools.ui.NOTIFICATION_GROUP
 /**
  * @authors Lukas Kremla
  */
-class MpyRunConfUpload(
+internal class MpyRunConfUpload(
     project: Project,
     factory: ConfigurationFactory,
     name: String
@@ -81,7 +81,8 @@ class MpyRunConfUpload(
         return "$baseName ($counter)"
     }
 
-    override fun isGeneratedName(): Boolean = listOf("Upload Project", "Upload Selection", "Upload ${getFileName()}").any { it in name }
+    override fun isGeneratedName(): Boolean =
+        listOf("Upload Project", "Upload Selection", "Upload ${getFileName()}").any { it in name }
 
     val options: MpyRunConfUploadOptions
         get() = super.getOptions() as MpyRunConfUploadOptions
@@ -133,6 +134,7 @@ class MpyRunConfUpload(
                         excludePaths
                     )
                 }
+
                 1 -> {
                     val toUpload = selectedPaths.mapNotNull { path ->
                         StandardFileSystems.local().findFileByPath(path)
@@ -145,6 +147,7 @@ class MpyRunConfUpload(
                         excludePaths,
                     )
                 }
+
                 else -> {
                     val file = StandardFileSystems.local().findFileByPath(options.path!!)!!
 

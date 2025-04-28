@@ -21,11 +21,13 @@ import com.intellij.openapi.components.BaseState
 /**
  * @author Lukas Kremla
  */
-class MpyState : BaseState() {
+internal class MpyState : BaseState() {
     var isPluginEnabled by property(false)
     var usingUart by property(true)
     var filterManufacturers by property(true)
     var portName by string("")
+    var increaseBaudrateForFileTransfers by string("")
+    var increasedFileTransferBaudrate by string("")
     var webReplIp by string(DEFAULT_WEBREPL_IP)
     var webReplPort by property(DEFAULT_WEBREPL_PORT)
     var compileToBytecode by property(false)

@@ -2,24 +2,14 @@
     <name>MicroPython Tools</name>
     <id>micropython-tools-jetbrains</id>
     <change-notes><![CDATA[
-      <h3>0.5.1 - 23-4-2025</h3>
+      <h3>0.5.2 - xx-4-2025</h3>
         <ul>
-          <li>Fixed a bug where the upload preview dialog prevented modified files from getting uploaded</li>
-        </ul>
-
-      <h3>0.5.0 - 22-4-2025</h3>
-        <ul>
-          <li>Added upload preview dialog</li>
-          <li>Added available MicroPython 1.25.0 stubs</li>
-          <li>Implemented raw paste mode for both WebREPL and Serial communication, webREPL should now work reliably and serial communication should be significantly faster</li>
-          <li>Improved the WebREPL / Serial communication download feature, it should be more reliable and faster</li>
-          <li>Added support for .mpy files, they will now be recognized by the IDE, however, editing is not supported due to the nature of the MicroPython bytecode files</li>
-          <li>Added serial connection integrity checks to catch and handle unexpected connection interruptions such as a cable getting unplugged</li>
-          <li>Switched back to allowing project uploads without selected MicroPython Sources Roots</li>
-          <li>Reworked and improved how visibility of REPL and context menu actions is handled</li>
-          <li>Reworked and improved naming of several REPL and context menu actions</li>
-          <li>Rewrote and optimized a significant portion of the code base, many small bugs and inconsistencies should be fixed</li>
-          <li>Removed FTP uploads, will be replaced with a custom socket based implementation in a later minor version</li>
+          <li>Fixed communication retry logic issues, including mishandled timeout exceptions that caused silent connection failures.</li>
+          <li>Fixed a state transition bug in the interrupt action that could leave the plugin in an inconsistent state after an interrupt.</li>
+          <li>Fixed WebREPL reset reconnection logic.</li>
+          <li>Improved WebREPL configuration settings UI.</li>
+          <li>Made the download action destination choice dialog open the project directory by default.</li>
+          <li>Optimized the communication speed.</li>
         </ul>
         <br>
       <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
@@ -34,7 +24,7 @@
       <li>Observe code execution through REPL</li>
     </ul>
   <p>All microcontrollers and MicroPython versions above 1.20.0 should be supported. However, certain features might not be available on highly resource constrained microcontrollers such as the ESP8266.</a></p>
-  <p>Feedback and bug reports through Github are welcome!</p>
+  <p>Feedback and bug reports through GitHub are welcome!</p>
   <p>More info and usage tips <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">on GitHub!</a></p>
 ]]></description>
     <version>SNAPSHOT</version>

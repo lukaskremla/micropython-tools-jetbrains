@@ -11,6 +11,7 @@ The Changelog
 * Fixed WebREPL reset reconnection logic
 * Improved WebREPL configuration settings UI
 * Made the download action destination choice dialog open the project directory by default
+* Optimized the communication speed
 
 0.5.1 - 23.4.2025
 ------------------

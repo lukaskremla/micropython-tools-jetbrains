@@ -43,17 +43,18 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.sourceroots.MpySourceRootType
 import dev.micropythontools.ui.*
+import jssc.SerialPort
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
 
-@Service(Service.Level.PROJECT)
 /**
  * @author Lukas Kremla, elmot
  */
-class MpyTransferService(private val project: Project) {
+@Service(Service.Level.PROJECT)
+internal class MpyTransferService(private val project: Project) {
     private fun VirtualFile.leadingDot() = this.name.startsWith(".")
 
     val VirtualFile.crc32: String
@@ -63,16 +64,6 @@ class MpyTransferService(private val project: Project) {
             crc.update(localFileBytes)
             return "%08x".format(crc.value)
         }
-
-    private fun collectProjectUploadables(): Set<VirtualFile> {
-        return project.modules.flatMap { module ->
-            module.rootManager.contentEntries
-                .mapNotNull { it.file }
-                .flatMap { it.children.toList() }
-                .filter { !it.leadingDot() }
-                .toMutableList()
-        }.toSet()
-    }
 
     fun collectExcluded(): Set<VirtualFile> {
         val ideaDir = project.stateStore.directoryStorePath?.let { VfsUtil.findFile(it, false) }
@@ -103,6 +94,16 @@ class MpyTransferService(private val project: Project) {
                 .flatMap { entry -> entry.sourceFolders.toList() }
                 .filter { sourceFolder -> sourceFolder.isTestSource }
                 .mapNotNull { it.file }
+        }.toSet()
+    }
+
+    private fun collectProjectUploadables(): Set<VirtualFile> {
+        return project.modules.flatMap { module ->
+            module.rootManager.contentEntries
+                .mapNotNull { it.file }
+                .flatMap { it.children.toList() }
+                .filter { !it.leadingDot() }
+                .toMutableList()
         }.toSet()
     }
 
@@ -188,11 +189,9 @@ class MpyTransferService(private val project: Project) {
 
         var isProjectUpload = initialIsProjectUpload
 
-        var filesToUpload = if (initialIsProjectUpload) collectProjectUploadables().toMutableList() else initialFilesToUpload.toMutableList()
+        var filesToUpload =
+            if (initialIsProjectUpload) collectProjectUploadables().toMutableList() else initialFilesToUpload.toMutableList()
         val foldersToUpload = mutableSetOf<VirtualFile>()
-
-        var socketServer: MpySocketServer? = null
-        var shouldCleanupSocket = false
 
         var uploadedSuccessfully = false
         var shouldRefresh = false
@@ -224,7 +223,13 @@ class MpyTransferService(private val project: Project) {
                             excludedFolders.any { VfsUtil.isAncestor(it, file, false) } ||
                             // Skip test folders and their children if it's a project upload or if they weren't explicitly selected by the user
                             (testFolders.any { VfsUtil.isAncestor(it, file, false) } &&
-                                    (isProjectUpload || !initialFilesToUpload.any { VfsUtil.isAncestor(it, file, false) })) ||
+                                    (isProjectUpload || !initialFilesToUpload.any {
+                                        VfsUtil.isAncestor(
+                                            it,
+                                            file,
+                                            false
+                                        )
+                                    })) ||
                             // For project uploads, if at least one MicroPython Sources Root was selected
                             // then only contents of MicroPython Sources Roots are to be uploaded
                             (isProjectUpload && sourceFolders.isNotEmpty() &&
@@ -271,6 +276,14 @@ class MpyTransferService(private val project: Project) {
                     sourceFolders,
                     projectDir
                 )
+
+                if (settings.state.usingUart && settings.state.increaseBaudrateForFileTransfers == "true") {
+                    reporter.text("Increasing serial connection baudrate...")
+
+                    deviceService.setBaudrate(
+                        settings.state.increasedFileTransferBaudrate?.toIntOrNull() ?: SerialPort.BAUDRATE_115200
+                    )
+                }
 
                 reporter.text("Analyzing device files and preparing upload...")
                 if (deviceService.deviceInformation.hasCRC32) {
@@ -391,26 +404,6 @@ class MpyTransferService(private val project: Project) {
                     deviceService.recursivelySafeDeletePaths(targetPathsToRemove)
                 }
 
-                // Establish a socket connection if supposed to
-                if (shouldUseSockets(project, totalBytes)) {
-                    shouldCleanupSocket = true
-
-                    try {
-                        socketServer = MpySocketServer(project)
-                        socketServer?.establishConnection(reporter)
-                    } catch (e: Throwable) {
-                        Notifications.Bus.notify(
-                            Notification(
-                                NOTIFICATION_GROUP,
-                                "Failed to establish a socket connection, falling back to normal communication: ${e.localizedMessage}",
-                                NotificationType.ERROR
-                            ), project
-                        )
-
-                        socketServer = null
-                    }
-                }
-
                 var uploadProgress = 0.0
                 var uploadedKB = 0.0
                 var uploadedFiles = 1
@@ -425,26 +418,26 @@ class MpyTransferService(private val project: Project) {
                     // as floating point arithmetic can have minor inaccuracies
                     uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
 
-                    reporter.text("Uploading: file $uploadedFiles of ${fileToTargetPath.size} | ${"%.2f".format(uploadedKB)} KB of ${"%.2f".format(totalBytes / 1000)} KB")
+                    reporter.text(
+                        "Uploading: file $uploadedFiles of ${fileToTargetPath.size} | ${
+                            "%.2f".format(
+                                uploadedKB
+                            )
+                        } KB of ${"%.2f".format(totalBytes / 1000)} KB"
+                    )
                     reporter.fraction(uploadProgress)
                 }
 
                 fileToTargetPath.forEach { (file, path) ->
                     reporter.details(path)
 
-                    if (socketServer != null) {
-                        try {
-                            socketServer?.uploadFile(path, file.contentsToByteArray(), ::progressCallbackHandler)
-                        } catch (_: TimeoutCancellationException) {
-                            throw IOException("Timed out while uploading a file over sockets")
-                        }
-                    } else {
-                        deviceService.upload(path, file.contentsToByteArray(), ::progressCallbackHandler)
-                    }
+                    deviceService.upload(path, file.contentsToByteArray(), ::progressCallbackHandler)
 
                     uploadedFiles++
                     checkCanceled()
                 }
+
+                reporter.details(null)
 
                 // The upload methods handle creating parent files internally,
                 // however, this is necessary to ensure that empty folders get created too
@@ -461,26 +454,25 @@ class MpyTransferService(private val project: Project) {
                 // but details aren't thus they should be cleaned up
                 reporter.details(null)
 
-                if (shouldCleanupSocket) {
-                    reporter.text("Cleaning up after socket communication...")
-                    reporter.fraction(null)
-                    socketServer?.teardownMpyClient()
-                }
+                withContext(NonCancellable) {
+                    if (settings.state.usingUart && settings.state.increaseBaudrateForFileTransfers == "true") {
+                        reporter.text("Restoring the original serial connection baudrate...")
 
-                println("After socket clean up")
+                        deviceService.setBaudrate(SerialPort.BAUDRATE_115200)
+                    }
+                }
 
                 if (shouldRefresh) {
                     deviceService.fileSystemWidget?.refresh(reporter)
                 }
-
-                println("After refresh")
 
                 if (uploadedSuccessfully) {
                     val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
 
                     for (node in allNodes) {
                         if (node is FileNode) {
-                            val file = fileToTargetPath.entries.firstOrNull { it.value == node.fullName }?.key ?: continue
+                            val file =
+                                fileToTargetPath.entries.firstOrNull { it.value == node.fullName }?.key ?: continue
                             if (file.length != node.size.toLong()) continue
 
                             fileToTargetPath.values.remove(node.fullName)
@@ -509,9 +501,6 @@ class MpyTransferService(private val project: Project) {
     }
 
     fun downloadDeviceFiles() {
-        var socketServer: MpySocketServer? = null
-        var shouldCleanupSocket = false
-
         performReplAction(
             project = project,
             connectionRequired = true,
@@ -579,25 +568,6 @@ class MpyTransferService(private val project: Project) {
                     .sumOf { (it as FileNode).size }
                     .toDouble()
 
-                if (shouldUseSockets(project, totalBytes)) {
-                    shouldCleanupSocket = true
-
-                    try {
-                        socketServer = MpySocketServer(project)
-                        socketServer?.establishConnection(reporter)
-                    } catch (e: Throwable) {
-                        Notifications.Bus.notify(
-                            Notification(
-                                NOTIFICATION_GROUP,
-                                "Failed to establish a socket connection, falling back to normal communication: ${e.localizedMessage}",
-                                NotificationType.ERROR
-                            ), project
-                        )
-
-                        socketServer = null
-                    }
-                }
-
                 val singleFileProgress: Double = (1 / parentNameToFile.size.toDouble())
                 var downloadedFiles = 1
 
@@ -609,11 +579,7 @@ class MpyTransferService(private val project: Project) {
                     reporter.details(name)
 
                     val content = if (node is FileNode) {
-                        if (socketServer != null) {
-                            socketServer?.downloadFile(node.fullName)
-                        } else {
-                            deviceService.download(node.fullName)
-                        }
+                        deviceService.download(node.fullName)
                     } else null
 
                     try {
@@ -645,12 +611,6 @@ class MpyTransferService(private val project: Project) {
                 // Reporter text and fraction parameters are always set when the reporter is used elsewhere,
                 // but details aren't thus they should be cleaned up
                 reporter.details(null)
-
-                if (shouldCleanupSocket) {
-                    reporter.text("Cleaning up after socket communication...")
-                    reporter.fraction(null)
-                    socketServer?.teardownMpyClient()
-                }
             }
         )
     }

@@ -81,39 +81,6 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
     private val deviceService = project.service<MpyDeviceService>()
     private val transferService = project.service<MpyTransferService>()
 
-    private fun newTreeModel() = DefaultTreeModel(DirNode("/", "/"), true)
-
-    fun updateEmptyText() {
-        tree.emptyText.clear()
-
-        if (!settings.state.isPluginEnabled) {
-            tree.emptyText.appendText("MicroPython support is disabled")
-            tree.emptyText.appendLine("Change settings...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
-            }
-        } else {
-            tree.emptyText.appendText("No device connected")
-            tree.emptyText.appendLine("Connect device", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                performReplAction(
-                    project,
-                    false,
-                    "Connecting...",
-                    false,
-                    "Connection attempt cancelled",
-                    { reporter ->
-                        deviceService.doConnect(reporter)
-                    }
-                )
-            }
-
-            tree.emptyText.appendLine("")
-            tree.emptyText.appendLine("Find usage tips, report bugs or ask questions on our ")
-            tree.emptyText.appendText("GitHub", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-                BrowserUtil.browse("https://github.com/lukaskremla/micropython-tools-jetbrains")
-            }
-        }
-    }
-
     init {
         updateEmptyText()
 
@@ -167,8 +134,10 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
         tree.dropMode = DropMode.ON
 
         tree.transferHandler = object : TransferHandler() {
-            private val nodesFlavor = DataFlavor(Array<FileSystemNode>::class.java, "Array of MicroPython file system nodes")
-            private val virtualFileFlavor = DataFlavor("application/x-java-file-list; class=java.util.List", "List of virtual files")
+            private val nodesFlavor =
+                DataFlavor(Array<FileSystemNode>::class.java, "Array of MicroPython file system nodes")
+            private val virtualFileFlavor =
+                DataFlavor("application/x-java-file-list; class=java.util.List", "List of virtual files")
             private val flavors = arrayOf(nodesFlavor, virtualFileFlavor)
 
             private fun filterOutChildSelections(nodes: Array<FileSystemNode>): Array<FileSystemNode> {
@@ -316,13 +285,15 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
                                     val newPath = "${targetNode.fullName}/${node.name}"
                                     currentPathToNewPath[node.fullName] = newPath
 
-                                    if (foundConflicts && targetChildNames.contains(node.name)) pathsToRemove.add(newPath)
+                                    if (foundConflicts && targetChildNames.contains(node.name)) pathsToRemove.add(
+                                        newPath
+                                    )
                                     commands.add("os.rename(\"${node.fullName}\", \"$newPath\")")
                                 }
 
                                 deviceService.recursivelySafeDeletePaths(pathsToRemove)
 
-                                deviceService.blindExecute(commands).extractResponse()
+                                deviceService.blindExecute(commands)
                             }
                         )
                         if (result == false) return false
@@ -330,7 +301,8 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
 
                     support.isDataFlavorSupported(virtualFileFlavor) -> {
                         val filesToUpload = try {
-                            val transferData = support.transferable.getTransferData(virtualFileFlavor) as TransferableWrapper
+                            val transferData =
+                                support.transferable.getTransferData(virtualFileFlavor) as TransferableWrapper
 
                             transferData.asFileList()
                                 ?.mapNotNull { StandardFileSystems.local().findFileByPath(it.path) }
@@ -382,6 +354,37 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
         }
     }
 
+    fun updateEmptyText() {
+        tree.emptyText.clear()
+
+        if (!settings.state.isPluginEnabled) {
+            tree.emptyText.appendText("MicroPython support is disabled")
+            tree.emptyText.appendLine("Change settings...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
+            }
+        } else {
+            tree.emptyText.appendText("No device connected")
+            tree.emptyText.appendLine("Connect device", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                performReplAction(
+                    project,
+                    false,
+                    "Connecting...",
+                    false,
+                    "Connection attempt cancelled",
+                    { reporter ->
+                        deviceService.doConnect(reporter)
+                    }
+                )
+            }
+
+            tree.emptyText.appendLine("")
+            tree.emptyText.appendLine("Find usage tips, report bugs or ask questions on our ")
+            tree.emptyText.appendText("GitHub", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+                BrowserUtil.browse("https://github.com/lukaskremla/micropython-tools-jetbrains")
+            }
+        }
+    }
+
     suspend fun refresh(reporter: RawProgressReporter) =
         doRefresh(reporter, hash = false, disconnectOnCancel = true, isInitialRefresh = false, useReporter = true)
 
@@ -393,6 +396,29 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
 
     suspend fun initialRefresh(reporter: RawProgressReporter) =
         doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = true, useReporter = true)
+
+    fun selectedFiles(): Collection<FileSystemNode> {
+        return tree.selectionPaths?.mapNotNull { it.lastPathComponent.asSafely<FileSystemNode>() } ?: emptyList()
+    }
+
+    fun allNodes(): Collection<FileSystemNode> {
+        val allNodes = mutableListOf<FileSystemNode>()
+        val root = tree.model.root as DirNode
+        TreeUtil.treeNodeTraverser(root)
+            .traverse(TreeTraversal.POST_ORDER_DFS)
+            .mapNotNull {
+                when (val node = it) {
+                    is DirNode -> node
+                    is FileNode -> node
+                    else -> null
+                }
+            }
+            .toCollection(allNodes)
+
+        return allNodes
+    }
+
+    private fun newTreeModel() = DefaultTreeModel(DirNode("/", "/"), true)
 
     private suspend fun doRefresh(
         reporter: RawProgressReporter,
@@ -415,7 +441,7 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
         val fileSystemScanScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
 
         try {
-            dirList = deviceService.blindExecute(fileSystemScanScript).extractSingleResponse()
+            dirList = deviceService.blindExecute(fileSystemScanScript)
         } catch (e: CancellationException) {
             if (disconnectOnCancel) {
                 deviceService.disconnect(reporter)
@@ -477,27 +503,6 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
             TreeUtil.restoreExpandedPaths(tree, expandedPaths)
             TreeUtil.selectPath(tree, selectedPath)
         }
-    }
-
-    fun selectedFiles(): Collection<FileSystemNode> {
-        return tree.selectionPaths?.mapNotNull { it.lastPathComponent.asSafely<FileSystemNode>() } ?: emptyList()
-    }
-
-    fun allNodes(): Collection<FileSystemNode> {
-        val allNodes = mutableListOf<FileSystemNode>()
-        val root = tree.model.root as DirNode
-        TreeUtil.treeNodeTraverser(root)
-            .traverse(TreeTraversal.POST_ORDER_DFS)
-            .mapNotNull {
-                when (val node = it) {
-                    is DirNode -> node
-                    is FileNode -> node
-                    else -> null
-                }
-            }
-            .toCollection(allNodes)
-
-        return allNodes
     }
 }
 

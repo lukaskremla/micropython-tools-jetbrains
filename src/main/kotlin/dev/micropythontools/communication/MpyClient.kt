@@ -19,13 +19,12 @@ package dev.micropythontools.communication
 /**
  * @author elmot
  */
-interface MpyClient {
+internal interface MpyClient {
+    val isConnected: Boolean
+    suspend fun connect(progressIndicatorText: String): MpyClient
     fun send(string: String)
     fun send(bytes: ByteArray)
     fun hasPendingData(): Boolean
     fun close()
-    suspend fun connect(progressIndicatorText: String): MpyClient
     fun closeBlocking()
-    fun sendPing()
-    val isConnected: Boolean
 }

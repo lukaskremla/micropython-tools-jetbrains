@@ -59,11 +59,11 @@ import java.nio.charset.StandardCharsets
 
 // ===== ENUMS AND BASE CLASSES =====
 
-enum class VisibleWhen {
+internal enum class VisibleWhen {
     ALWAYS, PLUGIN_ENABLED, CONNECTED, DISCONNECTED
 }
 
-enum class EnabledWhen {
+internal enum class EnabledWhen {
     ALWAYS, PLUGIN_ENABLED, CONNECTED, DISCONNECTED
 }
 
@@ -71,7 +71,7 @@ enum class EnabledWhen {
  * Data class containing options of MpyActions. [visibleWhen] and [enabledWhen] only affect the default states.
  * They can be modified as needed by overriding the customUpdate() function
  */
-data class MpyActionOptions(
+internal data class MpyActionOptions(
     val visibleWhen: VisibleWhen,
     val enabledWhen: EnabledWhen,
     val requiresConnection: Boolean,
@@ -79,12 +79,12 @@ data class MpyActionOptions(
     val cancelledMessage: String? = null
 )
 
-data class DialogResult(
+internal data class DialogResult(
     val shouldExecute: Boolean,
     val resultToPass: Any?
 )
 
-abstract class MpyActionBase(
+internal abstract class MpyActionBase(
     private val text: String,
     private val options: MpyActionOptions
 ) : DumbAwareAction(text) {
@@ -112,7 +112,8 @@ abstract class MpyActionBase(
         val deviceService = project?.service<MpyDeviceService>()
 
         val isPluginEnabled = settings?.state?.isPluginEnabled == true
-        val isConnected = deviceService != null && (deviceService.state == State.CONNECTING || deviceService.state == State.CONNECTED || deviceService.state == State.TTY_DETACHED)
+        val isConnected =
+            deviceService != null && (deviceService.state == State.CONNECTING || deviceService.state == State.CONNECTED || deviceService.state == State.TTY_DETACHED)
 
         e.presentation.isVisible = when (options.visibleWhen) {
             VisibleWhen.ALWAYS -> true
@@ -141,7 +142,7 @@ abstract class MpyActionBase(
     open fun customUpdate(e: AnActionEvent) = Unit
 }
 
-abstract class MpyAction(
+internal abstract class MpyAction(
     text: String,
     protected val options: MpyActionOptions
 ) : MpyActionBase(
@@ -158,7 +159,7 @@ abstract class MpyAction(
     abstract fun performAction(e: AnActionEvent)
 }
 
-abstract class MpyReplAction(
+internal abstract class MpyReplAction(
     text: String,
     protected val options: MpyActionOptions
 ) : MpyActionBase(
@@ -191,7 +192,7 @@ abstract class MpyReplAction(
     open fun dialogToShowFirst(e: AnActionEvent): DialogResult = DialogResult(true, null)
 }
 
-abstract class MpyUploadActionBase(
+internal abstract class MpyUploadActionBase(
     text: String
 ) : MpyAction(
     text,
@@ -212,7 +213,7 @@ abstract class MpyUploadActionBase(
 
 // ===== CONNECTION MANAGEMENT ACTIONS =====
 
-class MpyConnectAction : MpyReplAction(
+internal class MpyConnectAction : MpyReplAction(
     "Connect",
     MpyActionOptions(
         visibleWhen = VisibleWhen.DISCONNECTED,
@@ -229,7 +230,7 @@ class MpyConnectAction : MpyReplAction(
     }
 }
 
-class MpyDisconnectAction : MpyReplAction(
+internal class MpyDisconnectAction : MpyReplAction(
     "Disconnect",
     MpyActionOptions(
         visibleWhen = VisibleWhen.CONNECTED,
@@ -255,7 +256,7 @@ class MpyDisconnectAction : MpyReplAction(
 
 // ===== FILE SYSTEM OPERATIONS | MIXED TOOLBAR ACTIONS =====
 
-class MpyRefreshAction : MpyReplAction(
+internal class MpyRefreshAction : MpyReplAction(
     "Refresh",
     MpyActionOptions(
         visibleWhen = VisibleWhen.PLUGIN_ENABLED,
@@ -272,7 +273,7 @@ class MpyRefreshAction : MpyReplAction(
     }
 }
 
-class MpyCreateFolderAction : MpyReplAction(
+internal class MpyCreateFolderAction : MpyReplAction(
     "New Folder",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
@@ -303,7 +304,11 @@ class MpyCreateFolderAction : MpyReplAction(
     }
 
     override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
-        val parent = deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull().asSafely<DirNode>() ?: return DialogResult(false, null)
+        val parent =
+            deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull().asSafely<DirNode>() ?: return DialogResult(
+                false,
+                null
+            )
 
         val validator = object : InputValidator {
             override fun checkInput(inputString: String): Boolean {
@@ -335,7 +340,7 @@ class MpyCreateFolderAction : MpyReplAction(
     }
 }
 
-class MpyDeleteAction : MpyReplAction(
+internal class MpyDeleteAction : MpyReplAction(
     "Delete",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
@@ -434,7 +439,7 @@ class MpyDeleteAction : MpyReplAction(
     }
 }
 
-class MpyDownloadAction : MpyAction(
+internal class MpyDownloadAction : MpyAction(
     "Download",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
@@ -494,7 +499,7 @@ class MpyDownloadAction : MpyAction(
     }
 }
 
-class MpyOpenFileAction : MpyReplAction(
+internal class MpyOpenFileAction : MpyReplAction(
     "Open File",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
@@ -545,7 +550,7 @@ class MpyOpenFileAction : MpyReplAction(
 
 // ===== REPL TOOLBAR ACTIONS =====
 
-class MpyInterruptAction : MpyReplAction(
+internal class MpyInterruptAction : MpyReplAction(
     "Interrupt",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
@@ -562,14 +567,14 @@ class MpyInterruptAction : MpyReplAction(
     }
 }
 
-class MpySoftResetAction : MpyReplAction(
+internal class MpySoftResetAction : MpyReplAction(
     "Reset",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = false,
-        cancelledMessage = "Reset ccancelled"
+        cancelledMessage = "Reset cancelled"
     )
 ) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
@@ -582,7 +587,7 @@ class MpySoftResetAction : MpyReplAction(
 
 // ===== EXECUTE ACTIONS =====
 
-class MpyExecuteFileInReplAction : MpyReplAction(
+internal class MpyExecuteFileInReplAction : MpyReplAction(
     "Execute File in REPL",
     MpyActionOptions(
         visibleWhen = VisibleWhen.PLUGIN_ENABLED,
@@ -625,7 +630,7 @@ class MpyExecuteFileInReplAction : MpyReplAction(
     }
 }
 
-class MpyExecuteFragmentInReplAction : MpyReplAction(
+internal class MpyExecuteFragmentInReplAction : MpyReplAction(
     "Execute Fragment in REPL",
     MpyActionOptions(
         visibleWhen = VisibleWhen.PLUGIN_ENABLED,
@@ -677,7 +682,8 @@ class MpyExecuteFragmentInReplAction : MpyReplAction(
 
 // ===== UPLOAD ACTIONS =====
 
-@Suppress("DialogTitleCapitalization") class MpyUploadActionGroup : ActionGroup("Upload Item(s) to MicroPython Device", true) {
+@Suppress("DialogTitleCapitalization")
+internal class MpyUploadActionGroup : ActionGroup("Upload Item(s) to MicroPython Device", true) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
@@ -739,7 +745,7 @@ class MpyExecuteFragmentInReplAction : MpyReplAction(
     }
 }
 
-class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload to Device Root \"/\"") {
+internal class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload to Device Root \"/\"") {
     override fun performAction(e: AnActionEvent) {
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
 
@@ -764,7 +770,7 @@ class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload to Devic
 }
 
 @Suppress("DialogTitleCapitalization")
-class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to") {
+internal class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to") {
     override fun performAction(e: AnActionEvent) {
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
 
@@ -803,7 +809,7 @@ class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to"
     }
 }
 
-class MpyUploadProjectAction : MpyUploadActionBase("Upload Project") {
+internal class MpyUploadProjectAction : MpyUploadActionBase("Upload Project") {
     override fun performAction(e: AnActionEvent) {
         transferService.uploadProject()
     }
@@ -820,7 +826,7 @@ class MpyUploadProjectAction : MpyUploadActionBase("Upload Project") {
 
 // ===== SETTINGS ACTIONS =====
 
-class MpyOpenSettingsAction : MpyAction(
+internal class MpyOpenSettingsAction : MpyAction(
     "Settings",
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,

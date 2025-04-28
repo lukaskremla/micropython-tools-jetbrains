@@ -37,8 +37,8 @@ class MpySocketServer(project: Project) {
 
             if (deviceService.serverSocket == null) {
                 deviceService.serverSocket = aSocket(ActorSelectorManager(Dispatchers.IO))
-                .tcp()
-                .bind("0.0.0.0", 8765)
+                    .tcp()
+                    .bind("0.0.0.0", 8765)
             }
 
             client = deviceService.serverSocket?.accept()
@@ -86,7 +86,7 @@ class MpySocketServer(project: Project) {
                 20, // Wi-Fi connection timeout
             )
             try {
-                deviceService.blindExecute(formattedWifiConnectScript).extractSingleResponse()
+                deviceService.blindExecute(formattedWifiConnectScript)
             } catch (e: Throwable) {
                 if (e.localizedMessage.contains("timed")) {
                     throw Exception("ERROR: Wi-fi connection attempt timed out")
@@ -150,7 +150,7 @@ class MpySocketServer(project: Project) {
             println("Error closing client: ${e.message}")
         }
         client = null
-        
+
         isConnected = false
     }
 
@@ -234,7 +234,8 @@ class MpySocketServer(project: Project) {
                 val tempBuffer = ByteArray(8192)
                 var totalBytesRead = 0
                 while (totalBytesRead < size) {
-                    val bytesRead = reader?.readAvailable(tempBuffer, 0, minOf(tempBuffer.size, (size - totalBytesRead))) ?: 0
+                    val bytesRead =
+                        reader?.readAvailable(tempBuffer, 0, minOf(tempBuffer.size, (size - totalBytesRead))) ?: 0
                     totalBytesRead += bytesRead
 
                     if (bytesRead <= 0) break

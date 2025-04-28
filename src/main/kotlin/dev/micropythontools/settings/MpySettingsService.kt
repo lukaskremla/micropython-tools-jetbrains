@@ -36,21 +36,21 @@ internal const val DEFAULT_WEBREPL_PORT = 8266
 
 internal const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
 
-val WEBREPL_PASSWORD_LENGTH_RANGE = 4..9
+internal val WEBREPL_PASSWORD_LENGTH_RANGE = 4..9
 
 private const val WIFI_KEY = "WiFi"
 private const val WEBREPL_KEY = "WebREPL"
 
+/**
+ * @author Lukas Kremla, elmot
+ */
 @Service(Service.Level.PROJECT)
 @State(
     name = "MicroPythonTools",
     storages = [Storage("micropython-tools-settings.xml")],
     category = SettingsCategory.PLUGINS
 )
-/**
- * @author Lukas Kremla, elmot
- */
-class MpySettingsService(private val project: Project) : SimplePersistentStateComponent<MpyState>(MpyState()) {
+internal class MpySettingsService(private val project: Project) : SimplePersistentStateComponent<MpyState>(MpyState()) {
     companion object {
         fun getInstance(project: Project): MpySettingsService =
             project.getService(MpySettingsService::class.java)
@@ -106,7 +106,7 @@ class MpySettingsService(private val project: Project) : SimplePersistentStateCo
     }
 }
 
-fun messageForBrokenIp(ip: String): @Nls String? {
+internal fun messageForBrokenIp(ip: String): @Nls String? {
     if (ip.isEmpty()) {
         return "Host/IP address must not be empty."
     }
@@ -122,7 +122,7 @@ fun messageForBrokenIp(ip: String): @Nls String? {
     }
 }
 
-fun messageForBrokenPort(port: String): @Nls String? {
+internal fun messageForBrokenPort(port: String): @Nls String? {
     val portNumber = port.toIntOrNull()
 
     return when {
@@ -133,13 +133,13 @@ fun messageForBrokenPort(port: String): @Nls String? {
     }
 }
 
-fun messageForBrokenPassword(password: CharArray): @Nls String? {
+internal fun messageForBrokenPassword(password: CharArray): @Nls String? {
     return if (password.size !in WEBREPL_PASSWORD_LENGTH_RANGE) {
         "Allowed password length is $WEBREPL_PASSWORD_LENGTH_RANGE"
     } else null
 }
 
-fun validateMpyPath(path: String, isEmptyPathValid: Boolean = false): String? {
+internal fun validateMpyPath(path: String, isEmptyPathValid: Boolean = false): String? {
     val forbiddenCharacters = listOf("<", ">", ":", "\"", "|", "?", "*")
     val foundForbiddenCharacters = mutableListOf<String>()
 
@@ -165,7 +165,7 @@ fun validateMpyPath(path: String, isEmptyPathValid: Boolean = false): String? {
     return null
 }
 
-fun normalizeMpyPath(path: String, isEmptyPathValid: Boolean = false): String {
+internal fun normalizeMpyPath(path: String, isEmptyPathValid: Boolean = false): String {
     var normalizedPath = path
 
     // Replace slash format to fit MicroPython file system
@@ -190,18 +190,7 @@ fun normalizeMpyPath(path: String, isEmptyPathValid: Boolean = false): String {
     return normalizedPath
 }
 
-fun isUftpdPathValid(uftpdPath: String): String? {
-    val validationResult = validateMpyPath(uftpdPath, true)
-
-    return validationResult
-        ?: if (uftpdPath.contains(".")) {
-            "The path before uftpd cannot contain a \".\""
-        } else {
-            null
-        }
-}
-
-fun isRunConfTargetPathValid(targetPath: String): String? {
+internal fun isRunConfTargetPathValid(targetPath: String): String? {
     val validationResult = validateMpyPath(targetPath, true)
 
     return validationResult

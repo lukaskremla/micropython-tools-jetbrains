@@ -26,7 +26,7 @@ import dev.micropythontools.util.MpyPythonService
 /**
  * @author vlan, Lukas Kremla
  */
-class MpyRequirementsInspection : LocalInspectionTool() {
+internal class MpyRequirementsInspection : LocalInspectionTool() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         val settings = file.project.service<MpySettingsService>()
 

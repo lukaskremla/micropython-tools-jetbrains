@@ -22,7 +22,7 @@ import com.intellij.openapi.util.IconLoader
 /**
  * @author Lukas Kremla
  */
-class MpyRunConfType : ConfigurationTypeBase(
+internal class MpyRunConfType : ConfigurationTypeBase(
     ID,
     "MicroPython Tools",
     "MicroPython Tools Run Configuration Type",

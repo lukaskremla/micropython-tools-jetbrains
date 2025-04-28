@@ -47,7 +47,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
 
-class MpyUploadPreview(
+internal class MpyUploadPreview(
     project: Project,
     private val allItemsToUpload: Set<VirtualFile>,
     private val fileToTargetPath: Map<VirtualFile, String>,
@@ -208,7 +208,7 @@ class MpyUploadPreview(
 
         val mutableFileToTargetPath = fileToTargetPath.toMutableMap()
         val mutableFolderToTargetPath = folderToTargetPath.toMutableMap()
-        
+
         existingTargeUploadPaths.forEach { path ->
             mutableFileToTargetPath.entries.removeIf { it.value == path }
             mutableFolderToTargetPath.entries.removeIf { it.value == path }

@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 
 
-class MpyFileEditorProvider : FileEditorProvider, DumbAware {
+internal class MpyFileEditorProvider : FileEditorProvider, DumbAware {
     override fun accept(project: Project, file: VirtualFile): Boolean {
         return file.extension == "mpy"
     }

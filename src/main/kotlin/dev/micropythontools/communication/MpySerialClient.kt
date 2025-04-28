@@ -27,21 +27,16 @@ import java.nio.charset.StandardCharsets
 /**
  * @author elmot
  */
-class MpySerialClient(private val comm: MpyComm) : MpyClient {
-    private val port = SerialPort(comm.connectionParameters.portName)
-    override fun send(string: String) {
-        this@MpySerialClient.thisLogger().debug("< $string")
-        port.writeString(string)
-    }
+internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
+    val port = SerialPort(comm.connectionParameters.portName)
 
-    override fun send(bytes: ByteArray) {
-        this@MpySerialClient.thisLogger().debug("< $bytes")
-        port.writeBytes(bytes)
-    }
-
-    override fun hasPendingData(): Boolean = port.inputBufferBytesCount > 0
-
-    override fun close() = closeBlocking()
+    override val isConnected: Boolean
+        get() = try {
+            port.isOpened && port.getInputBufferBytesCount() >= 0
+            true
+        } catch (_: SerialPortException) {
+            false
+        }
 
     private val listener = SerialPortEventListener { event ->
         if (event.eventType and SerialPort.MASK_RXCHAR != 0) {
@@ -71,17 +66,21 @@ class MpySerialClient(private val comm: MpyComm) : MpyClient {
         }
     }
 
+    override fun send(string: String) {
+        this@MpySerialClient.thisLogger().debug("< $string")
+        port.writeString(string)
+    }
+
+    override fun send(bytes: ByteArray) {
+        this@MpySerialClient.thisLogger().debug("< $bytes")
+        port.writeBytes(bytes)
+    }
+
+    override fun hasPendingData(): Boolean = port.inputBufferBytesCount > 0
+
+    override fun close() = closeBlocking()
+
     override fun closeBlocking() {
         port.closePort()
     }
-
-    override fun sendPing() = Unit
-
-    override val isConnected: Boolean
-        get() = try {
-            port.isOpened && port.getInputBufferBytesCount() >= 0
-            true
-        } catch (_: SerialPortException) {
-            false
-        }
 }

@@ -35,6 +35,7 @@ import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
 import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.util.MpyPythonService
+import jssc.SerialPort
 import kotlinx.coroutines.runBlocking
 import java.awt.Dimension
 import javax.swing.event.PopupMenuEvent
@@ -65,7 +66,7 @@ private data class ConfigurableParameters(
 /**
  * @author Lukas Kremla
  */
-class MpyConfigurable(private val project: Project) :
+internal class MpyConfigurable(private val project: Project) :
     BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
     private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", this::class.java)
 
@@ -403,6 +404,16 @@ class MpyConfigurable(private val project: Project) :
             settings.state.usingUart = usingUart
             settings.state.filterManufacturers = filterManufacturers
             settings.state.portName = portName.takeUnless { it == EMPTY_PORT_NAME_TEXT }
+
+            // Force create these manually-configured settings
+            if (settings.state.increaseBaudrateForFileTransfers == "") {
+                settings.state.increaseBaudrateForFileTransfers = "false"
+            }
+
+            if (settings.state.increasedFileTransferBaudrate == "") {
+                settings.state.increasedFileTransferBaudrate = "${SerialPort.BAUDRATE_115200}"
+            }
+
             settings.state.webReplIp = webReplIp
             settings.state.webReplPort = webReplPort
             settings.state.compileToBytecode = compileToBytecode

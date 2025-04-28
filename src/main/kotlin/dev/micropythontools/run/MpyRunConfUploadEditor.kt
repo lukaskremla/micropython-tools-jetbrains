@@ -39,7 +39,7 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyTransferService
-import dev.micropythontools.settings.isUftpdPathValid
+import dev.micropythontools.settings.isRunConfTargetPathValid
 import dev.micropythontools.settings.normalizeMpyPath
 import dev.micropythontools.settings.validateMpyPath
 import java.awt.BorderLayout
@@ -78,9 +78,10 @@ private data class SourceItem(
         } ?: thisFile.name
     } ?: path
 
-    val isValid = virtualFile?.exists() == true && project.service<MpyTransferService>().collectMpySourceRoots().any { mpySource ->
-        VfsUtil.isAncestor(mpySource, virtualFile, false)
-    }
+    val isValid = virtualFile?.exists() == true && project.service<MpyTransferService>().collectMpySourceRoots()
+        .any { mpySource ->
+            VfsUtil.isAncestor(mpySource, virtualFile, false)
+        }
 
     val icon = if (isValid)
         IconLoader.getIcon("icons/MpySource.svg", this::class.java)
@@ -104,7 +105,8 @@ private data class ExcludedItem(val path: String) {
 /**
  * @authors Lukas Kremla
  */
-class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : SettingsEditor<MpyRunConfUpload>() {
+internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) :
+    SettingsEditor<MpyRunConfUpload>() {
     private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", this::class.java)
 
     private val transferService = runConfiguration.project.service<MpyTransferService>()
@@ -344,9 +346,6 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
                                 }
                             }
                         }.gap(RightGap.SMALL)
-                    cell(JBLabel(questionMarkIcon).apply {
-                        toolTipText = "All MicroPython Sources Roots will be uploaded"
-                    })
                     useSelectedPathsRadioButton = radioButton("Selected")
                         .bindSelected({ parameters.uploadMode == 1 }, { if (it) parameters.uploadMode = 1 })
                         .applyToComponent {
@@ -420,7 +419,7 @@ class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) : S
                         .columns(15)
                         .gap(RightGap.SMALL)
                         .validationInfo { field ->
-                            val validationResult = isUftpdPathValid(field.text)
+                            val validationResult = isRunConfTargetPathValid(field.text)
 
                             if (validationResult != null) {
                                 error(validationResult)

@@ -44,15 +44,16 @@ import com.jediterm.terminal.ui.JediTermWidget
 import dev.micropythontools.settings.*
 import dev.micropythontools.ui.*
 import dev.micropythontools.util.MpyPythonService
-import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-data class DeviceInformation(
+
+internal typealias StateListener = (State) -> Unit
+
+internal data class DeviceInformation(
     var version: String = "Unknown",
     var description: String = "Unknown",
     var hasCRC32: Boolean = false,
@@ -101,7 +102,7 @@ data class DeviceInformation(
     }
 }
 
-data class ConnectionParameters(
+internal data class ConnectionParameters(
     var usingUart: Boolean = true,
     var portName: String,
     var webReplUrl: String,
@@ -131,36 +132,18 @@ data class ConnectionParameters(
     )
 }
 
-typealias StateListener = (State) -> Unit
+internal class PerformReplActionResult<T>(
+    val result: T? = null,
+    val shouldRefresh: Boolean = false
+)
 
 @Service(Service.Level.PROJECT)
-class MpyDeviceService(val project: Project) : Disposable {
-    init {
-        val newDisposable = Disposer.newDisposable("MpyDeviceServiceDisposable")
-        Disposer.register(newDisposable, this)
-    }
-
-    private val settings = project.service<MpySettingsService>()
-    private val pythonService = project.service<MpyPythonService>()
-    private val componentRegistryService = project.service<MpyComponentRegistryService>()
-
+internal class MpyDeviceService(val project: Project) : Disposable {
     val ttyConnector: TtyConnector
         get() = comm.ttyConnector
 
-    private var comm: MpyComm = createMpyComm()
-
-    private fun createMpyComm(): MpyComm {
-        return MpyComm(project, this, pythonService).also {
-            val newDisposable = Disposer.newDisposable("MpyCommDisposable")
-            Disposer.register(newDisposable, it)
-        }
-    }
-
     val fileSystemWidget: FileSystemWidget?
         get() = componentRegistryService.getFileSystemWidget()
-
-    private val terminalContent: Content?
-        get() = componentRegistryService.getTerminalContent()
 
     val stateListeners = mutableListOf<StateListener>()
 
@@ -169,15 +152,23 @@ class MpyDeviceService(val project: Project) : Disposable {
 
     var deviceInformation: DeviceInformation = DeviceInformation()
 
+    private val settings = project.service<MpySettingsService>()
+    private val pythonService = project.service<MpyPythonService>()
+    private val componentRegistryService = project.service<MpyComponentRegistryService>()
+    private var comm: MpyComm = createMpyComm()
     private var connectionChecker: ScheduledExecutorService? = null
 
-    var serverSocket: ServerSocket? = null
+    private val terminalContent: Content?
+        get() = componentRegistryService.getTerminalContent()
+
+    init {
+        val newDisposable = Disposer.newDisposable("MpyDeviceServiceDisposable")
+        Disposer.register(newDisposable, this)
+    }
 
     fun listSerialPorts(filterManufacturers: Boolean = settings.state.filterManufacturers): MutableList<String> {
         val os = System.getProperty("os.name").lowercase()
-
         val isWindows = os.contains("win")
-
         val filteredPorts = mutableListOf<String>()
         val ports = SerialPort.getCommPorts()
 
@@ -192,61 +183,6 @@ class MpyDeviceService(val project: Project) : Disposable {
         }
 
         return filteredPorts
-    }
-
-    private suspend fun initializeDevice() {
-        val scriptFileName = "initialize_device.py"
-        val initializeDeviceScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
-
-        val scriptResponse = blindExecute(initializeDeviceScript).extractSingleResponse()
-
-        if (!scriptResponse.contains("ERROR")) {
-            val responseFields = scriptResponse.split("&")
-
-            deviceInformation = DeviceInformation(
-                version = responseFields.getOrNull(0) ?: "Unknown",
-                description = responseFields.getOrNull(1) ?: "Unknown",
-                hasCRC32 = responseFields.getOrNull(2)?.toBoolean() == true,
-                canEncodeBase64 = responseFields.getOrNull(3)?.toBoolean() == true,
-                canDecodeBase64 = responseFields.getOrNull(4)?.toBoolean() == true,
-                platform = responseFields.getOrNull(5),
-                byteorder = responseFields.getOrNull(6),
-                maxsize = responseFields.getOrNull(7)?.toLongOrNull(),
-                mpyVersion = responseFields.getOrNull(8)?.toIntOrNull(),
-                mpySubversion = responseFields.getOrNull(9)?.toIntOrNull(),
-                mpyArchIdx = responseFields.getOrNull(10)?.toIntOrNull(),
-                mpyArchName = responseFields.getOrNull(11),
-                wordSize = responseFields.getOrNull(12)?.toIntOrNull(),
-                smallIntBits = responseFields.getOrNull(13)?.toIntOrNull()
-            )
-        } else {
-            deviceInformation = DeviceInformation()
-        }
-
-        val message: String? = if (!deviceInformation.hasCRC32) {
-            if (!deviceInformation.canDecodeBase64) {
-                "The connected board is missing the crc32 and a2b_base64 binascii functions. " +
-                        "The already uploaded files check won't work and uploads may be slower."
-            } else {
-                "The connected board is missing the crc32 binascii function." +
-                        "The already uploaded files check won't work."
-            }
-        } else if (!deviceInformation.canDecodeBase64) {
-            "The connected board is missing the a2b_base64 binascii function. " +
-                    "Uploads may be slower."
-        } else {
-            null
-        }
-
-        if (message != null) {
-            MessageDialogBuilder.Message(
-                "Missing MicroPython Libraries",
-                message
-            ).asWarning().buttons("Acknowledge").show(project)
-        }
-        //println(deviceInformation)
-        //println(deviceInformation.getMpyCrossArgs())
-        //println(deviceInformation.supportsMpyCompilation())
     }
 
     suspend fun doConnect(reporter: RawProgressReporter) {
@@ -361,20 +297,20 @@ class MpyDeviceService(val project: Project) : Disposable {
         deviceInformation = DeviceInformation()
     }
 
-    @Throws(IOException::class)
     suspend fun upload(
-        relativeName: @NonNls String,
+        relativeName: String,
         contentsToByteArray: ByteArray,
         progressCallback: (uploadedBytes: Double) -> Unit
     ) {
         comm.upload(relativeName, contentsToByteArray, progressCallback)
     }
 
-    @Throws(IOException::class)
-    suspend fun download(deviceFileName: @NonNls String): ByteArray =
+    suspend fun download(deviceFileName: String): ByteArray =
         comm.download(deviceFileName)
 
-    suspend fun instantRun(code: @NonNls String) {
+    suspend fun setBaudrate(baudrate: Int) = comm.setBaudrate(baudrate)
+
+    suspend fun instantRun(code: String) {
         clearTerminalIfNeeded()
         comm.instantRun(code)
         withContext(Dispatchers.EDT) {
@@ -397,12 +333,15 @@ class MpyDeviceService(val project: Project) : Disposable {
     }
 
     /**
-     * Executes a single command/script on the device.
+     * Executes a command/script on the device.
      *
      * @param command The command or script to execute
-     * @return The execution response
+     *
+     * @return The execution result as a string
+     *
+     * @throws MicroPythonExecutionException when REPL returns a non-empty stderr result
      */
-    suspend fun blindExecute(command: String): ExecResponse {
+    suspend fun blindExecute(command: String): String {
         clearTerminalIfNeeded()
         return comm.blindExecute(command)
     }
@@ -411,20 +350,18 @@ class MpyDeviceService(val project: Project) : Disposable {
      * Convenience method for executing lists of command lines
      * Internally joins all commands with newlines and executes them as a single script.
      *
-     * @param commands List of commands to join and execute
-     * @return The execution response
+     * @param commands The list of commands to join and execute
+     *
+     * @return The execution result as a string
+     *
+     * @throws MicroPythonExecutionException when REPL returns a non-empty stderr result
      */
-    suspend fun blindExecute(commands: List<String>): ExecResponse {
+    suspend fun blindExecute(commands: List<String>): String {
         val combinedCommand = commands.joinToString("\n")
         // Instead of passing the command list directly to doBlindExecute this joins them to a string
         // It makes the command as efficient to execute as possible
         return blindExecute(combinedCommand)
     }
-
-    private suspend fun connect() = comm.connect()
-
-    private fun setConnectionParams(connectionParameters: ConnectionParameters) =
-        comm.setConnectionParams(connectionParameters)
 
     suspend fun interrupt() {
         comm.interrupt()
@@ -438,16 +375,78 @@ class MpyDeviceService(val project: Project) : Disposable {
         componentRegistryService.getTerminal()?.ttyConnector = ttyConnector
     }
 
-    internal suspend fun clearTerminalIfNeeded() {
-        if (AutoClearAction.isAutoClearEnabled) {
-            withContext(Dispatchers.EDT) {
-                val widget = UIUtil.findComponentOfType(terminalContent?.component, JediTermWidget::class.java)
-                widget?.terminalPanel?.clearBuffer()
-            }
+    override fun dispose() {
+        stopSerialConnectionMonitoring()
+    }
+
+    private fun createMpyComm(): MpyComm {
+        return MpyComm(project, this, pythonService).also {
+            val newDisposable = Disposer.newDisposable("MpyCommDisposable")
+            Disposer.register(newDisposable, it)
         }
     }
 
-    fun startSerialConnectionMonitoring() {
+    private suspend fun initializeDevice() {
+        val scriptFileName = "initialize_device.py"
+        val initializeDeviceScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
+
+        val scriptResponse = blindExecute(initializeDeviceScript)
+
+        if (!scriptResponse.contains("ERROR")) {
+            val responseFields = scriptResponse.split("&")
+
+            deviceInformation = DeviceInformation(
+                version = responseFields.getOrNull(0) ?: "Unknown",
+                description = responseFields.getOrNull(1) ?: "Unknown",
+                hasCRC32 = responseFields.getOrNull(2)?.toBoolean() == true,
+                canEncodeBase64 = responseFields.getOrNull(3)?.toBoolean() == true,
+                canDecodeBase64 = responseFields.getOrNull(4)?.toBoolean() == true,
+                platform = responseFields.getOrNull(5),
+                byteorder = responseFields.getOrNull(6),
+                maxsize = responseFields.getOrNull(7)?.toLongOrNull(),
+                mpyVersion = responseFields.getOrNull(8)?.toIntOrNull(),
+                mpySubversion = responseFields.getOrNull(9)?.toIntOrNull(),
+                mpyArchIdx = responseFields.getOrNull(10)?.toIntOrNull(),
+                mpyArchName = responseFields.getOrNull(11),
+                wordSize = responseFields.getOrNull(12)?.toIntOrNull(),
+                smallIntBits = responseFields.getOrNull(13)?.toIntOrNull()
+            )
+        } else {
+            deviceInformation = DeviceInformation()
+        }
+
+        val message: String? = if (!deviceInformation.hasCRC32) {
+            if (!deviceInformation.canDecodeBase64) {
+                "The connected board is missing the crc32 and a2b_base64 binascii functions. " +
+                        "The already uploaded files check won't work and uploads may be slower."
+            } else {
+                "The connected board is missing the crc32 binascii function." +
+                        "The already uploaded files check won't work."
+            }
+        } else if (!deviceInformation.canDecodeBase64) {
+            "The connected board is missing the a2b_base64 binascii function. " +
+                    "Uploads may be slower."
+        } else {
+            null
+        }
+
+        if (message != null) {
+            MessageDialogBuilder.Message(
+                "Missing MicroPython Libraries",
+                message
+            ).asWarning().buttons("Acknowledge").show(project)
+        }
+        //println(deviceInformation)
+        //println(deviceInformation.getMpyCrossArgs())
+        //println(deviceInformation.supportsMpyCompilation())
+    }
+
+    private suspend fun connect() = comm.connect()
+
+    private fun setConnectionParams(connectionParameters: ConnectionParameters) =
+        comm.setConnectionParams(connectionParameters)
+
+    private fun startSerialConnectionMonitoring() {
         connectionChecker = Executors.newSingleThreadScheduledExecutor { r ->
             val thread = Thread(r, "MPY-Connection-Checker")
             thread.isDaemon = true
@@ -471,15 +470,8 @@ class MpyDeviceService(val project: Project) : Disposable {
                 runBlocking {
                     try {
                         disconnect(null)
-                    } catch (e: Exception) {
-                        Notifications.Bus.notify(
-                            Notification(
-                                NOTIFICATION_GROUP,
-                                "Error during disconnect",
-                                e.message ?: "Unknown error",
-                                NotificationType.ERROR
-                            )
-                        )
+                    } catch (_: Throwable) {
+                        // Ignore
                     }
                 }
             }
@@ -497,18 +489,17 @@ class MpyDeviceService(val project: Project) : Disposable {
         }
     }
 
-    override fun dispose() {
-        stopSerialConnectionMonitoring()
-        //serverSocket?.close()
+    internal suspend fun clearTerminalIfNeeded() {
+        if (AutoClearAction.isAutoClearEnabled) {
+            withContext(Dispatchers.EDT) {
+                val widget = UIUtil.findComponentOfType(terminalContent?.component, JediTermWidget::class.java)
+                widget?.terminalPanel?.clearBuffer()
+            }
+        }
     }
 }
 
-class PerformReplActionResult<T>(
-    val result: T? = null,
-    val shouldRefresh: Boolean = false
-)
-
-fun <T> performReplAction(
+internal fun <T> performReplAction(
     project: Project,
     connectionRequired: Boolean,
     @NlsContexts.DialogMessage description: String,

@@ -46,7 +46,7 @@ import javax.swing.JComponent
 /**
  * @author Lukas Kremla
  */
-class MpyPythonService(private val project: Project) {
+internal class MpyPythonService(private val project: Project) {
     private val settings = project.service<MpySettingsService>()
 
     companion object {
@@ -123,7 +123,8 @@ class MpyPythonService(private val project: Project) {
                     !activeStubPackage.isNullOrBlank() &&
                     availableStubs.contains(activeStubPackage)
                 ) {
-                    val newLibrary = projectLibraryModel.createLibrary(LIBRARY_NAME, PythonLibraryType.getInstance().kind)
+                    val newLibrary =
+                        projectLibraryModel.createLibrary(LIBRARY_NAME, PythonLibraryType.getInstance().kind)
                     val newModel = newLibrary.modifiableModel
 
                     val rootUrl = "$stubsPath/$activeStubPackage"

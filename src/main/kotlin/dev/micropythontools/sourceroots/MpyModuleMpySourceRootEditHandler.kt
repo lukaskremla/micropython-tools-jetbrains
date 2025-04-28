@@ -25,7 +25,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import java.awt.Color
 import javax.swing.Icon
 
-class MpyModuleMpySourceRootEditHandler : ModuleSourceRootEditHandler<JavaSourceRootProperties>(MpySourceRootType.SOURCE) {
+internal class MpyModuleMpySourceRootEditHandler :
+    ModuleSourceRootEditHandler<JavaSourceRootProperties>(MpySourceRootType.SOURCE) {
     override fun getRootTypeName(): @Nls(capitalization = Nls.Capitalization.Title) String {
         return "MicroPython Sources"
     }
