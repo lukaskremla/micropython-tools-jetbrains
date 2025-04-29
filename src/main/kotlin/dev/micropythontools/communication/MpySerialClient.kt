@@ -43,7 +43,6 @@ internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
             val count = event.eventValue
             val bytes = port.readBytes(count)
             comm.dataReceived(bytes)
-            port.readBytes()
             this@MpySerialClient.thisLogger().debug("> ${bytes.toString(StandardCharsets.UTF_8)}")
         }
     }

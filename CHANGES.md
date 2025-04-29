@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+0.5.3 - 29.4.2025
+------------------
+
+* Resolved issues related to receiving corrupted data over serial communication.
+
 0.5.2 - 28.4.2025
 ------------------
 

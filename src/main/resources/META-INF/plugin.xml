@@ -2,6 +2,11 @@
     <name>MicroPython Tools</name>
     <id>micropython-tools-jetbrains</id>
     <change-notes><![CDATA[
+      <h3>0.5.3 - 29-4-2025</h3>
+        <ul>
+          <li>Resolved issues related to receiving corrupted data over serial communication.</li>
+        </ul>
+        <br>
       <h3>0.5.2 - 28-4-2025</h3>
         <ul>
           <li>Fixed communication retry logic issues, including mishandled timeout exceptions that caused silent connection failures.</li>
