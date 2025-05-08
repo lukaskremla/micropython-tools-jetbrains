@@ -18,8 +18,8 @@ package dev.micropythontools.sourceroots
 
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler
-import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.JBColor
+import dev.micropythontools.settings.mpySourceIcon
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import java.awt.Color
@@ -32,7 +32,7 @@ internal class MpyModuleMpySourceRootEditHandler :
     }
 
     override fun getRootIcon(): Icon {
-        return IconLoader.getIcon("/icons/MpySource.svg", this::class.java)
+        return mpySourceIcon
     }
 
     override fun getFolderUnderRootIcon(): Icon? {

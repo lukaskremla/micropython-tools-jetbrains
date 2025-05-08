@@ -24,6 +24,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.IconLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
@@ -37,6 +38,16 @@ internal const val DEFAULT_WEBREPL_PORT = 8266
 internal const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
 
 internal val WEBREPL_PASSWORD_LENGTH_RANGE = 4..9
+
+internal val mpySourceIcon = IconLoader.getIcon(
+    "/icons/MpySource.svg",
+    MpySettingsService::class.java
+)
+
+internal val volumeIcon = IconLoader.getIcon(
+    "/icons/volume.svg",
+    MpySettingsService::class.java
+)
 
 private const val WIFI_KEY = "WiFi"
 private const val WEBREPL_KEY = "WebREPL"

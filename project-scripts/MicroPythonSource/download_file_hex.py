@@ -1,5 +1,5 @@
 """
-* Copyright 2024-2025 Lukas Kremla, Copyright 2000-2024 JetBrains s.r.o.
+* Copyright 2025 Lukas Kremla
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -19,15 +19,14 @@ import gc
 
 def m():
     with open("%s", "rb") as f:
-        b = bytearray(256)
+        ba = bytearray(256)
+        mv = memoryview(ba)
+
         while True:
-            n = f.readinto(b)
+            n = f.readinto(ba)
             if n == 0:
                 break
-            if n < 256:
-                print(b[:n].hex(), end="")
-            else:
-                print(b.hex(), end="")
+            print(mv[0:n].hex(), end="")
 
 
 m()

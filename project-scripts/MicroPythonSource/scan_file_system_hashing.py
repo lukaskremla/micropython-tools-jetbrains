@@ -18,33 +18,63 @@ import binascii
 import gc
 import os
 
+import vfs
 
-class t:
-    def __init__(self):
-        self.b = bytearray(1024)
+ba = bytearray(1024)
+mv = memoryview(ba)
 
-    def m(self, p):
-        for result in os.ilistdir(p):
-            file_path = f"{p}/{result[0]}" if p != "/" else f"/{result[0]}"
 
-            crc32 = 0
-            if not result[1] & 0x4000:
-                with open(file_path, "rb") as f:
-                    while True:
-                        n = f.readinto(self.b)
-                        if n == 0:
-                            break
-                        if n < 1024:
-                            crc32 = binascii.crc32(self.b[:n], crc32)
-                        else:
-                            crc32 = binascii.crc32(self.b, crc32)
-                    crc32 = "%08x" % (crc32 & 0xffffffff)
+def s():
+    try:
+        mount_points = [mount_tuple[1] for mount_tuple in vfs.mount()]
+    except TypeError:
+        path_to_stat_tuple = {"/": os.statvfs("/")}
 
-            print(result[1], result[3] if len(result) > 3 else -1, file_path, 0, crc32, sep="&")
+        for result in os.ilistdir("/"):
             if result[1] & 0x4000:
-                self.m(file_path)
+                path = f"/{result[0]}"
+                stats = os.statvfs(path)
+                if stats not in path_to_stat_tuple.values():
+                    path_to_stat_tuple[path] = stats
+
+        mount_points = path_to_stat_tuple.keys()
+
+    for mount_point in mount_points:
+        fs_stats = os.statvfs(mount_point)
+        total_bytes = fs_stats[0] * fs_stats[2]
+        free_bytes = fs_stats[0] * fs_stats[3]
+
+        print(mount_point, free_bytes, total_bytes, sep="&")
+
+    m("/")
 
 
-t().m("/")
-del t
+def m(p):
+    for result in os.ilistdir(p):
+        file_path = f"{p}/{result[0]}" if p != "/" else f"/{result[0]}"
+        # Utilize the fact that 0 evaluates to False and other integers to True
+        file_type = 1 if result[1] & 0x4000 else 0
+
+        crc32 = 0
+        if not file_type:
+            with open(file_path, "rb") as f:
+                while True:
+                    n = f.readinto(ba)
+                    if n == 0:
+                        break
+                    crc32 = binascii.crc32(mv[0:n], crc32)
+
+                crc32 = "%08x" % (crc32 & 0xffffffff)
+
+        print(file_path, file_type, result[3] if len(result) > 3 else -1, crc32, sep="&")
+
+        if file_type:
+            m(file_path)
+
+
+s()
+del ba
+del mv
+del s
+del m
 gc.collect()

@@ -20,16 +20,14 @@ import gc
 
 def m():
     with open("%s", "rb") as f:
-        b = bytearray(384)
-        mw = memoryview(b)
+        ba = bytearray(384)
+        mv = memoryview(ba)
+
         while True:
-            n = f.readinto(b)
+            n = f.readinto(ba)
             if n == 0:
                 break
-            if n < 384:
-                print(binascii.b2a_base64(b[:n]), end="")
-            else:
-                print(binascii.b2a_base64(b), end="")
+            print(binascii.b2a_base64(mv[0:n]), end="")
 
 
 m()

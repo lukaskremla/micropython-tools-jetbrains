@@ -14,11 +14,10 @@
 * limitations under the License.
 """
 
-import gc
 import os
 
 
-def ___d(p):
+def ___m(p):
     try:
         os.stat(p)
     except:
@@ -31,7 +30,7 @@ def ___d(p):
     for result in os.ilistdir(p):
         file_path = f'{p}/{result[0]}' if p != '/' else f'/{result[0]}'
         if result[1] & 0x4000:
-            ___d(file_path)
+            ___m(file_path)
         else:
             os.remove(file_path)
     try:

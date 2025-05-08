@@ -1,5 +1,5 @@
 """
-* Copyright 2024-2025 Lukas Kremla, Copyright 2000-2024 JetBrains s.r.o.
+* Copyright 2024-2025 Lukas Kremla
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -17,16 +17,47 @@
 import gc
 import os
 
+import vfs
+
+
+def s():
+    try:
+        mount_points = [mount_tuple[1] for mount_tuple in vfs.mount()]
+    except TypeError:
+        path_to_stat_tuple = {"/": os.statvfs("/")}
+
+        for result in os.ilistdir("/"):
+            if result[1] & 0x4000:
+                path = f"/{result[0]}"
+                stats = os.statvfs(path)
+                if stats not in path_to_stat_tuple.values():
+                    path_to_stat_tuple[path] = stats
+
+        mount_points = path_to_stat_tuple.keys()
+
+    for mount_point in mount_points:
+        fs_stats = os.statvfs(mount_point)
+        total_bytes = fs_stats[0] * fs_stats[2]
+        free_bytes = fs_stats[0] * fs_stats[3]
+
+        print(mount_point, free_bytes, total_bytes, sep="&")
+
+    m("/")
+
 
 def m(p):
     for result in os.ilistdir(p):
         file_path = f"{p}/{result[0]}" if p != "/" else f"/{result[0]}"
+        # Utilize the fact that 0 evaluates to False and other integers to True
+        file_type = 1 if result[1] & 0x4000 else 0
 
-        print(result[1], result[3] if len(result) > 3 else -1, file_path, 0, 0, sep="&")
-        if result[1] & 0x4000:
+        print(file_path, file_type, result[3] if len(result) > 3 else -1, 0, sep="&")
+
+        if file_type:
             m(file_path)
 
 
-m("/")
+s()
+del s
 del m
 gc.collect()

@@ -413,10 +413,11 @@ internal open class MpyComm(
         }
 
         filteredPaths.forEach {
-            commands.add("___d('${it}')")
+            commands.add("___m('${it}')")
         }
 
-        commands.add("del ___d")
+        commands.add("del ___m")
+        commands.add("import gc")
         commands.add("gc.collect()")
 
         blindExecute(commands.joinToString("\n"))
@@ -448,7 +449,9 @@ internal open class MpyComm(
         sortedPaths.forEach {
             commands.add("___m('$it')")
         }
+
         commands.add("del ___m")
+        commands.add("import gc")
         commands.add("gc.collect()")
 
         blindExecute(commands.joinToString("\n"))
@@ -655,7 +658,6 @@ internal open class MpyComm(
                 throw IOException("Timed out while establishing raw paste mode")
             }
 
-            // Allow enough time for large commands
             // Read two flow control bytes
             val bytes = readAndDiscardXBytesFromBuffer(2)
             // This is the flow control window-size-increment in bytes

@@ -193,6 +193,8 @@ internal class MpyTransferService(private val project: Project) {
             if (initialIsProjectUpload) collectProjectUploadables().toMutableList() else initialFilesToUpload.toMutableList()
         val foldersToUpload = mutableSetOf<VirtualFile>()
 
+        val pathsToExclude = excludedPaths.toMutableSet()
+
         var uploadedSuccessfully = false
         var shouldRefresh = false
 
@@ -259,7 +261,7 @@ internal class MpyTransferService(private val project: Project) {
                     }
                 }
 
-                val allFilesToUpload = filesToUpload.toSet() + foldersToUpload
+                val allItemsToUpload = filesToUpload.toSet() + foldersToUpload
 
                 fileToTargetPath = createVirtualFileToTargetPathMap(
                     filesToUpload.toSet(),
@@ -316,16 +318,16 @@ internal class MpyTransferService(private val project: Project) {
                 val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
                 fileToTargetPath.keys.forEach { file ->
                     val path = fileToTargetPath[file]
-                    val size = file.length.toInt()
+                    val size = file.length
                     val hash = file.crc32
 
                     val matchingNode = targetPathToNode[path]
 
                     if (matchingNode != null) {
                         if (matchingNode is FileNode) {
-                            if (size == matchingNode.size && hash == matchingNode.hash) {
+                            if (size == matchingNode.size && hash == matchingNode.crc32) {
                                 // If binascii is missing the hash is "0"
-                                if (matchingNode.hash != "0") {
+                                if (matchingNode.crc32 != "0") {
                                     // Remove already uploaded files
                                     alreadyUploadedFiles.add(file)
                                 }
@@ -353,7 +355,20 @@ internal class MpyTransferService(private val project: Project) {
                 fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
                 folderToTargetPath.keys.removeAll(alreadyExistingFolders)
 
-                if (fileToTargetPath.isEmpty() && folderToTargetPath.isEmpty()) {
+                // Remove explicitly excluded paths
+                if (shouldSynchronize && shouldExcludePaths && pathsToExclude.isNotEmpty()) {
+                    val additionalPathsToRemove = targetPathsToRemove.filter { targetPath ->
+                        pathsToExclude.any { pathToExclude ->
+                            targetPath.startsWith(pathToExclude)
+                        }
+                    }
+
+                    pathsToExclude.addAll(additionalPathsToRemove)
+
+                    targetPathsToRemove.removeAll(pathsToExclude)
+                }
+
+                if (fileToTargetPath.isEmpty() && folderToTargetPath.isEmpty() && targetPathsToRemove.isEmpty()) {
                     Notifications.Bus.notify(
                         Notification(
                             NOTIFICATION_GROUP,
@@ -366,17 +381,17 @@ internal class MpyTransferService(private val project: Project) {
                     return@performReplAction
                 }
 
-                // Calculate the total binary size of the upload
-                val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
-
                 if (settings.state.showUploadPreviewDialog) {
                     val shouldContinue = withContext(Dispatchers.EDT) {
                         val uploadPreview = MpyUploadPreview(
                             project,
-                            allFilesToUpload,
+                            shouldSynchronize,
+                            shouldExcludePaths,
+                            allItemsToUpload,
+                            pathsToExclude,
+                            targetPathsToRemove,
                             fileToTargetPath,
-                            folderToTargetPath,
-                            targetPathsToRemove
+                            folderToTargetPath
                         )
 
                         return@withContext uploadPreview.showAndGet()
@@ -392,13 +407,8 @@ internal class MpyTransferService(private val project: Project) {
                 shouldRefresh = true
 
                 // Perform synchronization
-                if (shouldSynchronize) {
+                if (shouldSynchronize && targetPathsToRemove.isNotEmpty()) {
                     reporter.text("Performing synchronization...")
-
-                    // Remove explicitly excluded paths
-                    if (shouldExcludePaths && excludedPaths.isNotEmpty()) {
-                        targetPathsToRemove.removeAll(excludedPaths)
-                    }
 
                     // Delete remaining existing target paths that aren't a part of the upload
                     deviceService.recursivelySafeDeletePaths(targetPathsToRemove)
@@ -407,6 +417,9 @@ internal class MpyTransferService(private val project: Project) {
                 var uploadProgress = 0.0
                 var uploadedKB = 0.0
                 var uploadedFiles = 1
+
+                // Calculate the total binary size of the upload
+                val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
 
                 fun progressCallbackHandler(uploadedBytes: Double) {
                     // Floating point arithmetic can be inaccurate,
@@ -473,7 +486,7 @@ internal class MpyTransferService(private val project: Project) {
                         if (node is FileNode) {
                             val file =
                                 fileToTargetPath.entries.firstOrNull { it.value == node.fullName }?.key ?: continue
-                            if (file.length != node.size.toLong()) continue
+                            if (file.length != node.size) continue
 
                             fileToTargetPath.values.remove(node.fullName)
                         }
@@ -562,11 +575,6 @@ internal class MpyTransferService(private val project: Project) {
                         listIndex++
                     }
                 }
-
-                val totalBytes = selectedFiles
-                    .filter { it is FileNode }
-                    .sumOf { (it as FileNode).size }
-                    .toDouble()
 
                 val singleFileProgress: Double = (1 / parentNameToFile.size.toDouble())
                 var downloadedFiles = 1

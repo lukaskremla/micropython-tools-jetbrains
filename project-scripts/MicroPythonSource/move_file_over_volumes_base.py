@@ -17,8 +17,16 @@
 import os
 
 
-def ___m(p):
-    try:
-        os.mkdir(p)
-    except:
-        pass
+def m(s, d):
+    ba = bytearray(1024)
+    mv = memoryview(ba)
+
+    with open(s, 'rb') as f_source:
+        with open(d, 'wb') as f_dest:
+            while True:
+                n = f_source.readinto(ba)
+                if n == 0:
+                    break
+                f_dest.write(mv[0:n])
+
+    os.remove(s)

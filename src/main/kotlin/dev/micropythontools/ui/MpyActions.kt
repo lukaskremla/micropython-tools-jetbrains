@@ -180,7 +180,9 @@ internal abstract class MpyReplAction(
             actionDescription,
             options.requiresRefreshAfter,
             options.cancelledMessage ?: "$actionDescription cancelled",
-            { reporter -> performAction(e, reporter) }
+            { reporter ->
+                performAction(e, reporter, dialogResult.resultToPass)
+            }
         )
     }
 
@@ -286,20 +288,11 @@ internal class MpyCreateFolderAction : MpyReplAction(
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter, dialogResult: Any?) {
-        performReplAction(
-            project,
-            options.requiresConnection,
-            actionDescription,
-            options.requiresRefreshAfter,
-            options.cancelledMessage ?: "$actionDescription cancelled",
-            { reporter ->
-                val newFolderPath = dialogResult as String
+        val newFolderPath = dialogResult as String
 
-                reporter.text("Creating a new folder...")
-                deviceService.safeCreateDirectories(
-                    setOf(newFolderPath)
-                )
-            },
+        reporter.text("Creating a new folder...")
+        deviceService.safeCreateDirectories(
+            setOf(newFolderPath)
         )
     }
 
@@ -384,23 +377,48 @@ internal class MpyDeleteAction : MpyReplAction(
     private fun getAppropriateText(): AppropriateText {
         val selectedFiles = deviceService.fileSystemWidget?.selectedFiles() ?: emptyList()
 
+        var volumeCount = 0
         var folderCount = 0
         var fileCount = 0
 
         for (file in selectedFiles) {
-            if (file is DirNode) {
-                folderCount++
-            } else {
-                fileCount++
+            when (file) {
+                is VolumeRootNode -> {
+                    volumeCount++
+                }
+
+                is DirNode -> {
+                    folderCount++
+                }
+
+                else -> {
+                    fileCount++
+                }
             }
         }
 
-        return if (selectedFiles.size == 1 && selectedFiles.first().isRoot) {
-            AppropriateText(
-                reporterText = "Deleting device contents...",
-                dialogTitle = "Delete Device Contents",
-                dialogMessage = "Are you sure you want to permanently delete the device contents?"
-            )
+        return if (selectedFiles.all { it is VolumeRootNode }) {
+            if (selectedFiles.size == 1) {
+                if ((selectedFiles.first() as VolumeRootNode).isFileSystemRoot) {
+                    AppropriateText(
+                        reporterText = "Deleting device contents...",
+                        dialogTitle = "Delete Device Contents",
+                        dialogMessage = "Are you sure you want to permanently delete the device contents?"
+                    )
+                } else {
+                    AppropriateText(
+                        reporterText = "Deleting volume contents...",
+                        dialogTitle = "Delete Volume Contents",
+                        dialogMessage = "Are you sure you want to permanently delete the volume contents?"
+                    )
+                }
+            } else {
+                AppropriateText(
+                    reporterText = "Deleting volume contents...",
+                    dialogTitle = "Delete Volume Contents",
+                    dialogMessage = "Are you sure you want to permanently delete the contents of these volumes?"
+                )
+            }
         } else if (fileCount == 0 && !selectedFiles.any { it.isRoot }) {
             if (folderCount == 1) {
                 AppropriateText(

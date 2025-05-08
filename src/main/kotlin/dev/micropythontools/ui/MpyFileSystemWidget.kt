@@ -35,7 +35,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -52,6 +51,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import dev.micropythontools.communication.*
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
+import dev.micropythontools.settings.volumeIcon
 import dev.micropythontools.util.MpyPythonService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -73,7 +73,7 @@ import javax.swing.tree.DefaultTreeModel
 /**
  * @authors elmot, Lukas Kremla
  */
-class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>(BorderLayout()) {
+internal class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>(BorderLayout()) {
     val tree: Tree = Tree(newTreeModel())
 
     private val settings = project.service<MpySettingsService>()
@@ -91,13 +91,19 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
             ) {
                 value as FileSystemNode
                 icon = when {
-                    value is DirNode && !value.isVolume -> AllIcons.Nodes.Folder
-                    value is DirNode && value.isVolume -> IconLoader.getIcon("/icons/volume.svg", this::class.java)
+                    // Only non "/" root volumes have a separate icon, otherwise it's meant to get the DirNode icon
+                    value is VolumeRootNode && !value.isFileSystemRoot -> volumeIcon
+                    value is DirNode -> AllIcons.Nodes.Folder
                     else -> FileTypeRegistry.getInstance().getFileTypeByFileName(value.name).icon
                 }
                 append(value.name)
                 if (value is FileNode) {
                     append("  ${value.size} bytes", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+                } else if (value is VolumeRootNode) {
+                    append(
+                        "  ${formatVolumeSize(value.freeSize)} free of ${formatVolumeSize(value.totalSize)}",
+                        SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES
+                    )
                 }
             }
         })
@@ -130,6 +136,7 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
             }
         }
         tree.model = null
+        tree.isRootVisible = false
         tree.dragEnabled = true
         tree.dropMode = DropMode.ON
 
@@ -187,6 +194,8 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
                     } catch (_: Exception) {
                         return false
                     }
+
+                    if (nodes.any { it is VolumeRootNode }) return false
 
                     return !nodes.any { node ->
                         targetNode.fullName.startsWith(node.fullName)
@@ -274,10 +283,26 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
                                     if (!wasOverwriteConfirmed) return@performReplAction false
                                 }
 
-                                reporter.text("Moving file system items...")
+                                reporter.text("Moving items...")
                                 reporter.fraction(null)
 
-                                val commands = mutableListOf("import os")
+                                val isCrossVolumeTransfer = allNodes()
+                                    .filter { it is VolumeRootNode && !it.isFileSystemRoot }
+                                    .map { it.fullName }
+                                    .any { volumePath ->
+                                        targetNode.fullName.startsWith(volumePath) ||
+                                                nodes.any { node ->
+                                                    node.fullName.startsWith(volumePath)
+                                                }
+                                    }
+
+                                val commands = if (isCrossVolumeTransfer) {
+                                    mutableListOf(
+                                        pythonService.retrieveMpyScriptAsString("move_file_over_volumes_base.py")
+                                    )
+                                } else {
+                                    mutableListOf("import os")
+                                }
 
                                 val currentPathToNewPath = mutableMapOf<String, String>()
                                 val pathsToRemove = mutableSetOf<String>()
@@ -288,7 +313,20 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
                                     if (foundConflicts && targetChildNames.contains(node.name)) pathsToRemove.add(
                                         newPath
                                     )
-                                    commands.add("os.rename(\"${node.fullName}\", \"$newPath\")")
+
+                                    commands.add(
+                                        if (isCrossVolumeTransfer) {
+                                            "___m(\"${node.fullName}\", \"$newPath\")"
+                                        } else {
+                                            "os.rename(\"${node.fullName}\", \"$newPath\")"
+                                        }
+                                    )
+                                }
+
+                                if (isCrossVolumeTransfer) {
+                                    commands.add("del ___m")
+                                    commands.add("import gc")
+                                    commands.add("gc.collect()")
                                 }
 
                                 deviceService.recursivelySafeDeletePaths(pathsToRemove)
@@ -408,6 +446,7 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
             .traverse(TreeTraversal.POST_ORDER_DFS)
             .mapNotNull {
                 when (val node = it) {
+                    is InvisibleRootNode -> null
                     is DirNode -> node
                     is FileNode -> node
                     else -> null
@@ -418,7 +457,17 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
         return allNodes
     }
 
-    private fun newTreeModel() = DefaultTreeModel(DirNode("/", "/"), true)
+    private fun newTreeModel() = DefaultTreeModel(InvisibleRootNode(), true)
+
+    private fun formatVolumeSize(bytes: Long): String {
+        return when {
+            bytes >= 1_000_000_000_000 -> "%.2f TB".format(bytes / 1_000_000_000_000.0)
+            bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
+            bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
+            bytes >= 1_000 -> "%.1f KB".format(bytes / 1_000.0)
+            else -> "$bytes bytes"
+        }
+    }
 
     private suspend fun doRefresh(
         reporter: RawProgressReporter,
@@ -464,27 +513,63 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
             deviceService.disconnect(reporter)
             throw IOException("Micropython filesystem scan failed, ${e.localizedMessage}", e)
         }
+        val volumeRootNodes = mutableListOf<VolumeRootNode>()
         dirList.lines().filter { it.isNotBlank() }.forEach { line ->
             line.split('&').let { fields ->
-                val flags = fields[0].toInt()
-                val len = fields[1].toInt()
-                val fullName = fields[2]
-                val volumeID = fields[3].toInt()
-                val hash = fields[4]
-                val names = fullName.split('/')
-                val folders = if (flags and 0x4000 == 0) names.dropLast(1) else names
-                var currentFolder = newModel.root as DirNode
-                folders.filter { it.isNotBlank() }.forEach { name ->
-                    val child =
-                        currentFolder.children().asSequence().find { (it as FileSystemNode).name == name }
-                    when (child) {
-                        is DirNode -> currentFolder = child
-                        is FileNode -> Unit
-                        null -> currentFolder = DirNode(fullName, name).also { currentFolder.add(it) }
+                if (fields.count() == 3) {
+                    val fullName = fields[0]
+                    val isFileSystemRoot = fullName == "/"
+                    val name = if (isFileSystemRoot) fullName else fullName.removePrefix("/")
+                    val freeSize = fields[1].toLong()
+                    val totalSize = fields[2].toLong()
+
+                    val volumeRootNode = VolumeRootNode(fullName, name, freeSize, totalSize, isFileSystemRoot)
+
+                    volumeRootNodes.add(volumeRootNode)
+                    (newModel.root as InvisibleRootNode).add(volumeRootNode)
+                } else {
+                    val fullName = fields[0]
+                    val fileType = fields[1].toInt() // 0 - file, 1 - folder
+                    val size = fields[2].toLong()
+                    val crc32 = fields[3]
+
+                    // All mounted volumes are discoverable with os.listdir("/"), however, unlike normal directories
+                    // their names can contain multiple slashes, so "mt/logs/sd/" is a valid mount point name.
+                    // There can never be a situation where the mount point path can conflict with a path structure
+                    // that's already created/mounted. At that point the mount operation would fail.
+                    // All paths can be considered unique thanks to that fact.
+                    val parentVolumeRoot = volumeRootNodes
+                        // Check longest volumes first to prevent matching similarly named, but shorter volumes
+                        .sortedByDescending { it.fullName.length }
+                        .find { fullName.startsWith(it.fullName) }
+                        ?: throw IllegalStateException("Couldn't find parent root node")
+
+                    // Collect names of all directories/files in the full path
+                    val names = fullName
+                        .removePrefix(parentVolumeRoot.fullName)
+                        .split('/')
+
+                    // Extract only the directory structure
+                    val folders = if (fileType == 0) names.dropLast(1) else names
+
+                    // Avoid creating directories for VolumeRoot paths
+                    if (fileType == 1 && volumeRootNodes.any { it.fullName == fullName }) {
+                        return@let
                     }
-                }
-                if (flags and 0x4000 == 0) {
-                    currentFolder.add(FileNode(fullName, names.last(), len, volumeID, hash))
+
+                    var currentFolder: DirNode = parentVolumeRoot
+                    folders.filter { it.isNotBlank() }.forEach { name ->
+                        val child =
+                            currentFolder.children().asSequence().find { (it as FileSystemNode).name == name }
+                        when (child) {
+                            is DirNode -> currentFolder = child
+                            is FileNode -> Unit
+                            null -> currentFolder = DirNode(fullName, name).also { currentFolder.add(it) }
+                        }
+                    }
+                    if (fileType == 0) {
+                        currentFolder.add(FileNode(fullName, names.last(), size, crc32))
+                    }
                 }
             }
         }
@@ -498,15 +583,41 @@ class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>
         })
         withContext(Dispatchers.EDT) {
             val expandedPaths = TreeUtil.collectExpandedPaths(tree)
+            val currentRoot = tree.model?.root as? InvisibleRootNode
+
+            val collapsedVolumeRootNodeNames = currentRoot
+                ?.children()
+                ?.asSequence()
+                ?.filterIsInstance<VolumeRootNode>()
+                ?.filter { !tree.isExpanded(TreeUtil.getPathFromRoot(it)) }
+                ?.map { it.name }
+                ?.toSet() ?: emptySet()
+
+
             val selectedPath = tree.selectionPath
             tree.model = newModel
+
+            val newRoot = tree.model?.root as? InvisibleRootNode
+            val newVolumeRootNodesToExpand = newRoot
+                ?.children()
+                ?.asSequence()
+                ?.filterIsInstance<VolumeRootNode>()
+                ?.filter { !collapsedVolumeRootNodeNames.contains(it.name) }
+                ?: emptySequence()
+
+            val newVolumeRootNodeTreePathsToExpand = newVolumeRootNodesToExpand.map {
+                TreeUtil.getPathFromRoot(it)
+            }
+
             TreeUtil.restoreExpandedPaths(tree, expandedPaths)
+            TreeUtil.restoreExpandedPaths(tree, newVolumeRootNodeTreePathsToExpand.toMutableList())
             TreeUtil.selectPath(tree, selectedPath)
         }
     }
 }
 
-sealed class FileSystemNode(@NonNls val fullName: String, @NonNls val name: String) : DefaultMutableTreeNode() {
+internal sealed class FileSystemNode(@NonNls val fullName: String, @NonNls val name: String) :
+    DefaultMutableTreeNode() {
     override fun toString(): String = name
 
     override fun equals(other: Any?): Boolean {
@@ -521,12 +632,11 @@ sealed class FileSystemNode(@NonNls val fullName: String, @NonNls val name: Stri
     }
 }
 
-class FileNode(
+internal class FileNode(
     fullName: String,
     name: String,
-    val size: Int,
-    val volumeID: Int,
-    val hash: String
+    val size: Long,
+    val crc32: String
 ) : FileSystemNode(
     fullName,
     name
@@ -535,13 +645,25 @@ class FileNode(
     override fun isLeaf(): Boolean = true
 }
 
-class DirNode(
+internal open class DirNode(
     fullName: String,
     name: String,
-    val isVolume: Boolean = false
 ) : FileSystemNode(
     fullName,
     name
 ) {
     override fun getAllowsChildren(): Boolean = true
 }
+
+internal class VolumeRootNode(
+    fullName: String,
+    name: String,
+    val freeSize: Long,
+    val totalSize: Long,
+    val isFileSystemRoot: Boolean = false
+) : DirNode(
+    fullName,
+    name
+)
+
+internal class InvisibleRootNode : DirNode("", "")

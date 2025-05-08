@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnePixelDivider
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -39,6 +38,8 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.tree.TreeUtil
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.settings.mpySourceIcon
+import dev.micropythontools.settings.volumeIcon
 import java.awt.Color
 import java.awt.Dimension
 import java.util.*
@@ -49,17 +50,18 @@ import javax.swing.tree.DefaultTreeModel
 
 internal class MpyUploadPreview(
     project: Project,
+    private val shouldSynchronize: Boolean,
+    private val shouldExcludePaths: Boolean,
     private val allItemsToUpload: Set<VirtualFile>,
+    private val pathsToExclude: Set<String>,
+    private val targetPathsToRemove: Set<String>,
     private val fileToTargetPath: Map<VirtualFile, String>,
     private val folderToTargetPath: Map<VirtualFile, String>,
-    private val targetPathsToRemove: Set<String>
 ) : DialogWrapper(true) {
 
     private val deviceService = project.service<MpyDeviceService>()
     private val transferService = project.service<MpyTransferService>()
     private val projectDir = project.guessProjectDir() ?: throw IllegalStateException("Can't guess project dir")
-    private val mpySourceIcon
-        get() = IconLoader.getIcon("/icons/MpySource.svg", this::class.java)
 
     private fun getFolderIcon(virtualFile: VirtualFile): Icon {
         val excludedRoots = transferService.collectExcluded()
@@ -80,7 +82,7 @@ internal class MpyUploadPreview(
         VfsUtilCore.iterateChildrenRecursively(projectDir, null) { file ->
             val path = VfsUtil.getRelativePath(file, projectDir, '/') ?: file.name
 
-            val fileStatus = if (allItemsToUpload.contains(file)) FileStatus.NOT_CHANGED else FileStatus.DELETED_FROM_FS
+            val fileStatus = if (allItemsToUpload.contains(file)) FileStatus.NOT_CHANGED else FileStatus.IGNORED
 
             val node = if (file.isDirectory) {
                 val icon = getFolderIcon(file)
@@ -152,7 +154,7 @@ internal class MpyUploadPreview(
             }
 
             // Update directory status if it contains changes
-            if (hasChanges && currentNode.fileStatus == FileStatus.DELETED_FROM_FS && currentNode.fullName != projectDir.name) {
+            if (hasChanges && currentNode.fileStatus == FileStatus.IGNORED && currentNode.fullName != projectDir.name) {
                 currentNode.fileStatus = FileStatus.NOT_CHANGED
             }
 
@@ -196,7 +198,10 @@ internal class MpyUploadPreview(
                     FileStatus.MODIFIED
                 }
 
-                targetPathsToRemove.contains(node.fullName) -> FileStatus.MERGED_WITH_CONFLICTS
+                shouldSynchronize && targetPathsToRemove.contains(node.fullName) -> FileStatus.DELETED_FROM_FS
+
+                shouldExcludePaths && pathsToExclude.contains(node.fullName) -> FileStatus.IGNORED
+
                 else -> FileStatus.NOT_CHANGED
             }
 
@@ -222,20 +227,33 @@ internal class MpyUploadPreview(
             previewNodes.add(PreviewDirNode(targetPath, file.name, FileStatus.ADDED, AllIcons.Nodes.Folder))
         }
 
-        val root = PreviewDirNode("/", "/", FileStatus.NOT_CHANGED, AllIcons.Nodes.Folder)
+        val root = PreviewInvisibleRootNode()
         val pathToDir = mutableMapOf<String, PreviewDirNode>()
-        pathToDir["/"] = root
+        val volumeRootNodes = deviceService.fileSystemWidget?.allNodes()
+            ?.filter { it is VolumeRootNode }
+            ?.map { node ->
+                PreviewVolumeRootNode(node.fullName, node.name, (node as VolumeRootNode).isFileSystemRoot)
+            } ?: listOf(PreviewVolumeRootNode("/", "/", true))
+
+        volumeRootNodes.forEach { volumeRootNode ->
+            volumeRootNode.fileStatus = FileStatus.NOT_CHANGED
+            //println("Setting node: $volumeRootNode")
+            root.add(volumeRootNode)
+            pathToDir[volumeRootNode.fullName] = volumeRootNode
+        }
 
         // Sort so that parents come before children
         val sortedNodes = previewNodes.sortedBy { it.fullName.count { char -> char == '/' } }
 
         for (node in sortedNodes) {
+            if (node.fullName in volumeRootNodes.map { it.fullName }) continue
+
             val parentPath = node.fullName.substringBeforeLast('/', "/")
             val parent = pathToDir[parentPath] ?: run {
                 // Create intermediate directories if necessary
                 val parts = parentPath.trim('/').split('/')
                 var currentPath = ""
-                var currentNode = root
+                var currentNode: PreviewDirNode = findParentVolume(node, volumeRootNodes)
 
                 for (part in parts) {
                     currentPath += "/$part"
@@ -278,7 +296,11 @@ internal class MpyUploadPreview(
             }
 
             // Update directory status if it contains changes
-            if (hasChanges && currentNode.fileStatus == FileStatus.NOT_CHANGED && currentNode.fullName != "/") {
+            if (currentNode !is PreviewVolumeRootNode &&
+                hasChanges &&
+                currentNode.fileStatus == FileStatus.NOT_CHANGED &&
+                currentNode.fullName != "/"
+            ) {
                 currentNode.fileStatus = FileStatus.MODIFIED
             }
 
@@ -307,11 +329,20 @@ internal class MpyUploadPreview(
         return defaultTreeModel
     }
 
+    private fun findParentVolume(
+        node: PreviewNode,
+        volumeRootNodes: List<PreviewVolumeRootNode>
+    ): PreviewVolumeRootNode {
+        return volumeRootNodes.find { node.fullName.startsWith(it.fullName) }
+            ?: throw IllegalStateException("Couldn't find parent volume root")
+    }
+
     private val projectTree = com.intellij.ui.treeStructure.Tree(createProjectTreeModel())
     private val deviceTree = com.intellij.ui.treeStructure.Tree(createDeviceTreeModel())
 
     init {
         title = "Upload Preview"
+        deviceTree.isRootVisible = false
 
         projectTree.setCellRenderer(object : ColoredTreeCellRenderer() {
             override fun customizeCellRenderer(
@@ -336,6 +367,7 @@ internal class MpyUploadPreview(
             ) {
                 value as PreviewNode
                 icon = when {
+                    value is PreviewVolumeRootNode && !value.isFileSystemRoot -> volumeIcon
                     value is PreviewDirNode -> AllIcons.Nodes.Folder
                     else -> FileTypeRegistry.getInstance().getFileTypeByFileName(value.name).icon
                 }
@@ -355,6 +387,14 @@ internal class MpyUploadPreview(
                     }
                 ) {
                     projectTree.expandPath(TreeUtil.getPathFromRoot(node))
+                }
+            }
+
+        TreeUtil.treeNodeTraverser(deviceTree.model.root as PreviewInvisibleRootNode)
+            .traverse()
+            .forEach { node ->
+                if (node is PreviewVolumeRootNode) {
+                    deviceTree.expandPath(TreeUtil.getPathFromRoot(node))
                 }
             }
 
@@ -399,9 +439,9 @@ internal class MpyUploadPreview(
                 row {
                     cell(createLegendItem("Added", FileStatus.ADDED.color)).gap(RightGap.SMALL)
                     cell(createLegendItem("Changed", FileStatus.MODIFIED.color)).gap(RightGap.SMALL)
-                    cell(createLegendItem("Deleted", FileStatus.MERGED_WITH_CONFLICTS.color)).gap(RightGap.SMALL)
+                    cell(createLegendItem("Deleted", FileStatus.DELETED_FROM_FS.color)).gap(RightGap.SMALL)
                     cell(createLegendItem("Unchanged", FileStatus.NOT_CHANGED.color)).gap(RightGap.SMALL)
-                    cell(createLegendItem("Skipped/Ignored", FileStatus.DELETED_FROM_FS.color)).gap(RightGap.SMALL)
+                    cell(createLegendItem("Skipped/Excluded", FileStatus.IGNORED.color)).gap(RightGap.SMALL)
                 }
             }.customize(UnscaledGaps(0, 4, 0, 0))
         }
@@ -458,7 +498,7 @@ private class PreviewFileNode(
     override fun isLeaf(): Boolean = true
 }
 
-private class PreviewDirNode(
+private open class PreviewDirNode(
     fullName: String,
     name: String,
     fileStatus: FileStatus,
@@ -470,3 +510,21 @@ private class PreviewDirNode(
 ) {
     override fun getAllowsChildren(): Boolean = true
 }
+
+private class PreviewVolumeRootNode(
+    fullName: String,
+    name: String,
+    val isFileSystemRoot: Boolean
+) : PreviewDirNode(
+    fullName,
+    name,
+    FileStatus.NOT_CHANGED,
+    volumeIcon
+)
+
+private class PreviewInvisibleRootNode : PreviewDirNode(
+    "",
+    "",
+    FileStatus.NOT_CHANGED,
+    AllIcons.Nodes.Folder
+)
