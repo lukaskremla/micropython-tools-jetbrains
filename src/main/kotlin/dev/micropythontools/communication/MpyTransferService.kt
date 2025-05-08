@@ -378,6 +378,7 @@ internal class MpyTransferService(private val project: Project) {
                     )
 
                     shouldRefresh = false
+                    uploadedSuccessfully = true
                     return@performReplAction
                 }
 
