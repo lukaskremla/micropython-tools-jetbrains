@@ -1,7 +1,7 @@
 # MicroPython Tools for PyCharm, CLion and other JetBrains IDEs
 
-[![JetBrains IntelliJ Plugins](https://img.shields.io/jetbrains/plugin/v/26227-micropython-tools)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
-[![JetBrains IntelliJ plugins](https://img.shields.io/jetbrains/plugin/d/26227-micropython-tools)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
+[![JetBrains IntelliJ Downloads](https://img.shields.io/jetbrains/plugin/d/26227-micropython-tools?label=Downloads)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
+[![JetBrains IntelliJ Rating](https://img.shields.io/jetbrains/plugin/r/rating/26227-micropython-tools?label=Rating)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 
 This is a fork of the [JetBrains IntelliJ MicroPython plugin](https://github.com/JetBrains/intellij-micropython).
 Credits to [Andrey Vlasovskikh](https://github.com/vlasovskikh) for creating the original plugin and
