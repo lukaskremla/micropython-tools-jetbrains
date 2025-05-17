@@ -3,6 +3,8 @@
 ## Table of Contents
 
 - [Getting Started](#getting-started)
+    - [Installation](#installation)
+    - [Setting Up a Run Configuration](#setting-up-a-run-configuration)
 - [Uploads](#uploads)
     - [Run Configurations](#run-configurations)
         - [Project](#project)
@@ -12,6 +14,36 @@
     - [Context Menu Actions](#context-menu-actions)
 
 ## Getting Started
+
+### Installation
+
+1. Ensure that you have the necessary drivers for communicating with your microcontroller installed.
+2. Ensure you have a JetBrains IDE version **2024.3 or newer** with the Python plugin installed.
+3. Go to the **Plugin Marketplace**, search for *MicroPython Tools*, and install the plugin.
+4. Open a project or create a new one.
+5. Go to `Settings → Languages & Frameworks → MicroPython Tools`.
+6. Enable **MicroPython support**.
+7. Select an appropriate **stub package**.
+8. Choose and configure your preferred **communication type**, then apply the settings.
+
+### Setting Up a Run Configuration
+
+To upload files to the device efficiently, you need to set up a run configuration:
+
+1. Go to the **Run Configurations** menu near the top right corner of your IDE.
+2. Create a new `MicroPython Tools → Upload` run configuration.
+3. Choose a run configuration type (*Project* is best for most use cases).
+4. Enable:
+    - "Reset on success"
+    - "Switch to REPL tab on success"
+    - "Synchronize"
+5. Configure paths to exclude from synchronization if needed (e.g. logs, OTA directories, persistent config files,
+   etc.).
+6. Create a new folder, right-click it, and mark it as a **MicroPython Sources Root**.
+
+You can now treat this folder as the file system root `/` of your device and structure your code accordingly.  
+When you make changes to your project, you can simply execute this run configuration — all new and modified items will
+be uploaded, and any items deleted from your project will also be deleted from the device.
 
 ## Uploads
 
