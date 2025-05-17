@@ -30,25 +30,9 @@ Long term plans:
 - After the full-release of this plugin I might consider also developing MicroPython plugins for VSCode
   and possibly Visual Studio 2022
 
-## Quick start
+## Installation, Getting Started and Documentation
 
-To access all of the features this plugin offers I recommend always creating a Project upload configuration in every
-project.
-
-After enabling MicroPython support in the "Languages & Frameworks" section of settings you will be able to mark
-directories as MicroPython Sources Roots. The upload project run configuration uploads contents of the top most
-MicroPython Sources Roots marked folders. So you can treat these folders as the root "/" of the device's MicroPython
-file system when structuring your project.
-
-I also recommend enabling the synchronize run configuration option, that way you don't have to worry about cleaning up
-the File System
-if you make large changes to your project. When running the upload run configuration, all folders and files that were
-not apart of the
-upload will be deleted - you can also simply configure excluded target (MicroPython) paths, that will be
-ignored by the synchronization feature.
-
-Finally, don't forget to select the appropriate stubs package for your device. You can do so in the plugin's settings.
-Start typing "micropython" in the "Stubs package" text field and you can browse all available packages via autocomplete.
+Usage tips and documentation are available [here](https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md)
 
 ## Features
 
