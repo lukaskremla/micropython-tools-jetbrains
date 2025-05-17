@@ -1,7 +1,7 @@
 The Changelog
 =============
 
-0.5.4 - x.5.2025
+0.5.4 - 17.5.2025
 ------------------
 
 * Added support for mounted volumes (File System tab, Upload Preview, Drag and Drop, Delete action)

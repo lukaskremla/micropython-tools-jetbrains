@@ -3,7 +3,6 @@
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-- [Installation](#installation)
 - [Uploads](#uploads)
     - [Run Configurations](#run-configurations)
         - [Project](#project)

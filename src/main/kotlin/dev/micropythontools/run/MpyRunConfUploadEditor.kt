@@ -363,7 +363,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                                 }
                             }
                         }
-                        .comment("Learn about how uploads work <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md\">here</a>")
+                        .comment("Learn about how uploads work <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md#uploads\">here</a>")
                     useSelectedPathsRadioButton = radioButton("Selected MPY sources roots")
                         .bindSelected({ parameters.uploadMode == 1 }, { if (it) parameters.uploadMode = 1 })
                         .applyToComponent {
