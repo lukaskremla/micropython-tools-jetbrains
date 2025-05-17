@@ -96,7 +96,7 @@ internal class MpyConfigurable(private val project: Project) :
                 ssid = wifiCredentials.userName ?: "",
                 wifiPassword = wifiCredentials.getPasswordAsString() ?: "",
                 areStubsEnabled = areStubsEnabled,
-                activeStubsPackage = activeStubsPackage ?: "",
+                activeStubsPackage = pythonService.getExistingStubPackage(),
             )
         }
     }
@@ -353,15 +353,16 @@ internal class MpyConfigurable(private val project: Project) :
             settings.state.showUploadPreviewDialog = showUploadPreviewDialog
             settings.state.minimumSocketTransferSize = minimumSocketTransferSize
             settings.state.areStubsEnabled = areStubsEnabled
-            settings.state.activeStubsPackage = activeStubsPackage
+
+            val stubPackageToUse = if (areStubsEnabled) activeStubsPackage else null
+
+            pythonService.updateStubPackage(stubPackageToUse)
 
             runWithModalProgressBlocking(project, "Saving settings...") {
                 settings.saveWebReplPassword(webReplPassword)
                 settings.saveWifiCredentials(ssid, wifiPassword)
             }
         }
-
-        pythonService.updateLibrary()
     }
 
     fun updatePortSelectModel(

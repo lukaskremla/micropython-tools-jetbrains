@@ -29,7 +29,9 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableModelsProvider
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -91,31 +93,35 @@ internal class MpyPythonService(private val project: Project) {
             ?: emptyList()
     }
 
-    fun updateLibrary() {
-        val activeStubPackage = settings.state.activeStubsPackage
-        val availableStubs = getAvailableStubs()
+    fun getExistingStubPackage(): String {
+        val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
 
+        return projectLibraryTable.modifiableModel.libraries.find { it.name == LIBRARY_NAME }?.modifiableModel?.getFiles(
+            OrderRootType.CLASSES
+        )?.firstOrNull()?.name
+            ?: ""
+    }
+
+    fun updateStubPackage(newStubPackage: String? = null) {
+        removeAllMpyLibraries()
+
+        if (!newStubPackage.isNullOrBlank()) addMpyLibrary(newStubPackage)
+    }
+
+    private fun addMpyLibrary(newStubPackage: String) {
         DumbService.getInstance(project).smartInvokeLater {
             ApplicationManager.getApplication().runWriteAction {
                 val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
                 val projectLibraryModel = projectLibraryTable.modifiableModel
 
-                for (library in projectLibraryModel.libraries) {
-                    if (library.name == LIBRARY_NAME) {
-                        projectLibraryTable.removeLibrary(library)
-                        projectLibraryModel.removeLibrary(library)
-                    }
-                }
-
                 if (settings.state.areStubsEnabled &&
-                    !activeStubPackage.isNullOrBlank() &&
-                    availableStubs.contains(activeStubPackage)
+                    getAvailableStubs().contains(newStubPackage)
                 ) {
                     val newLibrary =
                         projectLibraryModel.createLibrary(LIBRARY_NAME, PythonLibraryType.getInstance().kind)
                     val newModel = newLibrary.modifiableModel
 
-                    val rootUrl = "$stubsPath/$activeStubPackage"
+                    val rootUrl = "$stubsPath/$newStubPackage"
                     val virtualFile = LocalFileSystem.getInstance().findFileByPath(rootUrl)
 
                     newModel.addRoot(virtualFile!!, OrderRootType.CLASSES)
@@ -128,8 +134,51 @@ internal class MpyPythonService(private val project: Project) {
                         projectLibraryModel.commit()
                         ModifiableModelsProvider.getInstance().commitModuleModifiableModel(moduleModel)
                     }
-                } else {
-                    projectLibraryModel.commit()
+                }
+            }
+        }
+    }
+
+    private fun removeAllMpyLibraries() {
+        DumbService.getInstance(project).smartInvokeLater {
+            ApplicationManager.getApplication().runWriteAction {
+                // Clean up library table
+                val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+                val projectLibraryModel = projectLibraryTable.modifiableModel
+
+                val librariesToRemove = projectLibraryModel.libraries.filter {
+                    it.name in listOf(LIBRARY_NAME, "MicroPython Tools")
+                }
+
+                librariesToRemove.forEach { library ->
+                    projectLibraryModel.removeLibrary(library)
+                }
+
+                projectLibraryModel.commit()
+
+                // Clean up order entries
+                val moduleManager = ModuleManager.getInstance(project)
+                val modules = moduleManager.modules
+
+                modules.forEach { module ->
+                    val moduleRootManager = ModuleRootManager.getInstance(module)
+                    val moduleRootModel = moduleRootManager.modifiableModel
+
+                    // Find all order entries related to MicroPython libraries
+                    val entriesToRemove = moduleRootModel.orderEntries.filter { entry ->
+                        entry is LibraryOrderEntry && (entry.libraryName in listOf(
+                            LIBRARY_NAME,
+                            "MicroPython Tools"
+                        ))
+                    }
+
+                    if (entriesToRemove.isNotEmpty()) {
+                        entriesToRemove.forEach { entry ->
+                            moduleRootModel.removeOrderEntry(entry)
+                        }
+
+                        moduleRootModel.commit()
+                    }
                 }
             }
         }
