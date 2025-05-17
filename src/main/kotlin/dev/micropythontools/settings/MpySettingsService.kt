@@ -177,6 +177,8 @@ internal fun validateMpyPath(path: String, isEmptyPathValid: Boolean = false): S
 }
 
 internal fun normalizeMpyPath(path: String, isEmptyPathValid: Boolean = false): String {
+    val endedWithSlash = path.endsWith("/")
+
     var normalizedPath = path
 
     // Replace slash format to fit MicroPython file system
@@ -195,7 +197,11 @@ internal fun normalizeMpyPath(path: String, isEmptyPathValid: Boolean = false): 
     }
 
     if (!path.startsWith("/")) {
-        normalizedPath = "/${path}"
+        normalizedPath = "/$path"
+    }
+
+    if (endedWithSlash && !normalizedPath.endsWith("/")) {
+        normalizedPath = "$normalizedPath/"
     }
 
     return normalizedPath

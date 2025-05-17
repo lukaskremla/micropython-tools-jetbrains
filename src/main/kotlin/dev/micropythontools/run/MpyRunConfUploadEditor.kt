@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ToolbarDecorator
@@ -55,7 +56,7 @@ private data class FlashParameters(
     var uploadMode: Int,
     var selectedPaths: MutableList<String>,
     var path: String,
-    var targetPath: String,
+    var uploadToPath: String,
     var switchToReplOnSuccess: Boolean,
     var resetOnSuccess: Boolean,
     var synchronize: Boolean,
@@ -116,7 +117,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             uploadMode = uploadMode,
             selectedPaths = selectedPaths.toMutableList(),
             path = path ?: "",
-            targetPath = targetPath ?: "",
+            uploadToPath = uploadToPath ?: "/",
             switchToReplOnSuccess = switchToReplOnSuccess,
             resetOnSuccess = resetOnSuccess,
             synchronize = synchronize,
@@ -196,6 +197,21 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
 
         sortSourceItemsTable(fromTable)
         sortSourceItemsTable(toTable)
+    }
+
+    private fun handlePathChange(uploadToPath: String, filePath: String) {
+        val file = StandardFileSystems.local().findFileByPath(filePath)
+
+        if (file?.isDirectory != true) {
+            targetPathRow.visible(true)
+
+            targetPathLabel.component.text = when {
+                uploadToPath.endsWith("/") -> "$uploadToPath${runConfiguration.getFileName(filePath)}"
+                else -> "$uploadToPath/${runConfiguration.getFileName(filePath)}"
+            }
+        } else {
+            targetPathRow.visible(false)
+        }
     }
 
     private fun sourcesTable(emptyText: String) = TableView<SourceItem>().apply {
@@ -325,10 +341,11 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
     private lateinit var uploadProjectRadioButton: Cell<JBRadioButton>
     private lateinit var useSelectedPathsRadioButton: Cell<JBRadioButton>
     private lateinit var usePathRadiobutton: Cell<JBRadioButton>
-    private lateinit var targetPathTextField: Cell<JBTextField>
+    private lateinit var uploadToTextField: Cell<JBTextField>
+    private lateinit var targetPathRow: Row
+    private lateinit var targetPathLabel: Cell<JLabel>
     private lateinit var availableToSelectedButton: Cell<JButton>
     private lateinit var selectedToAvailableButton: Cell<JButton>
-
 
     override fun createEditor(): JComponent {
         setupTableSelectionListeners()
@@ -395,7 +412,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             }.visibleIf(useSelectedPathsRadioButton.selected)
 
             panel {
-                row("Source path:  ") {
+                row("Source path: ") {
                     textFieldWithBrowseButton(
                         FileChooserDescriptor(true, true, false, false, false, false).withTitle("Select Path"),
                         runConfiguration.project
@@ -407,15 +424,17 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                             override fun changedUpdate(e: javax.swing.event.DocumentEvent) = updatePath()
 
                             private fun updatePath() {
-                                parameters.path = component.text
+                                val newPath = component.text
+                                parameters.path = newPath
+                                handlePathChange(parameters.uploadToPath, newPath)
                             }
                         })
                     }.align(AlignX.FILL)
                 }
 
-                row("Target path: ") {
-                    targetPathTextField = textField()
-                        .bindText(parameters::targetPath)
+                row("Upload to: ") {
+                    uploadToTextField = textField()
+                        .bindText(parameters::uploadToPath)
                         .columns(15)
                         .gap(RightGap.SMALL)
                         .validationInfo { field ->
@@ -424,11 +443,24 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                             if (validationResult != null) {
                                 error(validationResult)
                             } else null
+                        }.apply {
+                            component.document.addDocumentListener(object :
+                                javax.swing.event.DocumentListener {
+                                override fun insertUpdate(e: javax.swing.event.DocumentEvent) = updatePath()
+                                override fun removeUpdate(e: javax.swing.event.DocumentEvent) = updatePath()
+                                override fun changedUpdate(e: javax.swing.event.DocumentEvent) = updatePath()
+
+                                private fun updatePath() {
+                                    handlePathChange(component.text, parameters.path)
+                                }
+                            })
                         }
-
-                    label("/${runConfiguration.getFileName()}")
-
                 }
+
+                targetPathRow = row("Target path: ") {
+                    targetPathLabel = label("")
+                }
+                handlePathChange(parameters.uploadToPath, parameters.path)
             }.visibleIf(usePathRadiobutton.selected)
 
             row {
@@ -488,15 +520,15 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
 
             excludedPaths.addAll(excludedPathsTableItemsPaths)
 
-            val normalizedTARGETPath = normalizeMpyPath(targetPath)
+            val normalizedUploadToPath = normalizeMpyPath(uploadToPath, true)
 
-            targetPathTextField.component.text = normalizedTARGETPath
+            uploadToTextField.component.text = normalizedUploadToPath
 
             runConfiguration.saveOptions(
                 uploadMode = uploadMode,
                 selectedPaths = selectedPaths,
                 path = path,
-                targetPath = normalizedTARGETPath,
+                uploadToPath = normalizedUploadToPath,
                 switchToReplOnSuccess = switchToReplOnSuccess,
                 resetOnSuccess = resetOnSuccess,
                 synchronize = synchronize,

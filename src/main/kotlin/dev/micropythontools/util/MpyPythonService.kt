@@ -33,13 +33,10 @@ import com.intellij.openapi.roots.ModifiableModelsProvider
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.library.PythonLibraryType
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import java.io.File
-import java.io.FileNotFoundException
 import javax.swing.JComponent
 
 @Service(Service.Level.PROJECT)
@@ -77,23 +74,14 @@ internal class MpyPythonService(private val project: Project) {
         val retrievedScript = File(scriptPath).readText(Charsets.UTF_8)
 
         var i = 0
-        if (!scriptFileName.contains("uftpd")) {
-            val lines = retrievedScript.lines().toMutableList()
+        val lines = retrievedScript.lines().toMutableList()
 
-            while (i < 15) {
-                lines.removeAt(0)
-                i++
-            }
-
-            return lines.joinToString("\n")
-        } else {
-            return retrievedScript
+        while (i < 15) {
+            lines.removeAt(0)
+            i++
         }
-    }
 
-    fun retrieveMpyScriptAsVirtualFile(scriptFileName: String): VirtualFile {
-        val scriptPath = "$microPythonScriptsPath/$scriptFileName"
-        return StandardFileSystems.local().findFileByPath(scriptPath) ?: throw FileNotFoundException()
+        return lines.joinToString("\n")
     }
 
     fun getAvailableStubs(): List<String> {
@@ -132,13 +120,14 @@ internal class MpyPythonService(private val project: Project) {
 
                     newModel.addRoot(virtualFile!!, OrderRootType.CLASSES)
 
-                    val module = ModuleManager.getInstance(project).modules.first()
-                    val moduleModel = ModifiableModelsProvider.getInstance().getModuleModifiableModel(module)
-                    moduleModel.addLibraryEntry(newLibrary)
+                    for (module in ModuleManager.getInstance(project).modules) {
+                        val moduleModel = ModifiableModelsProvider.getInstance().getModuleModifiableModel(module)
+                        moduleModel.addLibraryEntry(newLibrary)
 
-                    newModel.commit()
-                    projectLibraryModel.commit()
-                    ModifiableModelsProvider.getInstance().commitModuleModifiableModel(moduleModel)
+                        newModel.commit()
+                        projectLibraryModel.commit()
+                        ModifiableModelsProvider.getInstance().commitModuleModifiableModel(moduleModel)
+                    }
                 } else {
                     projectLibraryModel.commit()
                 }

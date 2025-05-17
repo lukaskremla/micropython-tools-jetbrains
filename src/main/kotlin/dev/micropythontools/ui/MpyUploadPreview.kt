@@ -57,6 +57,7 @@ internal class MpyUploadPreview(
     private val targetPathsToRemove: Set<String>,
     private val fileToTargetPath: Map<VirtualFile, String>,
     private val folderToTargetPath: Map<VirtualFile, String>,
+    private val customPathFolders: Set<String>
 ) : DialogWrapper(true) {
 
     private val deviceService = project.service<MpyDeviceService>()
@@ -198,7 +199,7 @@ internal class MpyUploadPreview(
                     FileStatus.MODIFIED
                 }
 
-                shouldSynchronize && targetPathsToRemove.contains(node.fullName) -> FileStatus.DELETED_FROM_FS
+                shouldSynchronize && targetPathsToRemove.contains(node.fullName) && !customPathFolders.contains(node.fullName) -> FileStatus.DELETED_FROM_FS
 
                 shouldExcludePaths && pathsToExclude.contains(node.fullName) -> FileStatus.IGNORED
 
@@ -237,7 +238,6 @@ internal class MpyUploadPreview(
 
         volumeRootNodes.forEach { volumeRootNode ->
             volumeRootNode.fileStatus = FileStatus.NOT_CHANGED
-            //println("Setting node: $volumeRootNode")
             root.add(volumeRootNode)
             pathToDir[volumeRootNode.fullName] = volumeRootNode
         }

@@ -175,6 +175,7 @@ internal class MpyTransferService(private val project: Project) {
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false,
+        customPathFolders: Set<String> = emptySet<String>()
     ): Boolean {
 
         FileDocumentManager.getInstance().saveAllDocuments()
@@ -392,7 +393,8 @@ internal class MpyTransferService(private val project: Project) {
                             pathsToExclude,
                             targetPathsToRemove,
                             fileToTargetPath,
-                            folderToTargetPath
+                            folderToTargetPath,
+                            customPathFolders
                         )
 
                         return@withContext uploadPreview.showAndGet()

@@ -1,6 +1,16 @@
 The Changelog
 =============
 
+0.5.4 - x.5.2025
+------------------
+
+* Added support for mounted volumes (File System tab, Upload Preview, Drag and Drop, Delete action)
+* File System tab now shows the amount of free and total storage space of every volume/mount point
+* Changed colors used by the Upload Preview dialog to hold convention with GIT color schemes
+* Reworked and fixed custom path upload run configurations
+* Upload Preview dialog now also highlights items excluded from synchronization
+* Optimized MicroPython scripts used by the plugin
+
 0.5.3 - 29.4.2025
 ------------------
 
@@ -28,7 +38,7 @@ The Changelog
 
 * Added upload preview dialog
 * Added available MicroPython 1.25.0 stubs
-* Implemented raw paste mode for both WebREPL and Serial communication, webREPL should now work reliably and serial
+* Implemented raw paste mode for both WebREPL and Serial communication, WebREPL should now work reliably and serial
   communication should be significantly faster
 * Improved the WebREPL / Serial communication download feature, it should be more reliable and faster
 * Added support for .mpy files, they will now be recognized by the IDE, however, editing is not supported due to the

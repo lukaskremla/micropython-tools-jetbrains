@@ -115,9 +115,6 @@ internal class MpyConfigurable(private val project: Project) :
     private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
-    //private lateinit var compileToBytecodeCheckBox: Cell<JBCheckBox>
-    //private lateinit var useSocketsCheckBox: Cell<JBCheckBox>
-    //private lateinit var requireMinimumSocketTransferSizeCheckBox: Cell<JBCheckBox>
     private lateinit var showUploadPreviewDialogCheckBox: Cell<JBCheckBox>
 
     private lateinit var areStubsEnabled: Cell<JBCheckBox>
@@ -253,67 +250,6 @@ internal class MpyConfigurable(private val project: Project) :
                 }.visible(isConnected)
 
                 group("Communication Settings") {
-                    /*row {
-                        compileToBytecodeCheckBox = checkBox("Compile to .mpy bytecode before uploading")
-                            .bindSelected(parameters::compileToBytecode)
-                            .gap(RightGap.SMALL)
-
-                        cell(JBLabel(questionMarkIcon).apply {
-                            toolTipText = "Converting .py files to .mpy bytecode reduces file size and memory usage."
-                        })
-                    }*/
-
-                    /*row {
-                        useSocketsCheckBox = checkBox("Establish fast network sockets for file transfers")
-                            .bindSelected(parameters::useSockets)
-                            .gap(RightGap.SMALL)
-
-                        cell(JBLabel(questionMarkIcon).apply {
-                            toolTipText = "The device will be connected to a wi-fi and a socket will be established."
-                        })
-                    }
-
-                    indent {
-                        indent {
-                            row("SSID: ") {
-                                textField()
-                                    .bindText(parameters::ssid)
-                                    .columns(25)
-                            }
-                            row("Password: ") {
-                                passwordField()
-                                    .bindText(parameters::wifiPassword)
-                                    .columns(25)
-                            }
-                        }
-
-                        indent {
-                            row {
-                                comment("WebREPL doesn't require wi-fi credentials to be set up")
-                            }
-                        }
-
-                        row {
-                            requireMinimumSocketTransferSizeCheckBox = checkBox("Require minimum socket transfer size")
-                                .bindSelected(parameters::requireMinimumSocketTransferSize)
-                                .gap(RightGap.SMALL)
-
-                            cell(JBLabel(questionMarkIcon).apply {
-                                toolTipText = "A socket will only be used if the size of the files to transfer goes above this value. Only affects serial."
-                            })
-                        }
-
-                        indent {
-                            row("Size: ") {
-                                intTextField()
-                                    .bindIntText(parameters::minimumSocketTransferSize)
-                                    .columns(5)
-                                    .gap(RightGap.SMALL)
-
-                                label("KB")
-                            }
-                        }.visibleIf(requireMinimumSocketTransferSizeCheckBox.selected)
-                    }.visibleIf(useSocketsCheckBox.selected)*/
                     row {
                         showUploadPreviewDialogCheckBox = checkBox("Show upload preview dialog")
                             .bindSelected(parameters::showUploadPreviewDialog)

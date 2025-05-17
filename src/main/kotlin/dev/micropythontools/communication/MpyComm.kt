@@ -151,7 +151,7 @@ internal open class MpyComm(
         val canEncodeBase64 = deviceService.deviceInformation.canEncodeBase64
 
         // Prefer base64 over hex as it is more efficient
-        val command = when (deviceService.deviceInformation.canEncodeBase64) {
+        val command = when (canEncodeBase64) {
             true -> pythonService.retrieveMpyScriptAsString("download_file_base_64.py")
             else -> pythonService.retrieveMpyScriptAsString("download_file_hex.py")
         }
@@ -263,7 +263,6 @@ internal open class MpyComm(
                     foundEotCharacters += count
 
                     if (foundEotCharacters > 2) {
-
                         ApplicationManager.getApplication().invokeLater {
                             runWithModalProgressBlocking(project, "Leaving instant run raw REPL") {
                                 withTimeout(SHORT_TIMEOUT) {

@@ -53,8 +53,16 @@ internal class MpyRunConfUpload(
     private val deviceService = project.service<MpyDeviceService>()
     private val transferService = project.service<MpyTransferService>()
 
-    fun getFileName(): String {
-        val path = options.path ?: return "Unknown"
+    /**
+     * Method for determining the filename of an existing file from its path.
+     *
+     * @param path Specify a path from which the filename is to be determined. If none is specified, the path saved
+     * in the run configuration is used
+     *
+     * @return The file name or "Unknown" if it can't be determined
+     */
+    fun getFileName(path: String? = null): String {
+        val path = path ?: options.path ?: return "Unknown"
         val file = StandardFileSystems.local().findFileByPath(path) ?: return "Unknown"
         return file.name
     }
@@ -91,7 +99,7 @@ internal class MpyRunConfUpload(
         uploadMode: Int,
         selectedPaths: MutableList<String>,
         path: String,
-        targetPath: String,
+        uploadToPath: String,
         resetOnSuccess: Boolean,
         switchToReplOnSuccess: Boolean,
         synchronize: Boolean,
@@ -101,7 +109,7 @@ internal class MpyRunConfUpload(
         options.uploadMode = uploadMode
         options.selectedPaths = selectedPaths
         options.path = path
-        options.targetPath = targetPath
+        options.uploadToPath = uploadToPath
         options.switchToReplOnSuccess = switchToReplOnSuccess
         options.resetOnSuccess = resetOnSuccess
         options.synchronize = synchronize
@@ -151,13 +159,31 @@ internal class MpyRunConfUpload(
                 else -> {
                     val file = StandardFileSystems.local().findFileByPath(options.path!!)!!
 
+                    val toUpload = if (file.isDirectory) {
+                        file.children.toSet()
+                    } else setOf(file)
+
+                    val relativeToFolder = if (file.isDirectory) {
+                        file
+                    } else file.parent
+
+                    val customPathFolders = options.uploadToPath
+                        ?.split("/")
+                        ?.filter { it.isNotBlank() }
+                        ?.foldIndexed(mutableListOf<String>()) { index, acc, folder ->
+                            val path = if (index == 0) "/$folder" else "${acc[index - 1]}/$folder"
+                            acc.add(path)
+                            acc
+                        }?.toSet()
+
                     success = transferService.performUpload(
-                        initialFilesToUpload = setOf(file),
-                        relativeToFolders = setOf(file.parent),
-                        targetDestination = options.targetPath ?: "/",
+                        initialFilesToUpload = toUpload,
+                        relativeToFolders = setOf(relativeToFolder),
+                        targetDestination = options.uploadToPath ?: "/",
                         excludedPaths = excludedPaths.toSet(),
                         shouldSynchronize = synchronize,
-                        shouldExcludePaths = excludePaths
+                        shouldExcludePaths = excludePaths,
+                        customPathFolders = customPathFolders ?: emptySet()
                     )
                 }
             }
@@ -225,7 +251,7 @@ internal class MpyRunConfUpload(
                     "File excluded: \"$path\". Excluded folders and their children can't be uploaded"
                 )
             }
-            val targetPath = options.targetPath
+            val targetPath = options.uploadToPath
             val validationResult = isRunConfTargetPathValid(targetPath ?: "/")
             if (validationResult != null) {
                 throw RuntimeConfigurationError(

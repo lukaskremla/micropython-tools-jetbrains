@@ -533,6 +533,11 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                     val size = fields[2].toLong()
                     val crc32 = fields[3]
 
+                    // Avoid creating directories for VolumeRoot paths
+                    if (fileType == 1 && volumeRootNodes.any { it.fullName == fullName }) {
+                        return@let
+                    }
+
                     // All mounted volumes are discoverable with os.listdir("/"), however, unlike normal directories
                     // their names can contain multiple slashes, so "mt/logs/sd/" is a valid mount point name.
                     // There can never be a situation where the mount point path can conflict with a path structure
@@ -541,21 +546,18 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                     val parentVolumeRoot = volumeRootNodes
                         // Check longest volumes first to prevent matching similarly named, but shorter volumes
                         .sortedByDescending { it.fullName.length }
-                        .find { fullName.startsWith(it.fullName) }
+                        // Append leading slash, to prevent situations where a file with full path of:
+                        // "/sdsm.py" from getting split like: "/sd/sm.py"
+                        .find { fullName.startsWith(if (it.isFileSystemRoot) "/" else "${it.fullName}/") }
                         ?: throw IllegalStateException("Couldn't find parent root node")
 
                     // Collect names of all directories/files in the full path
                     val names = fullName
-                        .removePrefix(parentVolumeRoot.fullName)
+                        .removePrefix("${parentVolumeRoot.fullName}/")
                         .split('/')
 
                     // Extract only the directory structure
                     val folders = if (fileType == 0) names.dropLast(1) else names
-
-                    // Avoid creating directories for VolumeRoot paths
-                    if (fileType == 1 && volumeRootNodes.any { it.fullName == fullName }) {
-                        return@let
-                    }
 
                     var currentFolder: DirNode = parentVolumeRoot
                     folders.filter { it.isNotBlank() }.forEach { name ->
