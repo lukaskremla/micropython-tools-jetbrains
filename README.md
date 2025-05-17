@@ -1,13 +1,14 @@
-# MicroPython Tools for PyCharm, CLion and other JetBrains IDEs
+# MicroPython Tools Plugin for PyCharm, CLion and other JetBrains IDEs
+
+[![JetBrains IntelliJ Downloads](https://img.shields.io/jetbrains/plugin/d/26227-micropython-tools?label=Downloads)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
+[![JetBrains IntelliJ Rating](https://img.shields.io/jetbrains/plugin/r/rating/26227-micropython-tools?label=Rating)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 
 This is a fork of the [JetBrains IntelliJ MicroPython plugin](https://github.com/JetBrains/intellij-micropython).
 Credits to [Andrey Vlasovskikh](https://github.com/vlasovskikh) for creating the original plugin and
-to [Ilia Motornyi](https://github.com/elmot) for rewriting the communication layer to kotlin and for developing the file
-system view, which serves as the foundation for this project.
+to [Ilia Motornyi](https://github.com/elmot) for his original work on the communication layer and file system view.
 
 Many thanks also go to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for creating and maintaining the
-MicroPython stubs
-that this plugin uses.
+MicroPython stubs that this plugin uses.
 
 I have decided fork the original jetbrains plugin as its development had slowed and I wanted to focus on implementing
 more advanced features that I deem invaluable based on my professional experience working with MicroPython
@@ -46,9 +47,6 @@ not apart of the
 upload will be deleted - you can also simply configure excluded target (MicroPython) paths, that will be
 ignored by the synchronization feature.
 
-For projects which involve uploading large files *(For MicoPython standards)*, FTP uploads might help speed things up,
-especially if you're using serial communication.
-
 Finally, don't forget to select the appropriate stubs package for your device. You can do so in the plugin's settings.
 Start typing "micropython" in the "Stubs package" text field and you can browse all available packages via autocomplete.
 
@@ -86,12 +84,6 @@ Start typing "micropython" in the "Stubs package" text field and you can browse 
 ### Settings
 
 ![Settings](media/settings.png)
-
-#### FTP Uploads
-
-- Speed up large or unstable serial communication uploads via built-in FTP support
-- Just enter the wi-fi credentials of the network your computer is connected to. The plugin will automatically handle
-  starting the FTP server and establishing a connection over serial communication
 
 #### MicroPython Stubs
 
