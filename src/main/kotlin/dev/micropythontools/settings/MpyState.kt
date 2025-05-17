@@ -36,5 +36,4 @@ internal class MpyState : BaseState() {
     var minimumSocketTransferSize by property(100)
     var showUploadPreviewDialog by property(true)
     var areStubsEnabled by property(true)
-    var activeStubsPackage by string("")
 }
