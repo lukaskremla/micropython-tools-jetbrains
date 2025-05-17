@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.TextFieldWithAutoCompletion
@@ -68,7 +67,6 @@ private data class ConfigurableParameters(
  */
 internal class MpyConfigurable(private val project: Project) :
     BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
-    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", this::class.java)
 
     private val settings = project.service<MpySettingsService>()
     private val pythonService = project.service<MpyPythonService>()
@@ -129,10 +127,7 @@ internal class MpyConfigurable(private val project: Project) :
             row {
                 pluginEnabledCheckBox = checkBox("Enable MicroPython support")
                     .bindSelected(parameters::isPluginEnabled)
-            }
-
-            row {
-                comment("Find usage tips, report bugs or ask questions on our <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains\">GitHub</a>")
+                    .comment("Find usage tips, report bugs or ask questions on our <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains\">GitHub</a>")
             }
 
             panel {

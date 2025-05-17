@@ -42,6 +42,7 @@ import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.settings.isRunConfTargetPathValid
 import dev.micropythontools.settings.normalizeMpyPath
+import dev.micropythontools.settings.questionMarkIcon
 import dev.micropythontools.settings.validateMpyPath
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -108,7 +109,6 @@ private data class ExcludedItem(val path: String) {
  */
 internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) :
     SettingsEditor<MpyRunConfUpload>() {
-    private val questionMarkIcon = IconLoader.getIcon("/icons/questionMark.svg", this::class.java)
 
     private val transferService = runConfiguration.project.service<MpyTransferService>()
 
@@ -362,8 +362,9 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                                     runConfiguration.suggestedName()
                                 }
                             }
-                        }.gap(RightGap.SMALL)
-                    useSelectedPathsRadioButton = radioButton("Selected")
+                        }
+                        .comment("Learn about how uploads work <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md\">here</a>")
+                    useSelectedPathsRadioButton = radioButton("Selected MPY sources roots")
                         .bindSelected({ parameters.uploadMode == 1 }, { if (it) parameters.uploadMode = 1 })
                         .applyToComponent {
                             addActionListener {
@@ -372,7 +373,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                                 }
                             }
                         }
-                    usePathRadiobutton = radioButton("Path")
+                    usePathRadiobutton = radioButton("Custom path")
                         .bindSelected({ parameters.uploadMode == 2 }, { if (it) parameters.uploadMode = 2 })
                         .applyToComponent {
                             addActionListener {
@@ -388,7 +389,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                 row {
                     cell(JBScrollPane(availableSourcesTable))
                         .align(AlignX.FILL)
-                        .label("Available sources:", LabelPosition.TOP)
+                        .label("Available MPY sources roots:", LabelPosition.TOP)
                         .resizableColumn()
 
                     panel {
@@ -406,7 +407,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
 
                     cell(JBScrollPane(selectedSourcesTable))
                         .align(AlignX.FILL)
-                        .label("Selected sources:", LabelPosition.TOP)
+                        .label("Selected MPY sources roots:", LabelPosition.TOP)
                         .resizableColumn()
                 }
             }.visibleIf(useSelectedPathsRadioButton.selected)

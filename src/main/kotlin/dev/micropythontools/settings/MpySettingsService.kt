@@ -49,6 +49,11 @@ internal val volumeIcon = IconLoader.getIcon(
     MpySettingsService::class.java
 )
 
+internal val questionMarkIcon = IconLoader.getIcon(
+    "/icons/questionMark.svg",
+    MpySettingsService::class.java
+)
+
 private const val WIFI_KEY = "WiFi"
 private const val WEBREPL_KEY = "WebREPL"
 
