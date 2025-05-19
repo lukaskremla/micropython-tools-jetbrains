@@ -17,59 +17,16 @@
 
 package dev.micropythontools.util
 
-import com.intellij.facet.ui.FacetConfigurationQuickFix
-import com.intellij.facet.ui.ValidationResult
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModifiableModelsProvider
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.jetbrains.python.library.PythonLibraryType
-import dev.micropythontools.settings.MpyConfigurable
-import dev.micropythontools.settings.MpySettingsService
+import dev.micropythontools.settings.microPythonScriptsPath
 import java.io.File
-import javax.swing.JComponent
 
 @Service(Service.Level.PROJECT)
 /**
  * @author Lukas Kremla
  */
 internal class MpyPythonService(private val project: Project) {
-    private val settings = project.service<MpySettingsService>()
-
-    companion object {
-        private const val PLUGIN_ID = "micropython-tools-jetbrains"
-
-        private const val LIBRARY_NAME = "MicroPythonTools"
-
-        private val pluginDescriptor: IdeaPluginDescriptor
-            get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))
-                ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
-
-        private val sandboxPath: String
-            get() = "${pluginDescriptor.pluginPath}"
-
-        private val scriptsPath: String
-            get() = "$sandboxPath/scripts"
-
-        private val microPythonScriptsPath: String
-            get() = "$scriptsPath/MicroPythonMinified"
-
-        val stubsPath: String
-            get() = "$sandboxPath/stubs"
-    }
-
     fun retrieveMpyScriptAsString(scriptFileName: String): String {
         val scriptPath = "$microPythonScriptsPath/$scriptFileName"
 
@@ -84,133 +41,6 @@ internal class MpyPythonService(private val project: Project) {
         }
 
         return lines.joinToString("\n")
-    }
-
-    fun getAvailableStubs(): List<String> {
-        return File(stubsPath).listFiles()?.filter { it.isDirectory }
-            ?.sortedByDescending { it }
-            ?.map { it.name }
-            ?: emptyList()
-    }
-
-    fun getExistingStubPackage(): String {
-        val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
-
-        return projectLibraryTable.modifiableModel.libraries.find { it.name == LIBRARY_NAME }?.modifiableModel?.getFiles(
-            OrderRootType.CLASSES
-        )?.firstOrNull()?.name
-            ?: ""
-    }
-
-    fun updateStubPackage(newStubPackage: String? = null) {
-        removeAllMpyLibraries()
-
-        if (!newStubPackage.isNullOrBlank()) addMpyLibrary(newStubPackage)
-    }
-
-    private fun addMpyLibrary(newStubPackage: String) {
-        DumbService.getInstance(project).smartInvokeLater {
-            ApplicationManager.getApplication().runWriteAction {
-                val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
-                val projectLibraryModel = projectLibraryTable.modifiableModel
-
-                if (settings.state.areStubsEnabled &&
-                    getAvailableStubs().contains(newStubPackage)
-                ) {
-                    val newLibrary =
-                        projectLibraryModel.createLibrary(LIBRARY_NAME, PythonLibraryType.getInstance().kind)
-                    val newModel = newLibrary.modifiableModel
-
-                    val rootUrl = "$stubsPath/$newStubPackage"
-                    val virtualFile = LocalFileSystem.getInstance().findFileByPath(rootUrl)
-
-                    newModel.addRoot(virtualFile!!, OrderRootType.CLASSES)
-
-                    for (module in ModuleManager.getInstance(project).modules) {
-                        val moduleModel = ModifiableModelsProvider.getInstance().getModuleModifiableModel(module)
-                        moduleModel.addLibraryEntry(newLibrary)
-
-                        newModel.commit()
-                        projectLibraryModel.commit()
-                        ModifiableModelsProvider.getInstance().commitModuleModifiableModel(moduleModel)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun removeAllMpyLibraries() {
-        DumbService.getInstance(project).smartInvokeLater {
-            ApplicationManager.getApplication().runWriteAction {
-                // Clean up library table
-                val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
-                val projectLibraryModel = projectLibraryTable.modifiableModel
-
-                val librariesToRemove = projectLibraryModel.libraries.filter {
-                    it.name in listOf(LIBRARY_NAME, "MicroPython Tools")
-                }
-
-                librariesToRemove.forEach { library ->
-                    projectLibraryModel.removeLibrary(library)
-                }
-
-                projectLibraryModel.commit()
-
-                // Clean up order entries
-                val moduleManager = ModuleManager.getInstance(project)
-                val modules = moduleManager.modules
-
-                modules.forEach { module ->
-                    val moduleRootManager = ModuleRootManager.getInstance(module)
-                    val moduleRootModel = moduleRootManager.modifiableModel
-
-                    // Find all order entries related to MicroPython libraries
-                    val entriesToRemove = moduleRootModel.orderEntries.filter { entry ->
-                        entry is LibraryOrderEntry && (entry.libraryName in listOf(
-                            LIBRARY_NAME,
-                            "MicroPython Tools"
-                        ))
-                    }
-
-                    if (entriesToRemove.isNotEmpty()) {
-                        entriesToRemove.forEach { entry ->
-                            moduleRootModel.removeOrderEntry(entry)
-                        }
-
-                        moduleRootModel.commit()
-                    }
-                }
-            }
-        }
-    }
-
-    fun checkStubPackageValidity(): ValidationResult {
-        val activeStubsPackage = settings.state.activeStubsPackage
-
-        var stubValidationText: String? = null
-
-        if (settings.state.areStubsEnabled) {
-            if (activeStubsPackage.isNullOrBlank()) {
-                stubValidationText = "No stub package selected"
-            } else if (activeStubsPackage.isNotBlank() && !getAvailableStubs().contains(activeStubsPackage)) {
-                stubValidationText = "Invalid stub package selected"
-            }
-        }
-
-        return if (stubValidationText != null) {
-            return ValidationResult(
-                stubValidationText,
-                object : FacetConfigurationQuickFix("Change Settings") {
-                    override fun run(place: JComponent?) {
-                        ApplicationManager.getApplication().invokeLater {
-                            ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
-                        }
-                    }
-                }
-            )
-        } else {
-            ValidationResult.OK
-        }
     }
 
     /*fun checkInterpreterValidity(): ValidationResult {

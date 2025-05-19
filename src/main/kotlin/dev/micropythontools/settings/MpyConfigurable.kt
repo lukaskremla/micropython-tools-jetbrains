@@ -33,7 +33,7 @@ import com.intellij.ui.dsl.builder.*
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
 import dev.micropythontools.communication.performReplAction
-import dev.micropythontools.util.MpyPythonService
+import dev.micropythontools.util.MpyStubPackageService
 import jssc.SerialPort
 import kotlinx.coroutines.runBlocking
 import java.awt.Dimension
@@ -69,8 +69,8 @@ internal class MpyConfigurable(private val project: Project) :
     BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
 
     private val settings = project.service<MpySettingsService>()
-    private val pythonService = project.service<MpyPythonService>()
     private val deviceService = project.service<MpyDeviceService>()
+    private val mpyStubPackageService = project.service<MpyStubPackageService>()
 
     private val isConnected
         get() = (deviceService.state == State.CONNECTED || deviceService.state == State.CONNECTING ||
@@ -96,7 +96,7 @@ internal class MpyConfigurable(private val project: Project) :
                 ssid = wifiCredentials.userName ?: "",
                 wifiPassword = wifiCredentials.getPasswordAsString() ?: "",
                 areStubsEnabled = areStubsEnabled,
-                activeStubsPackage = pythonService.getExistingStubPackage(),
+                activeStubsPackage = mpyStubPackageService.getExistingStubPackage(),
             )
         }
     }
@@ -121,13 +121,13 @@ internal class MpyConfigurable(private val project: Project) :
         val portSelectModel = MutableCollectionComboBoxModel<String>()
         updatePortSelectModel(portSelectModel, true)
 
-        val availableStubs = pythonService.getAvailableStubs()
+        val availableStubs = mpyStubPackageService.getAvailableStubs()
 
         settingsPanel = panel {
             row {
                 pluginEnabledCheckBox = checkBox("Enable MicroPython support")
                     .bindSelected(parameters::isPluginEnabled)
-                    .comment("Find usage tips, report bugs or ask questions on our <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains\">GitHub</a>")
+                    .comment("Find usage tips, report bugs or ask questions on <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains\">GitHub</a>")
             }
 
             panel {
@@ -356,7 +356,7 @@ internal class MpyConfigurable(private val project: Project) :
 
             val stubPackageToUse = if (areStubsEnabled) activeStubsPackage else null
 
-            pythonService.updateStubPackage(stubPackageToUse)
+            mpyStubPackageService.updateLibrary(stubPackageToUse)
 
             runWithModalProgressBlocking(project, "Saving settings...") {
                 settings.saveWebReplPassword(webReplPassword)

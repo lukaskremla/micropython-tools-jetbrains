@@ -21,7 +21,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.util.MpyPythonService
+import dev.micropythontools.util.MpyStubPackageService
 
 /**
  * @author vlan, Lukas Kremla
@@ -34,8 +34,8 @@ internal class MpyRequirementsInspection : LocalInspectionTool() {
             return emptyArray()
         }
 
-        val pythonService = file.project.service<MpyPythonService>()
-        val result = pythonService.checkStubPackageValidity()
+        val stubPackageService = file.project.service<MpyStubPackageService>()
+        val result = stubPackageService.checkStubPackageValidity()
         if (result.isOk) return null
 
         val stubsFix = result.quickFix

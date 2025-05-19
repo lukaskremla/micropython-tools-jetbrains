@@ -38,6 +38,7 @@ dependencies {
         }
     }
 
+    implementation("org.json:json:20240303")
     implementation("io.github.java-native:jssc:2.9.6") {
         exclude("org.slf4j", "slf4j-api")
     }
@@ -45,12 +46,6 @@ dependencies {
     // Relies on a custom fork of the Java-Websocket library made for this plugin
     // https://github.com/lukaskremla/Java-WebSocket
     implementation(files(project.property("javaWebsocket").toString()))
-    /*runtimeOnly("io.ktor:ktor-network:2.3.7") {
-        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-    }
-    runtimeOnly("io.ktor:ktor-io:2.3.7") {
-        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
-    }*/
 }
 
 java {
@@ -151,7 +146,6 @@ tasks {
     withType<org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask> {
         from("$rootDir") {
             into("micropython-tools-jetbrains")
-            include("stubs/")
             include("scripts/")
         }
 

@@ -21,13 +21,34 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.*
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.IconLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+
+internal const val PLUGIN_ID = "micropython-tools-jetbrains"
+
+private val pluginDescriptor: IdeaPluginDescriptor
+    get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))
+        ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
+
+private val sandboxPath: String
+    get() = "${pluginDescriptor.pluginPath}"
+
+internal val scriptsPath: String
+    get() = "$sandboxPath/scripts"
+
+internal val microPythonScriptsPath: String
+    get() = "$scriptsPath/MicroPythonMinified"
+
+internal val stubsPath: String
+    get() = "$sandboxPath/stubs"
 
 internal const val EMPTY_URL_TEXT = "No WebREPL URL Selected"
 internal const val EMPTY_PORT_NAME_TEXT = "No Port Selected"
