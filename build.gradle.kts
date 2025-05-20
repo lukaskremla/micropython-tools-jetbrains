@@ -64,7 +64,6 @@ intellijPlatform {
     pluginConfiguration {
         ideaVersion {
             sinceBuild = "243"
-            untilBuild = "251.*"
         }
     }
 
@@ -83,30 +82,30 @@ intellijPlatform {
     }
 
     pluginVerification {
-        cliPath = file("verifier-cli-1.384-all.jar")
+        cliPath = file("verifier-cli-1.386-all.jar")
 
         ides {
             select {
                 types = listOf(
                     IntelliJPlatformType.CLion,
-                    IntelliJPlatformType.AndroidStudio,
-                    IntelliJPlatformType.Aqua,
-                    IntelliJPlatformType.CLion,
-                    IntelliJPlatformType.DataGrip,
-                    IntelliJPlatformType.DataSpell,
-                    IntelliJPlatformType.GoLand,
+                    //IntelliJPlatformType.AndroidStudio,
+                    //IntelliJPlatformType.Aqua,
+                    //IntelliJPlatformType.CLion,
+                    //IntelliJPlatformType.DataGrip,
+                    //IntelliJPlatformType.DataSpell,
+                    //IntelliJPlatformType.GoLand,
                     IntelliJPlatformType.PyCharmProfessional,
                     IntelliJPlatformType.PyCharmCommunity,
-                    IntelliJPlatformType.Rider,
-                    IntelliJPlatformType.RustRover,
-                    IntelliJPlatformType.WebStorm
+                    //IntelliJPlatformType.Rider,
+                    //IntelliJPlatformType.RustRover,
+                    //IntelliJPlatformType.WebStorm
                 )
                 channels = listOf(
                     ProductRelease.Channel.RELEASE,
                     ProductRelease.Channel.EAP
                 )
                 sinceBuild = "243.*"
-                untilBuild = "251.*"
+                untilBuild = "252.*"
             }
         }
     }
