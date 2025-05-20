@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+0.5.5 - 20.5.2025
+------------------
+
+* Fix "FormatFlagsConversionMismatchException" errors
+
 0.5.4 - 20.5.2025
 ------------------
 
