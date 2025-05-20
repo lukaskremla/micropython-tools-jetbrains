@@ -45,7 +45,13 @@ import javax.swing.JComponent
  */
 internal class MpyStubPackageService(private val project: Project) {
     companion object {
-        private const val LIBRARY_NAME = "MicroPythonTools"
+        private const val LIBRARY_NAME = "MicroPythonToolsStubs"
+        private val LIBRARIES_TO_REMOVE = listOf(
+            LIBRARY_NAME,
+            // Legacy library names to clean up
+            "MicroPython Tools",
+            "MicroPythonTools"
+        )
     }
 
     private val settings = project.service<MpySettingsService>()
@@ -144,7 +150,7 @@ internal class MpyStubPackageService(private val project: Project) {
                 val projectLibraryModel = projectLibraryTable.modifiableModel
 
                 val librariesToRemove = projectLibraryModel.libraries.filter {
-                    it.name in listOf(LIBRARY_NAME, "MicroPython Tools")
+                    it.name in LIBRARIES_TO_REMOVE
                 }
 
                 librariesToRemove.forEach { library ->
@@ -163,10 +169,7 @@ internal class MpyStubPackageService(private val project: Project) {
 
                     // Find all order entries related to MicroPython libraries
                     val entriesToRemove = moduleRootModel.orderEntries.filter { entry ->
-                        entry is LibraryOrderEntry && (entry.libraryName in listOf(
-                            LIBRARY_NAME,
-                            "MicroPython Tools"
-                        ))
+                        entry is LibraryOrderEntry && (entry.libraryName in LIBRARIES_TO_REMOVE)
                     }
 
                     if (entriesToRemove.isNotEmpty()) {
