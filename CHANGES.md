@@ -1,15 +1,17 @@
 The Changelog
 =============
 
-0.5.4 - 17.5.2025
+0.5.4 - 20.5.2025
 ------------------
 
 * Added support for mounted volumes (File System tab, Upload Preview, Drag and Drop, Delete action)
 * File System tab now shows the amount of free and total storage space of every volume/mount point
 * Changed colors used by the Upload Preview dialog to hold convention with GIT color schemes
-* Reworked and fixed custom path upload run configurations
+* Stub package setting now accurately reflects the state of the attached MicroPython stubs
 * Upload Preview dialog now also highlights items excluded from synchronization
+* Reworked and fixed custom path upload run configurations
 * Optimized MicroPython scripts used by the plugin
+* Fixed stub issues with MicroPython stdlib
 
 0.5.3 - 29.4.2025
 ------------------

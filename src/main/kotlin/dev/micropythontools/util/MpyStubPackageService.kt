@@ -115,9 +115,13 @@ internal class MpyStubPackageService(private val project: Project) {
                     val newModel = newLibrary.modifiableModel
 
                     val rootUrl = "$stubsPath/$newStubPackage"
-                    val virtualFile = LocalFileSystem.getInstance().findFileByPath(rootUrl)
+                    val stdlibUrl = "$rootUrl/stdlib"
 
-                    newModel.addRoot(virtualFile!!, OrderRootType.CLASSES)
+                    val rootFile = LocalFileSystem.getInstance().findFileByPath(rootUrl)
+                    val stdlibFile = LocalFileSystem.getInstance().findFileByPath(stdlibUrl)
+
+                    newModel.addRoot(rootFile!!, OrderRootType.CLASSES)
+                    newModel.addRoot(stdlibFile!!, OrderRootType.CLASSES)
 
                     for (module in ModuleManager.getInstance(project).modules) {
                         val moduleModel = ModifiableModelsProvider.getInstance().getModuleModifiableModel(module)
