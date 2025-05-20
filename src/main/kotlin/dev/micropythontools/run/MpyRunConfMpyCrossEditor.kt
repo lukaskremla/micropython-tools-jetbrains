@@ -16,44 +16,28 @@
 
 package dev.micropythontools.run
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.options.SettingsEditor
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.setEmptyState
-import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.and
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
-import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.settings.isRunConfTargetPathValid
 import dev.micropythontools.settings.normalizeMpyPath
-import dev.micropythontools.settings.questionMarkIcon
-import dev.micropythontools.settings.validateMpyPath
-import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.*
 import javax.swing.table.DefaultTableCellRenderer
 
-
 /**
  * @authors Lukas Kremla
  */
-private data class UploadParameters(
+private data class CompileParameters(
     var uploadMode: Int,
     var selectedPaths: MutableList<String>,
     var path: String,
@@ -68,81 +52,23 @@ private data class UploadParameters(
 /**
  * @authors Lukas Kremla
  */
-internal data class SourceItem(
-    private val project: Project,
-    val path: String
-) {
-    val virtualFile: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(path)
-
-    val displayText: String = virtualFile?.let { thisFile ->
-        project.guessProjectDir()?.let { projectDir ->
-            VfsUtil.getRelativePath(thisFile, projectDir)
-        } ?: thisFile.name
-    } ?: path
-
-    val isValid = virtualFile?.exists() == true && project.service<MpyTransferService>().collectMpySourceRoots()
-        .any { mpySource ->
-            VfsUtil.isAncestor(mpySource, virtualFile, false)
-        }
-
-    val icon = if (isValid)
-        IconLoader.getIcon("icons/MpySource.svg", this::class.java)
-    else AllIcons.General.Error
-}
-
-/**
- * @authors Lukas Kremla
- */
-private data class ExcludedItem(val path: String) {
-    // This check isn't perfect, but with the limited information about excluded paths, it is the best choice
-    val isDirectory = !path.substringAfterLast("/").contains(".")
-
-    val icon: Icon = when {
-        isDirectory -> AllIcons.Nodes.Folder
-        path.endsWith("mpy") -> PythonFileType.INSTANCE.icon
-        else -> FileTypeRegistry.getInstance().getFileTypeByFileName(path).icon
-    }
-}
-
-/**
- * @authors Lukas Kremla
- */
-internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) :
-    SettingsEditor<MpyRunConfUpload>() {
+internal class MpyRunConfMpyCrossEditor(private val runConfiguration: MpyRunConfMpyCross) :
+    SettingsEditor<MpyRunConfMpyCross>() {
 
     private val transferService = runConfiguration.project.service<MpyTransferService>()
 
     private val parameters = with(runConfiguration.options) {
-        UploadParameters(
+        CompileParameters(
             uploadMode = uploadMode,
             selectedPaths = selectedPaths.toMutableList(),
             path = path ?: "",
-            uploadToPath = uploadToPath ?: "/",
-            switchToReplOnSuccess = switchToReplOnSuccess,
-            resetOnSuccess = resetOnSuccess,
-            synchronize = synchronize,
-            excludePaths = excludePaths,
-            excludedPaths = excludedPaths.toMutableList()
+            uploadToPath = uploadToPath ?: "/"
         )
     }
 
     private fun sortSourceItemsTable(table: TableView<SourceItem>) {
         val sortedItems = table.listTableModel.items.toList().sortedBy { it.path }
 
-        repeat(table.rowCount) {
-            table.listTableModel.removeRow(0)
-        }
-
-        sortedItems.forEach {
-            table.listTableModel.addRow(it)
-        }
-    }
-
-    private fun sortExcludedItemsTable(table: TableView<ExcludedItem>) {
-        val sortedItems = table.listTableModel.items.toList().sortedWith(
-            compareBy<ExcludedItem> { !it.isDirectory }
-                .thenBy { it.path.lowercase() }
-        )
         repeat(table.rowCount) {
             table.listTableModel.removeRow(0)
         }
@@ -233,107 +159,6 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
 
     private val availableSourcesTable = sourcesTable("No available MicroPython Sources Roots")
     private val selectedSourcesTable = sourcesTable("No selected MicroPython Sources Roots")
-
-    private val excludedPathsTable = TableView<ExcludedItem>().apply {
-        val column = object : ColumnInfo<ExcludedItem, String>("Excluded Path") {
-            override fun valueOf(item: ExcludedItem) = item.path
-
-            override fun getRenderer(item: ExcludedItem) = DefaultTableCellRenderer().apply {
-                icon = item.icon
-            }
-        }
-
-        model = ListTableModel<ExcludedItem>(column)
-        tableHeader = null
-        setShowGrid(false)
-        setEmptyState("No excluded paths")
-        selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
-        preferredScrollableViewportSize = Dimension(500, 100)
-    }
-
-    private val excludedPathsTableWithToolbar = ToolbarDecorator.createDecorator(excludedPathsTable)
-        .disableUpDownActions()
-        .setAddAction {
-            val dialog = DialogBuilder(runConfiguration.project)
-            dialog.title("Add Excluded Path")
-
-            val textField = JBTextField().apply {
-                preferredSize = Dimension(300, preferredSize.height)
-            }
-
-            val panel = JPanel(BorderLayout())
-            panel.add(JBLabel("Path: "), BorderLayout.WEST)
-            panel.add((textField), BorderLayout.CENTER)
-            dialog.centerPanel(panel)
-
-            dialog.setOkOperation {
-                val validationResult = validateMpyPath(textField.text)
-
-                if (validationResult == null) {
-                    val normalizedPath = normalizeMpyPath(textField.text, true)
-
-                    val model = excludedPathsTable.listTableModel
-                    model.addRow(ExcludedItem(normalizedPath))
-                    sortExcludedItemsTable(excludedPathsTable)
-                    dialog.dialogWrapper.close(0)
-                } else {
-                    dialog.setErrorText(validationResult)
-                }
-            }
-
-            dialog.show()
-        }
-        .setRemoveAction {
-            val selectedRow = excludedPathsTable.selectedRow
-            if (selectedRow != -1) {
-                val model = excludedPathsTable.listTableModel
-
-                val newSelectionRow = if (selectedRow < model.rowCount - 1) selectedRow else selectedRow - 1
-
-                model.removeRow(selectedRow)
-
-                if (model.rowCount > 0) {
-                    excludedPathsTable.selectionModel.setSelectionInterval(newSelectionRow, newSelectionRow)
-                    excludedPathsTable.requestFocus()
-                }
-            }
-        }
-        .setEditAction {
-            val selectedRow = excludedPathsTable.selectedRow
-            if (selectedRow != -1) {
-                val model = excludedPathsTable.listTableModel
-                val currentItem = model.getItem(selectedRow)
-
-                val dialog = DialogBuilder(runConfiguration.project)
-                dialog.title("Edit Excluded Path")
-
-                val textField = JBTextField(currentItem.path).apply {
-                    preferredSize = Dimension(300, preferredSize.height)
-                }
-
-                val panel = JPanel(BorderLayout())
-                panel.add(JBLabel("Path: "), BorderLayout.WEST)
-                panel.add((textField), BorderLayout.CENTER)
-                dialog.centerPanel(panel)
-
-                dialog.setOkOperation {
-                    val validationResult = validateMpyPath(textField.text)
-
-                    if (validationResult == null) {
-                        val normalizedPath = normalizeMpyPath(textField.text, true)
-
-                        model.setItem(selectedRow, ExcludedItem(normalizedPath))
-                        sortExcludedItemsTable(excludedPathsTable)
-                        dialog.dialogWrapper.close(0)
-                    } else {
-                        dialog.setErrorText(validationResult)
-                    }
-                }
-
-                dialog.show()
-            }
-        }
-        .createPanel()
 
     private lateinit var configurationPanel: DialogPanel
     private lateinit var synchronizeCheckbox: Cell<JBCheckBox>
@@ -463,50 +288,12 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                 }
                 handlePathChange(parameters.uploadToPath, parameters.path)
             }.visibleIf(usePathRadiobutton.selected)
-
-            row {
-                checkBox("Reset on success")
-                    .bindSelected(parameters::resetOnSuccess)
-            }
-
-            row {
-                checkBox("Switch to REPL tab on success")
-                    .bindSelected(parameters::switchToReplOnSuccess)
-            }
-
-            row {
-                synchronizeCheckbox = checkBox("Synchronize")
-                    .bindSelected(parameters::synchronize)
-                    .gap(RightGap.SMALL)
-
-                cell(JBLabel(questionMarkIcon).apply {
-                    toolTipText = "Synchronize device file system to only contain uploaded files and folders"
-                })
-            }
-
-            row {
-                excludePathsCheckbox = checkBox("Exclude selected paths")
-                    .bindSelected(parameters::excludePaths)
-                    .gap(RightGap.SMALL)
-
-                cell(JBLabel(questionMarkIcon).apply {
-                    toolTipText = "Exclude on-device paths from synchronization"
-                })
-            }.visibleIf(synchronizeCheckbox.selected)
-
-            collapsibleGroup("Excluded Paths") {
-                row {
-                    cell(excludedPathsTableWithToolbar)
-                }
-            }.apply {
-                this.expanded = true
-            }.visibleIf(synchronizeCheckbox.selected.and(excludePathsCheckbox.selected))
         }
 
         return configurationPanel
     }
 
-    override fun applyEditorTo(runConfiguration: MpyRunConfUpload) {
+    override fun applyEditorTo(runConfiguration: MpyRunConfMpyCross) {
         configurationPanel.apply()
 
         with(parameters) {
@@ -517,10 +304,6 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
 
             selectedPaths.addAll(selectedSourcesTableItemsPaths)
 
-            val excludedPathsTableItemsPaths = excludedPathsTable.listTableModel.items.map { it.path }
-
-            excludedPaths.addAll(excludedPathsTableItemsPaths)
-
             val normalizedUploadToPath = normalizeMpyPath(uploadToPath, true)
 
             uploadToTextField.component.text = normalizedUploadToPath
@@ -529,12 +312,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                 uploadMode = uploadMode,
                 selectedPaths = selectedPaths,
                 path = path,
-                uploadToPath = normalizedUploadToPath,
-                switchToReplOnSuccess = switchToReplOnSuccess,
-                resetOnSuccess = resetOnSuccess,
-                synchronize = synchronize,
-                excludePaths = excludePaths,
-                excludedPaths = excludedPaths
+                uploadToPath = normalizedUploadToPath
             )
         }
     }
@@ -562,17 +340,6 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
         }
 
         sortSourceItemsTable(selectedSourcesTable)
-
-        // Reset excluded paths table
-        repeat(excludedPathsTable.rowCount) {
-            excludedPathsTable.listTableModel.removeRow(0)
-        }
-
-        runConfiguration.options.excludedPaths.forEach { path ->
-            excludedPathsTable.listTableModel.addRow(ExcludedItem(path))
-        }
-
-        sortExcludedItemsTable(excludedPathsTable)
 
         configurationPanel.reset()
     }

@@ -149,9 +149,9 @@ internal class MpyStubPackageService(private val project: Project) {
                 val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
                 val projectLibraryModel = projectLibraryTable.modifiableModel
 
-                val librariesToRemove = projectLibraryModel.libraries.filter {
-                    it.name in LIBRARIES_TO_REMOVE
-                }
+                println(LIBRARIES_TO_REMOVE)
+
+                val librariesToRemove = projectLibraryModel.libraries.filter { it.name in LIBRARIES_TO_REMOVE }
 
                 librariesToRemove.forEach { library ->
                     projectLibraryModel.removeLibrary(library)
