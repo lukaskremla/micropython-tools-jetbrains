@@ -6,7 +6,6 @@
          <ul>
           <li>Fix "FormatFlagsConversionMismatchException" errors</li>
         </ul>
-      <br>
       <h3>0.5.4 - 20-5-2025</h3>
         <ul>
           <li>Added support for mounted volumes (File System tab, Upload Preview, Drag and Drop, Delete action)</li>
