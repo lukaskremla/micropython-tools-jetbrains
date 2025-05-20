@@ -30,10 +30,7 @@ internal class MpyState : BaseState() {
     var increasedFileTransferBaudrate by string("")
     var webReplIp by string(DEFAULT_WEBREPL_IP)
     var webReplPort by property(DEFAULT_WEBREPL_PORT)
-    var compileToBytecode by property(false)
-    var useSockets by property(false)
-    var requireMinimumSocketTransferSize by property(false)
-    var minimumSocketTransferSize by property(100)
+    var legacyVolumeSupportEnabled by property(false)
     var showUploadPreviewDialog by property(true)
     var areStubsEnabled by property(true)
 }

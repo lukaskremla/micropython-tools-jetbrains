@@ -28,6 +28,7 @@ import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.TextFieldWithAutoCompletion
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
 import dev.micropythontools.communication.MpyDeviceService
@@ -51,10 +52,7 @@ private data class ConfigurableParameters(
     var webReplIp: String,
     var webReplPort: Int,
     var webReplPassword: String,
-    var compileToBytecode: Boolean,
-    var useSockets: Boolean,
-    var requireMinimumSocketTransferSize: Boolean,
-    var minimumSocketTransferSize: Int,
+    var legacyVolumeSupportEnabled: Boolean,
     var showUploadPreviewDialog: Boolean,
     var ssid: String,
     var wifiPassword: String,
@@ -88,10 +86,7 @@ internal class MpyConfigurable(private val project: Project) :
                 webReplIp = webReplIp ?: DEFAULT_WEBREPL_IP,
                 webReplPort = webReplPort,
                 webReplPassword = settings.retrieveWebReplPassword(),
-                compileToBytecode = compileToBytecode,
-                useSockets = useSockets,
-                requireMinimumSocketTransferSize = requireMinimumSocketTransferSize,
-                minimumSocketTransferSize = minimumSocketTransferSize,
+                legacyVolumeSupportEnabled = legacyVolumeSupportEnabled,
                 showUploadPreviewDialog = showUploadPreviewDialog,
                 ssid = wifiCredentials.userName ?: "",
                 wifiPassword = wifiCredentials.getPasswordAsString() ?: "",
@@ -112,8 +107,6 @@ internal class MpyConfigurable(private val project: Project) :
 
     private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
-
-    private lateinit var showUploadPreviewDialogCheckBox: Cell<JBCheckBox>
 
     private lateinit var areStubsEnabled: Cell<JBCheckBox>
 
@@ -246,7 +239,19 @@ internal class MpyConfigurable(private val project: Project) :
 
                 group("Communication Settings") {
                     row {
-                        showUploadPreviewDialogCheckBox = checkBox("Show upload preview dialog")
+                        checkBox("Enable legacy volume support (pre-1.25.0)")
+                            .bindSelected(parameters::legacyVolumeSupportEnabled)
+                            .gap(RightGap.SMALL)
+
+                        cell(JBLabel(questionMarkIcon).apply {
+                            toolTipText =
+                                "Enables scanning for additional mounted volumes on MicroPython versions older than 1.25.0.<br>" +
+                                        " May slow down filesystem refreshes."
+                        })
+                    }
+
+                    row {
+                        checkBox("Show upload preview dialog")
                             .bindSelected(parameters::showUploadPreviewDialog)
                     }
                 }.bottomGap(BottomGap.NONE).topGap(TopGap.SMALL)
@@ -347,11 +352,8 @@ internal class MpyConfigurable(private val project: Project) :
 
             settings.state.webReplIp = webReplIp
             settings.state.webReplPort = webReplPort
-            settings.state.compileToBytecode = compileToBytecode
-            settings.state.useSockets = useSockets
-            settings.state.requireMinimumSocketTransferSize = requireMinimumSocketTransferSize
+            settings.state.legacyVolumeSupportEnabled = legacyVolumeSupportEnabled
             settings.state.showUploadPreviewDialog = showUploadPreviewDialog
-            settings.state.minimumSocketTransferSize = minimumSocketTransferSize
             settings.state.areStubsEnabled = areStubsEnabled
 
             val stubPackageToUse = if (areStubsEnabled) activeStubsPackage else null

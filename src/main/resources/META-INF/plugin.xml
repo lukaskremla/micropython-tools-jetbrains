@@ -9,6 +9,7 @@
           <li>Changed colors used by the Upload Preview dialog to hold convention with GIT color schemes</li>
           <li>Stub package setting now accurately reflects the state of the attached MicroPython stubs</li>
           <li>Upload Preview dialog now also highlights items excluded from synchronization</li>
+          <li>Added documentation for uploads and linked to it in the plugin</li>
           <li>Reworked and fixed custom path upload run configurations</li>
           <li>Optimized MicroPython scripts used by the plugin</li>
           <li>Fixed stub issues with MicroPython stdlib</li>

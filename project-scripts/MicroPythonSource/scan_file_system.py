@@ -24,16 +24,19 @@ def s():
     try:
         mount_points = [mount_tuple[1] for mount_tuple in vfs.mount()]
     except TypeError:
-        path_to_stat_tuple = {"/": os.statvfs("/")}
+        if "%s":
+            path_to_stat_tuple = {"/": os.statvfs("/")}
 
-        for result in os.ilistdir("/"):
-            if result[1] & 0x4000:
-                path = f"/{result[0]}"
-                stats = os.statvfs(path)
-                if stats not in path_to_stat_tuple.values():
-                    path_to_stat_tuple[path] = stats
+            for result in os.ilistdir("/"):
+                if result[1] & 0x4000:
+                    path = f"/{result[0]}"
+                    stats = os.statvfs(path)
+                    if stats not in path_to_stat_tuple.values():
+                        path_to_stat_tuple[path] = stats
 
-        mount_points = path_to_stat_tuple.keys()
+            mount_points = path_to_stat_tuple.keys()
+        else:
+            mount_points = ["/"]
 
     for mount_point in mount_points:
         fs_stats = os.statvfs(mount_point)

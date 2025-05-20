@@ -15,10 +15,9 @@
 """
 
 import os
+import python_minifier
 import re
 import shutil
-
-import python_minifier
 
 path = os.path.abspath(__file__)
 current_dir = os.path.dirname(path)
@@ -102,7 +101,10 @@ def do_minification(source_directory, target_directory):
                 minified_code = minified_code.replace(f"\'%s{i}\'", "%s")
 
             # Also handle the case where just one template is used without an index
-            minified_code = minified_code.replace(f"\'%s\'", "%s")
+            minified_code = minified_code.replace("\'%s\'", "%s")
+
+            # If the template is used as a variable, it needs to be replaced as well
+            minified_code = minified_code.replace("\'%___s\'", " %s")
 
             with open(target_path, "w") as t:
                 t.write(license_header)
