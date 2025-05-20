@@ -488,7 +488,10 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         val scriptFileName = if (hash) "scan_file_system_hashing.py" else "scan_file_system.py"
 
         val fileSystemScanScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
-            .format(if (settings.state.legacyVolumeSupportEnabled) "True" else "False")
+            .replace(
+                "___l=False",
+                "___l=${if (settings.state.legacyVolumeSupportEnabled) "True" else "False"}"
+            )
 
         try {
             dirList = deviceService.blindExecute(fileSystemScanScript)
