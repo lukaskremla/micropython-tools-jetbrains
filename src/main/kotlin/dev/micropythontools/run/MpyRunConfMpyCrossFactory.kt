@@ -10,7 +10,7 @@ internal class MpyRunConfMpyCrossFactory(type: MpyRunConfType) : ConfigurationFa
     }
 
     override fun getName(): String {
-        return "Mpy Cross"
+        return "Mpy-Cross"
     }
 
     override fun getId(): String {

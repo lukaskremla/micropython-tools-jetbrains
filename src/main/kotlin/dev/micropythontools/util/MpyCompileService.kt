@@ -14,27 +14,33 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.run
+package dev.micropythontools.util
 
-import com.intellij.execution.configurations.ConfigurationTypeBase
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 
+@Service(Service.Level.PROJECT)
 /**
  * @author Lukas Kremla
  */
-internal class MpyRunConfType : ConfigurationTypeBase(
-    ID,
-    "MicroPython Tools",
-    "MicroPython Tools Run Configuration Type",
-    IconLoader.getIcon("/icons/pluginIcon.svg", this::class.java)
-) {
-    init {
-        addFactory(MpyRunConfUploadFactory(this))
-        addFactory(MpyRunConfExecuteFactory(this))
-        addFactory(MpyRunConfMpyCrossFactory(this))
+internal class MpyCompileService(private val project: Project) {
+    fun compileProject(outputPath: String) {
+
     }
 
-    companion object {
-        const val ID = "micropython-tools-configuration-type"
+    fun compileItems(
+        toCompile: Set<VirtualFile>,
+        outputPath: String
+    ) {
+
+    }
+
+    fun performCompilation(
+        toCompile: Set<VirtualFile>,
+        relativeToFolders: Set<VirtualFile>,
+        outputPath: String
+    ) {
+
     }
 }

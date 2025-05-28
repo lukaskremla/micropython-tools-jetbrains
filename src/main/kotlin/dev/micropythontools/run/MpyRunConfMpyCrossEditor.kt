@@ -16,13 +16,19 @@
 
 package dev.micropythontools.run
 
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.options.SettingsEditor
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.setEmptyState
-import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.ui.components.*
+import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
@@ -31,7 +37,9 @@ import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.settings.isRunConfTargetPathValid
 import dev.micropythontools.settings.normalizeMpyPath
 import java.awt.Dimension
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.ListSelectionModel
 import javax.swing.table.DefaultTableCellRenderer
 
 /**
@@ -41,12 +49,8 @@ private data class CompileParameters(
     var uploadMode: Int,
     var selectedPaths: MutableList<String>,
     var path: String,
-    var uploadToPath: String,
-    var switchToReplOnSuccess: Boolean,
-    var resetOnSuccess: Boolean,
-    var synchronize: Boolean,
-    var excludePaths: Boolean,
-    var excludedPaths: MutableList<String>
+    var outputPath: String,
+    var pathRelativeToOutput: String,
 )
 
 /**
@@ -62,7 +66,8 @@ internal class MpyRunConfMpyCrossEditor(private val runConfiguration: MpyRunConf
             uploadMode = uploadMode,
             selectedPaths = selectedPaths.toMutableList(),
             path = path ?: "",
-            uploadToPath = uploadToPath ?: "/"
+            outputPath = outputPath ?: "${runConfiguration.project.guessProjectDir()?.path}/mpy-output",
+            pathRelativeToOutput = pathRelativeToOutput ?: ""
         )
     }
 
@@ -125,21 +130,6 @@ internal class MpyRunConfMpyCrossEditor(private val runConfiguration: MpyRunConf
         sortSourceItemsTable(toTable)
     }
 
-    private fun handlePathChange(uploadToPath: String, filePath: String) {
-        val file = StandardFileSystems.local().findFileByPath(filePath)
-
-        if (file?.isDirectory != true) {
-            targetPathRow.visible(true)
-
-            targetPathLabel.component.text = when {
-                uploadToPath.endsWith("/") -> "$uploadToPath${runConfiguration.getFileName(filePath)}"
-                else -> "$uploadToPath/${runConfiguration.getFileName(filePath)}"
-            }
-        } else {
-            targetPathRow.visible(false)
-        }
-    }
-
     private fun sourcesTable(emptyText: String) = TableView<SourceItem>().apply {
         val column = object : ColumnInfo<SourceItem, String>("Source Path") {
             override fun valueOf(item: SourceItem) = item.displayText
@@ -161,14 +151,11 @@ internal class MpyRunConfMpyCrossEditor(private val runConfiguration: MpyRunConf
     private val selectedSourcesTable = sourcesTable("No selected MicroPython Sources Roots")
 
     private lateinit var configurationPanel: DialogPanel
-    private lateinit var synchronizeCheckbox: Cell<JBCheckBox>
-    private lateinit var excludePathsCheckbox: Cell<JBCheckBox>
     private lateinit var uploadProjectRadioButton: Cell<JBRadioButton>
     private lateinit var useSelectedPathsRadioButton: Cell<JBRadioButton>
     private lateinit var usePathRadiobutton: Cell<JBRadioButton>
-    private lateinit var uploadToTextField: Cell<JBTextField>
-    private lateinit var targetPathRow: Row
-    private lateinit var targetPathLabel: Cell<JLabel>
+    private lateinit var relativeToTextField: Cell<JBTextField>
+    private lateinit var outputTextField: Cell<TextFieldWithBrowseButton>
     private lateinit var availableToSelectedButton: Cell<JButton>
     private lateinit var selectedToAvailableButton: Cell<JButton>
 
@@ -188,7 +175,7 @@ internal class MpyRunConfMpyCrossEditor(private val runConfiguration: MpyRunConf
                                 }
                             }
                         }
-                        .comment("Learn about how uploads work <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md#uploads\">here</a>")
+                        .comment("Learn about how compilation works <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md#uploads\">here</a>")
                     useSelectedPathsRadioButton = radioButton("Selected MPY sources roots")
                         .bindSelected({ parameters.uploadMode == 1 }, { if (it) parameters.uploadMode = 1 })
                         .applyToComponent {
@@ -237,12 +224,13 @@ internal class MpyRunConfMpyCrossEditor(private val runConfiguration: MpyRunConf
                 }
             }.visibleIf(useSelectedPathsRadioButton.selected)
 
-            panel {
-                row("Source path: ") {
-                    textFieldWithBrowseButton(
-                        FileChooserDescriptor(true, true, false, false, false, false).withTitle("Select Path"),
-                        runConfiguration.project
-                    ).apply {
+            row("Source path: ") {
+                textFieldWithBrowseButton(
+                    FileChooserDescriptor(true, true, false, false, false, false).withTitle("Select Path"),
+                    runConfiguration.project
+                )
+                    .widthGroup("TextFields")
+                    .apply {
                         component.text = parameters.path
                         component.textField.document.addDocumentListener(object : javax.swing.event.DocumentListener {
                             override fun insertUpdate(e: javax.swing.event.DocumentEvent) = updatePath()
@@ -250,44 +238,44 @@ internal class MpyRunConfMpyCrossEditor(private val runConfiguration: MpyRunConf
                             override fun changedUpdate(e: javax.swing.event.DocumentEvent) = updatePath()
 
                             private fun updatePath() {
-                                val newPath = component.text
-                                parameters.path = newPath
-                                handlePathChange(parameters.uploadToPath, newPath)
+                                parameters.path = component.text
                             }
                         })
-                    }.align(AlignX.FILL)
-                }
-
-                row("Upload to: ") {
-                    uploadToTextField = textField()
-                        .bindText(parameters::uploadToPath)
-                        .columns(15)
-                        .gap(RightGap.SMALL)
-                        .validationInfo { field ->
-                            val validationResult = isRunConfTargetPathValid(field.text)
-
-                            if (validationResult != null) {
-                                error(validationResult)
-                            } else null
-                        }.apply {
-                            component.document.addDocumentListener(object :
-                                javax.swing.event.DocumentListener {
-                                override fun insertUpdate(e: javax.swing.event.DocumentEvent) = updatePath()
-                                override fun removeUpdate(e: javax.swing.event.DocumentEvent) = updatePath()
-                                override fun changedUpdate(e: javax.swing.event.DocumentEvent) = updatePath()
-
-                                private fun updatePath() {
-                                    handlePathChange(component.text, parameters.path)
-                                }
-                            })
-                        }
-                }
-
-                targetPathRow = row("Target path: ") {
-                    targetPathLabel = label("")
-                }
-                handlePathChange(parameters.uploadToPath, parameters.path)
+                    }
             }.visibleIf(usePathRadiobutton.selected)
+
+            row("Relative path: ") {
+                relativeToTextField = textField()
+                    .bindText(parameters::pathRelativeToOutput)
+                    .widthGroup("TextFields")
+                    .gap(RightGap.SMALL)
+                    .validationInfo { field ->
+                        val validationResult = isRunConfTargetPathValid(field.text)
+
+                        if (validationResult != null) {
+                            error(validationResult)
+                        } else null
+                    }
+            }.visibleIf(usePathRadiobutton.selected)
+
+            row("Output to: ") {
+                outputTextField = textFieldWithBrowseButton(
+                    FileChooserDescriptor(false, true, false, false, false, false).withTitle("Select Output Directory"),
+                    runConfiguration.project
+                )
+                    .widthGroup("TextFields")
+                    .columns(45)
+                    .bindText(parameters::outputPath)
+                    .gap(RightGap.SMALL)
+                actionButton(object :
+                    AnAction("Restore Default", "Restore default output directory", AllIcons.Actions.Rollback) {
+                    override fun actionPerformed(e: AnActionEvent) {
+                        val defaultPath = "${runConfiguration.project.guessProjectDir()?.path}/mpy-output"
+                        parameters.outputPath = defaultPath
+                        outputTextField.component.textField.text = defaultPath
+                    }
+                })
+            }
         }
 
         return configurationPanel
@@ -298,26 +286,26 @@ internal class MpyRunConfMpyCrossEditor(private val runConfiguration: MpyRunConf
 
         with(parameters) {
             selectedPaths.clear()
-            excludedPaths.clear()
 
             val selectedSourcesTableItemsPaths = selectedSourcesTable.listTableModel.items.map { it.path }
 
             selectedPaths.addAll(selectedSourcesTableItemsPaths)
 
-            val normalizedUploadToPath = normalizeMpyPath(uploadToPath, true)
+            val normalizedUploadToPath = normalizeMpyPath(pathRelativeToOutput, true)
 
-            uploadToTextField.component.text = normalizedUploadToPath
+            relativeToTextField.component.text = normalizedUploadToPath
 
             runConfiguration.saveOptions(
                 uploadMode = uploadMode,
                 selectedPaths = selectedPaths,
                 path = path,
-                uploadToPath = normalizedUploadToPath
+                outputPath = outputPath,
+                pathRelativeToOutput = pathRelativeToOutput
             )
         }
     }
 
-    override fun resetEditorFrom(runConfiguration: MpyRunConfUpload) {
+    override fun resetEditorFrom(runConfiguration: MpyRunConfMpyCross) {
         // Reset available sources table
         repeat(availableSourcesTable.rowCount) {
             availableSourcesTable.listTableModel.removeRow(0)

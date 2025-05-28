@@ -63,7 +63,7 @@ kotlin {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "243"
+            sinceBuild = project.property("sinceBuild").toString()
         }
     }
 
@@ -104,8 +104,7 @@ intellijPlatform {
                     ProductRelease.Channel.RELEASE,
                     ProductRelease.Channel.EAP
                 )
-                sinceBuild = "243.*"
-                untilBuild = "252.*"
+                sinceBuild = project.property("sinceBuild").toString()
             }
         }
     }

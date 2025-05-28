@@ -175,7 +175,7 @@ internal class MpyTransferService(private val project: Project) {
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false,
-        customPathFolders: Set<String> = emptySet<String>()
+        customPathFolders: Set<String> = emptySet()
     ): Boolean {
 
         FileDocumentManager.getInstance().saveAllDocuments()

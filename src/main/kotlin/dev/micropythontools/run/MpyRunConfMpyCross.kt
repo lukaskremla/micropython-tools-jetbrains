@@ -30,11 +30,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
-import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.settings.isRunConfTargetPathValid
 import dev.micropythontools.ui.NOTIFICATION_GROUP
+import dev.micropythontools.util.MpyCompileService
 
 /**
  * @authors Lukas Kremla
@@ -51,6 +51,7 @@ internal class MpyRunConfMpyCross(
 
     private val settings = project.service<MpySettingsService>()
     private val deviceService = project.service<MpyDeviceService>()
+    private val compileService = project.service<MpyCompileService>()
     private val transferService = project.service<MpyTransferService>()
 
     /**
@@ -99,12 +100,14 @@ internal class MpyRunConfMpyCross(
         uploadMode: Int,
         selectedPaths: MutableList<String>,
         path: String,
-        uploadToPath: String
+        outputPath: String,
+        pathRelativeToOutput: String
     ) {
         options.uploadMode = uploadMode
         options.selectedPaths = selectedPaths
         options.path = path
-        options.uploadToPath = uploadToPath
+        options.outputPath = outputPath
+        options.pathRelativeToOutput = pathRelativeToOutput
     }
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
@@ -121,35 +124,27 @@ internal class MpyRunConfMpyCross(
             return null
         }
 
-        val success: Boolean
-
         with(options) {
             when (options.uploadMode) {
                 0 -> {
-                    success = transferService.uploadProject(
-                        excludedPaths.toSet(),
-                        synchronize,
-                        excludePaths
-                    )
+                    compileService.compileProject(options.outputPath ?: "/")
                 }
 
                 1 -> {
-                    val toUpload = selectedPaths.mapNotNull { path ->
+                    val toCompile = selectedPaths.mapNotNull { path ->
                         StandardFileSystems.local().findFileByPath(path)
                     }.toSet()
 
-                    success = transferService.uploadItems(
-                        toUpload,
-                        excludedPaths.toSet(),
-                        synchronize,
-                        excludePaths,
+                    compileService.compileItems(
+                        toCompile,
+                        options.outputPath ?: "/"
                     )
                 }
 
                 else -> {
                     val file = StandardFileSystems.local().findFileByPath(options.path!!)!!
 
-                    val toUpload = if (file.isDirectory) {
+                    val toCompile = if (file.isDirectory) {
                         file.children.toSet()
                     } else setOf(file)
 
@@ -157,41 +152,15 @@ internal class MpyRunConfMpyCross(
                         file
                     } else file.parent
 
-                    val customPathFolders = options.uploadToPath
-                        ?.split("/")
-                        ?.filter { it.isNotBlank() }
-                        ?.foldIndexed(mutableListOf<String>()) { index, acc, folder ->
-                            val path = if (index == 0) "/$folder" else "${acc[index - 1]}/$folder"
-                            acc.add(path)
-                            acc
-                        }?.toSet()
-
-                    success = transferService.performUpload(
-                        initialFilesToUpload = toUpload,
+                    compileService.performCompilation(
+                        toCompile = toCompile,
                         relativeToFolders = setOf(relativeToFolder),
-                        targetDestination = options.uploadToPath ?: "/",
-                        excludedPaths = excludedPaths.toSet(),
-                        shouldSynchronize = synchronize,
-                        shouldExcludePaths = excludePaths,
-                        customPathFolders = customPathFolders ?: emptySet()
+                        outputPath = options.outputPath ?: "/"
                     )
                 }
             }
-            if (success) {
-                if (resetOnSuccess) {
-                    performReplAction(
-                        project,
-                        false,
-                        "Soft reset",
-                        false,
-                        "Soft reset cancelled",
-                        { deviceService.reset() })
-                }
-                if (switchToReplOnSuccess) deviceService.activateRepl()
-                return EmptyRunProfileState.INSTANCE
-            } else {
-                return null
-            }
+
+            return EmptyRunProfileState.INSTANCE
         }
     }
 
@@ -238,10 +207,10 @@ internal class MpyRunConfMpyCross(
             }
             if (transferService.collectExcluded().contains(file)) {
                 throw RuntimeConfigurationError(
-                    "File excluded: \"$path\". Excluded folders and their children can't be uploaded"
+                    "File excluded: \"$path\". Excluded folders and their children can't be compiled"
                 )
             }
-            val targetPath = options.uploadToPath
+            val targetPath = options.outputPath
             val validationResult = isRunConfTargetPathValid(targetPath ?: "/")
             if (validationResult != null) {
                 throw RuntimeConfigurationError(
