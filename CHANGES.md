@@ -1,10 +1,15 @@
 The Changelog
 =============
 
+0.5.6 - 28.5.2025
+------------------
+
+* Fixed "ImportError: no module named 'vfs'" errors when connecting to devices without the "vfs" module
+
 0.5.5 - 20.5.2025
 ------------------
 
-* Fix "FormatFlagsConversionMismatchException" errors
+* Fixed "FormatFlagsConversionMismatchException" errors
 
 0.5.4 - 20.5.2025
 ------------------

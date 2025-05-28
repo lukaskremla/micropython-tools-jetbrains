@@ -17,15 +17,14 @@
 import gc
 import os
 
-import vfs
-
 ___l = False
 
 
 def s():
     try:
+        import vfs
         mount_points = [mount_tuple[1] for mount_tuple in vfs.mount()]
-    except TypeError:
+    except (ImportError, TypeError):
         if ___l:
             path_to_stat_tuple = {"/": os.statvfs("/")}
 
