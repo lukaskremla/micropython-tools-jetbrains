@@ -2,25 +2,11 @@
     <name>MicroPython Tools</name>
     <id>micropython-tools-jetbrains</id>
     <change-notes><![CDATA[
-        <h3>0.5.6 - 28-5-2025</h3>
-         <ul>
-          <li>Fixed "ImportError: no module named 'vfs'" errors when connecting to devices without the "vfs" module</li>
-        </ul>
-      <h3>0.5.5 - 20-5-2025</h3>
-         <ul
-          <li>Fixed "FormatFlagsConversionMismatchException" errors</li>
-        </ul>
-      <h3>0.5.4 - 20-5-2025</h3>
+       <h3>0.5.7 - 2-6-2025</h3>
         <ul>
-          <li>Added support for mounted volumes (File System tab, Upload Preview, Drag and Drop, Delete action)</li>
-          <li>File System tab now shows the amount of free and total storage space of every volume/mount point</li>
-          <li>Changed colors used by the Upload Preview dialog to hold convention with GIT color schemes</li>
-          <li>Stub package setting now accurately reflects the state of the attached MicroPython stubs</li>
-          <li>Upload Preview dialog now also highlights items excluded from synchronization</li>
-          <li>Added documentation for uploads and linked to it in the plugin</li>
-          <li>Reworked and fixed custom path upload run configurations</li>
-          <li>Optimized MicroPython scripts used by the plugin</li>
-          <li>Fixed stub issues with MicroPython stdlib</li>
+          <li>Fixed duplicated MicroPython REPL banners in terminal which occurred after uploads</li>
+          <li>Only enable delete action when at least one item is selected</li>
+          <li>Added a "Clear REPL" action</li>
         </ul>
         <br>
       <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
