@@ -46,6 +46,8 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PathUtilRt.Platform
 import com.intellij.util.asSafely
+import com.intellij.util.ui.UIUtil
+import com.jediterm.terminal.ui.JediTermWidget
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
@@ -604,6 +606,29 @@ internal class MpySoftResetAction : MpyReplAction(
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
         reporter.text("Resetting...")
         deviceService.reset()
+    }
+}
+
+internal class MpyClearReplAction : MpyAction(
+    "Clear REPL",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.ALWAYS,
+        enabledWhen = EnabledWhen.ALWAYS,
+        requiresConnection = false,
+        requiresRefreshAfter = false
+    )
+) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun performAction(e: AnActionEvent) {
+        val sure =
+            MessageDialogBuilder.yesNo("Clear REPL", "Are you sure you want to clear the REPL terminal?").ask(project)
+
+        if (sure) {
+            val terminal = project.service<MpyComponentRegistryService>().getTerminal()
+            val widget = UIUtil.findComponentOfType(terminal?.component, JediTermWidget::class.java)
+            widget?.terminalPanel?.clearBuffer()
+        }
     }
 }
 

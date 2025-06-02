@@ -6,6 +6,7 @@ The Changelog
 
 * Fixed duplicated MicroPython REPL banners in terminal which occurred after uploads
 * Only enable delete action when at least one item is selected
+* Added a "Clear REPL" action
 
 0.5.6 - 28.5.2025
 ------------------

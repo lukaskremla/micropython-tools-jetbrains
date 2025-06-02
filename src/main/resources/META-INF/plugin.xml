@@ -143,6 +143,10 @@
                     class="dev.micropythontools.ui.MpyInterruptAction"
                     icon="AllIcons.Actions.Suspend">
             </action>
+            <action id="micropythontools.repl.ClearREPL"
+                    class="dev.micropythontools.ui.MpyClearReplAction"
+                    icon="AllIcons.Actions.GC">
+            </action>
             <reference ref="micropythontools.repl.ConnectionParameters"/>
             <reference ref="micropythontools.repl.AutoClear"/>
         </group>
