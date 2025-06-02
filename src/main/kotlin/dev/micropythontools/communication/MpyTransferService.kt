@@ -175,7 +175,7 @@ internal class MpyTransferService(private val project: Project) {
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false,
-        customPathFolders: Set<String> = emptySet<String>()
+        customPathFolders: Set<String> = emptySet()
     ): Boolean {
 
         FileDocumentManager.getInstance().saveAllDocuments()
@@ -197,7 +197,6 @@ internal class MpyTransferService(private val project: Project) {
         val pathsToExclude = excludedPaths.toMutableSet()
 
         var uploadedSuccessfully = false
-        var shouldRefresh = false
 
         // Define the initially collected maps here to allow final verification in the clean-up action
         var fileToTargetPath = mutableMapOf<VirtualFile, String>()
@@ -207,7 +206,7 @@ internal class MpyTransferService(private val project: Project) {
             project = project,
             connectionRequired = true,
             description = "Upload",
-            requiresRefreshAfter = false,
+            requiresRefreshAfter = true,
             action = { reporter ->
                 reporter.text("collecting files and creating directories...")
                 reporter.fraction(null)
@@ -378,9 +377,10 @@ internal class MpyTransferService(private val project: Project) {
                         ), project
                     )
 
-                    shouldRefresh = false
                     uploadedSuccessfully = true
-                    return@performReplAction
+                    deviceService.state = State.CONNECTED
+                    deviceService.writeOffTtyBufferToTerminal()
+                    return@performReplAction PerformReplActionResult(null, false)
                 }
 
                 if (settings.state.showUploadPreviewDialog) {
@@ -401,13 +401,9 @@ internal class MpyTransferService(private val project: Project) {
                     }
 
                     if (!shouldContinue) {
-                        shouldRefresh = false
-                        return@performReplAction
+                        return@performReplAction PerformReplActionResult(null, false)
                     }
                 }
-
-                // Only set the shouldRefresh flag before actual file system changes start happening
-                shouldRefresh = true
 
                 // Perform synchronization
                 if (shouldSynchronize && targetPathsToRemove.isNotEmpty()) {
@@ -447,7 +443,11 @@ internal class MpyTransferService(private val project: Project) {
                 fileToTargetPath.forEach { (file, path) ->
                     reporter.details(path)
 
-                    deviceService.upload(path, file.contentsToByteArray(), ::progressCallbackHandler)
+                    deviceService.upload(
+                        path,
+                        file.contentsToByteArray(),
+                        ::progressCallbackHandler
+                    )
 
                     uploadedFiles++
                     checkCanceled()
@@ -465,21 +465,13 @@ internal class MpyTransferService(private val project: Project) {
                 uploadedSuccessfully = true
             },
 
-            cleanUpAction = { reporter ->
-                // Reporter text and fraction parameters are always set when the reporter is used elsewhere,
-                // but details aren't thus they should be cleaned up
-                reporter.details(null)
-
+            finalCheckAction = { reporter ->
                 withContext(NonCancellable) {
                     if (settings.state.usingUart && settings.state.increaseBaudrateForFileTransfers == "true") {
                         reporter.text("Restoring the original serial connection baudrate...")
 
                         deviceService.setBaudrate(SerialPort.BAUDRATE_115200)
                     }
-                }
-
-                if (shouldRefresh) {
-                    deviceService.fileSystemWidget?.refresh(reporter)
                 }
 
                 if (uploadedSuccessfully) {
@@ -617,11 +609,6 @@ internal class MpyTransferService(private val project: Project) {
 
                     downloadedFiles++
                 }
-            },
-            cleanUpAction = { reporter ->
-                // Reporter text and fraction parameters are always set when the reporter is used elsewhere,
-                // but details aren't thus they should be cleaned up
-                reporter.details(null)
             }
         )
     }

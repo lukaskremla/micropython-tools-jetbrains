@@ -147,8 +147,14 @@ internal class MpyDeviceService(val project: Project) : Disposable {
 
     val stateListeners = mutableListOf<StateListener>()
 
-    val state: State
+    // Also allow setting the value from outside MpyComm for complex scenarios (like with uploads),
+    // if the initial quiet (stays in tty detached) refresh finds all files are up to date, the state needs to be reset
+    // manually
+    var state: State
         get() = comm.state
+        set(value) {
+            comm.state = value
+        }
 
     var deviceInformation: DeviceInformation = DeviceInformation()
 
@@ -164,6 +170,12 @@ internal class MpyDeviceService(val project: Project) : Disposable {
     init {
         val newDisposable = Disposer.newDisposable("MpyDeviceServiceDisposable")
         Disposer.register(newDisposable, this)
+    }
+
+    // Some complex scenarios (such as uploads) may require the ability to manually print the MicroPython banner
+    // which would be stored in the offTtyBuffer
+    fun writeOffTtyBufferToTerminal() {
+        comm.outPipe.write(comm.offTtyByteBuffer.toUtf8String())
     }
 
     fun listSerialPorts(filterManufacturers: Boolean = settings.state.filterManufacturers): MutableList<String> {
@@ -272,15 +284,16 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                 ), project
             )
             disconnect(reporter)
-        } catch (_: CancellationException) {
+        } catch (e: CancellationException) {
             Notifications.Bus.notify(
                 Notification(
                     NOTIFICATION_GROUP,
                     "Connection attempt cancelled",
-                    NotificationType.ERROR
+                    NotificationType.INFORMATION
                 ), project
             )
             disconnect(reporter)
+            throw e
         }
     }
 
@@ -341,9 +354,9 @@ internal class MpyDeviceService(val project: Project) : Disposable {
      *
      * @throws MicroPythonExecutionException when REPL returns a non-empty stderr result
      */
-    suspend fun blindExecute(command: String): String {
+    suspend fun blindExecute(command: String, shouldStayDetached: Boolean = false): String {
         clearTerminalIfNeeded()
-        return comm.blindExecute(command)
+        return comm.blindExecute(command, shouldStayDetached)
     }
 
     /**
@@ -506,7 +519,8 @@ internal fun <T> performReplAction(
     requiresRefreshAfter: Boolean,
     cancelledMessage: String? = null,
     action: suspend (RawProgressReporter) -> T,
-    cleanUpAction: (suspend (RawProgressReporter) -> Unit)? = null
+    cleanUpAction: (suspend (RawProgressReporter) -> Unit)? = null,
+    finalCheckAction: (suspend (RawProgressReporter) -> Unit)? = null
 ): T? {
     val deviceService = project.service<MpyDeviceService>()
 
@@ -546,20 +560,24 @@ internal fun <T> performReplAction(
                     gotThroughTryBlock = true
                 } catch (_: TimeoutCancellationException) {
                     error = "$description timed out"
-                } catch (_: CancellationException) {
+                } catch (e: CancellationException) {
                     wasCancelled = true
 
                     error = cancelledMessage ?: "$description cancelled"
                     errorType = NotificationType.INFORMATION
+                    throw e
                 } catch (e: IOException) {
                     error = "$description I/O error - ${e.localizedMessage ?: e.message ?: "No message"}"
                 } catch (e: Exception) {
                     error = e.localizedMessage ?: e.message
                     error = if (error.isNullOrBlank()) "$description error - ${e::class.simpleName}"
                     else "$description error - ${e::class.simpleName}: $error"
-                }
-                if (!error.isNullOrBlank()) {
-                    Notifications.Bus.notify(Notification(NOTIFICATION_GROUP, error, errorType), project)
+                } finally {
+                    withContext(NonCancellable) {
+                        if (!error.isNullOrBlank()) {
+                            Notifications.Bus.notify(Notification(NOTIFICATION_GROUP, error, errorType), project)
+                        }
+                    }
                 }
             }
         }
@@ -581,11 +599,18 @@ internal fun <T> performReplAction(
                             else -> true
                         }
 
+                        println(action)
+                        println(shouldRefresh)
+                        println(requiresRefreshAfter)
+
                         if (requiresRefreshAfter && shouldRefresh) {
                             deviceService.fileSystemWidget?.refresh(reporter)
                         }
-                    } catch (_: CancellationException) {
+
+                        finalCheckAction?.let { finalCheckAction(reporter) }
+                    } catch (e: CancellationException) {
                         error = "Clean up action cancelled"
+                        throw e
                     } catch (e: Throwable) {
                         error = e.localizedMessage ?: e.message
                         error = if (error.isNullOrBlank()) {
@@ -594,17 +619,20 @@ internal fun <T> performReplAction(
                             "$description error - ${e::class.simpleName}: $error"
                         }
                         error = "Clean up Exception: $error"
-                    }
-                    if (!error.isNullOrBlank()) {
-                        deviceService.disconnect(reporter)
+                    } finally {
+                        withContext(NonCancellable) {
+                            if (!error.isNullOrBlank()) {
+                                deviceService.disconnect(reporter)
 
-                        Notifications.Bus.notify(
-                            Notification(
-                                NOTIFICATION_GROUP,
-                                "$error - disconnecting to prevent a de-synchronized state",
-                                NotificationType.ERROR
-                            ), project
-                        )
+                                Notifications.Bus.notify(
+                                    Notification(
+                                        NOTIFICATION_GROUP,
+                                        "$error - disconnecting to prevent a de-synchronized state",
+                                        NotificationType.ERROR
+                                    ), project
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -203,7 +203,7 @@ internal abstract class MpyUploadActionBase(
         enabledWhen = EnabledWhen.PLUGIN_ENABLED,
         requiresConnection = true,
         requiresRefreshAfter = true,
-        cancelledMessage = "Upload operation cancelled"
+        cancelledMessage = "Upload cancelled"
     )
 ) {
     init {
@@ -264,7 +264,7 @@ internal class MpyRefreshAction : MpyReplAction(
         visibleWhen = VisibleWhen.PLUGIN_ENABLED,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = false,
-        requiresRefreshAfter = false,
+        requiresRefreshAfter = false, // This option isn't used, refresh is instead called explicitly, (allows cancellation)
         cancelledMessage = "Refresh operation cancelled"
     )
 ) {
@@ -363,6 +363,10 @@ internal class MpyDeleteAction : MpyReplAction(
             .toSet()
 
         deviceService.recursivelySafeDeletePaths(pathsToDelete)
+    }
+
+    override fun customUpdate(e: AnActionEvent) {
+        e.presentation.isEnabled = !deviceService.fileSystemWidget?.selectedFiles().isNullOrEmpty()
     }
 
     override fun dialogToShowFirst(e: AnActionEvent): DialogResult {

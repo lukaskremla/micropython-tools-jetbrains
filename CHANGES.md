@@ -1,6 +1,12 @@
 The Changelog
 =============
 
+0.5.7 - 2.6.2025
+------------------
+
+* Fixed duplicated MicroPython REPL banners in terminal which occurred after uploads
+* Only enable delete action when at least one item is selected
+
 0.5.6 - 28.5.2025
 ------------------
 
