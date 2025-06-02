@@ -464,8 +464,7 @@ internal class MpyTransferService(private val project: Project) {
 
                 uploadedSuccessfully = true
             },
-
-            finalCheckAction = { reporter ->
+            cleanUpAction = { reporter ->
                 withContext(NonCancellable) {
                     if (settings.state.usingUart && settings.state.increaseBaudrateForFileTransfers == "true") {
                         reporter.text("Restoring the original serial connection baudrate...")
@@ -473,7 +472,8 @@ internal class MpyTransferService(private val project: Project) {
                         deviceService.setBaudrate(SerialPort.BAUDRATE_115200)
                     }
                 }
-
+            },
+            finalCheckAction = {
                 if (uploadedSuccessfully) {
                     val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
 

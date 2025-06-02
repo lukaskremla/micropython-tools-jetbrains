@@ -202,7 +202,7 @@ internal abstract class MpyUploadActionBase(
         visibleWhen = VisibleWhen.PLUGIN_ENABLED,
         enabledWhen = EnabledWhen.PLUGIN_ENABLED,
         requiresConnection = true,
-        requiresRefreshAfter = true,
+        requiresRefreshAfter = false, // A manual performReplAction is called by the uploading class
         cancelledMessage = "Upload cancelled"
     )
 ) {

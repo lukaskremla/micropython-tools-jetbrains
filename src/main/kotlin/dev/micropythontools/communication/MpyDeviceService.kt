@@ -520,7 +520,7 @@ internal fun <T> performReplAction(
     cancelledMessage: String? = null,
     action: suspend (RawProgressReporter) -> T,
     cleanUpAction: (suspend (RawProgressReporter) -> Unit)? = null,
-    finalCheckAction: (suspend (RawProgressReporter) -> Unit)? = null
+    finalCheckAction: (() -> Unit)? = null
 ): T? {
     val deviceService = project.service<MpyDeviceService>()
 
@@ -542,7 +542,8 @@ internal fun <T> performReplAction(
 
     var result: T? = null
 
-    var gotThroughTryBlock = false
+    var mainActionExecuted = false
+    var cleanUpActionExecuted = false
     var wasCancelled = false
 
     try {
@@ -557,7 +558,7 @@ internal fun <T> performReplAction(
                     }
                     result = action(reporter)
 
-                    gotThroughTryBlock = true
+                    mainActionExecuted = true
                 } catch (_: TimeoutCancellationException) {
                     error = "$description timed out"
                 } catch (e: CancellationException) {
@@ -582,7 +583,7 @@ internal fun <T> performReplAction(
             }
         }
     } finally {
-        if (gotThroughTryBlock || wasCancelled) {
+        if (mainActionExecuted || wasCancelled) {
             runWithModalProgressBlocking(project, "Cleaning up after board operation...") {
                 reportRawProgress { reporter ->
                     var error: String? = null
@@ -599,15 +600,13 @@ internal fun <T> performReplAction(
                             else -> true
                         }
 
-                        println(action)
-                        println(shouldRefresh)
-                        println(requiresRefreshAfter)
-
                         if (requiresRefreshAfter && shouldRefresh) {
                             deviceService.fileSystemWidget?.refresh(reporter)
                         }
 
-                        finalCheckAction?.let { finalCheckAction(reporter) }
+                        cleanUpActionExecuted = true
+                    } catch (_: TimeoutCancellationException) {
+                        error = "Clean up action timed out"
                     } catch (e: CancellationException) {
                         error = "Clean up action cancelled"
                         throw e
@@ -635,6 +634,10 @@ internal fun <T> performReplAction(
                         }
                     }
                 }
+            }
+
+            if (mainActionExecuted && cleanUpActionExecuted && !wasCancelled) {
+                finalCheckAction?.let { finalCheckAction() }
             }
         }
     }
