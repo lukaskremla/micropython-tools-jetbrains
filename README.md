@@ -55,14 +55,14 @@ Usage tips and documentation are available [here](https://github.com/lukaskremla
     - Exclude on-device paths from synchronization
       ![Upload Run Configuration](media/run_configuration_upload.png)
 - #### Execute in REPL
-    - Execute selected ".py", ".mpy" file or code in REPL without uploading it to the device
+    - Execute a ".py", ".mpy" file or selected code fragmennts in REPL without uploading anything to the device
       ![Execute in REPL Run Configuration](media/run_configuration_execute.png)
 
 ### Context Menu Actions
 
 - Quickly upload or execute selected files
   ![Context Menu File Actions](media/file_actions.png)
-- Custom "Mark as MicroPython Sources Root" action that allows compatibility many different JetBrains IDEs
+- Custom "Mark as MicroPython Sources Root" action that allows compatibility with many different JetBrains IDEs
   ![Context Menu MicroPython Sources Actions](media/micropython_sources.png)
 
 ### Settings
@@ -76,12 +76,12 @@ Usage tips and documentation are available [here](https://github.com/lukaskremla
 
 ### Other
 
-- Automatically skips already uploaded files (on boards with the required crc32 binascii capabilities)
+- Automatically skips already uploaded files (on boards with binascii.crc32 hashing capabilities)
 
 ## Requirements
 
 * A valid Python interpreter 3.10+
 * Python Community plugin (For non-PyCharm IDEs)
-* A development board with MicroPython installed (1.20+ is recommended)
+* A development board with MicroPython installed (version 1.20+)
 
-The plugin is licensed under the terms of the Apache 2 license.
+This plugin is licensed under the terms of the Apache 2 license.
