@@ -3,6 +3,7 @@ name: Verifier Check
 on:
   schedule:
     - cron: '0 3 * * 1'
+  workflow_dispatch:
 
 # Allow cancelling all previous runs for the same branch
 # See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
