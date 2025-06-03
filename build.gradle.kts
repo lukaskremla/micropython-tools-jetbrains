@@ -82,8 +82,6 @@ intellijPlatform {
     }
 
     pluginVerification {
-        cliPath = file("verifier-cli-1.386-all.jar")
-
         ides {
             select {
                 types = listOf(
