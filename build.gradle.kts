@@ -85,9 +85,7 @@ intellijPlatform {
         ides {
             select {
                 types = listOf(
-                    IntelliJPlatformType.CLion,
-                    IntelliJPlatformType.PyCharmProfessional,
-                    IntelliJPlatformType.PyCharmCommunity,
+                    IntelliJPlatformType.PyCharmCommunity
                 )
                 channels = listOf(
                     ProductRelease.Channel.RELEASE,
