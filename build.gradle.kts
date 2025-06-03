@@ -86,17 +86,8 @@ intellijPlatform {
             select {
                 types = listOf(
                     IntelliJPlatformType.CLion,
-                    IntelliJPlatformType.AndroidStudio,
-                    IntelliJPlatformType.Aqua,
-                    IntelliJPlatformType.CLion,
-                    IntelliJPlatformType.DataGrip,
-                    IntelliJPlatformType.DataSpell,
-                    IntelliJPlatformType.GoLand,
                     IntelliJPlatformType.PyCharmProfessional,
                     IntelliJPlatformType.PyCharmCommunity,
-                    IntelliJPlatformType.Rider,
-                    IntelliJPlatformType.RustRover,
-                    IntelliJPlatformType.WebStorm
                 )
                 channels = listOf(
                     ProductRelease.Channel.RELEASE,
