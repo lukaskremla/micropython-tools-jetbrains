@@ -12,10 +12,10 @@
 - [Stubs/Typehints](#stubstypehints)
     - [Built-in stub package manager](#built-in-stub-package-manager)
     - [Custom stub package](#custom-stub-package)
-- [File System Widget]()
-    - [File System Actions]()
-    - [Volume Support]()
-- [REPL Widget]()
+- [File System Widget](#file-system-widget)
+    - [File System Actions](#file-system-actions)
+    - [Volume/SD card Support](#volume-support)
+- [REPL Widget](#repl-widget)
 - [Uploads](#uploads)
     - [Run Configurations](#run-configurations)
         - [Project](#project)
@@ -23,9 +23,9 @@
         - [Custom Path](#custom-path)
     - [Drag and Drop](#drag-and-drop)
     - [Context Menu Actions](#context-menu-actions)
-- [Execute File in REPL]()
-    - [Run Configuration]()
-    - [Context menu Action]()
+- [Execute File in REPL](#execute-file-in-repl)
+    - [Run Configuration](#run-configuration)
+    - [Context menu Action](#context-menu-action)
 
 ## Getting Started
 
@@ -61,13 +61,13 @@ be uploaded, and any items deleted from your project will also be deleted from t
 
 ## Communication Types
 
-Both official ways (Serial, WebREPL) to communicate with MicroPython boards are supported. The plugin utilizes a highly
+Both official ways (Serial, WebREPL) to communicate with MicroPython devices are supported. The plugin utilizes a highly
 optimized implementation of MicroPython's raw-paste mode with flow control. This ensures the fastest and most reliable
 communication that REPL can support.
 
 ### Serial
 
-Serial communication is the best and most common way to work with MicroPython boards, it's the fastest and most
+Serial communication is the best and most common way to work with MicroPython devices, it's the fastest and most
 reliable. It should be preferred over WebREPL whenever possible.
 
 By default, the plugin's port-select dropdown menu filters out serial ports without a detectable manufacturer entry -
@@ -80,7 +80,7 @@ it, try to disable this setting as it might be falsely filtering out this port.
 
 ### WebREPL
 
-WebREPL is MicroPython's custom communication protocol meant to facilitate remote development on MicroPython boards. It
+WebREPL is MicroPython's custom communication protocol meant to facilitate remote development on MicroPython devices. It
 was primarily intended for use by browsers, and for this reason it uses WebSockets instead of pure TCP connections
 (those are prohibited by browsers for security reasons).
 
@@ -104,7 +104,7 @@ At this time the plugin only supports a single active connection, supporting mul
 overly complex and ambiguous. Additionally, the plugin utilizes a modal (blocking) progress dialog while communicating
 with the device. This ensures files can't be modified during an upload and that no more than one action happens at once.
 
-Supporting more than one connected device at a time would require a complete rewrite and only offer diminishing results
+Supporting more than one connected device at a time would require a complete rewrite and only offer diminishing returns
 due to the modal nature of the dialog.
 
 If you need to work with multiple devices simultaneously, you can either create a separate project for each device and
@@ -136,9 +136,17 @@ You can also use your own custom stub packages like this:
    folder, make sure to explicitly mark it as a `Sources Root` as well, otherwise it will be ignored.
 5. You may need to restart the IDE to trigger a typehint re-scan.
 
+# File System Widget
+
+## File System Actions
+
+## Volume Support
+
+# REPL Widget
+
 ## Uploads
 
-There are several options for uploading items. All of them will skip already uploaded files if the connected board is
+There are several options for uploading items. All of them will skip already uploaded files if the connected device is
 capable of calculating CRC32 hashes.
 
 ### Run Configurations
@@ -223,3 +231,22 @@ can be uploaded directly to the device root `/`, relative to the project root, o
 MicroPython Sources Root (if applicable).
 
 Excluded and leading dot items are still skipped. Test source roots get uploaded if they are explicitly selected.
+
+# Execute File in REPL
+
+Executing a file in REPL is a handy feature for a wide array of scenarios, from running test scripts, executing code
+fragments or wanting to avoid blocking a device off by a bug in your `main.py`. This plugin offers two ways to execute
+code directly in REPL without it ever touching the file system of your device.
+
+## Run Configuration
+
+Setting up an Execute File in REPL run configuration will allow you to easily run a file with one click or run a set of
+test files programmatically as a part of some larger run configuration chain.
+
+## Context menu Action
+
+The execute code in REPL action is available in multiple menus. It's available for `.py` and `.mpy` files when you
+right-click them in the project tree, and it's also available for files open in the editor, both in the file's editor
+tab and when right-clicking anywhere in the open editor.
+
+While you're in the file's editor you can also select code and execute just the selected Fragment in REPL.
