@@ -70,17 +70,17 @@ Usage tips and documentation are available
       ![Execute in REPL Run Configuration](media/run_configuration_execute.png)
       ![Execute Code Fragment in REPL](media/execute_fragment.png)
 
+### MicroPython Stubs
+
+- Built-in stubs management Integrates all available MicroPython stubs packages
+  by [Jos Verlinde](https://github.com/Josverl/micropython-stubs)
+
 ### Context Menu Actions
 
 - Quickly upload or execute selected files
   ![Context Menu File Actions](media/file_actions.png)
 - Custom "Mark as MicroPython Sources Root" action that allows compatibility with many different JetBrains IDEs
   ![Context Menu MicroPython Sources Actions](media/micropython_sources.png)
-
-### MicroPython Stubs
-
-- Built-in stubs management Integrates all available MicroPython stubs packages
-  by [Jos Verlinde](https://github.com/Josverl/micropython-stubs)
 
 ### Settings
 
