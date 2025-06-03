@@ -5,13 +5,27 @@
 - [Getting Started](#getting-started)
     - [Installation](#installation)
     - [Setting Up a Run Configuration](#setting-up-a-run-configuration)
+- [Communication Types](#communication-types)
+    - [Serial](#serial)
+    - [WebREPL](#webrepl)
+    - [Multiple Simultaneous Connections](#multiple-simultaneous-connections)
+- [Stubs/Typehints](#stubstypehints)
+    - [Built-in stub package manager](#built-in-stub-package-manager)
+    - [Custom stub package](#custom-stub-package)
+- [File System Widget](#file-system-widget)
+    - [Drag and Drop](#drag-and-drop-in-file-system-widget)
+    - [Volume/SD card Support](#volume-support)
+- [REPL Widget](#repl-widget)
 - [Uploads](#uploads)
     - [Run Configurations](#run-configurations)
         - [Project](#project)
         - [Selected MicroPython Sources Roots](#selected-micropython-sources-roots)
         - [Custom Path](#custom-path)
-    - [Drag and Drop](#drag-and-drop)
+    - [Drag and Drop](#drag-and-drop-uploads)
     - [Context Menu Actions](#context-menu-actions)
+- [Execute File in REPL](#execute-file-in-repl)
+    - [Run Configuration](#run-configuration)
+    - [Context menu Action](#context-menu-action)
 
 ## Getting Started
 
@@ -45,9 +59,130 @@ You can now treat this folder as the file system root `/` of your device and str
 When you make changes to your project, you can simply execute this run configuration — all new and modified items will
 be uploaded, and any items deleted from your project will also be deleted from the device.
 
+## Communication Types
+
+Both official ways (Serial, WebREPL) to communicate with MicroPython devices are supported. The plugin utilizes a highly
+optimized implementation of MicroPython's raw-paste mode with flow control. This ensures the fastest and most reliable
+communication that REPL can support.
+
+### Serial
+
+Serial communication is the best and most common way to work with MicroPython devices, it's the fastest and most
+reliable. It should be preferred over WebREPL whenever possible.
+
+By default, the plugin's port-select dropdown menu filters out serial ports without a detectable manufacturer entry -
+these ports often aren't hardware ports, but virtual ones (such as the default macOS "
+/dev/tty.Bluetooth-Incoming-Port").
+
+Some microcontrollers might not have the device manufacturer entry of their port populated and thus get filtered out
+when they shouldn't. If you can't find the port you want to connect to in the dropdown menu, but your computer does see
+it, try to disable this setting as it might be falsely filtering out this port.
+
+### WebREPL
+
+WebREPL is MicroPython's custom communication protocol meant to facilitate remote development on MicroPython devices. It
+was primarily intended for use by browsers, and for this reason it uses WebSockets instead of pure TCP connections
+(those are prohibited by browsers for security reasons).
+
+The protocol is unfinished, riddled with many bugs, highly-unoptimized and difficult to implement right in a tool such
+as this plugin due to being WebSocket based.
+
+The plugin's current WebREPL implementation is as fast as the protocol permits, however, despite that it's incredibly
+slow. Even simple scripts (such as File System scan) take long to execute, and uploads take ages.
+
+It's advisable to avoid WebREPL for any projects that involve uploads with sizes of hundreds of kilobytes and to explore
+custom remote development solutions if it is a necessity for your project.
+
+If you do want to use or try WebREPL even with all of its constraints, it's recommended to add a delay after
+starting a WebREPL server on the device to ensure that debug output isn't missed while the plugin is re-establishing a
+WebREPL connection after a device reset. Some more useful information can also be found in
+[this issue](https://github.com/lukaskremla/micropython-tools-jetbrains/issues/26#issuecomment-2843503240).
+
+### Multiple Simultaneous Connections
+
+At this time the plugin only supports a single active connection, supporting multiple simultaneous connections would be
+overly complex and ambiguous. Additionally, the plugin utilizes a modal (blocking) progress dialog while communicating
+with the device. This ensures files can't be modified during an upload and that no more than one action happens at once.
+
+Supporting more than one connected device at a time would require a complete rewrite and only offer diminishing returns
+due to the modal nature of the dialog.
+
+If you need to work with multiple devices simultaneously, you can either create a separate project for each device and
+then have them open simultaneously. Alternatively, you can combine this plugin with a command line tool such as mpremote
+or rshell and use the plugin for uploading code and the command line tool as a REPL monitor. More info can be found
+[here](https://github.com/lukaskremla/micropython-tools-jetbrains/discussions/24).
+
+## Stubs/Typehints
+
+MicroPython stubs make the IDE recognize MicroPython specific modules (machine, network) and the MicroPythons stdlib
+modules (asyncio, time). This brings auto-completion, code checking and allows you to see what methods are available.
+
+### Built-in stub package manager
+
+The plugin has a built-in MicroPython stub package manager. It utilizes MicroPython stubs by
+[Jos Verlinde](https://github.com/Josverl/micropython-stubs). The packages come bundled with the plugin, and you can
+select between them via the auto-completion text field.
+
+Just start typing "micropython" and you'll be able to browse the available packages.
+
+### Custom stub package
+
+You can also use your own custom stub packages like this:
+
+1. Disable the plugin's "Enable MicroPython stubs" option, so that it doesn't interfere with your customs stubs.
+2. Create a folder in your project, it can be called anything, `.stubs` for example.
+3. Mark the created folder as a `Sources Root` via the right click `Mark Directory as` action
+4. Put the `.pyi` files and directories containing them in the created folder. If your stubs also have an `stdlib`
+   folder, make sure to explicitly mark it as a `Sources Root` as well, otherwise it will be ignored.
+5. You may need to restart the IDE to trigger a typehint re-scan.
+
+## File System Widget
+
+The File System widget is one of the most useful features of this plugin. Being able to see the state of the file
+system and manage it just like on your computer’s OS is priceless.
+
+Due to the constrained nature of MicroPython, file system scans cannot occur in the background, they must interrupt code
+running on the device. In order for the file information that the plugin displays to be accurate, a scan is
+automatically carried out after every file system operation (uploads, deletions, creating directories, etc.)
+
+If this automatic refresh is cancelled, the plugin will disconnect, as it can no longer trust that the data it has
+reflects the true state of the device's file system.
+
+You can also trigger a refresh manually via the toolbar action, this is useful for when you want to see changes your
+code has made.
+
+### Drag and Drop in File System Widget
+
+The File System widget's tree items fully support drag and drop for both uploads and re-arranging the file system. More
+info on drag and drop uploads can be found [here](#drag-and-drop-uploads).
+
+### Volume Support
+
+The File System widget also supports mounted volumes (SD cards and more). This support works automatically for
+MicroPython versions 1.25+, which introduced an efficient way to query the device's mount points.
+
+The plugin will display SD cards and other mounted volumes on the top level similarly to the FS root "/". It will also
+display the stats of how much storage is used up, how much is available and some action descriptions will change to
+reflect that a volume is going to be affected.
+
+Volume support is also available for MicroPython versions below 1.25, it can be enabled by checking the "legacy volume
+support" checkbox in the settings.
+
+NOTE: Legacy support will slow down refresh operations anytime you connect a device with MicroPython version below 1.25,
+because the check is more comprehensive and demanding.
+
+## REPL Widget
+
+The REPL Widget of this plugin lets you directly access REPL as it is. This means that all MicroPython REPL keyboard
+shortcuts (Raw REPL, Paste mode, Reset) will get passed through to the device. For your comfort the plugin also exposes
+some commonly used REPL actions (reset and interrupt) into toolbar buttons.
+
+Enabling Auto Clear REPL will clear the terminal after every major action (FS refresh, upload, download, reset). This is
+useful to prevent cluttering of the terminal.
+
 ## Uploads
 
-There are several options for uploading items. All of them will skip already uploaded files if the connected board is
+There are several options for uploading items. All of them will skip already uploaded files if the connected device is
 capable of calculating CRC32 hashes.
 
 ### Run Configurations
@@ -118,7 +253,7 @@ must specify it in the `Upload to` field.
 This run configuration type can also be useful if you want to upload a test source root, which would be ignored by the  
 previous two types. Excluded and leading dot items are still skipped.
 
-### Drag and Drop
+### Drag and Drop Uploads
 
 You can quickly upload items by dragging them from the project file tree to the File System tab in the plugin's tool  
 window. The items will get uploaded where they are dropped.
@@ -132,3 +267,22 @@ can be uploaded directly to the device root `/`, relative to the project root, o
 MicroPython Sources Root (if applicable).
 
 Excluded and leading dot items are still skipped. Test source roots get uploaded if they are explicitly selected.
+
+## Execute File in REPL
+
+Executing a file in REPL is a handy feature for a wide array of scenarios, from running test scripts, executing code
+fragments or wanting to avoid blocking a device off by a bug in your `main.py`. This plugin offers two ways to execute
+code directly in REPL without it ever touching the file system of your device.
+
+### Run Configuration
+
+Setting up an Execute File in REPL run configuration will allow you to easily run a file with one click or run a set of
+test files programmatically as a part of some larger run configuration chain. Only `.py` and `.mpy` are accepted.
+
+### Context menu Action
+
+The execute code in REPL action is available in multiple menus. It's available for `.py` and `.mpy` files when you
+right-click them in the project tree, and it's also available for files open in the editor, both in the file's editor
+tab and when right-clicking anywhere in the open editor.
+
+While you're in the file's editor you can also select code and execute just the selected Fragment in REPL.

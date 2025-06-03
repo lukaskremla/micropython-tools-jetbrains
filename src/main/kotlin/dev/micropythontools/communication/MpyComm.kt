@@ -80,9 +80,9 @@ internal open class MpyComm(
     @Volatile
     private var mpyClient: MpyClient? = null
 
-    private val offTtyByteBuffer = ByteArrayOutputStream()
+    internal val offTtyByteBuffer = ByteArrayOutputStream()
     private val webSocketMutex = Mutex()
-    private val outPipe = PipedWriter()
+    internal val outPipe = PipedWriter()
     private val inPipe = PipedReader(outPipe, 1000)
 
     // These variables are used by instantRun functionality
@@ -144,7 +144,12 @@ internal open class MpyComm(
         val command = commands.joinToString("\n")
 
         // Extract the result so that possible errors are reported
-        doBlindExecute(command, progressCallback = progressCallback, payloadSize = content.size)
+        doBlindExecute(
+            command,
+            progressCallback = progressCallback,
+            payloadSize = content.size,
+            shouldStayDetached = true
+        )
     }
 
     suspend fun download(fileName: String): ByteArray {
@@ -177,7 +182,10 @@ internal open class MpyComm(
         webSocketMutex.withLock {
             if (mpyClient is MpySerialClient) {
                 // Reconfigure the REPL to the specified baudrate
-                doBlindExecute("import machine; machine.UART(0, baudrate=$baudrate)", redirectToRepl = true)
+                doBlindExecute(
+                    "import machine, time; machine.UART(0, baudrate=$baudrate); time.sleep(2)",
+                    redirectToRepl = true
+                )
 
                 // Move back to TTY_DETACHED
                 state = State.TTY_DETACHED
@@ -419,7 +427,7 @@ internal open class MpyComm(
         commands.add("import gc")
         commands.add("gc.collect()")
 
-        blindExecute(commands.joinToString("\n"))
+        blindExecute(commands.joinToString("\n"), shouldStayDetached = true)
     }
 
     internal suspend fun safeCreateDirectories(paths: Set<String>) {
@@ -453,22 +461,24 @@ internal open class MpyComm(
         commands.add("import gc")
         commands.add("gc.collect()")
 
-        blindExecute(commands.joinToString("\n"))
+        blindExecute(commands.joinToString("\n"), shouldStayDetached = true)
     }
 
     /**
      * Method for executing MicroPython scripts and commands over REPL
      *
      * @param command Command string to execute
+     * @param shouldStayDetached Whether to redirect output back to REPL console after executing the command,
+     * this is only used in complex operations involving multiple executions, such as uploads
      *
      * @return The execution result as a string
      *
      * @throws MicroPythonExecutionException when REPL returns a non-empty stderr result
      */
-    internal suspend fun blindExecute(command: String): String {
+    internal suspend fun blindExecute(command: String, shouldStayDetached: Boolean = false): String {
         checkConnected()
         webSocketMutex.withLock {
-            return doBlindExecute(command)
+            return doBlindExecute(command, shouldStayDetached = shouldStayDetached)
         }
     }
 
@@ -481,9 +491,8 @@ internal open class MpyComm(
 
     internal fun checkConnected() {
         when (state) {
-            State.CONNECTED -> {}
-            State.DISCONNECTING, State.DISCONNECTED, State.CONNECTING -> throw IOException("Not connected")
-            State.TTY_DETACHED -> throw IOException("A command is already being executed")
+            State.CONNECTED, State.TTY_DETACHED -> {}
+            else -> throw IOException("Not connected")
         }
     }
 
@@ -558,10 +567,16 @@ internal open class MpyComm(
         command: String,
         progressCallback: ((uploadedBytes: Double) -> Unit)? = null,
         payloadSize: Int = 0,
-        redirectToRepl: Boolean = false
+        redirectToRepl: Boolean = false,
+        shouldStayDetached: Boolean = false
     ): String {
+        var stayInTtyDetached = shouldStayDetached
+
         // Redirect REPL input from the terminal view
         state = State.TTY_DETACHED
+
+        // Ensure the buffer is clean
+        offTtyByteBuffer.reset()
 
         // Reset raw repl instantRun state variables
         shouldExitRawRepl = false
@@ -777,9 +792,11 @@ internal open class MpyComm(
             // Return the output string
             return stdout
         } catch (e: CancellationException) {
+            stayInTtyDetached = false
             throw e
         } catch (e: MicroPythonExecutionException) {
             // MicroPython command error, meant to bubble up and not disconnect
+            stayInTtyDetached = false
             throw e
         } catch (e: Throwable) {
             // Unhandled exception occurred, disconnect
@@ -804,7 +821,9 @@ internal open class MpyComm(
                     offTtyByteBuffer.reset()
 
                     // Return to the CONNECTED state
-                    state = State.CONNECTED
+                    if (!stayInTtyDetached) {
+                        state = State.CONNECTED
+                    }
                 }
             }
         }

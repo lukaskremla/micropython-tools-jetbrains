@@ -1,6 +1,28 @@
 The Changelog
 =============
 
+0.5.8 -
+------------------
+
+* Fixed a bug in the Execute in REPL run configuration validity check
+
+0.5.7 - 2.6.2025
+------------------
+
+* Fixed duplicated MicroPython REPL banners in terminal which occurred after uploads
+* Only enable delete action when at least one item is selected
+* Added a "Clear REPL" action
+
+0.5.6 - 28.5.2025
+------------------
+
+* Fixed "ImportError: no module named 'vfs'" errors when connecting to devices without the "vfs" module
+
+0.5.5 - 20.5.2025
+------------------
+
+* Fixed "FormatFlagsConversionMismatchException" errors
+
 0.5.4 - 20.5.2025
 ------------------
 

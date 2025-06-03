@@ -488,10 +488,16 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         val scriptFileName = if (hash) "scan_file_system_hashing.py" else "scan_file_system.py"
 
         val fileSystemScanScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
-            .format(if (settings.state.legacyVolumeSupportEnabled) "True" else "False")
+            .replace(
+                "___l=False",
+                "___l=${if (settings.state.legacyVolumeSupportEnabled) "True" else "False"}"
+            )
 
         try {
-            dirList = deviceService.blindExecute(fileSystemScanScript)
+            // If not using the reporter, this refresh is a part of some complex operation that needs
+            // information about the file system state, such as uploads
+            // In that scenario it shouldn't return to the connected state to prevent emitting extra MicroPython banners
+            dirList = deviceService.blindExecute(fileSystemScanScript, !useReporter)
         } catch (e: CancellationException) {
             if (disconnectOnCancel) {
                 deviceService.disconnect(reporter)

@@ -18,17 +18,17 @@ import binascii
 import gc
 import os
 
-import vfs
-
 ba = bytearray(1024)
 mv = memoryview(ba)
+___l = False
 
 
 def s():
     try:
+        import vfs
         mount_points = [mount_tuple[1] for mount_tuple in vfs.mount()]
-    except TypeError:
-        if "%s":
+    except (ImportError, TypeError):
+        if ___l:
             path_to_stat_tuple = {"/": os.statvfs("/")}
 
             for result in os.ilistdir("/"):

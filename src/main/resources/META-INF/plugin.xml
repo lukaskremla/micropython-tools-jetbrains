@@ -2,17 +2,11 @@
     <name>MicroPython Tools</name>
     <id>micropython-tools-jetbrains</id>
     <change-notes><![CDATA[
-      <h3>0.5.4 - 20-5-2025</h3>
+       <h3>0.5.7 - 2-6-2025</h3>
         <ul>
-          <li>Added support for mounted volumes (File System tab, Upload Preview, Drag and Drop, Delete action)</li>
-          <li>File System tab now shows the amount of free and total storage space of every volume/mount point</li>
-          <li>Changed colors used by the Upload Preview dialog to hold convention with GIT color schemes</li>
-          <li>Stub package setting now accurately reflects the state of the attached MicroPython stubs</li>
-          <li>Upload Preview dialog now also highlights items excluded from synchronization</li>
-          <li>Added documentation for uploads and linked to it in the plugin</li>
-          <li>Reworked and fixed custom path upload run configurations</li>
-          <li>Optimized MicroPython scripts used by the plugin</li>
-          <li>Fixed stub issues with MicroPython stdlib</li>
+          <li>Fixed duplicated MicroPython REPL banners in terminal which occurred after uploads</li>
+          <li>Only enable delete action when at least one item is selected</li>
+          <li>Added a "Clear REPL" action</li>
         </ul>
         <br>
       <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
@@ -24,6 +18,7 @@
       <li>Efficiently upload files to MPY boards (Serial, WebREPL)</li>
       <li>Comfortably view and interact with the board's file system with drag and drop support</li>
       <li>Built-in stub manager utilizing stubs by <a href="https://github.com/Josverl/micropython-stubs">Jos Verlinde</a></li>
+      <li>Upload preview dialog that shows how the file system will look after the upload</li>
       <li>Observe code execution through REPL</li>
     </ul>
   <p>All microcontrollers and MicroPython versions above 1.20.0 should be supported. However, certain features might not be available on highly resource constrained microcontrollers such as the ESP8266.</a></p>
@@ -134,6 +129,10 @@
             <action id="micropythontools.repl.Interrupt"
                     class="dev.micropythontools.ui.MpyInterruptAction"
                     icon="AllIcons.Actions.Suspend">
+            </action>
+            <action id="micropythontools.repl.ClearREPL"
+                    class="dev.micropythontools.ui.MpyClearReplAction"
+                    icon="AllIcons.Actions.GC">
             </action>
             <reference ref="micropythontools.repl.ConnectionParameters"/>
             <reference ref="micropythontools.repl.AutoClear"/>
