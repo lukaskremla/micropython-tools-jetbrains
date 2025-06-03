@@ -18,6 +18,7 @@
       <li>Efficiently upload files to MPY boards (Serial, WebREPL)</li>
       <li>Comfortably view and interact with the board's file system with drag and drop support</li>
       <li>Built-in stub manager utilizing stubs by <a href="https://github.com/Josverl/micropython-stubs">Jos Verlinde</a></li>
+      <li>Upload preview dialog that shows how the file system will look after the upload</li>
       <li>Observe code execution through REPL</li>
     </ul>
   <p>All microcontrollers and MicroPython versions above 1.20.0 should be supported. However, certain features might not be available on highly resource constrained microcontrollers such as the ESP8266.</a></p>

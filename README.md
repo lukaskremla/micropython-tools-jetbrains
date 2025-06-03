@@ -22,30 +22,41 @@ requests, feel free to start a discussion.
 
 Some of the features you can expect soon include:
 
-- Built-in MicroPython firmware flashing support
+- Reworked stubs manager, allowing on-demand downloading and updating of stub packages
 - Integration with mpy-cross to allow compiling to bytecode
 
 Long term plans:
 
+- Built-in MicroPython firmware flashing support
 - After the full-release of this plugin I might consider also developing MicroPython plugins for VSCode
   and possibly Visual Studio 2022
 
 ## Installation, Getting Started and Documentation
 
-Usage tips and documentation are available [here](https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md)
+Usage tips and documentation are available
+[here](https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md)
 
 ## Features
 
-### File System widget
+### File System Widget
 
-- Easily view and interact with the MicroPython device file system
+- Easily view and interact with the device's file system
 - Upload to or reorganize the file system via drag and drop
+- Supports mounted volumes (such as SD cards) and displays storage usage
   ![File System Widget](media/file_system.png)
 
 ### REPL Widget
 
-- Observe code execution via REPL
+- Interact with the MicroPython REPL
+- All keyboard shortcuts are passed to the device as well (Raw REPL, Paste mode, etc.)
   ![REPL Widget](media/repl.png)
+
+### Uploads
+
+- Items can be uploaded via context menu actions, drag and drop, or run configurations
+- Already uploaded files are automatically skipped using CRC32 calculations
+- Upload preview dialog that shows how the file system will look after the upload operation
+  ![Upload Preview](media/upload_preview.png)
 
 ### Run Configurations
 
@@ -55,8 +66,9 @@ Usage tips and documentation are available [here](https://github.com/lukaskremla
     - Exclude on-device paths from synchronization
       ![Upload Run Configuration](media/run_configuration_upload.png)
 - #### Execute in REPL
-    - Execute a ".py", ".mpy" file or selected code fragmennts in REPL without uploading anything to the device
+    - Execute a ".py", ".mpy" file or selected code selections in REPL without uploading anything to the device
       ![Execute in REPL Run Configuration](media/run_configuration_execute.png)
+      ![Execute Code Fragment in REPL](media/execute_fragment.png)
 
 ### Context Menu Actions
 
@@ -65,18 +77,14 @@ Usage tips and documentation are available [here](https://github.com/lukaskremla
 - Custom "Mark as MicroPython Sources Root" action that allows compatibility with many different JetBrains IDEs
   ![Context Menu MicroPython Sources Actions](media/micropython_sources.png)
 
-### Settings
-
-![Settings](media/settings.png)
-
-#### MicroPython Stubs
+### MicroPython Stubs
 
 - Built-in stubs management Integrates all available MicroPython stubs packages
   by [Jos Verlinde](https://github.com/Josverl/micropython-stubs)
 
-### Other
+### Settings
 
-- Automatically skips already uploaded files (on boards with binascii.crc32 hashing capabilities)
+![Settings](media/settings.png)
 
 ## Requirements
 
