@@ -485,12 +485,14 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         val newModel = newTreeModel()
         val dirList: String
 
-        val scriptFileName = if (hash) "scan_file_system_hashing.py" else "scan_file_system.py"
-
-        val fileSystemScanScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
+        val fileSystemScanScript = pythonService.retrieveMpyScriptAsString("scan_file_system.py")
             .replace(
                 "___l=False",
                 "___l=${if (settings.state.legacyVolumeSupportEnabled) "True" else "False"}"
+            )
+            .replace(
+                "___h=False",
+                "___h=${if (hash) "True" else "False"}"
             )
 
         try {
