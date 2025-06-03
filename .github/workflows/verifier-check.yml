@@ -1,12 +1,8 @@
-name: check
+name: Verifier Check
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 3 * * 1'
 
 # Allow cancelling all previous runs for the same branch
 # See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
@@ -32,10 +28,4 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build plugin
-        run: ./gradlew clean :buildPlugin -Pversion=SNAPSHOT-${{ github.run_number }}
-
-      - name: Upload plugin archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: intellij-micropython-SNAPSHOT-${{ github.run_number }}
-          path: build/distributions/micropython-tools-jetbrains-SNAPSHOT-${{ github.run_number }}.zip
+        run: ./gradlew clean :verifyPlugin
