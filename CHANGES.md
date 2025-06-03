@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+0.5.8 -
+------------------
+
+* Fixed a bug in the Execute in REPL run configuration validity check
+
 0.5.7 - 2.6.2025
 ------------------
 

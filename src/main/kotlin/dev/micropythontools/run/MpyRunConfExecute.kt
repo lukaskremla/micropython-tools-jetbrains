@@ -137,13 +137,16 @@ internal class MpyRunConfExecute(
         }
 
         val path = options.path
-        if (path == null || StandardFileSystems.local().findFileByPath(path) == null) {
-            val message = when {
-                path.isNullOrEmpty() -> "No file path specified. Please select a file to execute"
-                !path.endsWith(".py") && !path.endsWith(".mpy") -> "The specified path is not a valid \".py\" or \".mpy\" file"
-                else -> "File not found: \"$path\". Please select a valid file"
-            }
+        val message = when {
+            path.isNullOrEmpty() -> "No file path specified. Please select a file to execute"
+            !path.endsWith(".py") && !path.endsWith(".mpy") -> "The specified path is not a valid \".py\" or \".mpy\" file"
+            StandardFileSystems.local()
+                .findFileByPath(path) == null -> "File not found: \"$path\". Please select a valid file"
 
+            else -> null
+        }
+
+        if (message != null) {
             throw RuntimeConfigurationError(message)
         }
     }
