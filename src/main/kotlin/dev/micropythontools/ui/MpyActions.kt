@@ -287,6 +287,10 @@ internal class MpyCreateFolderAction : MpyReplAction(
         cancelledMessage = "New folder creation cancelled"
     )
 ) {
+    init {
+        this.templatePresentation.icon = AllIcons.Actions.AddDirectory // Set in Kotlin code to prevent false plugin.xml errors
+    }
+
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter, dialogResult: Any?) {
@@ -601,6 +605,10 @@ internal class MpySoftResetAction : MpyReplAction(
         cancelledMessage = "Reset cancelled"
     )
 ) {
+    init {
+        this.templatePresentation.icon = AllIcons.Actions.StopAndRestart // Set in Kotlin code to prevent false plugin.xml errors
+    }
+
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {

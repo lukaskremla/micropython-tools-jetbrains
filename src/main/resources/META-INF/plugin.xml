@@ -36,10 +36,13 @@
 
     <idea-version since-build="243"/>
 
+    <resource-bundle>messages.MpyBundle</resource-bundle>
+
     <extensions defaultExtensionNs="com.intellij">
         <projectConfigurable groupId="language"
                              id="dev.micropythontools.intellij.configurable"
-                             displayName="MicroPython Tools"
+                             key="configurable.name"
+                             bundle="messages.MpyBundle"
                              instance="dev.micropythontools.settings.MpyConfigurable"/>
 
         <jps.plugin/>
@@ -51,12 +54,17 @@
                   extensions="mpy"/>
 
         <localInspection language="Python"
-                         displayName="MicroPython stub package inspection"
-                         groupName="MicroPython"
+                         key="inspection.stub.package.display.name"
+                         groupKey="inspection.stub.package.group.name"
+                         bundle="messages.MpyBundle"
                          enabledByDefault="true"
                          implementationClass="dev.micropythontools.inspections.MpyStubPackageInspection"/>
 
-        <notificationGroup displayType="BALLOON" id="MicroPython Tools"/>
+        <!--suppress PluginXmlCapitalization -->
+        <notificationGroup displayType="BALLOON"
+                           id="MicroPython Tools"
+                           key="notification.group.name"
+                           bundle="messages.MpyBundle"/>
 
         <configurationType implementation="dev.micropythontools.run.MpyRunConfType"/>
 
@@ -90,8 +98,7 @@
                 <keyboard-shortcut first-keystroke="control R" keymap="$default"/>
             </action>
             <action id="micropythontools.fs.CreateFolderAction"
-                    class="dev.micropythontools.ui.MpyCreateFolderAction"
-                    icon="AllIcons.Actions.AddDirectory"/>
+                    class="dev.micropythontools.ui.MpyCreateFolderAction"/>
             <action id="micropythontools.fs.DownloadAction"
                     class="dev.micropythontools.ui.MpyDownloadAction"
                     icon="AllIcons.Actions.Download"/>
@@ -121,8 +128,7 @@
             <reference ref="micropythontools.repl.DisconnectAction"/>
             <reference ref="micropythontools.repl.connectionSelector"/>
             <action id="micropythontools.repl.SoftReset"
-                    class="dev.micropythontools.ui.MpySoftResetAction"
-                    icon="AllIcons.Actions.StopAndRestart">
+                    class="dev.micropythontools.ui.MpySoftResetAction">
                 <keyboard-shortcut first-keystroke="control D" keymap="$default"/>
             </action>
             <action id="micropythontools.repl.Interrupt"
