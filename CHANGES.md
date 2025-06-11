@@ -1,9 +1,10 @@
 The Changelog
 =============
 
-0.5.8 -
+0.5.8 - 11.6.2025
 ------------------
 
+* IntelliJ support
 * Fixed a bug in the Execute in REPL run configuration validity check
 
 0.5.7 - 2.6.2025

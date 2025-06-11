@@ -110,33 +110,40 @@ internal class MpyStubPackageService(private val project: Project) {
     private fun addMpyLibrary(newStubPackage: String) {
         DumbService.getInstance(project).smartInvokeLater {
             ApplicationManager.getApplication().runWriteAction {
-                val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
-                val projectLibraryModel = projectLibraryTable.modifiableModel
+                if (!settings.state.areStubsEnabled || !getAvailableStubs().contains(newStubPackage)) {
+                    return@runWriteAction
+                }
 
-                if (settings.state.areStubsEnabled &&
-                    getAvailableStubs().contains(newStubPackage)
-                ) {
-                    val newLibrary =
-                        projectLibraryModel.createLibrary(LIBRARY_NAME, PythonLibraryType.getInstance().kind)
-                    val newModel = newLibrary.modifiableModel
+                val modelsProvider = ModifiableModelsProvider.getInstance()
+                val projectLibraryModel = modelsProvider.getLibraryTableModifiableModel(project)
 
-                    val rootUrl = "$stubsPath/$newStubPackage"
-                    val stdlibUrl = "$rootUrl/stdlib"
+                // Create library
+                val newLibrary = projectLibraryModel.createLibrary(LIBRARY_NAME, PythonLibraryType.getInstance().kind)
+                val libraryModel = newLibrary.modifiableModel
 
-                    val rootFile = LocalFileSystem.getInstance().findFileByPath(rootUrl)
-                    val stdlibFile = LocalFileSystem.getInstance().findFileByPath(stdlibUrl)
+                // Add roots
+                val rootUrl = "$stubsPath/$newStubPackage"
+                val stdlibUrl = "$rootUrl/stdlib"
 
-                    newModel.addRoot(rootFile!!, OrderRootType.CLASSES)
-                    newModel.addRoot(stdlibFile!!, OrderRootType.CLASSES)
+                val rootFile = LocalFileSystem.getInstance().findFileByPath(rootUrl)
+                val stdlibFile = LocalFileSystem.getInstance().findFileByPath(stdlibUrl)
 
-                    for (module in ModuleManager.getInstance(project).modules) {
-                        val moduleModel = ModifiableModelsProvider.getInstance().getModuleModifiableModel(module)
-                        moduleModel.addLibraryEntry(newLibrary)
+                if (rootFile != null) {
+                    libraryModel.addRoot(rootFile, OrderRootType.CLASSES)
+                }
+                if (stdlibFile != null) {
+                    libraryModel.addRoot(stdlibFile, OrderRootType.CLASSES)
+                }
 
-                        newModel.commit()
-                        projectLibraryModel.commit()
-                        ModifiableModelsProvider.getInstance().commitModuleModifiableModel(moduleModel)
-                    }
+                // Commit library changes first
+                libraryModel.commit()
+                projectLibraryModel.commit()
+
+                // Then add to modules
+                for (module in ModuleManager.getInstance(project).modules) {
+                    val moduleModel = modelsProvider.getModuleModifiableModel(module)
+                    moduleModel.addLibraryEntry(newLibrary)
+                    modelsProvider.commitModuleModifiableModel(moduleModel)
                 }
             }
         }
