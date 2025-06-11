@@ -165,7 +165,7 @@ internal fun messageForBrokenIp(ip: String): @Nls String? {
         return "Host/IP address must not be empty."
     }
 
-    val ipPattern = Regex("^\\d{1,3}(\\.\\d{1,3}){3}\$")
+    val ipPattern = Regex("^\\d{1,3}(\\.\\d{1,3}){3}$")
 
     val hostnamePattern = Regex("^[a-zA-Z0-9.-]+$")
 

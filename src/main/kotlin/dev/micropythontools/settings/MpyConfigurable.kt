@@ -168,6 +168,7 @@ internal class MpyConfigurable(private val project: Project) :
                     indent {
                         row("URL: ") {
                             cell().apply { }
+                            @Suppress("DialogTitleCapitalization")
                             label("ws://").gap(RightGap.SMALL)
 
                             cell(object : com.intellij.ui.components.JBTextField(parameters.webReplIp) {
