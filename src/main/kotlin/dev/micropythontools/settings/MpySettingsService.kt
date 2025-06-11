@@ -31,6 +31,7 @@ import com.intellij.openapi.util.IconLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import java.io.File
 
 internal const val PLUGIN_ID = "micropython-tools-jetbrains"
 
@@ -141,6 +142,22 @@ internal class MpySettingsService(private val project: Project) : SimplePersiste
             PasswordSafe.instance.get(attributes) ?: Credentials("", "")
         }
     }
+}
+
+internal fun retrieveMpyScriptAsString(scriptFileName: String): String {
+    val scriptPath = "$microPythonScriptsPath/$scriptFileName"
+
+    val retrievedScript = File(scriptPath).readText(Charsets.UTF_8)
+
+    var i = 0
+    val lines = retrievedScript.lines().toMutableList()
+
+    while (i < 15) {
+        lines.removeAt(0)
+        i++
+    }
+
+    return lines.joinToString("\n")
 }
 
 internal fun messageForBrokenIp(ip: String): @Nls String? {

@@ -43,7 +43,6 @@ import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
 import dev.micropythontools.settings.*
 import dev.micropythontools.ui.*
-import dev.micropythontools.util.MpyPythonService
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.util.concurrent.Executors
@@ -159,7 +158,6 @@ internal class MpyDeviceService(val project: Project) : Disposable {
     var deviceInformation: DeviceInformation = DeviceInformation()
 
     private val settings = project.service<MpySettingsService>()
-    private val pythonService = project.service<MpyPythonService>()
     private val componentRegistryService = project.service<MpyComponentRegistryService>()
     private var comm: MpyComm = createMpyComm()
     private var connectionChecker: ScheduledExecutorService? = null
@@ -393,7 +391,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
     }
 
     private fun createMpyComm(): MpyComm {
-        return MpyComm(project, this, pythonService).also {
+        return MpyComm(project, this).also {
             val newDisposable = Disposer.newDisposable("MpyCommDisposable")
             Disposer.register(newDisposable, it)
         }
@@ -401,7 +399,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
 
     private suspend fun initializeDevice() {
         val scriptFileName = "initialize_device.py"
-        val initializeDeviceScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
+        val initializeDeviceScript = retrieveMpyScriptAsString(scriptFileName)
 
         val scriptResponse = blindExecute(initializeDeviceScript)
 

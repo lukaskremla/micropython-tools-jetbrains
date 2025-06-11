@@ -51,10 +51,10 @@
                   extensions="mpy"/>
 
         <localInspection language="Python"
-                         displayName="MicroPython requirements inspection"
+                         displayName="MicroPython stub package inspection"
                          groupName="MicroPython"
                          enabledByDefault="true"
-                         implementationClass="dev.micropythontools.inspections.MpyRequirementsInspection"/>
+                         implementationClass="dev.micropythontools.inspections.MpyStubPackageInspection"/>
 
         <notificationGroup displayType="BALLOON" id="MicroPython Tools"/>
 

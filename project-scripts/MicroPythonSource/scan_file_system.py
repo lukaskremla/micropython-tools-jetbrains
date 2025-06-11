@@ -14,10 +14,15 @@
 * limitations under the License.
 """
 
+import binascii
 import gc
 import os
 
-___l = False
+# Mangling "___" will be applied to these variables during build
+ba = bytearray(1024)
+mv = memoryview(ba)
+l = False
+h = False
 
 
 def s():
@@ -25,7 +30,7 @@ def s():
         import vfs
         mount_points = [mount_tuple[1] for mount_tuple in vfs.mount()]
     except (ImportError, TypeError):
-        if ___l:
+        if l:
             path_to_stat_tuple = {"/": os.statvfs("/")}
 
             for result in os.ilistdir("/"):
@@ -55,13 +60,27 @@ def m(p):
         # Utilize the fact that 0 evaluates to False and other integers to True
         file_type = 1 if result[1] & 0x4000 else 0
 
-        print(file_path, file_type, result[3] if len(result) > 3 else -1, 0, sep="&")
+        crc32 = 0
+        if h:
+            if not file_type:
+                with open(file_path, "rb") as f:
+                    while True:
+                        n = f.readinto(ba)
+                        if n == 0:
+                            break
+                        crc32 = binascii.crc32(mv[0:n], crc32)
+
+                    crc32 = "%08x" % (crc32 & 0xffffffff)
+
+        print(file_path, file_type, result[3] if len(result) > 3 else -1, crc32, sep="&")
 
         if file_type:
             m(file_path)
 
 
 s()
+del ba
+del mv
 del s
 del m
 gc.collect()

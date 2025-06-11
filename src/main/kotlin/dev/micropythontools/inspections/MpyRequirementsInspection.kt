@@ -26,7 +26,7 @@ import dev.micropythontools.util.MpyStubPackageService
 /**
  * @author vlan, Lukas Kremla
  */
-internal class MpyRequirementsInspection : LocalInspectionTool() {
+internal class MpyStubPackageInspection : LocalInspectionTool() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         val settings = file.project.service<MpySettingsService>()
 
@@ -34,8 +34,8 @@ internal class MpyRequirementsInspection : LocalInspectionTool() {
             return emptyArray()
         }
 
-        val stubPackageService = file.project.service<MpyStubPackageService>()
-        val result = stubPackageService.checkStubPackageValidity()
+        val result = file.project.service<MpyStubPackageService>().checkStubPackageValidity()
+
         if (result.isOk) return null
 
         val stubsFix = result.quickFix

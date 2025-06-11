@@ -31,8 +31,8 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.ExceptionUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
+import dev.micropythontools.settings.retrieveMpyScriptAsString
 import dev.micropythontools.ui.NOTIFICATION_GROUP
-import dev.micropythontools.util.MpyPythonService
 import jssc.SerialPort
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -63,8 +63,7 @@ internal class MicroPythonExecutionException(message: String) : IOException(mess
  */
 internal open class MpyComm(
     val project: Project,
-    private val deviceService: MpyDeviceService,
-    private val pythonService: MpyPythonService
+    private val deviceService: MpyDeviceService
 ) : Disposable, Closeable {
     val ttyConnector: TtyConnector = WebSocketTtyConnector()
 
@@ -157,8 +156,8 @@ internal open class MpyComm(
 
         // Prefer base64 over hex as it is more efficient
         val command = when (canEncodeBase64) {
-            true -> pythonService.retrieveMpyScriptAsString("download_file_base_64.py")
-            else -> pythonService.retrieveMpyScriptAsString("download_file_hex.py")
+            true -> retrieveMpyScriptAsString("download_file_base_64.py")
+            else -> retrieveMpyScriptAsString("download_file_hex.py")
         }
 
         val result = blindExecute(command.format("\"$fileName\""))
@@ -408,9 +407,7 @@ internal open class MpyComm(
     }
 
     internal suspend fun recursivelySafeDeletePaths(paths: Set<String>) {
-        val commands = mutableListOf(
-            pythonService.retrieveMpyScriptAsString("recursively_safe_delete_base.py")
-        )
+        val commands = mutableListOf(retrieveMpyScriptAsString("recursively_safe_delete_base.py"))
 
         val filteredPaths = paths.filter { path ->
             // Keep this path only if no other path is a prefix of it
@@ -431,9 +428,7 @@ internal open class MpyComm(
     }
 
     internal suspend fun safeCreateDirectories(paths: Set<String>) {
-        val commands = mutableListOf(
-            pythonService.retrieveMpyScriptAsString("safe_create_directories_base.py")
-        )
+        val commands = mutableListOf(retrieveMpyScriptAsString("safe_create_directories_base.py"))
 
         val allPaths = buildSet {
             paths.forEach { path ->

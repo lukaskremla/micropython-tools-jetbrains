@@ -51,8 +51,8 @@ import com.intellij.util.ui.tree.TreeUtil
 import dev.micropythontools.communication.*
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
+import dev.micropythontools.settings.retrieveMpyScriptAsString
 import dev.micropythontools.settings.volumeIcon
-import dev.micropythontools.util.MpyPythonService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -77,7 +77,6 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
     val tree: Tree = Tree(newTreeModel())
 
     private val settings = project.service<MpySettingsService>()
-    private val pythonService = project.service<MpyPythonService>()
     private val deviceService = project.service<MpyDeviceService>()
     private val transferService = project.service<MpyTransferService>()
 
@@ -298,7 +297,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
                                 val commands = if (isCrossVolumeTransfer) {
                                     mutableListOf(
-                                        pythonService.retrieveMpyScriptAsString("move_file_over_volumes_base.py")
+                                        retrieveMpyScriptAsString("move_file_over_volumes_base.py")
                                     )
                                 } else {
                                     mutableListOf("import os")
@@ -485,12 +484,14 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         val newModel = newTreeModel()
         val dirList: String
 
-        val scriptFileName = if (hash) "scan_file_system_hashing.py" else "scan_file_system.py"
-
-        val fileSystemScanScript = pythonService.retrieveMpyScriptAsString(scriptFileName)
+        val fileSystemScanScript = retrieveMpyScriptAsString("scan_file_system.py")
             .replace(
                 "___l=False",
                 "___l=${if (settings.state.legacyVolumeSupportEnabled) "True" else "False"}"
+            )
+            .replace(
+                "___h=False",
+                "___h=${if (hash) "True" else "False"}"
             )
 
         try {
