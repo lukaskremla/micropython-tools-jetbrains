@@ -67,39 +67,7 @@ internal data class DeviceInformation(
     var mpyArchName: String? = null,
     var wordSize: Int? = null,
     var smallIntBits: Int? = null
-) {
-    /**
-     * Generates mpy-cross command-line arguments based on device capabilities
-     */
-    fun getMpyCrossArgs(): List<String> {
-        val args = mutableListOf<String>()
-
-        // Add architecture if known
-        if (mpyArchName != null) {
-            args.add("-march=${mpyArchName}")
-        }
-
-        // Add small int bits if different from default
-        if (smallIntBits != 31) {
-            args.add("-msmall-int-bits=${smallIntBits}")
-        }
-
-        // Add bytecode version if available
-        if (mpyVersion != null) {
-            args.add("-b")
-            args.add(mpyVersion.toString())
-        }
-
-        return args
-    }
-
-    /**
-     * Determines if the device supports MPY compilation
-     */
-    fun supportsMpyCompilation(): Boolean {
-        return mpyVersion != null && mpyArchName != null
-    }
-}
+)
 
 internal data class ConnectionParameters(
     var usingUart: Boolean = true,
