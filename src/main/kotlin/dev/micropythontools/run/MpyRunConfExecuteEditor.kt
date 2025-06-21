@@ -18,6 +18,7 @@ package dev.micropythontools.run
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.options.SettingsEditor
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindSelected
@@ -50,7 +51,9 @@ internal class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfE
         configurationPanel = panel {
             row("Source path: ") {
                 textFieldWithBrowseButton(
-                    FileChooserDescriptor(true, true, false, false, false, false).withTitle("Select Path"),
+                    FileChooserDescriptor(true, false, false, false, false, false)
+                        .withTitle("Select Path")
+                        .withRoots(runConfiguration.project.guessProjectDir()),
                     runConfiguration.project
                 ).apply {
                     component.text = parameters.path

@@ -415,7 +415,9 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             panel {
                 row("Source path: ") {
                     textFieldWithBrowseButton(
-                        FileChooserDescriptor(true, true, false, false, false, false).withTitle("Select Path"),
+                        FileChooserDescriptor(true, true, false, false, false, false)
+                            .withTitle("Select Path")
+                            .withRoots(runConfiguration.project.guessProjectDir()),
                         runConfiguration.project
                     ).apply {
                         component.text = parameters.path
