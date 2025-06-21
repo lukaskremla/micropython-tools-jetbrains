@@ -55,11 +55,12 @@ internal class MpyRunConfUpload(
      * @param path Specify a path from which the filename is to be determined. If none is specified, the path saved
      * in the run configuration is used
      *
-     * @return The file name or "Unknown" if it can't be determined
+     * @return The file name or "" if it can't be determined
      */
     fun getFileName(path: String? = null): String {
-        val path = path ?: options.path ?: return "Unknown"
-        val file = StandardFileSystems.local().findFileByPath(path) ?: return "Unknown"
+        val path = path ?: options.path
+        if (path.isNullOrBlank()) return ""
+        val file = StandardFileSystems.local().findFileByPath(path) ?: return ""
         return file.name
     }
 

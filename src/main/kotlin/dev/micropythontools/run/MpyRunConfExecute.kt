@@ -42,8 +42,9 @@ internal class MpyRunConfExecute(
 ), LocatableConfiguration {
 
     private fun getFileName(): String {
-        val path = options.path ?: return "Unknown"
-        val file = StandardFileSystems.local().findFileByPath(path) ?: return "Unknown"
+        val path = options.path
+        if (path.isNullOrBlank()) return ""
+        val file = StandardFileSystems.local().findFileByPath(path) ?: return ""
         return file.name
     }
 
