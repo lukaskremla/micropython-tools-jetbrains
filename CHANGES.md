@@ -1,6 +1,14 @@
 The Changelog
 =============
 
+0.5.9 - 2x.6.2025
+------------------
+
+* Updated stubs
+* Remove "unknown" as default run configuration file name parameter
+* Make the run configuration file choosers auto select the project directory by default
+* Fixed a bug where before launch tasks would only execute after the run configurations
+
 0.5.8 - 11.6.2025
 ------------------
 

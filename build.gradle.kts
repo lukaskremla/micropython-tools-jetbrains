@@ -15,8 +15,8 @@ repositories {
 }
 
 plugins {
-    kotlin("jvm") version "2.1.20"
-    id("org.jetbrains.intellij.platform") version "2.5.0"
+    kotlin("jvm") version "2.1.21"
+    id("org.jetbrains.intellij.platform") version "2.6.0"
 }
 
 dependencies {
@@ -125,7 +125,7 @@ tasks {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_21
             languageVersion = KotlinVersion.DEFAULT
-            apiVersion = KotlinVersion.KOTLIN_1_9
+            apiVersion = KotlinVersion.KOTLIN_2_1
         }
     }
     withType<org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask> {

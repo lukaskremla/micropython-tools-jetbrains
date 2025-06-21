@@ -2,10 +2,12 @@
     <name>MicroPython Tools</name>
     <id>micropython-tools-jetbrains</id>
     <change-notes><![CDATA[
-       <h3>0.5.8 - 11-6-2025</h3>
+       <h3>0.5.9 - 21-6-2025</h3>
         <ul>
-          <li>IntelliJ support</li>
-          <li>Fixed a bug in the Execute in REPL run configuration validity check</li>
+          <li>Updated stubs</li>
+          <li>Remove "unknown" as default run configuration file name parameter</li>
+          <li>Make the run configuration file choosers auto select the project directory by default</li>
+          <li>Fixed a bug where before launch tasks would only execute after the run configurations</li>
         </ul>
         <br>
       <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
