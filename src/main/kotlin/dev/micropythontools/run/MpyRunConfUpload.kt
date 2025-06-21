@@ -18,7 +18,6 @@ package dev.micropythontools.run
 
 import com.intellij.execution.Executor
 import com.intellij.execution.RunManager
-import com.intellij.execution.configuration.EmptyRunProfileState
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.notification.Notification
@@ -28,9 +27,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
-import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
-import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.settings.isRunConfTargetPathValid
@@ -50,7 +47,6 @@ internal class MpyRunConfUpload(
 ), LocatableConfiguration {
 
     private val settings = project.service<MpySettingsService>()
-    private val deviceService = project.service<MpyDeviceService>()
     private val transferService = project.service<MpyTransferService>()
 
     /**
@@ -131,78 +127,7 @@ internal class MpyRunConfUpload(
             return null
         }
 
-        val success: Boolean
-
-        with(options) {
-            when (options.uploadMode) {
-                0 -> {
-                    success = transferService.uploadProject(
-                        excludedPaths.toSet(),
-                        synchronize,
-                        excludePaths
-                    )
-                }
-
-                1 -> {
-                    val toUpload = selectedPaths.mapNotNull { path ->
-                        StandardFileSystems.local().findFileByPath(path)
-                    }.toSet()
-
-                    success = transferService.uploadItems(
-                        toUpload,
-                        excludedPaths.toSet(),
-                        synchronize,
-                        excludePaths,
-                    )
-                }
-
-                else -> {
-                    val file = StandardFileSystems.local().findFileByPath(options.path!!)!!
-
-                    val toUpload = if (file.isDirectory) {
-                        file.children.toSet()
-                    } else setOf(file)
-
-                    val relativeToFolder = if (file.isDirectory) {
-                        file
-                    } else file.parent
-
-                    val customPathFolders = options.uploadToPath
-                        ?.split("/")
-                        ?.filter { it.isNotBlank() }
-                        ?.foldIndexed(mutableListOf<String>()) { index, acc, folder ->
-                            val path = if (index == 0) "/$folder" else "${acc[index - 1]}/$folder"
-                            acc.add(path)
-                            acc
-                        }?.toSet()
-
-                    success = transferService.performUpload(
-                        initialFilesToUpload = toUpload,
-                        relativeToFolders = setOf(relativeToFolder),
-                        targetDestination = options.uploadToPath ?: "/",
-                        excludedPaths = excludedPaths.toSet(),
-                        shouldSynchronize = synchronize,
-                        shouldExcludePaths = excludePaths,
-                        customPathFolders = customPathFolders ?: emptySet()
-                    )
-                }
-            }
-            if (success) {
-                if (resetOnSuccess) {
-                    performReplAction(
-                        project,
-                        false,
-                        "Soft reset",
-                        false,
-                        "Soft reset cancelled",
-                        { deviceService.reset() })
-                }
-                if (switchToReplOnSuccess) deviceService.activateRepl()
-                return EmptyRunProfileState.INSTANCE
-            } else {
-                return null
-            }
-        }
+        return MpyRunConfUploadState(project, options)
     }
 
     override fun checkConfiguration() {

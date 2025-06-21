@@ -18,20 +18,15 @@ package dev.micropythontools.run
 
 import com.intellij.execution.Executor
 import com.intellij.execution.RunManager
-import com.intellij.execution.configuration.EmptyRunProfileState
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.readText
-import dev.micropythontools.communication.MpyDeviceService
-import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.NOTIFICATION_GROUP
@@ -97,33 +92,7 @@ internal class MpyRunConfExecute(
             return null
         }
 
-        val deviceService = project.service<MpyDeviceService>()
-
-        val path = options.path!!
-        val switchToReplOnSuccess = options.switchToReplOnSuccess
-
-        try {
-            FileDocumentManager.getInstance().saveAllDocuments()
-            val file = StandardFileSystems.local().findFileByPath(path)!!
-            val code = file.readText()
-            performReplAction(project, true, "Run code", false, "REPL execution cancelled", { _ ->
-                deviceService.instantRun(code)
-            })
-
-            if (switchToReplOnSuccess) deviceService.activateRepl()
-
-            return EmptyRunProfileState.INSTANCE
-        } catch (e: Throwable) {
-            Notifications.Bus.notify(
-                Notification(
-                    NOTIFICATION_GROUP,
-                    "Failed to execute \"${name}\"",
-                    "An error occurred: ${e.message ?: e.javaClass.simpleName}",
-                    NotificationType.ERROR
-                ), project
-            )
-            return null
-        }
+        return MpyRunConfExecuteState(project, options, name)
     }
 
     override fun checkConfiguration() {
