@@ -6,6 +6,7 @@
         <ul>
           <li>Updated stubs</li>
           <li>Remove "unknown" as default run configuration file name parameter</li>
+          <li>Fixed a bug that caused uploads to incorrectly erase the file system</li>
           <li>Make the run configuration file choosers auto select the project directory by default</li>
           <li>Fixed a bug where before launch tasks would only execute after the run configurations</li>
         </ul>
