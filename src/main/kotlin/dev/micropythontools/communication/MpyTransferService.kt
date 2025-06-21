@@ -297,6 +297,11 @@ internal class MpyTransferService(private val project: Project) {
                 // Traverse and collect all file system nodes
                 val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
 
+                val volumeRootPaths = allNodes
+                    .filterIsInstance<VolumeRootNode>()
+                    .map { it.fullName }
+                    .toSet()
+
                 // Map target paths to file system nodes
                 val targetPathToNode = mutableMapOf<String, FileSystemNode>()
                 allNodes.forEach { node ->
@@ -367,6 +372,9 @@ internal class MpyTransferService(private val project: Project) {
 
                     targetPathsToRemove.removeAll(pathsToExclude)
                 }
+
+                // Ensure volume root nodes won't be erased
+                targetPathsToRemove.removeAll(volumeRootPaths)
 
                 if (fileToTargetPath.isEmpty() && folderToTargetPath.isEmpty() && targetPathsToRemove.isEmpty()) {
                     Notifications.Bus.notify(
