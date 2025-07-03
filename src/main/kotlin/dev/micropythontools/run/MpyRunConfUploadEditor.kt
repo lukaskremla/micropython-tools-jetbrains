@@ -487,16 +487,12 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             }
 
             row {
-                excludePathsCheckbox = checkBox("Exclude selected paths")
+                excludePathsCheckbox = checkBox("Exclude paths from synchronization")
                     .bindSelected(parameters::excludePaths)
                     .gap(RightGap.SMALL)
-
-                cell(JBLabel(questionMarkIcon).apply {
-                    toolTipText = "Exclude on-device paths from synchronization"
-                })
             }.visibleIf(synchronizeCheckbox.selected)
 
-            collapsibleGroup("Excluded Paths") {
+            collapsibleGroup("Paths Excluded from Synchronization") {
                 row {
                     cell(excludedPathsTableWithToolbar)
                 }
