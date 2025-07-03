@@ -230,7 +230,7 @@ internal class MpyConnectAction : MpyReplAction(
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        deviceService.doConnect(reporter)
+        deviceService.doConnect(reporter, isConnectAction = true)
     }
 }
 
@@ -288,7 +288,8 @@ internal class MpyCreateFolderAction : MpyReplAction(
     )
 ) {
     init {
-        this.templatePresentation.icon = AllIcons.Actions.AddDirectory // Set in Kotlin code to prevent false plugin.xml errors
+        this.templatePresentation.icon =
+            AllIcons.Actions.AddDirectory // Set in Kotlin code to prevent false plugin.xml errors
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
@@ -606,7 +607,8 @@ internal class MpySoftResetAction : MpyReplAction(
     )
 ) {
     init {
-        this.templatePresentation.icon = AllIcons.Actions.StopAndRestart // Set in Kotlin code to prevent false plugin.xml errors
+        this.templatePresentation.icon =
+            AllIcons.Actions.StopAndRestart // Set in Kotlin code to prevent false plugin.xml errors
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = BGT

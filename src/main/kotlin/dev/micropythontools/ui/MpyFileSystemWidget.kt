@@ -409,7 +409,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                     false,
                     "Connection attempt cancelled",
                     { reporter ->
-                        deviceService.doConnect(reporter)
+                        deviceService.doConnect(reporter, isConnectAction = true)
                     }
                 )
             }

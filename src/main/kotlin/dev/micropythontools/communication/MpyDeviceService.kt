@@ -163,7 +163,14 @@ internal class MpyDeviceService(val project: Project) : Disposable {
         return filteredPorts
     }
 
-    suspend fun doConnect(reporter: RawProgressReporter) {
+    /**
+     * Method for handling the procedure for connecting to a MicroPython board
+     *
+     * @param reporter RawProgressReporter to use
+     * @param isConnectAction An optional parameter to be used by MpyConnectAction and FileSystemWidget empty text,
+     * prevents duplicate cancellation notifications, since these actions handle their own cancellation notifications
+     */
+    suspend fun doConnect(reporter: RawProgressReporter, isConnectAction: Boolean = false) {
         try {
             if (state == State.CONNECTED) return
 
@@ -251,13 +258,16 @@ internal class MpyDeviceService(val project: Project) : Disposable {
             )
             disconnect(reporter)
         } catch (e: CancellationException) {
-            Notifications.Bus.notify(
-                Notification(
-                    NOTIFICATION_GROUP,
-                    "Connection attempt cancelled",
-                    NotificationType.INFORMATION
-                ), project
-            )
+            // Connect actions handle their own cancellation notifications
+            if (!isConnectAction) {
+                Notifications.Bus.notify(
+                    Notification(
+                        NOTIFICATION_GROUP,
+                        "Connection attempt cancelled",
+                        NotificationType.INFORMATION
+                    ), project
+                )
+            }
             disconnect(reporter)
             throw e
         }
