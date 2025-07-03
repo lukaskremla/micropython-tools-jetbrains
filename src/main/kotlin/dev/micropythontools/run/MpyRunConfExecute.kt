@@ -66,7 +66,7 @@ internal class MpyRunConfExecute(
         return "$baseName ($counter)"
     }
 
-    override fun isGeneratedName(): Boolean = "Execute ${getFileName()}" in name
+    override fun isGeneratedName(): Boolean = "Execute ${getFileName()}" == name
 
     val options: MpyRunConfExecuteOptions
         get() = super.getOptions() as MpyRunConfExecuteOptions

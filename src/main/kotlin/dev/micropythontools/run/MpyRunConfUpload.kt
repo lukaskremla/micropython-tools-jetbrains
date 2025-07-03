@@ -86,8 +86,12 @@ internal class MpyRunConfUpload(
         return "$baseName ($counter)"
     }
 
-    override fun isGeneratedName(): Boolean =
-        listOf("Upload Project", "Upload Selection", "Upload ${getFileName()}").any { it in name }
+    override fun isGeneratedName(): Boolean {
+        val isCustomPathGenerated = "Upload ${getFileName()}" == name
+        val isProjectOrSelectedGenerated = listOf("Upload Project", "Upload Selection").any { it in name }
+
+        return isCustomPathGenerated || isProjectOrSelectedGenerated
+    }
 
     val options: MpyRunConfUploadOptions
         get() = super.getOptions() as MpyRunConfUploadOptions
