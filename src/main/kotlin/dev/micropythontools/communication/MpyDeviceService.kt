@@ -410,10 +410,12 @@ internal class MpyDeviceService(val project: Project) : Disposable {
         }
 
         if (message != null) {
-            MessageDialogBuilder.Message(
-                "Missing MicroPython Libraries",
-                message
-            ).asWarning().buttons("Acknowledge").show(project)
+            withContext(Dispatchers.EDT) {
+                MessageDialogBuilder.Message(
+                    "Missing MicroPython Libraries",
+                    message
+                ).asWarning().buttons("Acknowledge").show(project)
+            }
         }
         //println(deviceInformation)
         //println(deviceInformation.getMpyCrossArgs())
