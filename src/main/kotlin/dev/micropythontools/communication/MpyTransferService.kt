@@ -409,6 +409,7 @@ internal class MpyTransferService(private val project: Project) {
                     }
 
                     if (!shouldContinue) {
+                        deviceService.state = State.CONNECTED
                         return@performReplAction PerformReplActionResult(null, false)
                     }
                 }
