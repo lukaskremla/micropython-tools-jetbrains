@@ -211,6 +211,10 @@ internal class MpyTransferService(private val project: Project) {
                 reporter.text("collecting files and creating directories...")
                 reporter.fraction(null)
 
+                withContext(Dispatchers.EDT) {
+                    project.guessProjectDir()?.refresh(false, true)
+                }
+
                 var i = 0
                 while (i < filesToUpload.size) {
                     val file = filesToUpload[i]
