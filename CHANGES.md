@@ -1,6 +1,16 @@
 The Changelog
 =============
 
+0.5.10 - 3.7.2025
+------------------
+
+* Fixed a bug where warnings about unavailable features of certain boards caused EDT errors
+* Fixed a bug where cancelling an Upload Preview would leave the plugin in an unusable state
+* Fixed a bug where run configurations kept getting renamed to default names
+* Fixed duplicate "connection attempt cancelled" notifications
+* Uploads now refresh the project dir each time to ensure no changes are missed
+* Improved the upload run configuration's exclude paths checkbox and table labels
+
 0.5.9 - 22.6.2025
 ------------------
 
