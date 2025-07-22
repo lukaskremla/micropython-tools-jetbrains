@@ -1,6 +1,12 @@
 The Changelog
 =============
 
+0.5.11 - 22.7.2025
+------------------
+
+* Fixed a bug where uploads of files that can't fit into the device's memory always failed
+* Improved error reporting, added memory fragmentation warnings
+
 0.5.10 - 3.7.2025
 ------------------
 

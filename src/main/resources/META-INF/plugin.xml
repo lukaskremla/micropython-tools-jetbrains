@@ -2,14 +2,10 @@
     <name>MicroPython Tools</name>
     <id>micropython-tools-jetbrains</id>
     <change-notes><![CDATA[
-       <h3>0.5.10 - 3-7-2025</h3>
+       <h3>0.5.11 - 22-7-2025</h3>
         <ul>
-          <li>Fixed a bug where warnings about unavailable features of certain boards caused EDT errors</li>
-          <li>Fixed a bug where cancelling an Upload Preview would leave the plugin in an unusable state</li>
-          <li>Fixed a bug where run configurations kept getting renamed to default names</li>
-          <li>Fixed duplicate "connection attempt cancelled" notifications</li>
-          <li>Uploads now refresh the project dir each time to ensure no changes are missed</li>
-          <li>Improved the upload run configuration exclude paths checkbox and table labels</li>
+          <li>Fixed a bug where uploads of files that can't fit into the device's memory always failed</li>
+          <li>Improved error reporting, added memory fragmentation warnings</li>
         </ul>
         <br>
       <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
