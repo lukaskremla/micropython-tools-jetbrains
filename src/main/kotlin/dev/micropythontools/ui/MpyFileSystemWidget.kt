@@ -474,7 +474,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         disconnectOnCancel: Boolean,
         isInitialRefresh: Boolean,
         useReporter: Boolean
-    ) {
+    ): Int? {
         if (useReporter) {
             reporter.text("Updating file system view...")
             reporter.fraction(null)
@@ -482,7 +482,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
         deviceService.checkConnected()
         val newModel = newTreeModel()
-        val dirList: String
+        val executionResult: String
 
         val fileSystemScanScript = retrieveMpyScriptAsString("scan_file_system.py")
             .replace(
@@ -492,13 +492,15 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
             .replace(
                 "___h=False",
                 "___h=${if (hash) "True" else "False"}"
-            )
+            ) +
+                // Print free memory (used by uploads)
+                "\nprint(gc.mem_free())"
 
         try {
             // If not using the reporter, this refresh is a part of some complex operation that needs
             // information about the file system state, such as uploads
             // In that scenario it shouldn't return to the connected state to prevent emitting extra MicroPython banners
-            dirList = deviceService.blindExecute(fileSystemScanScript, !useReporter)
+            executionResult = deviceService.blindExecute(fileSystemScanScript, !useReporter)
         } catch (e: CancellationException) {
             if (disconnectOnCancel) {
                 deviceService.disconnect(reporter)
@@ -515,14 +517,18 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
             } else if (useReporter) {
                 throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
             } else {
-                return
+                return null
             }
         } catch (e: Throwable) {
             deviceService.disconnect(reporter)
             throw IOException("Micropython filesystem scan failed, ${e.localizedMessage}", e)
         }
+
+        val freeMemBytes = executionResult.lines().last().toInt()
+        val dirList = executionResult.lines().subList(0, executionResult.lines().size - 1)
+
         val volumeRootNodes = mutableListOf<VolumeRootNode>()
-        dirList.lines().filter { it.isNotBlank() }.forEach { line ->
+        dirList.filter { it.isNotBlank() }.forEach { line ->
             line.split('&').let { fields ->
                 if (fields.count() == 3) {
                     val fullName = fields[0]
@@ -623,6 +629,8 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
             TreeUtil.restoreExpandedPaths(tree, newVolumeRootNodeTreePathsToExpand.toMutableList())
             TreeUtil.selectPath(tree, selectedPath)
         }
+
+        return if (useReporter) null else freeMemBytes
     }
 }
 

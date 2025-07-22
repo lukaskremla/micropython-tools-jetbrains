@@ -112,12 +112,13 @@ internal open class MpyComm(
     suspend fun upload(
         fullName: String,
         content: ByteArray,
-        progressCallback: (uploadedBytes: Double) -> Unit
+        progressCallback: (uploadedBytes: Double) -> Unit,
+        freeMemBytes: Int?
     ) {
         checkConnected()
 
         // Initialize the command list with necessary imports
-        val commands = mutableListOf<Any>("import os, gc")
+        val setupCommands = mutableListOf("import os, gc")
 
         // Ensure parent directories are always created
         var slashIdx = 0
@@ -125,30 +126,93 @@ internal open class MpyComm(
             slashIdx = fullName.indexOf('/', slashIdx + 1)
             if (slashIdx > 0) {
                 val folderName = fullName.substring(0, slashIdx)
-                commands.add("try: os.mkdir(\"$folderName\");")
-                commands.add("except: pass;")
+                setupCommands.add("try: os.mkdir(\"$folderName\");")
+                setupCommands.add("except: pass;")
             }
         }
 
-        // Check if using base64 encoding is possible and viable
-        if (deviceService.deviceInformation.canDecodeBase64 && content.size > 256 && content.count { b -> b in 32..127 } < content.size / 2) {
-            commands.addAll(binUpload(fullName, content))
-        } else {
-            commands.addAll(txtUpload(fullName, content))
+        // Format the initial command for creating directories
+        val setupCommand = setupCommands.joinToString("\n")
+
+        // Expect at least 10 KB of free memory as a safe minimum
+        if (freeMemBytes != null && freeMemBytes < 10000) {
+            throw IOException("Insufficient free memory for upload. Please reset the device.")
         }
 
-        // Clean up used memory after writing the file
-        commands.add("gc.collect()")
+        val maxChunkSize = if (freeMemBytes != null) {
+            // Use at most 80 percent of the free memory unless we'd be leaving more than 10 KB unused
+            val freeMemBuffer = minOf(freeMemBytes / 5 * 4, 10000)
+            // Leave the buffer free and use the rest of the memory
+            freeMemBytes - freeMemBuffer
+        } else {
+            // Data about free memory is missing, don't chunk
+            content.size
+        }
 
-        val command = commands.joinToString("\n")
+        // Determine if using base64 encoding is possible and viable
+        val shouldEncodeBase64 = deviceService.deviceInformation.canDecodeBase64 &&
+                content.size > 256 &&
+                content.count { b -> b in 32..127 } < content.size / 2
 
-        // Extract the result so that possible errors are reported
-        doBlindExecute(
-            command,
-            progressCallback = progressCallback,
-            payloadSize = content.size,
-            shouldStayDetached = true
-        )
+        var index = 0
+        var endIndex = 0
+        var isFirstChunk = true
+
+        // Allocate a list for all the chunked upload commands
+        val uploadCommands = mutableListOf<String>()
+
+        if (content.isEmpty()) {
+            uploadCommands.add("with open('$fullName', 'w'): pass")
+        }
+
+        while (index < content.size) {
+            // If writing first chunk, truncate. Append otherwise
+            val openMode = if (isFirstChunk) "wb" else "ab"
+
+            if (shouldEncodeBase64) {
+                // Calculate how many bytes can be written at once (base64 has a 33% overhead)
+                val safeBytes = (maxChunkSize * 0.75).toInt()
+
+                endIndex = minOf(index + safeBytes, content.size)
+
+                val chunk = content.copyOfRange(index, endIndex)
+
+                uploadCommands.add(binUpload(fullName, chunk, openMode))
+            } else {
+                val (txtCommand, size) = txtUpload(fullName, content, openMode, index, maxChunkSize)
+                uploadCommands.add(txtCommand)
+                endIndex += size
+            }
+
+            index = endIndex
+
+            isFirstChunk = false
+        }
+
+        // Allocate a list for the final combined commands and add the setup command
+        val commands = mutableListOf(setupCommand)
+
+        // Remove the first upload command from the list and save it
+        val firstUploadCommand = uploadCommands.removeFirst()
+
+        // Combine the setupCommand with the first u    ploadCommand to avoid extra REPL executions
+        commands[0] += "\n$firstUploadCommand"
+
+        // Add there rest of the uploadCommands
+        if (uploadCommands.isNotEmpty())
+            commands.addAll(uploadCommands)
+
+        val totalProgressCommandSize = commands.sumOf { it.toByteArray(Charsets.UTF_8).size }
+
+        commands.forEach { command ->
+            doBlindExecute(
+                command,
+                progressCallback = progressCallback,
+                totalProgressCommandSize = totalProgressCommandSize,
+                payloadSize = content.size,
+                shouldStayDetached = true
+            )
+        }
     }
 
     suspend fun download(fileName: String): ByteArray {
@@ -495,11 +559,21 @@ internal open class MpyComm(
         return if (connectionParameters.usingUart) MpySerialClient(this) else MpyWebSocketClient(this)
     }
 
-    private fun txtUpload(fullName: String, content: ByteArray): List<Any> {
-        val commands = mutableListOf<Any>("___f=open('$fullName','wb')")
+    private fun txtUpload(
+        fullName: String,
+        content: ByteArray,
+        openMode: String,
+        index: Int,
+        maxChunkSize: Int
+    ): Pair<String, Int> {
+        val maxSafeChunkSize = maxChunkSize
+        var commandSize = 200 // Safe overhead for the non ___f.write() calls
+
+        var contentSize = 0
+        val commands = mutableListOf("___f=open('$fullName','$openMode')")
         val chunk = StringBuilder()
         val maxDataChunk = 400
-        var contentIdx = 0
+        var contentIdx = index // Start at the index given
         while (contentIdx < content.size) {
             chunk.setLength(0)
             val startIdx = contentIdx
@@ -517,32 +591,48 @@ internal open class MpyComm(
                 )
             }
             val chunkSize = contentIdx - startIdx
-            commands.add(Pair("___f.write(b'$chunk')", chunkSize))
+
+            val writeCommand = "___f.write(b'$chunk')"
+            val writeCommandSize = writeCommand.toByteArray(Charsets.UTF_8).size
+
+            // Avoid appending the write command if it would exceed the total maxSafeChunkSize
+            if ((commandSize + writeCommandSize) > maxSafeChunkSize) break
+
+            contentSize += chunkSize // This chunk will be written, extend contentSize value
+            commandSize += writeCommandSize // This chunk will be written, extend commandSize value
+            commands.add(writeCommand)
         }
         commands.add("___f.close()")
         commands.add("del(___f)")
-        return commands
+        commands.add("gc.collect()")
+
+        val command = commands.joinToString("\n")
+
+        return Pair(command, contentSize)
     }
 
-    private fun binUpload(fullName: String, content: ByteArray): List<Any> {
-        val commands = mutableListOf<Any>(
+    private fun binUpload(fullName: String, content: ByteArray, openMode: String): String {
+        val commands = mutableListOf(
             "import binascii",
             "___e=lambda b:___f.write(binascii.a2b_base64(b))",
-            "___f=open('$fullName','wb')"
+            "___f=open('$fullName','$openMode')"
         )
         val maxDataChunk = 384
-        assert(maxDataChunk % 4 == 0)
         var contentIdx = 0
         val encoder = Base64.getEncoder()
         while (contentIdx < content.size) {
             val len = maxDataChunk.coerceAtMost(content.size - contentIdx)
             val chunk = encoder.encodeToString(content.copyOfRange(contentIdx, contentIdx + len))
             contentIdx += len
-            commands.add(Pair("___e('$chunk')", len))
+            commands.add("___e('$chunk')")
         }
         commands.add("___f.close()")
         commands.add("del ___f,___e")
-        return commands
+        commands.add("gc.collect()")
+
+        val command = commands.joinToString("\n")
+
+        return command
     }
 
     /**
@@ -561,6 +651,7 @@ internal open class MpyComm(
     private suspend fun doBlindExecute(
         command: String,
         progressCallback: ((uploadedBytes: Double) -> Unit)? = null,
+        totalProgressCommandSize: Int = 0,
         payloadSize: Int = 0,
         redirectToRepl: Boolean = false,
         shouldStayDetached: Boolean = false
@@ -591,7 +682,7 @@ internal open class MpyComm(
                         // Attempt to enter raw REPL by sending Ctrl-A
                         mpyClient?.send("\u0001")
 
-                        // Wait until raw-REPL is ready (the prompt will contain the bellow suffix)
+                        // Wait until raw-REPL is ready (the prompt will contain the below suffix)
                         try {
                             withTimeout(TIMEOUT) {
                                 while (!offTtyByteBuffer.toUtf8String().endsWith("\n>")) {
@@ -672,18 +763,17 @@ internal open class MpyComm(
             // This is the flow control window-size-increment in bytes
             // stored as a 16 unsigned little endian integer
             val flowControlWindowSize = (bytes[0].toInt() and 0xFF) or ((bytes[1].toInt() and 0xFF) shl 8)
-            // The initial value for the remaining-window-sie variable should be set to this number
+            // The initial value for the remaining-window-size variable should be set to this number
             var remainingFlowControlWindowSize = flowControlWindowSize
-
 
             // Convert the command to a bytearray
             val commandBytes = command.toByteArray(Charsets.UTF_8)
 
             // Calculate an approximate progress-per-byte ratio for reporting upload progress proportionally to the sent data.
-            // This avoids tracking precise writes,
+            // This avoids tracking precise writes, which would impact performance,
             // while still providing consistent and accurate enough progress reporting
             val singleByteProgress = if (progressCallback != null && payloadSize > 0) {
-                payloadSize.toDouble() / commandBytes.size.toDouble()
+                payloadSize.toDouble() / totalProgressCommandSize.toDouble()
             } else null
 
             var index = 0
@@ -711,7 +801,11 @@ internal open class MpyComm(
                     } else if (bytes[0] == 0x04.toByte()) {
                         // Acknowledge (Ctrl-D)
                         mpyClient?.send("\u0004")
-                        throw IOException("Device aborted raw paste mode")
+                        throw IOException(
+                            "Device aborted raw paste mode. " +
+                                    "The device's memory might be fragmented or insufficient for this operation. " +
+                                    "Please reset the board and retry."
+                        )
                     }
                 }
 

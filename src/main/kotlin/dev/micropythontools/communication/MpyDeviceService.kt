@@ -289,9 +289,10 @@ internal class MpyDeviceService(val project: Project) : Disposable {
     suspend fun upload(
         relativeName: String,
         contentsToByteArray: ByteArray,
-        progressCallback: (uploadedBytes: Double) -> Unit
+        progressCallback: (uploadedBytes: Double) -> Unit,
+        freeMemBytes: Int?
     ) {
-        comm.upload(relativeName, contentsToByteArray, progressCallback)
+        comm.upload(relativeName, contentsToByteArray, progressCallback, freeMemBytes)
     }
 
     suspend fun download(deviceFileName: String): ByteArray =

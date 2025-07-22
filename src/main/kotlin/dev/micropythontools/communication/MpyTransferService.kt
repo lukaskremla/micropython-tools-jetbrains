@@ -292,7 +292,7 @@ internal class MpyTransferService(private val project: Project) {
                 }
 
                 reporter.text("Analyzing device files and preparing upload...")
-                if (deviceService.deviceInformation.hasCRC32) {
+                val freeMemBytes = if (deviceService.deviceInformation.hasCRC32) {
                     deviceService.fileSystemWidget?.quietHashingRefresh(reporter)
                 } else {
                     deviceService.fileSystemWidget?.quietRefresh(reporter)
@@ -459,7 +459,8 @@ internal class MpyTransferService(private val project: Project) {
                     deviceService.upload(
                         path,
                         file.contentsToByteArray(),
-                        ::progressCallbackHandler
+                        ::progressCallbackHandler,
+                        freeMemBytes
                     )
 
                     uploadedFiles++
