@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+0.5.12 - 28.7.2025
+------------------
+
+* Added a checkbox to enable manual editing of selected ports
+
 0.5.11 - 22.7.2025
 ------------------
 
