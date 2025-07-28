@@ -47,6 +47,7 @@ import javax.swing.event.PopupMenuListener
 private data class ConfigurableParameters(
     var isPluginEnabled: Boolean,
     var usingUart: Boolean,
+    var enableManualEditing: Boolean,
     var filterManufacturers: Boolean,
     var portName: String,
     var webReplIp: String,
@@ -81,6 +82,7 @@ internal class MpyConfigurable(private val project: Project) :
             ConfigurableParameters(
                 isPluginEnabled = isPluginEnabled,
                 usingUart = usingUart,
+                enableManualEditing = enableManualEditing,
                 filterManufacturers = filterManufacturers,
                 portName = if (portName.isNullOrBlank()) EMPTY_PORT_NAME_TEXT else portName.toString(),
                 webReplIp = webReplIp ?: DEFAULT_WEBREPL_IP,
@@ -105,6 +107,7 @@ internal class MpyConfigurable(private val project: Project) :
     private lateinit var serialRadioButton: Cell<JBRadioButton>
     private lateinit var webReplRadioButton: Cell<JBRadioButton>
 
+    private lateinit var enableManualEditingCheckbox: Cell<JBCheckBox>
     private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
@@ -138,6 +141,18 @@ internal class MpyConfigurable(private val project: Project) :
 
                     indent {
                         row {
+                            enableManualEditingCheckbox = checkBox("Edit port manually")
+                                .bindSelected(parameters::enableManualEditing)
+                                .applyToComponent {
+                                    addActionListener {
+                                        val comboBox = portSelectComboBox.component
+                                        comboBox.isEditable = isSelected
+                                        comboBox.revalidate()
+                                        comboBox.repaint()
+                                    }
+                                }
+                        }
+                        row {
                             filterManufacturersCheckBox = checkBox("Filter out devices with unknown manufacturers")
                                 .bindSelected(parameters::filterManufacturers)
                         }
@@ -150,7 +165,7 @@ internal class MpyConfigurable(private val project: Project) :
                                     { parameters.portName = it.takeIf { !it.isNullOrBlank() } ?: EMPTY_PORT_NAME_TEXT }
                                 )
                                 .applyToComponent {
-                                    isEditable = false
+                                    isEditable = parameters.enableManualEditing
                                     selectedItem = parameters.portName
 
                                     addPopupMenuListener(object : PopupMenuListener {
@@ -161,6 +176,30 @@ internal class MpyConfigurable(private val project: Project) :
                                         override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
                                         override fun popupMenuCanceled(e: PopupMenuEvent?) {}
                                     })
+
+                                    // Add listener to detect typing changes in the editor
+                                    val editorComponent = editor.editorComponent
+                                    if (editorComponent is javax.swing.JTextField) {
+                                        editorComponent.document.addDocumentListener(object :
+                                            javax.swing.event.DocumentListener {
+                                            override fun insertUpdate(e: javax.swing.event.DocumentEvent?) =
+                                                updateModel()
+
+                                            override fun removeUpdate(e: javax.swing.event.DocumentEvent?) =
+                                                updateModel()
+
+                                            override fun changedUpdate(e: javax.swing.event.DocumentEvent?) =
+                                                updateModel()
+
+                                            private fun updateModel() {
+                                                val text = editorComponent.text
+                                                if (text != parameters.portName) {
+                                                    parameters.portName = text
+                                                    settingsPanel.validateAll()
+                                                }
+                                            }
+                                        })
+                                    }
                                 }
                         }
                     }.visibleIf(serialRadioButton.selected)
@@ -339,6 +378,7 @@ internal class MpyConfigurable(private val project: Project) :
 
             settings.state.isPluginEnabled = isPluginEnabled
             settings.state.usingUart = usingUart
+            settings.state.enableManualEditing = enableManualEditing
             settings.state.filterManufacturers = filterManufacturers
             settings.state.portName = portName.takeUnless { it == EMPTY_PORT_NAME_TEXT }
 

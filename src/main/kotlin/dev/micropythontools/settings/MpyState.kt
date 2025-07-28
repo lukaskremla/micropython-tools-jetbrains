@@ -24,6 +24,7 @@ import com.intellij.openapi.components.BaseState
 internal class MpyState : BaseState() {
     var isPluginEnabled by property(false)
     var usingUart by property(true)
+    var enableManualEditing by property(false)
     var filterManufacturers by property(true)
     var portName by string("")
     var increaseBaudrateForFileTransfers by string("")
