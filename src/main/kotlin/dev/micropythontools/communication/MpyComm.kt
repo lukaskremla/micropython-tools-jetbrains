@@ -49,6 +49,7 @@ internal const val SHORT_TIMEOUT = 2000L
 internal const val TIMEOUT = 5000L
 internal const val MEDIUM_TIMEOUT = 10000L
 internal const val LONG_TIMEOUT = 20000L
+internal const val LONG_LONG_TIMEOUT = 50000L
 
 internal enum class State {
     DISCONNECTING, DISCONNECTED, CONNECTING, CONNECTED, TTY_DETACHED
@@ -846,7 +847,7 @@ internal open class MpyComm(
             // The device is executing the command now, once done it will have output 3 EOT (Ctrl-D) characters
             // and the buffer will end with "\u0004>" (Ctrl-D + >)
             try {
-                withTimeout(LONG_TIMEOUT) {
+                withTimeout(LONG_LONG_TIMEOUT) {
                     while (!(offTtyByteBuffer.toUtf8String().endsWith("\u0004>") && offTtyByteBuffer.toUtf8String()
                             .count { it == '\u0004' } == 3)
                     ) checkCanceled()
