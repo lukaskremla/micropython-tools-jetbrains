@@ -28,6 +28,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.Key
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
@@ -60,6 +61,14 @@ internal const val DEFAULT_WEBREPL_PORT = 8266
 internal const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
 
 internal val WEBREPL_PASSWORD_LENGTH_RANGE = 4..9
+
+internal val ORIGINAL_CONTENT_KEY = Key.create<ByteArray>("Mpy.OriginalContent")
+internal val REMOTE_PATH_KEY = Key.create<String>("Mpy.RemotePath")
+internal val LISTENER_ADDED_KEY = Key.create<Boolean>("Mpy.ListenerAdded")
+internal val MPY_TOOLS_EDITABLE_FILE_SIGNATURE_KEY = Key.create<String>("Mpy.ListenerAdded")
+
+internal const val MPY_TOOLS_EDITABLE_FILE_SIGNATURE =
+    "c3748df410294e7af89bab26035944a2e2dca9cbd007a75b04398f4c1850ba9f"
 
 internal val mpySourceIcon = IconLoader.getIcon(
     "/icons/MpySource.svg",

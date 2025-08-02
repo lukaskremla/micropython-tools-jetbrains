@@ -460,7 +460,7 @@ internal class MpyTransferService(private val project: Project) {
                         path,
                         file.contentsToByteArray(),
                         ::progressCallbackHandler,
-                        freeMemBytes
+                        freeMemBytes ?: throw (RuntimeException("Free mem bytes is undefined before upload"))
                     )
 
                     uploadedFiles++

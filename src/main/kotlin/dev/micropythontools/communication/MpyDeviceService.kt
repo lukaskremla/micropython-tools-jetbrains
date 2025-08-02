@@ -55,6 +55,7 @@ internal typealias StateListener = (State) -> Unit
 internal data class DeviceInformation(
     var version: String = "Unknown",
     var description: String = "Unknown",
+    val defaultFreeMem: Int? = null,
     var hasCRC32: Boolean = false,
     var canEncodeBase64: Boolean = false,
     var canDecodeBase64: Boolean = false,
@@ -290,7 +291,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
         relativeName: String,
         contentsToByteArray: ByteArray,
         progressCallback: (uploadedBytes: Double) -> Unit,
-        freeMemBytes: Int?
+        freeMemBytes: Int
     ) {
         comm.upload(relativeName, contentsToByteArray, progressCallback, freeMemBytes)
     }
@@ -388,18 +389,19 @@ internal class MpyDeviceService(val project: Project) : Disposable {
             deviceInformation = DeviceInformation(
                 version = responseFields.getOrNull(0) ?: "Unknown",
                 description = responseFields.getOrNull(1) ?: "Unknown",
-                hasCRC32 = responseFields.getOrNull(2)?.toBoolean() == true,
-                canEncodeBase64 = responseFields.getOrNull(3)?.toBoolean() == true,
-                canDecodeBase64 = responseFields.getOrNull(4)?.toBoolean() == true,
-                platform = responseFields.getOrNull(5),
-                byteorder = responseFields.getOrNull(6),
-                maxsize = responseFields.getOrNull(7)?.toLongOrNull(),
-                mpyVersion = responseFields.getOrNull(8)?.toIntOrNull(),
-                mpySubversion = responseFields.getOrNull(9)?.toIntOrNull(),
-                mpyArchIdx = responseFields.getOrNull(10)?.toIntOrNull(),
-                mpyArchName = responseFields.getOrNull(11),
-                wordSize = responseFields.getOrNull(12)?.toIntOrNull(),
-                smallIntBits = responseFields.getOrNull(13)?.toIntOrNull()
+                defaultFreeMem = responseFields.getOrNull(2)?.toIntOrNull(),
+                hasCRC32 = responseFields.getOrNull(3)?.toBoolean() == true,
+                canEncodeBase64 = responseFields.getOrNull(4)?.toBoolean() == true,
+                canDecodeBase64 = responseFields.getOrNull(5)?.toBoolean() == true,
+                platform = responseFields.getOrNull(6),
+                byteorder = responseFields.getOrNull(7),
+                maxsize = responseFields.getOrNull(8)?.toLongOrNull(),
+                mpyVersion = responseFields.getOrNull(9)?.toIntOrNull(),
+                mpySubversion = responseFields.getOrNull(10)?.toIntOrNull(),
+                mpyArchIdx = responseFields.getOrNull(11)?.toIntOrNull(),
+                mpyArchName = responseFields.getOrNull(12),
+                wordSize = responseFields.getOrNull(13)?.toIntOrNull(),
+                smallIntBits = responseFields.getOrNull(14)?.toIntOrNull()
             )
         } else {
             deviceInformation = DeviceInformation()

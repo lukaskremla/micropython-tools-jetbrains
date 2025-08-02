@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.module.ModuleUtil
@@ -53,8 +54,7 @@ import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.communication.State
 import dev.micropythontools.communication.performReplAction
-import dev.micropythontools.settings.MpyConfigurable
-import dev.micropythontools.settings.MpySettingsService
+import dev.micropythontools.settings.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.charset.StandardCharsets
@@ -547,17 +547,50 @@ internal class MpyOpenFileAction : MpyReplAction(
 
         reporter.text(if (selectedFiles.size == 1) "Opening file..." else "Opening files...")
         for (file in selectedFiles) {
-            var text = deviceService.download(file.fullName).toString(StandardCharsets.UTF_8)
-            withContext(Dispatchers.EDT) {
-                var fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(file.name)
-                if (fileType.isBinary) {
-                    fileType = PlainTextFileType.INSTANCE
-                } else {
-                    //hack for LightVirtualFile and line endings
-                    text = StringUtilRt.convertLineSeparators(text)
+            // Avoid opening a new editor if one already exists for this remote path
+            var foundExistingEditor = false
+            for (openFile in FileEditorManager.getInstance(project).openFiles) {
+                val remotePath = openFile.getUserData(REMOTE_PATH_KEY)
+                if (remotePath == file.fullName) {
+                    val editorManager = FileEditorManager.getInstance(project)
+
+                    val providerId = FileEditorProviderManager.getInstance()
+                        .getProviderList(project, openFile)
+                        .firstOrNull()?.editorTypeId
+
+                    if (providerId != null) {
+                        editorManager.setSelectedEditor(openFile, providerId)
+
+                        ApplicationManager.getApplication().invokeLater {
+                            editorManager.openFile(openFile, true, true)
+                        }
+                    }
+
+                    foundExistingEditor = true
+                    break
                 }
-                val selectedFile = LightVirtualFile("micropython: ${file.fullName}", fileType, text)
-                selectedFile.isWritable = false
+            }
+
+            // Don't download the file if it is already open
+            if (foundExistingEditor) continue
+
+            var text = deviceService.download(file.fullName).toString(StandardCharsets.UTF_8)
+
+            var fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(file.name)
+            if (fileType.isBinary) {
+                fileType = PlainTextFileType.INSTANCE
+            } else {
+                //hack for LightVirtualFile and line endings
+                text = StringUtilRt.convertLineSeparators(text)
+            }
+            val selectedFile = LightVirtualFile("mpy-tools: ${file.fullName}", fileType, text)
+
+            selectedFile.isWritable = false
+            selectedFile.putUserData(ORIGINAL_CONTENT_KEY, text.toByteArray(StandardCharsets.UTF_8))
+            selectedFile.putUserData(REMOTE_PATH_KEY, file.fullName)
+            selectedFile.putUserData(MPY_TOOLS_EDITABLE_FILE_SIGNATURE_KEY, MPY_TOOLS_EDITABLE_FILE_SIGNATURE)
+
+            withContext(Dispatchers.EDT) {
                 FileEditorManager.getInstance(project).openFile(selectedFile, true, true)
             }
         }

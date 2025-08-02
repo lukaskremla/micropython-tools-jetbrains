@@ -82,6 +82,8 @@
                 implementation="dev.micropythontools.sourceroots.MpyModuleMpySourceRootEditHandler"/>
 
         <postStartupActivity implementation="dev.micropythontools.util.MpyConfigurationMigrationActivity"/>
+
+        <editorNotificationProvider implementation="dev.micropythontools.util.MpyEditorNotificationProvider"/>
     </extensions>
 
     <actions>

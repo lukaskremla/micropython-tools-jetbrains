@@ -26,6 +26,7 @@ def m():
 
         version = system_info[2]
         description = system_info[4]
+        default_free_mem = gc.mem_free()
 
         has_crc32 = hasattr(binascii, "crc32")
         can_encode_base64 = hasattr(binascii, "b2a_base64")
@@ -70,7 +71,8 @@ def m():
                     arch_name = arch_names[arch_idx]
                     mpy_arch = arch_idx
 
-        print(version, description, has_crc32, can_encode_base64, can_decode_base64, platform, byteorder, maxsize,
+        print(version, description, default_free_mem, has_crc32, can_encode_base64, can_decode_base64, platform,
+              byteorder, maxsize,
               mpy_version, mpy_subversion,
               mpy_arch, arch_name, word_size, small_int_bits, sep="&")
 

@@ -114,7 +114,7 @@ internal open class MpyComm(
         fullName: String,
         content: ByteArray,
         progressCallback: (uploadedBytes: Double) -> Unit,
-        freeMemBytes: Int?
+        freeMemBytes: Int
     ) {
         checkConnected()
 
@@ -136,19 +136,14 @@ internal open class MpyComm(
         val setupCommand = setupCommands.joinToString("\n")
 
         // Expect at least 10 KB of free memory as a safe minimum
-        if (freeMemBytes != null && freeMemBytes < 10000) {
+        if (freeMemBytes < 10000) {
             throw IOException("Insufficient free memory for upload. Please reset the device.")
         }
 
-        val maxChunkSize = if (freeMemBytes != null) {
-            // Use at most 80 percent of the free memory unless we'd be leaving more than 10 KB unused
-            val freeMemBuffer = minOf(freeMemBytes / 5 * 4, 10000)
-            // Leave the buffer free and use the rest of the memory
-            freeMemBytes - freeMemBuffer
-        } else {
-            // Data about free memory is missing, don't chunk
-            content.size
-        }
+        // Use at most 80 percent of the free memory unless we'd be leaving more than 10 KB unused
+        val freeMemBuffer = minOf(freeMemBytes / 5 * 4, 10000)
+        // Leave the buffer free and use the rest of the memory
+        val maxChunkSize = freeMemBytes - freeMemBuffer
 
         // Determine if using base64 encoding is possible and viable
         val shouldEncodeBase64 = deviceService.deviceInformation.canDecodeBase64 &&
