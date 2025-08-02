@@ -109,7 +109,7 @@ class MpyEditorNotificationProvider : EditorNotificationProvider {
                         performReplAction(
                             project,
                             true,
-                            "Saving edited file",
+                            "Saving the edited file",
                             true,
                             action = { reporter ->
                                 reporter.details(remotePath)
@@ -134,7 +134,7 @@ class MpyEditorNotificationProvider : EditorNotificationProvider {
                                     uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
 
                                     reporter.text(
-                                        "Saving edited file | ${
+                                        "Saving the edited file | ${
                                             "%.2f".format(
                                                 uploadedKB
                                             )
