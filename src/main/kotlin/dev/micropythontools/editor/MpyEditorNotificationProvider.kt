@@ -96,6 +96,13 @@ class MpyEditorNotificationProvider : EditorNotificationProvider {
                 panel.add(JButton("Save").apply {
                     isEnabled = isModified
                     addActionListener {
+                        val canContinue = MessageDialogBuilder.Companion.yesNo(
+                            "Save changes",
+                            "This will replace the version of the file on the device. Are you sure?"
+                        ).ask(project)
+
+                        if (!canContinue) return@addActionListener
+
                         val updatedContent = doc?.text?.toByteArray(StandardCharsets.UTF_8) ?: return@addActionListener
                         val remotePath = file.getUserData(REMOTE_PATH_KEY) ?: return@addActionListener
 
@@ -154,7 +161,6 @@ class MpyEditorNotificationProvider : EditorNotificationProvider {
                 })
                 panel.add(JButton("Cancel").apply {
                     addActionListener {
-
                         var canContinue = true
                         if (isModified) {
                             canContinue = MessageDialogBuilder.Companion.yesNo(
