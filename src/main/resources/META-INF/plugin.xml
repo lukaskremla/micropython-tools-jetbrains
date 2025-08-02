@@ -83,7 +83,7 @@
 
         <postStartupActivity implementation="dev.micropythontools.util.MpyConfigurationMigrationActivity"/>
 
-        <editorNotificationProvider implementation="dev.micropythontools.util.MpyEditorNotificationProvider"/>
+        <editorNotificationProvider implementation="dev.micropythontools.editor.MpyEditorNotificationProvider"/>
     </extensions>
 
     <actions>
