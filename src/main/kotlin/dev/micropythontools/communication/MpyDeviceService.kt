@@ -362,7 +362,8 @@ internal class MpyDeviceService(val project: Project) : Disposable {
     fun recreateTtyConnector() {
         comm.dispose()
         comm = createMpyComm()
-        componentRegistryService.getTerminal()?.ttyConnector = ttyConnector
+        // TODO: migrate from Terminal to Console
+        // componentRegistryService.getTerminal()?.ttyConnector = ttyConnector
     }
 
     override fun dispose() {

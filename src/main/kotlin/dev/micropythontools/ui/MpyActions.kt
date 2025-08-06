@@ -635,9 +635,8 @@ internal class MpyClearReplAction : MpyAction(
             MessageDialogBuilder.yesNo("Clear REPL", "Are you sure you want to clear the REPL terminal?").ask(project)
 
         if (sure) {
-            val terminal = project.service<MpyComponentRegistryService>().getTerminal()
-            val widget = UIUtil.findComponentOfType(terminal?.component, JediTermWidget::class.java)
-            widget?.terminalPanel?.clearBuffer()
+            val console = project.service<MpyComponentRegistryService>().getConsole()
+            console?.clear()
         }
     }
 }

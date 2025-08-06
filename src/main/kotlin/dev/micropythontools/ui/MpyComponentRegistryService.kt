@@ -16,8 +16,8 @@
 
 package dev.micropythontools.ui
 
+import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.openapi.components.Service
-import com.intellij.terminal.JBTerminalWidget
 import com.intellij.ui.content.Content
 
 
@@ -25,7 +25,7 @@ import com.intellij.ui.content.Content
 internal class MpyComponentRegistryService {
     private var fileSystemWidget: FileSystemWidget? = null
     private var terminalContent: Content? = null
-    private var terminal: JBTerminalWidget? = null
+    private var console: ConsoleViewImpl? = null
 
     fun registerFileSystem(fileSystemWidget: FileSystemWidget) {
         this.fileSystemWidget = fileSystemWidget
@@ -35,11 +35,11 @@ internal class MpyComponentRegistryService {
         this.terminalContent = terminalContent
     }
 
-    fun registerTerminal(terminal: JBTerminalWidget) {
-        this.terminal = terminal
+    fun registerConsole(console: ConsoleViewImpl) {
+        this.console = console
     }
 
     fun getFileSystemWidget() = fileSystemWidget
     fun getTerminalContent() = terminalContent
-    fun getTerminal() = terminal
+    fun getConsole() = console
 }

@@ -17,6 +17,10 @@
 
 package dev.micropythontools.ui
 
+import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
@@ -30,17 +34,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.terminal.JBTerminalWidget
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TtyConnector
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
 import dev.micropythontools.settings.EMPTY_PORT_NAME_TEXT
 import dev.micropythontools.settings.EMPTY_URL_TEXT
 import dev.micropythontools.settings.MpySettingsService
-import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import java.io.OutputStream
+import java.nio.charset.StandardCharsets
 import javax.swing.JComponent
 
 internal const val NOTIFICATION_GROUP = "MicroPython Tools"
@@ -62,35 +65,71 @@ internal class MpyToolWindow() : ToolWindowFactory, DumbAware {
         toolWindow.contentManager.addContent(fileSystemContent)
         componentRegistryService.registerFileSystem(fileSystemWidget)
 
-        val jediTermWidget = jediTermWidget(project, newDisposable, deviceService.ttyConnector)
-        val terminalContent = ContentFactory.getInstance().createContent(jediTermWidget, "REPL", true)
+        val console = createConsoleView(project, newDisposable, deviceService.ttyConnector)
+        val terminalContent = ContentFactory.getInstance().createContent(console.component, "REPL", true)
         terminalContent.setDisposer(newDisposable)
         toolWindow.contentManager.addContent(terminalContent)
         componentRegistryService.registerTerminalContent(terminalContent)
     }
 
-    private fun jediTermWidget(project: Project, disposable: Disposable, connector: TtyConnector): JComponent {
+    private fun createConsoleView(project: Project, disposable: Disposable, connector: TtyConnector): ConsoleView {
         val componentRegistryService = project.service<MpyComponentRegistryService>()
+        val console = ConsoleViewImpl(project, false)
+        componentRegistryService.registerConsole(console)
+        Disposer.register(disposable, console)
 
-        val mySettingsProvider = JBTerminalSystemSettingsProvider()
-        val terminal = JBTerminalWidget(project, mySettingsProvider, disposable)
-        componentRegistryService.registerTerminal(terminal)
-        terminal.isEnabled = false
-        with(terminal.terminal) {
-            setModeEnabled(TerminalMode.ANSI, true)
-            setModeEnabled(TerminalMode.AutoNewLine, true)
-            setModeEnabled(TerminalMode.WideColumn, true)
+        // Create a bridge between TtyConnector and ConsoleView
+        val bridge = object : ProcessHandler() {
+            override fun destroyProcessImpl() = notifyProcessTerminated(0)
+            override fun detachProcessImpl() = notifyProcessTerminated(0)
+            override fun detachIsDefault() = true
+            override fun getProcessInput(): OutputStream = object : OutputStream() {
+                override fun write(b: Int) {
+                    val data = byteArrayOf(b.toByte())
+                    val text = String(data, StandardCharsets.UTF_8).replace("\n", "\r\n")
+                    connector.write(text.toByteArray(StandardCharsets.UTF_8))
+                }
+
+                override fun write(b: ByteArray, off: Int, len: Int) {
+                    val data = b.copyOfRange(off, off + len)
+                    val text = String(data, StandardCharsets.UTF_8).replace("\n", "\r\n")
+                    connector.write(text.toByteArray(StandardCharsets.UTF_8))
+                }
+            }
         }
-        terminal.ttyConnector = connector
-        terminal.start()
 
+        // Connect the console to the process handler
+        console.attachToProcess(bridge)
+
+        // Start thread to read from connector and write to console
+        Thread {
+            val buffer = CharArray(1024)
+            try {
+                while (true) {
+                    val len = connector.read(buffer, 0, buffer.size)
+                    if (len > 0) {
+                        val text = String(buffer, 0, len)
+                        console.print(text, ConsoleViewContentType.NORMAL_OUTPUT)
+                    }
+                    if (len < 0) break // EOF
+                }
+            } catch (e: Exception) {
+                console.print("Device error: ${e.message}\n", ConsoleViewContentType.ERROR_OUTPUT)
+            }
+        }.start()
+
+        // Add toolbar
         val widget = BorderLayoutPanel()
-        widget.addToCenter(terminal)
+        widget.addToCenter(console.component)
         val actions = ActionManager.getInstance().getAction("micropythontools.repl.ReplToolbar") as ActionGroup
         val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, actions, true)
-        actionToolbar.targetComponent = terminal
+        actionToolbar.targetComponent = console.component
         widget.addToTop(actionToolbar.component)
-        return widget
+
+        // Return the wrapped console
+        return object : ConsoleView by console {
+            override fun getComponent(): JComponent = widget
+        }
     }
 }
 
