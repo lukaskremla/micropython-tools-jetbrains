@@ -17,6 +17,9 @@
 package dev.micropythontools.settings
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
@@ -24,20 +27,24 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.ui.MutableCollectionComboBoxModel
-import com.intellij.ui.TextFieldWithAutoCompletion
-import com.intellij.ui.TextFieldWithAutoCompletionListProvider
+import com.intellij.ui.*
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.table.TableView
+import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.ListTableModel
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
 import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.util.MpyStubPackageService
+import dev.micropythontools.util.StubPackage
 import jssc.SerialPort
 import kotlinx.coroutines.runBlocking
 import java.awt.Dimension
+import javax.swing.event.DocumentEvent
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 
@@ -300,6 +307,110 @@ internal class MpyConfigurable(private val project: Project) :
                     row {
                         areStubsEnabled = checkBox("Enable MicroPython stubs")
                             .bindSelected(parameters::areStubsEnabled)
+                    }
+
+                    val stubPackages = emptyList<StubPackage>()
+                    /*mutableListOf(
+                    StubPackage("micropython-esp32", "1.20.0", true),
+                    StubPackage("micropython-rp2", "1.19.1", false)
+                )*/
+
+                    // Column definitions
+                    val stubColumns = arrayOf(
+                        object : ColumnInfo<StubPackage, String>("Name") {
+                            override fun valueOf(item: StubPackage): String = item.name
+                        },
+                        object : ColumnInfo<StubPackage, String>("Version") {
+                            override fun valueOf(item: StubPackage): String = item.version
+                        }
+                    )
+
+                    val tableModel: ListTableModel<StubPackage> = ListTableModel(*stubColumns)
+                    tableModel.items = stubPackages
+
+                    val pkgs = mpyStubPackageService.getStubPackages()
+
+                    val table = TableView(tableModel)
+                    table.setShowGrid(false)
+
+                    // Setup ToolbarDecorator with buttons
+                    val decoratedPanel = ToolbarDecorator.createDecorator(table)
+                        .disableAddAction()
+                        .disableRemoveAction()
+                        .disableUpDownActions()
+                        .addExtraAction(object : AnAction() {
+                            init {
+                                this.templatePresentation.icon = AllIcons.Actions.Checked
+                                this.templatePresentation.text = "Apply"
+                            }
+
+                            override fun actionPerformed(e: AnActionEvent) {
+                                TODO("Not yet implemented")
+                            }
+                        })
+                        .addExtraAction(object : AnAction() {
+                            init {
+                                this.templatePresentation.icon = AllIcons.Diff.Remove
+                                this.templatePresentation.text = "Unapply"
+                            }
+
+                            override fun actionPerformed(e: AnActionEvent) {
+                                TODO("Not yet implemented")
+                            }
+                        })
+                        .addExtraAction(object : AnAction() {
+                            init {
+                                this.templatePresentation.icon = AllIcons.Actions.Download
+                                this.templatePresentation.text = "Download"
+                            }
+
+                            override fun actionPerformed(e: AnActionEvent) {
+                                TODO("Not yet implemented")
+                            }
+                        })
+                        .addExtraAction(object : AnAction() {
+                            init {
+                                this.templatePresentation.icon = AllIcons.General.Delete
+                                this.templatePresentation.text = "Delete"
+                            }
+
+                            override fun actionPerformed(e: AnActionEvent) {
+                                TODO("Not yet implemented")
+                            }
+                        })
+                        .addExtraAction(object : AnAction() {
+                            init {
+                                this.templatePresentation.icon = AllIcons.Actions.Refresh
+                                this.templatePresentation.text = "Refresh"
+                            }
+
+                            override fun actionPerformed(e: AnActionEvent) {
+                                TODO("Not yet implemented")
+                            }
+                        })
+                        .createPanel()
+
+                    // Search field logic
+                    val searchField = SearchTextField()
+                    searchField.textEditor.document.addDocumentListener(object : DocumentAdapter() {
+                        override fun textChanged(e: DocumentEvent) {
+                            val filterText = searchField.text.lowercase()
+                            tableModel.items = stubPackages.filter {
+                                it.name.lowercase().contains(filterText) ||
+                                        it.version.lowercase().contains(filterText)
+                            }
+                        }
+                    })
+
+                    // Integrate into DSL layout
+                    row {
+                        cell(searchField)
+                            .align(Align.FILL)
+                    }
+                    row {
+                        cell(decoratedPanel)
+                            .align(Align.FILL)
+                            .resizableColumn()
                     }
 
                     row {
