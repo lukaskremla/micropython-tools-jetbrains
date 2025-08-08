@@ -49,7 +49,7 @@ internal class MpyFileEditor(private val file: VirtualFile) :
 
     override fun getComponent(): JComponent = component
 
-    override fun getPreferredFocusedComponent(): JComponent? = component
+    override fun getPreferredFocusedComponent(): JComponent = component
 
     override fun getName(): String = "MicroPython Bytecode File Editor"
 

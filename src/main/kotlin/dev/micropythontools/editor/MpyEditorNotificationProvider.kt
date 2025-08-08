@@ -96,7 +96,7 @@ class MpyEditorNotificationProvider : EditorNotificationProvider {
                 panel.add(JButton("Save").apply {
                     isEnabled = isModified
                     addActionListener {
-                        val canContinue = MessageDialogBuilder.Companion.yesNo(
+                        val canContinue = MessageDialogBuilder.yesNo(
                             "Save changes",
                             "This will replace the version of the file on the device. Are you sure?"
                         ).ask(project)
@@ -163,7 +163,7 @@ class MpyEditorNotificationProvider : EditorNotificationProvider {
                     addActionListener {
                         var canContinue = true
                         if (isModified) {
-                            canContinue = MessageDialogBuilder.Companion.yesNo(
+                            canContinue = MessageDialogBuilder.yesNo(
                                 "Discard changes",
                                 "You have unsaved changes. Are you sure you want to discard them?"
                             ).ask(project)
@@ -185,7 +185,7 @@ class MpyEditorNotificationProvider : EditorNotificationProvider {
                 addActionListener {
                     var canContinue = true
                     if (isModified) {
-                        canContinue = MessageDialogBuilder.Companion.yesNo(
+                        canContinue = MessageDialogBuilder.yesNo(
                             "Refresh open file",
                             "You have unsaved changes. Refreshing the file will discard them. Are you sure you want to continue?"
                         ).ask(project)

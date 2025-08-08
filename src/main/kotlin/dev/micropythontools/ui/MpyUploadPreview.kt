@@ -220,11 +220,11 @@ internal class MpyUploadPreview(
             mutableFolderToTargetPath.entries.removeIf { it.value == path }
         }
 
-        mutableFileToTargetPath.forEach { file, targetPath ->
+        mutableFileToTargetPath.forEach { (file, targetPath) ->
             previewNodes.add(PreviewFileNode(targetPath, file.name, FileStatus.ADDED))
         }
 
-        mutableFolderToTargetPath.forEach { file, targetPath ->
+        mutableFolderToTargetPath.forEach { (file, targetPath) ->
             previewNodes.add(PreviewDirNode(targetPath, file.name, FileStatus.ADDED, AllIcons.Nodes.Folder))
         }
 

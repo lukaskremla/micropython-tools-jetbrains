@@ -35,7 +35,7 @@ internal class MpyModuleMpySourceRootEditHandler :
         return mpySourceIcon
     }
 
-    override fun getFolderUnderRootIcon(): Icon? {
+    override fun getFolderUnderRootIcon(): Icon {
         return rootIcon
     }
 

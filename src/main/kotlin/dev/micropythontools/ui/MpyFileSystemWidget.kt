@@ -56,7 +56,6 @@ import dev.micropythontools.settings.volumeIcon
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
@@ -444,10 +443,10 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         TreeUtil.treeNodeTraverser(root)
             .traverse(TreeTraversal.POST_ORDER_DFS)
             .mapNotNull {
-                when (val node = it) {
+                when (it) {
                     is InvisibleRootNode -> null
-                    is DirNode -> node
-                    is FileNode -> node
+                    is DirNode -> it
+                    is FileNode -> it
                     else -> null
                 }
             }
@@ -634,7 +633,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
     }
 }
 
-internal sealed class FileSystemNode(@NonNls val fullName: String, @NonNls val name: String) :
+internal sealed class FileSystemNode(val fullName: String, val name: String) :
     DefaultMutableTreeNode() {
     override fun toString(): String = name
 

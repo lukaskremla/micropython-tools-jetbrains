@@ -98,6 +98,9 @@ internal class AutoClearAction :
     CheckboxAction("Auto Clear REPL", "Automatically clear REPL console on upload/reset", null),
     DumbAware {
 
+    private val isAutoClearEnabled: Boolean
+        get() = PropertiesComponent.getInstance().getBoolean("micropythontools.repl.autoClear", true)
+
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
@@ -111,14 +114,7 @@ internal class AutoClearAction :
     override fun isSelected(e: AnActionEvent): Boolean = isAutoClearEnabled
 
     override fun setSelected(e: AnActionEvent, state: Boolean) =
-        PropertiesComponent.getInstance().setValue(PROPERTY_NAME, state, DEFAULT)
-
-    companion object {
-        private const val PROPERTY_NAME = "micropythontools.repl.autoClear"
-        private const val DEFAULT = true
-        val isAutoClearEnabled: Boolean
-            get() = PropertiesComponent.getInstance().getBoolean(PROPERTY_NAME, DEFAULT)
-    }
+        PropertiesComponent.getInstance().setValue("micropythontools.repl.autoClear", state, true)
 }
 
 internal class ConnectionSelectorAction : ComboBoxAction(), DumbAware {
