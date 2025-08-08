@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.ExceptionUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -66,7 +65,7 @@ internal open class MpyComm(
     val project: Project,
     private val deviceService: MpyDeviceService
 ) : Disposable, Closeable {
-    val ttyConnector: TtyConnector = WebSocketTtyConnector()
+    val ttyConnector: TtyConnector = MpyTtyConnector()
 
     val isConnected
         get() = mpyClient?.isConnected == true
@@ -81,7 +80,7 @@ internal open class MpyComm(
     private var mpyClient: MpyClient? = null
 
     internal val offTtyByteBuffer = ByteArrayOutputStream()
-    private val webSocketMutex = Mutex()
+    private val commMutex = Mutex()
     internal val outPipe = PipedWriter()
     private val inPipe = PipedReader(outPipe, 1000)
 
@@ -126,7 +125,7 @@ internal open class MpyComm(
         while (slashIdx >= 0) {
             slashIdx = fullName.indexOf('/', slashIdx + 1)
             if (slashIdx > 0) {
-                val folderName = fullName.substring(0, slashIdx)
+                val folderName = fullName.take(slashIdx)
                 setupCommands.add("try: os.mkdir(\"$folderName\");")
                 setupCommands.add("except: pass;")
             }
@@ -238,7 +237,7 @@ internal open class MpyComm(
 
     suspend fun setBaudrate(baudrate: Int) {
         checkConnected()
-        webSocketMutex.withLock {
+        commMutex.withLock {
             if (mpyClient is MpySerialClient) {
                 // Reconfigure the REPL to the specified baudrate
                 doBlindExecute(
@@ -297,7 +296,7 @@ internal open class MpyComm(
         }
         state = State.CONNECTING
         offTtyByteBuffer.reset()
-        webSocketMutex.withLock {
+        commMutex.withLock {
             try {
                 mpyClient = createClient().connect("Connecting to $name")
             } catch (e: Exception) {
@@ -308,7 +307,7 @@ internal open class MpyComm(
     }
 
     internal suspend fun disconnect() {
-        webSocketMutex.withLock {
+        commMutex.withLock {
             state = State.DISCONNECTING
             mpyClient?.close()
             mpyClient = null
@@ -377,7 +376,7 @@ internal open class MpyComm(
 
     internal suspend fun reset() {
         checkConnected()
-        webSocketMutex.withLock {
+        commMutex.withLock {
             if (mpyClient is MpyWebSocketClient) {
                 // Hide reset output via TTY_DETACHED and mute disconnect error reporting for WebREPL
                 state = State.TTY_DETACHED
@@ -415,35 +414,33 @@ internal open class MpyComm(
             // Disconnect WebREPL after reset
             mpyWebsocketClient.closeBlocking()
 
-            reportRawProgress { reporter ->
-                try {
-                    mpyWebsocketClient.connect("Reconnecting WebREPL After Reset...")
-                } catch (e: TimeoutCancellationException) {
-                    Notifications.Bus.notify(
-                        Notification(
-                            NOTIFICATION_GROUP,
-                            "Connection attempt timed out",
-                            NotificationType.ERROR
-                        ), project
-                    )
-                    throw e
-                } catch (e: kotlinx.coroutines.CancellationException) {
-                    Notifications.Bus.notify(
-                        Notification(
-                            NOTIFICATION_GROUP,
-                            "Connection attempt cancelled",
-                            NotificationType.ERROR
-                        ), project
-                    )
-                    throw e
-                }
+            try {
+                mpyWebsocketClient.connect("Reconnecting WebREPL After Reset...")
+            } catch (e: TimeoutCancellationException) {
+                Notifications.Bus.notify(
+                    Notification(
+                        NOTIFICATION_GROUP,
+                        "Connection attempt timed out",
+                        NotificationType.ERROR
+                    ), project
+                )
+                throw e
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                Notifications.Bus.notify(
+                    Notification(
+                        NOTIFICATION_GROUP,
+                        "Connection attempt cancelled",
+                        NotificationType.ERROR
+                    ), project
+                )
+                throw e
             }
         }
     }
 
     internal suspend fun interrupt() {
         checkConnected()
-        webSocketMutex.withLock {
+        commMutex.withLock {
             try {
                 withTimeout(SHORT_TIMEOUT) {
                     // Interrupt running code
@@ -532,14 +529,14 @@ internal open class MpyComm(
      */
     internal suspend fun blindExecute(command: String, shouldStayDetached: Boolean = false): String {
         checkConnected()
-        webSocketMutex.withLock {
+        commMutex.withLock {
             return doBlindExecute(command, shouldStayDetached = shouldStayDetached)
         }
     }
 
     internal suspend fun instantRun(command: String) {
         checkConnected()
-        webSocketMutex.withLock {
+        commMutex.withLock {
             doBlindExecute(command, redirectToRepl = true)
         }
     }
@@ -562,7 +559,6 @@ internal open class MpyComm(
         index: Int,
         maxChunkSize: Int
     ): Pair<String, Int> {
-        val maxSafeChunkSize = maxChunkSize
         var commandSize = 200 // Safe overhead for the non ___f.write() calls
 
         var contentSize = 0
@@ -592,7 +588,7 @@ internal open class MpyComm(
             val writeCommandSize = writeCommand.toByteArray(Charsets.UTF_8).size
 
             // Avoid appending the write command if it would exceed the total maxSafeChunkSize
-            if ((commandSize + writeCommandSize) > maxSafeChunkSize) break
+            if ((commandSize + writeCommandSize) > maxChunkSize) break
 
             contentSize += chunkSize // This chunk will be written, extend contentSize value
             commandSize += writeCommandSize // This chunk will be written, extend commandSize value
@@ -950,7 +946,7 @@ internal open class MpyComm(
         throw exception
     }
 
-    private inner class WebSocketTtyConnector : TtyConnector {
+    private inner class MpyTtyConnector : TtyConnector {
         override fun getName(): String = connectionParameters.webReplUrl
         override fun close() = Disposer.dispose(this@MpyComm)
         override fun isConnected(): Boolean = true
