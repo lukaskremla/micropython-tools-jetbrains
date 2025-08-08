@@ -484,7 +484,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
     }
 
     internal suspend fun clearTerminalIfNeeded() {
-        if (AutoClearAction.isAutoClearEnabled) {
+        if (isAutoClearEnabled) {
             withContext(Dispatchers.EDT) {
                 val widget = UIUtil.findComponentOfType(terminalContent?.component, JediTermWidget::class.java)
                 widget?.terminalPanel?.clearBuffer()

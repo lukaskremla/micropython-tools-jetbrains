@@ -46,6 +46,9 @@ import javax.swing.JComponent
 internal const val NOTIFICATION_GROUP = "MicroPython Tools"
 internal const val TOOL_WINDOW_ID = "MicroPython Tools"
 
+internal val isAutoClearEnabled: Boolean
+    get() = PropertiesComponent.getInstance().getBoolean("micropythontools.repl.autoClear", true)
+
 /**
  * @author elmot, Lukas Kremla
  */
@@ -97,9 +100,6 @@ internal class MpyToolWindow() : ToolWindowFactory, DumbAware {
 internal class AutoClearAction :
     CheckboxAction("Auto Clear REPL", "Automatically clear REPL console on upload/reset", null),
     DumbAware {
-
-    private val isAutoClearEnabled: Boolean
-        get() = PropertiesComponent.getInstance().getBoolean("micropythontools.repl.autoClear", true)
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
