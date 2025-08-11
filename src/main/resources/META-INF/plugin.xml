@@ -86,6 +86,12 @@
         <editorNotificationProvider implementation="dev.micropythontools.editor.MpyEditorNotificationProvider"/>
     </extensions>
 
+    <applicationListeners>
+        <listener
+                topic="com.intellij.openapi.actionSystem.ex.AnActionListener"
+                class="dev.micropythontools.util.MpySaveKeyListener"/>
+    </applicationListeners>
+
     <actions>
         <group id="micropythontools.repl.FSToolbar">
             <action id="micropythontools.repl.ConnectAction"

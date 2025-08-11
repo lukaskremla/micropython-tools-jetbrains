@@ -96,67 +96,7 @@ class MpyEditorNotificationProvider : EditorNotificationProvider {
                 panel.add(JButton("Save").apply {
                     isEnabled = isModified
                     addActionListener {
-                        val canContinue = MessageDialogBuilder.yesNo(
-                            "Save changes",
-                            "This will replace the version of the file on the device. Are you sure?"
-                        ).ask(project)
-
-                        if (!canContinue) return@addActionListener
-
-                        val updatedContent = doc?.text?.toByteArray(StandardCharsets.UTF_8) ?: return@addActionListener
-                        val remotePath = file.getUserData(REMOTE_PATH_KEY) ?: return@addActionListener
-
-                        performReplAction(
-                            project,
-                            true,
-                            "Saving the edited file",
-                            true,
-                            action = { reporter ->
-                                reporter.details(remotePath)
-
-                                var uploadProgress = 0.0
-                                var uploadedKB = 0.0
-
-                                // Calculate the total binary size of the upload
-                                val totalBytes = updatedContent.size.toDouble()
-
-                                fun progressCallbackHandler(uploadedBytes: Double) {
-                                    // Floating point arithmetic can be inaccurate,
-                                    // ensures the uploaded size won't go over the actual file size
-                                    uploadedKB += (uploadedBytes / 1000).coerceIn(
-                                        (uploadedBytes / 1000),
-                                        totalBytes / 1000
-                                    )
-                                    // Convert to double for maximal accuracy
-                                    uploadProgress += (uploadedBytes / totalBytes)
-                                    // Ensure that uploadProgress never goes over 1.0
-                                    // as floating point arithmetic can have minor inaccuracies
-                                    uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
-
-                                    reporter.text(
-                                        "Saving the edited file | ${
-                                            "%.2f".format(
-                                                uploadedKB
-                                            )
-                                        } KB of ${"%.2f".format(totalBytes / 1000)} KB"
-                                    )
-                                    reporter.fraction(uploadProgress)
-                                }
-
-                                deviceService.upload(
-                                    remotePath,
-                                    updatedContent,
-                                    ::progressCallbackHandler,
-                                    deviceService.deviceInformation.defaultFreeMem
-                                        ?: throw RuntimeException("DefaultFreeMem is undefined")
-                                )
-
-                                // Reset edit state
-                                file.putUserData(ORIGINAL_CONTENT_KEY, updatedContent)
-                                // Re-open as view-only
-                                reOpenFile(project, file, doc, false)
-                            }
-                        )
+                        MpyFileSaveHelper.saveFileFromEditor(project, file, doc, deviceService)
                     }
                 })
                 panel.add(JButton("Cancel").apply {
@@ -223,7 +163,7 @@ class MpyEditorNotificationProvider : EditorNotificationProvider {
         }
     }
 
-    private fun reOpenFile(
+    internal fun reOpenFile(
         project: Project,
         file: VirtualFile,
         doc: Document?,
@@ -254,5 +194,71 @@ class MpyEditorNotificationProvider : EditorNotificationProvider {
         if (editor is EditorEx) {
             editor.isViewer = !file.isWritable
         }
+    }
+}
+
+internal object MpyFileSaveHelper {
+    fun saveFileFromEditor(project: Project, file: VirtualFile, doc: Document?, deviceService: MpyDeviceService) {
+        val canContinue = MessageDialogBuilder.yesNo(
+            "Save changes",
+            "This will replace the version of the file on the device. Are you sure?"
+        ).ask(project)
+
+        if (!canContinue) return
+
+        val updatedContent = doc?.text?.toByteArray(StandardCharsets.UTF_8) ?: return
+        val remotePath = file.getUserData(REMOTE_PATH_KEY) ?: return
+
+        performReplAction(
+            project,
+            true,
+            "Saving the edited file",
+            true,
+            action = { reporter ->
+                reporter.details(remotePath)
+
+                var uploadProgress = 0.0
+                var uploadedKB = 0.0
+
+                // Calculate the total binary size of the upload
+                val totalBytes = updatedContent.size.toDouble()
+
+                fun progressCallbackHandler(uploadedBytes: Double) {
+                    // Floating point arithmetic can be inaccurate,
+                    // ensures the uploaded size won't go over the actual file size
+                    uploadedKB += (uploadedBytes / 1000).coerceIn(
+                        (uploadedBytes / 1000),
+                        totalBytes / 1000
+                    )
+                    // Convert to double for maximal accuracy
+                    uploadProgress += (uploadedBytes / totalBytes)
+                    // Ensure that uploadProgress never goes over 1.0
+                    // as floating point arithmetic can have minor inaccuracies
+                    uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
+
+                    reporter.text(
+                        "Saving the edited file | ${
+                            "%.2f".format(
+                                uploadedKB
+                            )
+                        } KB of ${"%.2f".format(totalBytes / 1000)} KB"
+                    )
+                    reporter.fraction(uploadProgress)
+                }
+
+                deviceService.upload(
+                    remotePath,
+                    updatedContent,
+                    ::progressCallbackHandler,
+                    deviceService.deviceInformation.defaultFreeMem
+                        ?: throw RuntimeException("DefaultFreeMem is undefined")
+                )
+
+                // Reset edit state
+                file.putUserData(ORIGINAL_CONTENT_KEY, updatedContent)
+                // Re-open as view-only
+                MpyEditorNotificationProvider().reOpenFile(project, file, doc, false)
+            }
+        )
     }
 }
