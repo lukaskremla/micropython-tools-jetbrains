@@ -13,3 +13,7 @@ publish-token.txt
 # IntelliJ Platform Gradle Plugin
 .intellijPlatform/
 .kotlin
+
+# Allow the default project dictionary to be versioned
+!.idea/dictionaries/project.xml
+!.idea/inspectionProfiles/Project_Default.xml
