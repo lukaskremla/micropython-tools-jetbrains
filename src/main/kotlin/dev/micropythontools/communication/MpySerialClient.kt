@@ -32,8 +32,8 @@ internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
 
     override val isConnected: Boolean
         get() = try {
+            port.getLinesStatus()
             port.isOpened && port.getInputBufferBytesCount() >= 0
-            true
         } catch (_: SerialPortException) {
             false
         }
