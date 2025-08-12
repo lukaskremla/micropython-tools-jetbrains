@@ -38,15 +38,13 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.tree.TreeUtil
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
-import dev.micropythontools.settings.mpySourceIcon
-import dev.micropythontools.settings.volumeIcon
+import dev.micropythontools.icons.MpyIcons
 import java.awt.Color
 import java.awt.Dimension
 import java.util.*
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
-
 
 internal class MpyUploadPreview(
     project: Project,
@@ -72,7 +70,7 @@ internal class MpyUploadPreview(
         return when {
             // Excluded roots icons apply to children in the project file tree as well
             excludedRoots.any { VfsUtil.isAncestor(it, virtualFile, false) } -> AllIcons.Modules.ExcludeRoot
-            sourceRoots.any { it == virtualFile } -> mpySourceIcon
+            sourceRoots.any { it == virtualFile } -> MpyIcons.Source
             testRoots.any { it == virtualFile } -> AllIcons.Modules.TestRoot
             else -> AllIcons.Nodes.Folder
         }
@@ -367,7 +365,7 @@ internal class MpyUploadPreview(
             ) {
                 value as PreviewNode
                 icon = when {
-                    value is PreviewVolumeRootNode && !value.isFileSystemRoot -> volumeIcon
+                    value is PreviewVolumeRootNode && !value.isFileSystemRoot -> MpyIcons.Volume
                     value is PreviewDirNode -> AllIcons.Nodes.Folder
                     else -> FileTypeRegistry.getInstance().getFileTypeByFileName(value.name).icon
                 }
@@ -381,7 +379,7 @@ internal class MpyUploadPreview(
             .forEach { node ->
                 if (node is PreviewDirNode &&
                     node.fileStatus == FileStatus.NOT_CHANGED &&
-                    node.icon == mpySourceIcon &&
+                    node.icon == MpyIcons.Source &&
                     allItemsToUpload.any {
                         (VfsUtil.getRelativePath(it, projectDir, '/') ?: it.name) == node.fullName
                     }
@@ -519,7 +517,7 @@ private class PreviewVolumeRootNode(
     fullName,
     name,
     FileStatus.NOT_CHANGED,
-    volumeIcon
+    MpyIcons.Volume
 )
 
 private class PreviewInvisibleRootNode : PreviewDirNode(

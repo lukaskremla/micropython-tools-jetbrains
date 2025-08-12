@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-
-package dev.micropythontools.util
+package dev.micropythontools.stubs
 
 import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.facet.ui.ValidationResult
@@ -33,16 +32,13 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.jetbrains.python.library.PythonLibraryType
+import dev.micropythontools.core.MpyPaths
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.settings.stubsPath
 import java.io.File
 import javax.swing.JComponent
 
 @Service(Service.Level.PROJECT)
-/**
- * @author Lukas Kremla
- */
 internal class MpyStubPackageService(private val project: Project) {
     companion object {
         private const val LIBRARY_NAME = "MicroPythonToolsStubs"
@@ -57,7 +53,7 @@ internal class MpyStubPackageService(private val project: Project) {
     private val settings = project.service<MpySettingsService>()
 
     fun getAvailableStubs(): List<String> {
-        return File(stubsPath).listFiles()?.filter { it.isDirectory }
+        return File(MpyPaths.stubsPath).listFiles()?.filter { it.isDirectory }
             ?.sortedByDescending { it }
             ?.map { it.name }
             ?: emptyList()
@@ -122,7 +118,7 @@ internal class MpyStubPackageService(private val project: Project) {
                 val libraryModel = newLibrary.modifiableModel
 
                 // Add roots
-                val rootUrl = "$stubsPath/$newStubPackage"
+                val rootUrl = "${MpyPaths.stubsPath}/$newStubPackage"
                 val stdlibUrl = "$rootUrl/stdlib"
 
                 val rootFile = LocalFileSystem.getInstance().findFileByPath(rootUrl)

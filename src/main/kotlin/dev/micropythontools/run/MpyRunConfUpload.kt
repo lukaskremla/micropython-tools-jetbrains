@@ -28,14 +28,11 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.core.MpyValidators
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.settings.isRunConfTargetPathValid
-import dev.micropythontools.ui.NOTIFICATION_GROUP
 
-/**
- * @authors Lukas Kremla
- */
 internal class MpyRunConfUpload(
     project: Project,
     factory: ConfigurationFactory,
@@ -124,7 +121,7 @@ internal class MpyRunConfUpload(
         } catch (e: RuntimeConfigurationError) {
             Notifications.Bus.notify(
                 Notification(
-                    NOTIFICATION_GROUP,
+                    MpyBundle.message("notification.group.name"),
                     "Cannot run \"${name}\". ${e.localizedMessage}",
                     NotificationType.ERROR
                 ), project
@@ -182,7 +179,7 @@ internal class MpyRunConfUpload(
                 )
             }
             val targetPath = options.uploadToPath
-            val validationResult = isRunConfTargetPathValid(targetPath ?: "/")
+            val validationResult = MpyValidators.isRunConfTargetPathValid(targetPath ?: "/")
             if (validationResult != null) {
                 throw RuntimeConfigurationError(
                     validationResult

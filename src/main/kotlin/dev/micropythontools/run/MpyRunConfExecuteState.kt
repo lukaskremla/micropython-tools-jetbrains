@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.readText
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.performReplAction
-import dev.micropythontools.ui.NOTIFICATION_GROUP
+import dev.micropythontools.i18n.MpyBundle
 
 internal class MpyRunConfExecuteState(
     private val project: Project,
@@ -58,7 +58,7 @@ internal class MpyRunConfExecuteState(
         } catch (e: Throwable) {
             Notifications.Bus.notify(
                 Notification(
-                    NOTIFICATION_GROUP,
+                    MpyBundle.message("notification.group.name"),
                     "Failed to execute \"${fileName}\"",
                     "An error occurred: ${e.message ?: e.javaClass.simpleName}",
                     NotificationType.ERROR

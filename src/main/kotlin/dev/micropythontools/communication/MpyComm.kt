@@ -30,8 +30,8 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.ExceptionUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
-import dev.micropythontools.settings.retrieveMpyScriptAsString
-import dev.micropythontools.ui.NOTIFICATION_GROUP
+import dev.micropythontools.core.MpyScripts
+import dev.micropythontools.i18n.MpyBundle
 import jssc.SerialPort
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -41,7 +41,6 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.properties.Delegates
-
 
 internal const val SHORT_DELAY = 20L
 internal const val SHORT_TIMEOUT = 2000L
@@ -58,9 +57,6 @@ internal fun ByteArrayOutputStream.toUtf8String(): String = this.toString(Standa
 
 internal class MicroPythonExecutionException(message: String) : IOException(message)
 
-/**
- * @author elmot, Lukas Kremla
- */
 internal open class MpyComm(
     val project: Project,
     private val deviceService: MpyDeviceService
@@ -97,7 +93,7 @@ internal open class MpyComm(
         thisLogger().warn(exception)
         Notifications.Bus.notify(
             Notification(
-                NOTIFICATION_GROUP,
+                MpyBundle.message("notification.group.name"),
                 ExceptionUtil.getMessage(exception) ?: exception.toString(),
                 NotificationType.WARNING
             )
@@ -139,7 +135,7 @@ internal open class MpyComm(
             throw IOException("Insufficient free memory for upload. Please reset the device.")
         }
 
-        // Use at most 80 percent of the free memory unless we'd be leaving more than 10 KB unused
+        // this is 80% OR 10KB, not the intended policy
         val freeMemBuffer = minOf(freeMemBytes / 5 * 4, 10000)
         // Leave the buffer free and use the rest of the memory
         val maxChunkSize = freeMemBytes - freeMemBuffer
@@ -215,8 +211,8 @@ internal open class MpyComm(
 
         // Prefer base64 over hex as it is more efficient
         val command = when (canEncodeBase64) {
-            true -> retrieveMpyScriptAsString("download_file_base_64.py")
-            else -> retrieveMpyScriptAsString("download_file_hex.py")
+            true -> MpyScripts.retrieveMpyScriptAsString("download_file_base_64.py")
+            else -> MpyScripts.retrieveMpyScriptAsString("download_file_hex.py")
         }
 
         val result = blindExecute(command.format("\"$fileName\""))
@@ -272,7 +268,6 @@ internal open class MpyComm(
     override fun close() {
         try {
             mpyClient?.close()
-            mpyClient = null
         } catch (_: IOException) {
         }
         try {
@@ -284,7 +279,7 @@ internal open class MpyComm(
         } catch (_: IOException) {
         }
         try {
-            mpyClient?.close()
+            mpyClient = null
         } catch (_: IOException) {
         }
         state = State.DISCONNECTED
@@ -349,7 +344,7 @@ internal open class MpyComm(
                 }
 
                 ApplicationManager.getApplication().invokeLater {
-                    runBlocking {
+                    CoroutineScope(Dispatchers.IO).launch {
                         try {
                             outPipe.write(bytes.toString(StandardCharsets.UTF_8))
                             outPipe.flush()
@@ -358,7 +353,7 @@ internal open class MpyComm(
 
                             Notifications.Bus.notify(
                                 Notification(
-                                    NOTIFICATION_GROUP,
+                                    MpyBundle.message("notification.group.name"),
                                     "Error writing to the IDE terminal widget. Please connect again and retry.",
                                     NotificationType.ERROR
                                 ), deviceService.project
@@ -419,7 +414,7 @@ internal open class MpyComm(
             } catch (e: TimeoutCancellationException) {
                 Notifications.Bus.notify(
                     Notification(
-                        NOTIFICATION_GROUP,
+                        MpyBundle.message("notification.group.name"),
                         "Connection attempt timed out",
                         NotificationType.ERROR
                     ), project
@@ -428,7 +423,7 @@ internal open class MpyComm(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 Notifications.Bus.notify(
                     Notification(
-                        NOTIFICATION_GROUP,
+                        MpyBundle.message("notification.group.name"),
                         "Connection attempt cancelled",
                         NotificationType.ERROR
                     ), project
@@ -464,7 +459,7 @@ internal open class MpyComm(
     }
 
     internal suspend fun recursivelySafeDeletePaths(paths: Set<String>) {
-        val commands = mutableListOf(retrieveMpyScriptAsString("recursively_safe_delete_base.py"))
+        val commands = mutableListOf(MpyScripts.retrieveMpyScriptAsString("recursively_safe_delete_base.py"))
 
         val filteredPaths = paths.filter { path ->
             // Keep this path only if no other path is a prefix of it
@@ -485,7 +480,7 @@ internal open class MpyComm(
     }
 
     internal suspend fun safeCreateDirectories(paths: Set<String>) {
-        val commands = mutableListOf(retrieveMpyScriptAsString("safe_create_directories_base.py"))
+        val commands = mutableListOf(MpyScripts.retrieveMpyScriptAsString("safe_create_directories_base.py"))
 
         val allPaths = buildSet {
             paths.forEach { path ->
@@ -585,7 +580,7 @@ internal open class MpyComm(
             val chunkSize = contentIdx - startIdx
 
             val writeCommand = "___f.write(b'$chunk')"
-            val writeCommandSize = writeCommand.toByteArray(Charsets.UTF_8).size
+            val writeCommandSize = writeCommand.toByteArray(StandardCharsets.UTF_8).size
 
             // Avoid appending the write command if it would exceed the total maxSafeChunkSize
             if ((commandSize + writeCommandSize) > maxChunkSize) break
@@ -759,7 +754,7 @@ internal open class MpyComm(
             var remainingFlowControlWindowSize = flowControlWindowSize
 
             // Convert the command to a bytearray
-            val commandBytes = command.toByteArray(Charsets.UTF_8)
+            val commandBytes = command.toByteArray(StandardCharsets.UTF_8)
 
             // Calculate an approximate progress-per-byte ratio for reporting upload progress proportionally to the sent data.
             // This avoids tracking precise writes, which would impact performance,
@@ -894,7 +889,7 @@ internal open class MpyComm(
                         mpyClient?.send("\u0002")
                         offTtyByteBuffer.reset()
                     } else {
-                        // Raw REPL wasn't exited now, it should be in the future should some communication happen
+                        // Raw REPL is still active, the plugin should exit it in the future should some communication happen
                         // outside doBlindExecute
                         shouldExitRawRepl = true
                     }
@@ -928,7 +923,7 @@ internal open class MpyComm(
         var i = 0
         do {
             try {
-                val delayToUse = delayList[minOf(i, delayList.size)]
+                val delayToUse = delayList[minOf(i, delayList.size - 1)]
                 delay(delayToUse)
                 codeToRetry()
                 return

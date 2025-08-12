@@ -3,7 +3,7 @@
 .gradle/
 build/
 scripts/
-stubs/
+/stubs/
 venv/
 tmp/
 out/

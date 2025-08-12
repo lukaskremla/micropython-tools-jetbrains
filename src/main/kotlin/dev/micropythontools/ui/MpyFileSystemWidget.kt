@@ -49,10 +49,11 @@ import com.intellij.util.asSafely
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.tree.TreeUtil
 import dev.micropythontools.communication.*
+import dev.micropythontools.core.MpyScripts
+import dev.micropythontools.i18n.MpyBundle
+import dev.micropythontools.icons.MpyIcons
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.settings.retrieveMpyScriptAsString
-import dev.micropythontools.settings.volumeIcon
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -68,10 +69,6 @@ import javax.swing.TransferHandler
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-
-/**
- * @authors elmot, Lukas Kremla
- */
 internal class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>(BorderLayout()) {
     val tree: Tree = Tree(newTreeModel())
 
@@ -90,7 +87,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 value as FileSystemNode
                 icon = when {
                     // Only non "/" root volumes have a separate icon, otherwise it's meant to get the DirNode icon
-                    value is VolumeRootNode && !value.isFileSystemRoot -> volumeIcon
+                    value is VolumeRootNode && !value.isFileSystemRoot -> MpyIcons.Volume
                     value is DirNode -> AllIcons.Nodes.Folder
                     else -> FileTypeRegistry.getInstance().getFileTypeByFileName(value.name).icon
                 }
@@ -107,14 +104,14 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         })
         val actionManager = ActionManager.getInstance()
         EditSourceOnDoubleClickHandler.install(tree) {
-            val action = actionManager.getAction("micropythontools.repl.OpenMpyFileAction")
+            val action = actionManager.getAction("dev.micropythontools.repl.MpyOpenFileAction")
             actionManager.tryToExecute(action, null, tree, TOOLWINDOW_CONTENT, true)
         }
-        val popupActions = actionManager.getAction("micropythontools.repl.FSContextMenu") as ActionGroup
+        val popupActions = actionManager.getAction("dev.micropythontools.repl.FSContextMenuGroup") as ActionGroup
         PopupHandler.installFollowingSelectionTreePopup(tree, popupActions, ActionPlaces.POPUP)
         TreeUtil.installActions(tree)
 
-        val actions = actionManager.getAction("micropythontools.repl.FSToolbar") as ActionGroup
+        val actions = actionManager.getAction("dev.micropythontools.repl.FSToolbarGroup") as ActionGroup
         val actionToolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR, actions, true)
         actionToolbar.targetComponent = this
 
@@ -296,7 +293,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
                                 val commands = if (isCrossVolumeTransfer) {
                                     mutableListOf(
-                                        retrieveMpyScriptAsString("move_file_over_volumes_base.py")
+                                        MpyScripts.retrieveMpyScriptAsString("move_file_over_volumes_base.py")
                                     )
                                 } else {
                                     mutableListOf("import os")
@@ -346,7 +343,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                         } catch (e: Exception) {
                             Notifications.Bus.notify(
                                 Notification(
-                                    NOTIFICATION_GROUP,
+                                    MpyBundle.message("notification.group.name"),
                                     "Drag and drop file collection failed: $e",
                                     NotificationType.ERROR
                                 ), project
@@ -483,7 +480,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         val newModel = newTreeModel()
         val executionResult: String
 
-        val fileSystemScanScript = retrieveMpyScriptAsString("scan_file_system.py")
+        val fileSystemScanScript = MpyScripts.retrieveMpyScriptAsString("scan_file_system.py")
             .replace(
                 "___l=False",
                 "___l=${if (settings.state.legacyVolumeSupportEnabled) "True" else "False"}"

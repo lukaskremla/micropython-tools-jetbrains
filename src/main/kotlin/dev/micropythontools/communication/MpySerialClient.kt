@@ -24,9 +24,6 @@ import jssc.SerialPortException
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 
-/**
- * @author elmot
- */
 internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
     val port = SerialPort(comm.connectionParameters.portName)
 

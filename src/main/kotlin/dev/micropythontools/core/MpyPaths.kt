@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2024 JetBrains s.r.o.
+ * Copyright 2025 Lukas Kremla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.communication
+package dev.micropythontools.core
 
-internal interface MpyClient {
-    val isConnected: Boolean
-    suspend fun connect(progressIndicatorText: String): MpyClient
-    fun send(string: String)
-    fun send(bytes: ByteArray)
-    fun hasPendingData(): Boolean
-    fun close()
-    fun closeBlocking()
+internal object MpyPaths {
+    val scriptsPath: String
+        get() = "${MpyPluginInfo.sandboxPath}/scripts"
+
+    val microPythonScriptsPath: String
+        get() = "$scriptsPath/MicroPythonMinified"
+
+    val stubsPath: String
+        get() = "${MpyPluginInfo.sandboxPath}/stubs"
 }

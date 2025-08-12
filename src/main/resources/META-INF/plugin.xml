@@ -1,33 +1,31 @@
 <idea-plugin url="https://github.com/lukaskremla/micropython-tools-jetbrains">
     <name>MicroPython Tools</name>
     <id>micropython-tools-jetbrains</id>
+
     <change-notes><![CDATA[
-        <h3>0.5.12 - 28-7-2025</h3>
-         <ul>
-           <li>Added a checkbox to enable manual editing of selected ports</li>
-         </ul>
-       <h3>0.5.11 - 22-7-2025</h3>
+        <h3>0.6.0 - xx-8-2025</h3>
         <ul>
-          <li>Fixed a bug where uploads of files that can't fit into the device's memory always failed</li>
-          <li>Improved error reporting, added memory fragmentation warnings</li>
+            <li></li>
         </ul>
         <br>
-      <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
+        <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
     ]]></change-notes>
+
     <description><![CDATA[
-  <p>Adds support for working with MicroPython devices to PyCharm.</p>
-    <p>Features:</p>
-    <ul>
-      <li>Efficiently upload files to MPY boards (Serial, WebREPL)</li>
-      <li>Comfortably view and interact with the board's file system with drag and drop support</li>
-      <li>Built-in stub manager utilizing stubs by <a href="https://github.com/Josverl/micropython-stubs">Jos Verlinde</a></li>
-      <li>Upload preview dialog that shows how the file system will look after the upload</li>
-      <li>Observe code execution through REPL</li>
-    </ul>
-  <p>All microcontrollers and MicroPython versions above 1.20.0 should be supported. However, certain features might not be available on highly resource constrained microcontrollers such as the ESP8266.</a></p>
-  <p>Feedback and bug reports through GitHub are welcome!</p>
-  <p>More info and usage tips <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">on GitHub!</a></p>
-]]></description>
+        <p>Adds support for working with MicroPython devices to PyCharm.</p>
+        <p>Features:</p>
+        <ul>
+            <li>Efficiently upload files to MPY boards (Serial, WebREPL)</li>
+            <li>Comfortably view and interact with the board's file system with drag and drop support</li>
+            <li>Built-in stub manager utilizing stubs by <a href="https://github.com/Josverl/micropython-stubs">Jos Verlinde</a></li>
+            <li>Upload preview dialog that shows how the file system will look after the upload</li>
+            <li>Observe code execution through REPL</li>
+        </ul>
+        <p>All microcontrollers and MicroPython versions above 1.20.0 should be supported. However, certain features might not be available on highly resource constrained microcontrollers such as the ESP8266.</a></p>
+        <p>Feedback and bug reports through GitHub are welcome!</p>
+        <p>More info and usage tips <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">on GitHub!</a></p>
+    ]]></description>
+
     <version>SNAPSHOT</version>
     <vendor>Lukas Kremla</vendor>
 
@@ -43,157 +41,153 @@
     <resource-bundle>messages.MpyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
+        <!-- Settings -->
         <projectConfigurable groupId="language"
-                             id="dev.micropythontools.intellij.configurable"
+                             id="dev.micropythontools.configurable"
                              key="configurable.name"
                              bundle="messages.MpyBundle"
                              instance="dev.micropythontools.settings.MpyConfigurable"/>
 
-        <jps.plugin/>
-
+        <!-- File handling -->
         <fileEditorProvider implementation="dev.micropythontools.mpyfile.MpyFileEditorProvider"/>
-
         <fileType name="MicroPython Bytecode"
                   implementationClass="dev.micropythontools.mpyfile.MpyFileType"
                   extensions="mpy"/>
 
+        <!-- Inspections -->
+        <!--suppress PluginXmlCapitalization -->
         <localInspection language="Python"
-                         key="inspection.stub.package.display.name"
-                         groupKey="inspection.stub.package.group.name"
+                         key="inspection.name"
+                         groupKey="inspection.group.name"
                          bundle="messages.MpyBundle"
                          enabledByDefault="true"
                          implementationClass="dev.micropythontools.inspections.MpyStubPackageInspection"/>
 
+        <!-- Notifications -->
         <!--suppress PluginXmlCapitalization -->
         <notificationGroup displayType="BALLOON"
-                           id="MicroPython Tools"
+                           id="dev.micropythontools.notification.group"
                            key="notification.group.name"
                            bundle="messages.MpyBundle"/>
 
+        <!-- Run configurations -->
         <configurationType implementation="dev.micropythontools.run.MpyRunConfType"/>
 
+        <!-- UI elements -->
         <toolWindow factoryClass="dev.micropythontools.ui.MpyToolWindow"
                     id="MicroPython Tools"
                     anchor="bottom"
-                    icon="/icons/micropythonTw.svg"
                     canCloseContents="false"/>
 
+        <!-- Source roots -->
         <projectStructure.sourceRootEditHandler
                 implementation="dev.micropythontools.sourceroots.MpyModuleMpySourceRootEditHandler"/>
 
-        <postStartupActivity implementation="dev.micropythontools.util.MpyConfigurationMigrationActivity"/>
+        <!-- Startup tasks -->
+        <postStartupActivity implementation="dev.micropythontools.startup.MpyConfigurationMigrationActivity"/>
 
+        <!-- Editor notifications -->
         <editorNotificationProvider implementation="dev.micropythontools.editor.MpyEditorNotificationProvider"/>
     </extensions>
 
     <applicationListeners>
-        <listener
-                topic="com.intellij.openapi.actionSystem.ex.AnActionListener"
-                class="dev.micropythontools.util.MpySaveKeyListener"/>
+        <listener topic="com.intellij.openapi.actionSystem.ex.AnActionListener"
+                  class="dev.micropythontools.listeners.MpySaveKeyListener"/>
     </applicationListeners>
 
     <actions>
-        <group id="micropythontools.repl.FSToolbar">
-            <action id="micropythontools.repl.ConnectAction"
-                    class="dev.micropythontools.ui.MpyConnectAction"
-                    icon="/icons/connectActive.svg"/>
-            <action id="micropythontools.repl.DisconnectAction"
-                    class="dev.micropythontools.ui.MpyDisconnectAction"
-                    icon="/icons/connectActive.svg">
+        <!-- REPL + FS toolbar -->
+        <group id="dev.micropythontools.repl.FSToolbarGroup">
+            <action id="dev.micropythontools.repl.MpyConnectAction"
+                    class="dev.micropythontools.actions.MpyConnectAction"/>
+            <action id="dev.micropythontools.repl.MpyDisconnectAction"
+                    class="dev.micropythontools.actions.MpyDisconnectAction">
                 <keyboard-shortcut first-keystroke="control CLOSE_BRACKET" keymap="$default"/>
             </action>
-            <action id="micropythontools.repl.connectionSelector"
-                    class="dev.micropythontools.ui.ConnectionSelectorAction"/>
-            <action id="micropythontools.fs.RefreshAction"
-                    class="dev.micropythontools.ui.MpyRefreshAction"
-                    icon="AllIcons.Actions.StopRefresh">
+            <action id="dev.micropythontools.repl.MpyConnectionSelectorAction"
+                    class="dev.micropythontools.actions.MpyConnectionSelectorAction"/>
+            <action id="dev.micropythontools.fs.MpyRefreshAction"
+                    class="dev.micropythontools.actions.MpyRefreshAction">
                 <keyboard-shortcut first-keystroke="control R" keymap="$default"/>
             </action>
-            <action id="micropythontools.fs.CreateFolderAction"
-                    class="dev.micropythontools.ui.MpyCreateFolderAction"/>
-            <action id="micropythontools.fs.DownloadAction"
-                    class="dev.micropythontools.ui.MpyDownloadAction"
-                    icon="AllIcons.Actions.Download"/>
-            <action id="micropythontools.fs.DeleteAction"
-                    class="dev.micropythontools.ui.MpyDeleteAction"
-                    use-shortcut-of="$Delete"
-                    icon="AllIcons.Actions.GC"/>
-            <action id="micropythontools.repl.ConnectionParameters"
-                    class="dev.micropythontools.ui.MpyOpenSettingsAction"
-                    icon="AllIcons.General.GearPlain"/>
-            <action id="micropythontools.repl.AutoClear"
-                    class="dev.micropythontools.ui.AutoClearAction"/>
-        </group>
-        <group id="micropythontools.repl.FSContextMenu">
-            <action class="dev.micropythontools.ui.MpyOpenFileAction"
-                    id="micropythontools.repl.OpenMpyFileAction"
-                    icon="AllIcons.Actions.MenuOpen"/>
-            <reference ref="micropythontools.fs.RefreshAction"/>
-            <reference ref="micropythontools.fs.DownloadAction"/>
-            <separator/>
-            <reference ref="micropythontools.fs.CreateFolderAction"/>
-            <reference ref="micropythontools.fs.DeleteAction"/>
+            <action id="dev.micropythontools.fs.MpyCreateFolderAction"
+                    class="dev.micropythontools.actions.MpyCreateFolderAction"/>
+            <action id="dev.micropythontools.fs.MpyDownloadAction"
+                    class="dev.micropythontools.actions.MpyDownloadAction"/>
+            <action id="dev.micropythontools.fs.MpyDeleteAction"
+                    class="dev.micropythontools.actions.MpyDeleteAction"
+                    use-shortcut-of="$Delete"/>
+            <action id="dev.micropythontools.repl.MpyOpenSettingsAction"
+                    class="dev.micropythontools.actions.MpyOpenSettingsAction"/>
+            <action id="dev.micropythontools.repl.MpyAutoClearAction"
+                    class="dev.micropythontools.actions.MpyAutoClearAction"/>
         </group>
 
-        <group id="micropythontools.repl.ReplToolbar">
-            <reference ref="micropythontools.repl.ConnectAction"/>
-            <reference ref="micropythontools.repl.DisconnectAction"/>
-            <reference ref="micropythontools.repl.connectionSelector"/>
-            <action id="micropythontools.repl.SoftReset"
-                    class="dev.micropythontools.ui.MpySoftResetAction">
+        <!-- FS context menu -->
+        <group id="dev.micropythontools.repl.FSContextMenuGroup">
+            <action id="dev.micropythontools.repl.MpyOpenFileAction"
+                    class="dev.micropythontools.actions.MpyOpenFileAction"/>
+            <reference ref="dev.micropythontools.fs.MpyRefreshAction"/>
+            <reference ref="dev.micropythontools.fs.MpyDownloadAction"/>
+            <separator/>
+            <reference ref="dev.micropythontools.fs.MpyCreateFolderAction"/>
+            <reference ref="dev.micropythontools.fs.MpyDeleteAction"/>
+        </group>
+
+        <!-- REPL toolbar -->
+        <group id="dev.micropythontools.repl.ReplToolbarGroup">
+            <reference ref="dev.micropythontools.repl.MpyConnectAction"/>
+            <reference ref="dev.micropythontools.repl.MpyDisconnectAction"/>
+            <reference ref="dev.micropythontools.repl.MpyConnectionSelectorAction"/>
+            <action id="dev.micropythontools.repl.MpySoftResetAction"
+                    class="dev.micropythontools.actions.MpySoftResetAction">
                 <keyboard-shortcut first-keystroke="control D" keymap="$default"/>
             </action>
-            <action id="micropythontools.repl.Interrupt"
-                    class="dev.micropythontools.ui.MpyInterruptAction"
-                    icon="AllIcons.Actions.Suspend">
-            </action>
-            <action id="micropythontools.repl.ClearREPL"
-                    class="dev.micropythontools.ui.MpyClearReplAction"
-                    icon="AllIcons.Actions.GC">
-            </action>
-            <reference ref="micropythontools.repl.ConnectionParameters"/>
-            <reference ref="micropythontools.repl.AutoClear"/>
+            <action id="dev.micropythontools.repl.MpyInterruptAction"
+                    class="dev.micropythontools.actions.MpyInterruptAction"/>
+            <action id="dev.micropythontools.repl.MpyClearReplAction"
+                    class="dev.micropythontools.actions.MpyClearReplAction"/>
+            <reference ref="dev.micropythontools.repl.MpyOpenSettingsAction"/>
+            <reference ref="dev.micropythontools.repl.MpyAutoClearAction"/>
         </group>
 
-        <action id="micropythontools.repl.UploadProjectAction"
-                class="dev.micropythontools.ui.MpyUploadProjectAction"
-                icon="AllIcons.Actions.Upload">
-
-            <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>
-        </action>
-
-        <group id="micropythontools.repl.UploadAction"
-               class="dev.micropythontools.ui.MpyUploadActionGroup"
-               icon="AllIcons.Actions.Upload">
+        <!-- Upload actions -->
+        <group id="dev.micropythontools.repl.MpyUploadActionGroup"
+               class="dev.micropythontools.actions.MpyUploadActionGroup">
             <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ExecuteInPyConsoleAction"/>
             <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
             <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>
         </group>
 
-        <action id="micropythontools.repl.ExecuteFileInReplAction"
-                class="dev.micropythontools.ui.MpyExecuteFileInReplAction"
-                icon="AllIcons.Actions.Rerun">
+        <action id="dev.micropythontools.repl.MpyUploadProjectAction"
+                class="dev.micropythontools.actions.MpyUploadProjectAction">
+            <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>
+        </action>
+
+        <action id="dev.micropythontools.repl.MpyExecuteFileInReplAction"
+                class="dev.micropythontools.actions.MpyExecuteFileInReplAction">
             <add-to-group group-id="EditorPopupMenu"
                           anchor="before"
-                          relative-to-action="micropythontools.repl.UploadAction"/>
+                          relative-to-action="dev.micropythontools.repl.MpyUploadActionGroup"/>
             <add-to-group group-id="EditorTabPopupMenu"
                           anchor="before"
-                          relative-to-action="micropythontools.repl.UploadAction"/>
+                          relative-to-action="dev.micropythontools.repl.MpyUploadActionGroup"/>
             <add-to-group group-id="ProjectViewPopupMenuSettingsGroup"
                           anchor="before"
-                          relative-to-action="micropythontools.repl.UploadAction"/>
+                          relative-to-action="dev.micropythontools.repl.MpyUploadActionGroup"/>
         </action>
 
-        <action id="micropythontools.repl.ExecuteFragmentInReplAction"
-                class="dev.micropythontools.ui.MpyExecuteFragmentInReplAction"
-                icon="AllIcons.Actions.Run_anything">
+        <action id="dev.micropythontools.repl.MpyExecuteFragmentInReplAction"
+                class="dev.micropythontools.actions.MpyExecuteFragmentInReplAction">
             <add-to-group group-id="EditorPopupMenu"
                           anchor="before"
-                          relative-to-action="micropythontools.repl.ExecuteFileInReplAction"/>
+                          relative-to-action="dev.micropythontools.repl.MpyExecuteFileInReplAction"/>
         </action>
 
-        <group id="MarkMpySourceRootGroup">
-            <action id="MarkMpySourceRoot" class="dev.micropythontools.sourceroots.MarkMpySourceRootAction"/>
+        <!-- Source root marking -->
+        <group id="dev.micropythontools.sourceroots.MarkMpySourceRootGroup">
+            <action id="dev.micropythontools.sourceroots.MarkMpySourceRootAction"
+                    class="dev.micropythontools.sourceroots.MarkMpySourceRootAction"/>
             <add-to-group group-id="MarkRootGroup"/>
         </group>
     </actions>

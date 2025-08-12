@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.util
+package dev.micropythontools.icons
 
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.IconLoader
 
-/**
- * @author Lukas Kremla
- */
-internal class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
-    override suspend fun execute(project: Project) {
-        //
-    }
+internal object MpyIcons {
+    val connectActive = IconLoader.getIcon("/icons/connectActive.svg", MpyIcons::class.java)
+    val micropythonTw = IconLoader.getIcon("/icons/micropythonTw.svg", MpyIcons::class.java)
+    val Source = IconLoader.getIcon("/icons/MpySource.svg", MpyIcons::class.java)
+    val plugin = IconLoader.getIcon("/icons/pluginIcon.svg", MpyIcons::class.java)
+    val Volume = IconLoader.getIcon("/icons/volume.svg", MpyIcons::class.java)
 }

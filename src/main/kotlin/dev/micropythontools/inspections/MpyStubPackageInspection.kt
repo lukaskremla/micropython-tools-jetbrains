@@ -21,11 +21,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.util.MpyStubPackageService
+import dev.micropythontools.stubs.MpyStubPackageService
 
-/**
- * @author vlan, Lukas Kremla
- */
 internal class MpyStubPackageInspection : LocalInspectionTool() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         val settings = file.project.service<MpySettingsService>()

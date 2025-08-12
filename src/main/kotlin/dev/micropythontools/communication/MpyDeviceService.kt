@@ -41,14 +41,19 @@ import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
-import dev.micropythontools.settings.*
-import dev.micropythontools.ui.*
+import dev.micropythontools.core.MpyScripts
+import dev.micropythontools.core.MpyValidators
+import dev.micropythontools.i18n.MpyBundle
+import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
+import dev.micropythontools.settings.MpyConfigurable
+import dev.micropythontools.settings.MpySettingsService
+import dev.micropythontools.ui.FileSystemWidget
+import dev.micropythontools.ui.MpyComponentRegistryService
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
-
 
 internal typealias StateListener = (State) -> Unit
 
@@ -200,9 +205,9 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                     }
                 }
 
-                val ipMsg = messageForBrokenIp(settings.state.webReplIp ?: "")
-                val portMsg = messageForBrokenPort(settings.state.webReplPort.toString())
-                val passwordMsg = messageForBrokenPassword(password.toCharArray())
+                val ipMsg = MpyValidators.messageForBrokenIp(settings.state.webReplIp ?: "")
+                val portMsg = MpyValidators.messageForBrokenPort(settings.state.webReplPort.toString())
+                val passwordMsg = MpyValidators.messageForBrokenPassword(password.toCharArray())
 
                 msg = when {
                     ipMsg.isNullOrBlank() -> ipMsg
@@ -252,7 +257,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
         } catch (_: TimeoutCancellationException) {
             Notifications.Bus.notify(
                 Notification(
-                    NOTIFICATION_GROUP,
+                    MpyBundle.message("notification.group.name"),
                     "Connection attempt timed out",
                     NotificationType.ERROR
                 ), project
@@ -263,7 +268,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
             if (!isConnectAction) {
                 Notifications.Bus.notify(
                     Notification(
-                        NOTIFICATION_GROUP,
+                        MpyBundle.message("notification.group.name"),
                         "Connection attempt cancelled",
                         NotificationType.INFORMATION
                     ), project
@@ -314,7 +319,8 @@ internal class MpyDeviceService(val project: Project) : Disposable {
     suspend fun recursivelySafeDeletePaths(paths: Set<String>) = comm.recursivelySafeDeletePaths(paths)
 
     fun activateRepl(): Content? = terminalContent?.apply {
-        project.service<ToolWindowManager>().getToolWindow(TOOL_WINDOW_ID)?.activate(null, true, true)
+        project.service<ToolWindowManager>().getToolWindow(MpyBundle.message("toolwindow.id"))
+            ?.activate(null, true, true)
         manager?.setSelectedContent(this)
     }
 
@@ -379,7 +385,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
 
     private suspend fun initializeDevice() {
         val scriptFileName = "initialize_device.py"
-        val initializeDeviceScript = retrieveMpyScriptAsString(scriptFileName)
+        val initializeDeviceScript = MpyScripts.retrieveMpyScriptAsString(scriptFileName)
 
         val scriptResponse = blindExecute(initializeDeviceScript)
 
@@ -453,7 +459,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                     @Suppress("DialogTitleCapitalization")
                     Notifications.Bus.notify(
                         Notification(
-                            NOTIFICATION_GROUP,
+                            MpyBundle.message("notification.group.name"),
                             "Connection To Device Lost",
                             "Connection to the device was lost unexpectedly. This may have been caused by a disconnected cable or a network issue.",
                             NotificationType.ERROR
@@ -484,7 +490,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
     }
 
     internal suspend fun clearTerminalIfNeeded() {
-        if (isAutoClearEnabled) {
+        if (settings.state.autoClearRepl) {
             withContext(Dispatchers.EDT) {
                 val widget = UIUtil.findComponentOfType(terminalContent?.component, JediTermWidget::class.java)
                 widget?.terminalPanel?.clearBuffer()
@@ -557,7 +563,13 @@ internal fun <T> performReplAction(
                 } finally {
                     withContext(NonCancellable) {
                         if (!error.isNullOrBlank()) {
-                            Notifications.Bus.notify(Notification(NOTIFICATION_GROUP, error, errorType), project)
+                            Notifications.Bus.notify(
+                                Notification(
+                                    MpyBundle.message("notification.group.name"),
+                                    error,
+                                    errorType
+                                ), project
+                            )
                         }
                     }
                 }
@@ -606,7 +618,7 @@ internal fun <T> performReplAction(
 
                                 Notifications.Bus.notify(
                                     Notification(
-                                        NOTIFICATION_GROUP,
+                                        MpyBundle.message("notification.group.name"),
                                         "$error - disconnecting to prevent a de-synchronized state",
                                         NotificationType.ERROR
                                     ), project
