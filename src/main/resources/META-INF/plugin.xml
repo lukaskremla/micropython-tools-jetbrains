@@ -139,6 +139,12 @@
 
             <separator/>
 
+            <action id="dev.micropythontools.fs.MpyRenameAction"
+                    class="dev.micropythontools.actions.MpyRenameAction"
+                    use-shortcut-of="RenameElement"/>
+
+            <separator/>
+
             <action id="dev.micropythontools.fs.MpyOpenFileAction"
                     class="dev.micropythontools.actions.MpyOpenFileAction"/>
             <reference ref="dev.micropythontools.fs.MpyRefreshAction"/>

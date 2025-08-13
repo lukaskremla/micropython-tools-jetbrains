@@ -31,6 +31,7 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.testFramework.LightVirtualFile
@@ -395,6 +396,86 @@ internal class MpyCopyAbsolutePathAction : MpyCopyPathAction("Absolute Path", tr
     init {
         val base = ActionManager.getInstance().getAction("CopyAbsolutePath")
         shortcutSet = base.shortcutSet
+    }
+}
+
+internal class MpyRenameAction : MpyReplAction(
+    "Rename...",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.ALWAYS,
+        enabledWhen = EnabledWhen.CONNECTED,
+        requiresConnection = true,
+        requiresRefreshAfter = true,
+        cancelledMessage = "File renaming operation cancelled"
+    )
+) {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override fun customUpdate(e: AnActionEvent) {
+        val selectedFiles = deviceService.fileSystemWidget?.selectedFiles() ?: return
+        e.presentation.isEnabled = selectedFiles.size == 1 && selectedFiles.first() !is VolumeRootNode
+    }
+
+    override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
+        val selection = deviceService.fileSystemWidget?.selectedFiles()?.singleOrNull()
+            ?: return DialogResult(false, null)
+        if (selection is VolumeRootNode) return DialogResult(false, null)
+
+        // Parent dir and current name
+        val parentDir = selection.parent as? DirNode ?: return DialogResult(false, null)
+        val currentName = selection.name
+
+        // Validate like "new file/folder": no slashes, valid UNIX file name, and no sibling clash
+        val validator = object : InputValidator {
+            override fun checkInput(inputString: String): Boolean {
+                if (inputString.isBlank()) return false
+                if (inputString.contains('/') || inputString.contains('\\')) return false
+                if (!PathUtilRt.isValidFileName(inputString, Platform.UNIX, true, Charsets.US_ASCII)) return false
+                // name must be unique among siblings (ignore the currently selected node)
+                val clash = parentDir.children().asSequence()
+                    .mapNotNull { it as? FileSystemNode }
+                    .any { it !== selection && it.name == inputString }
+                return !clash
+            }
+
+            override fun canClose(inputString: String) = checkInput(inputString)
+        }
+
+        val newName = Messages.showInputDialog(
+            project,
+            "New name:",
+            "Rename",
+            AllIcons.Actions.Edit,
+            currentName,
+            validator
+        ) ?: return DialogResult(false, null)
+
+        return DialogResult(true, newName)
+    }
+
+    override suspend fun performAction(
+        e: AnActionEvent,
+        reporter: RawProgressReporter,
+        dialogResult: Any?
+    ) {
+        val selection = deviceService.fileSystemWidget?.selectedFiles()?.singleOrNull() ?: return
+        val parentDir = selection.parent as? DirNode ?: return
+        val newName = dialogResult as? String ?: return
+        if (newName == selection.name) return  // no-op
+
+        reporter.text("Renaming...")
+
+        val oldPath = selection.fullName
+        val parentPath = parentDir.fullName
+        val newPath = if (parentPath == "/") "/$newName" else "$parentPath/$newName"
+
+        deviceService.blindExecute(
+            listOf(
+                "import os",
+                "os.rename(${StringUtil.escapeStringCharacters(oldPath).let { "\"$it\"" }}, " +
+                        "${StringUtil.escapeStringCharacters(newPath).let { "\"$it\"" }})"
+            )
+        )
     }
 }
 
