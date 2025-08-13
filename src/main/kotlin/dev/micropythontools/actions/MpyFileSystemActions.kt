@@ -18,8 +18,10 @@
 package dev.micropythontools.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.ActionUpdateThread.BGT
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -37,6 +39,8 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PathUtilRt.Platform
 import com.intellij.util.asSafely
+import com.jetbrains.python.PythonFileType
+import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.communication.State
 import dev.micropythontools.editor.MPY_TOOLS_EDITABLE_FILE_SIGNATURE
@@ -69,69 +73,6 @@ internal class MpyRefreshAction : MpyReplAction(
 
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
         deviceService.fileSystemWidget?.refresh(reporter)
-    }
-}
-
-internal class MpyCreateFolderAction : MpyReplAction(
-    "New Folder",
-    MpyActionOptions(
-        visibleWhen = VisibleWhen.ALWAYS,
-        enabledWhen = EnabledWhen.CONNECTED,
-        requiresConnection = true,
-        requiresRefreshAfter = true,
-        cancelledMessage = "New folder creation cancelled"
-    )
-) {
-    init {
-        this.templatePresentation.icon =
-            AllIcons.Actions.AddDirectory // Set in Kotlin code to prevent false plugin.xml errors
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread = BGT
-
-    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter, dialogResult: Any?) {
-        val newFolderPath = dialogResult as String
-
-        reporter.text("Creating a new folder...")
-        deviceService.safeCreateDirectories(
-            setOf(newFolderPath)
-        )
-    }
-
-    override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
-        val parent =
-            deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull().asSafely<DirNode>() ?: return DialogResult(
-                false,
-                null
-            )
-
-        val validator = object : InputValidator {
-            override fun checkInput(inputString: String): Boolean {
-                if (!PathUtilRt.isValidFileName(inputString, Platform.UNIX, true, Charsets.US_ASCII)) return false
-                return parent.children().asSequence().none { it.asSafely<FileSystemNode>()?.name == inputString }
-            }
-
-            override fun canClose(inputString: String): Boolean = checkInput(inputString)
-        }
-
-        val newName = Messages.showInputDialog(
-            project,
-            "Name:", "Create New Folder", AllIcons.Actions.AddDirectory,
-            "new_folder", validator
-        )
-
-        return DialogResult(
-            !newName.isNullOrEmpty(),
-            "${parent.fullName}/$newName"
-        )
-    }
-
-    override fun customUpdate(e: AnActionEvent) {
-        val selectedFiles = deviceService.fileSystemWidget?.selectedFiles()
-
-        if (selectedFiles.isNullOrEmpty() || selectedFiles.size > 1 || selectedFiles.first() is FileNode) {
-            e.presentation.isEnabled = false
-        }
     }
 }
 
@@ -414,5 +355,188 @@ internal class MpyOpenFileAction : MpyReplAction(
             fileNodes.isNullOrEmpty() || fileNodes.count() == 1 -> e.presentation.text = "Open File"
             else -> e.presentation.text = "Open Files"
         }
+    }
+}
+
+internal class MpyNewActionGroup : ActionGroup("New", true) {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override fun update(e: AnActionEvent) {
+        val deviceService = e.project?.service<MpyDeviceService>() ?: return
+        val selectedFiles = deviceService.fileSystemWidget?.selectedFiles() ?: return
+
+        val targetPaths = selectedFiles.map { (it as? DirNode)?.fullName ?: (it.parent as FileSystemNode).fullName }
+
+        e.presentation.isEnabled = targetPaths.all { it == targetPaths.first() }
+    }
+
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+        arrayOf(MpyCreatePythonFileAction(), MpyCreateFileAction(), MpyCreateFolderAction())
+}
+
+internal class MpyCreatePythonFileAction : MpyReplAction(
+    "Python File",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.ALWAYS,
+        enabledWhen = EnabledWhen.CONNECTED,
+        requiresConnection = true,
+        requiresRefreshAfter = true,
+        cancelledMessage = "File creation cancelled"
+    )
+) {
+    init {
+        templatePresentation.icon = PythonFileType.INSTANCE.icon
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
+        val parent = deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull()
+        val parentPath = (parent as? DirNode)?.fullName ?: "/"
+        val validator = object : InputValidator {
+            override fun checkInput(inputString: String): Boolean {
+                if (inputString.isBlank()) return false
+                if (inputString.contains('/') || inputString.contains('\\')) return false
+                if (!PathUtilRt.isValidFileName(inputString, Platform.UNIX, true, Charsets.US_ASCII)) return false
+                val clash = (parent as? DirNode)?.children()
+                    ?.asSequence()
+                    ?.mapNotNull { it as? FileSystemNode }
+                    ?.any { it.name == inputString || it.name == ensurePy(inputString) } ?: false
+                return !clash
+            }
+
+            override fun canClose(inputString: String) = checkInput(inputString)
+        }
+        val raw = Messages.showInputDialog(
+            project, "Name:", "Create New Python File",
+            PythonFileType.INSTANCE.icon, "", validator
+        )
+        val name = raw?.let(::ensurePy)
+        return DialogResult(!name.isNullOrBlank(), "$parentPath/$name")
+    }
+
+    override suspend fun performAction(
+        e: AnActionEvent,
+        reporter: RawProgressReporter,
+        dialogResult: Any?
+    ) {
+        val remotePath = dialogResult as? String ?: return
+        reporter.text("Creating file...")
+
+        deviceService.upload(
+            remotePath,
+            ByteArray(0),
+            progressCallback = {},
+            freeMemBytes = deviceService.deviceInformation.defaultFreeMem ?: throw RuntimeException("Free mem is null")
+        )
+    }
+
+    private fun ensurePy(name: String) =
+        if (name.endsWith(".py", ignoreCase = true)) name else "$name.py"
+}
+
+internal class MpyCreateFileAction : MpyReplAction(
+    "File",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.ALWAYS,
+        enabledWhen = EnabledWhen.CONNECTED,
+        requiresConnection = true,
+        requiresRefreshAfter = true,
+        cancelledMessage = "File creation cancelled"
+    )
+) {
+    init {
+        templatePresentation.icon = AllIcons.FileTypes.Any_type
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
+        val parent = deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull()
+        val parentPath = (parent as? DirNode)?.fullName ?: "/"
+        val validator = object : InputValidator {
+            override fun checkInput(inputString: String): Boolean {
+                if (inputString.isBlank()) return false
+                if (inputString.contains('/') || inputString.contains('\\')) return false
+                return PathUtilRt.isValidFileName(inputString, Platform.UNIX, true, Charsets.US_ASCII)
+            }
+
+            override fun canClose(inputString: String) = checkInput(inputString)
+        }
+        val name = Messages.showInputDialog(
+            project, "Name:", "Create New File",
+            AllIcons.Actions.New, "", validator
+        )
+        return DialogResult(!name.isNullOrBlank(), "$parentPath/$name")
+    }
+
+    override suspend fun performAction(
+        e: AnActionEvent,
+        reporter: RawProgressReporter,
+        dialogResult: Any?
+    ) {
+        val remotePath = dialogResult as? String ?: return
+        reporter.text("Creating file...")
+        deviceService.upload(
+            remotePath,
+            ByteArray(0),
+            progressCallback = {},
+            freeMemBytes = deviceService.deviceInformation.defaultFreeMem ?: throw RuntimeException("Free mem is null")
+        )
+    }
+}
+
+internal class MpyCreateFolderAction : MpyReplAction(
+    "New Folder",
+    MpyActionOptions(
+        visibleWhen = VisibleWhen.ALWAYS,
+        enabledWhen = EnabledWhen.CONNECTED,
+        requiresConnection = true,
+        requiresRefreshAfter = true,
+        cancelledMessage = "New folder creation cancelled"
+    )
+) {
+    init {
+        this.templatePresentation.icon =
+            AllIcons.Actions.AddDirectory
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter, dialogResult: Any?) {
+        val newFolderPath = dialogResult as String
+
+        reporter.text("Creating a new folder...")
+        deviceService.safeCreateDirectories(
+            setOf(newFolderPath)
+        )
+    }
+
+    override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
+        val parent =
+            deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull().asSafely<DirNode>() ?: return DialogResult(
+                false,
+                null
+            )
+
+        val validator = object : InputValidator {
+            override fun checkInput(inputString: String): Boolean {
+                if (!PathUtilRt.isValidFileName(inputString, Platform.UNIX, true, Charsets.US_ASCII)) return false
+                return parent.children().asSequence().none { it.asSafely<FileSystemNode>()?.name == inputString }
+            }
+
+            override fun canClose(inputString: String): Boolean = checkInput(inputString)
+        }
+
+        val newName = Messages.showInputDialog(
+            project,
+            "Name:", "Create New Folder", AllIcons.Actions.AddDirectory,
+            "", validator
+        )
+
+        return DialogResult(
+            !newName.isNullOrEmpty(),
+            "${parent.fullName}/$newName"
+        )
     }
 }

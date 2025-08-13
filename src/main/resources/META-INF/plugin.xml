@@ -96,8 +96,8 @@
     </applicationListeners>
 
     <actions>
-        <!-- REPL + FS toolbar -->
-        <group id="dev.micropythontools.repl.FSToolbarGroup">
+        <!-- FS toolbar -->
+        <group id="dev.micropythontools.fs.FSToolbarGroup">
             <action id="dev.micropythontools.repl.MpyConnectAction"
                     class="dev.micropythontools.actions.MpyConnectAction"/>
             <action id="dev.micropythontools.repl.MpyDisconnectAction"
@@ -110,8 +110,6 @@
                     class="dev.micropythontools.actions.MpyRefreshAction">
                 <keyboard-shortcut first-keystroke="control R" keymap="$default"/>
             </action>
-            <action id="dev.micropythontools.fs.MpyCreateFolderAction"
-                    class="dev.micropythontools.actions.MpyCreateFolderAction"/>
             <action id="dev.micropythontools.fs.MpyDownloadAction"
                     class="dev.micropythontools.actions.MpyDownloadAction"/>
             <action id="dev.micropythontools.fs.MpyDeleteAction"
@@ -124,13 +122,16 @@
         </group>
 
         <!-- FS context menu -->
-        <group id="dev.micropythontools.repl.FSContextMenuGroup">
-            <action id="dev.micropythontools.repl.MpyOpenFileAction"
+        <group id="dev.micropythontools.fs.FSContextMenuGroup">
+            <group id="dev.micropythontools.fs.MpyNewActionGroup"
+                   class="dev.micropythontools.actions.MpyNewActionGroup">
+            </group>
+            <separator/>
+            <action id="dev.micropythontools.fs.MpyOpenFileAction"
                     class="dev.micropythontools.actions.MpyOpenFileAction"/>
             <reference ref="dev.micropythontools.fs.MpyRefreshAction"/>
             <reference ref="dev.micropythontools.fs.MpyDownloadAction"/>
             <separator/>
-            <reference ref="dev.micropythontools.fs.MpyCreateFolderAction"/>
             <reference ref="dev.micropythontools.fs.MpyDeleteAction"/>
         </group>
 

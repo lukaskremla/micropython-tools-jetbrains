@@ -104,14 +104,14 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         })
         val actionManager = ActionManager.getInstance()
         EditSourceOnDoubleClickHandler.install(tree) {
-            val action = actionManager.getAction("dev.micropythontools.repl.MpyOpenFileAction")
+            val action = actionManager.getAction("dev.micropythontools.fs.MpyOpenFileAction")
             actionManager.tryToExecute(action, null, tree, TOOLWINDOW_CONTENT, true)
         }
-        val popupActions = actionManager.getAction("dev.micropythontools.repl.FSContextMenuGroup") as ActionGroup
+        val popupActions = actionManager.getAction("dev.micropythontools.fs.FSContextMenuGroup") as ActionGroup
         PopupHandler.installFollowingSelectionTreePopup(tree, popupActions, ActionPlaces.POPUP)
         TreeUtil.installActions(tree)
 
-        val actions = actionManager.getAction("dev.micropythontools.repl.FSToolbarGroup") as ActionGroup
+        val actions = actionManager.getAction("dev.micropythontools.fs.FSToolbarGroup") as ActionGroup
         val actionToolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR, actions, true)
         actionToolbar.targetComponent = this
 
