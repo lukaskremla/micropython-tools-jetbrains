@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.readText
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -73,8 +72,7 @@ internal class MpySoftResetAction : MpyReplAction(
     )
 ) {
     init {
-        this.templatePresentation.icon =
-            AllIcons.Actions.StopAndRestart // Set in Kotlin code to prevent false plugin.xml errors
+        this.templatePresentation.icon = AllIcons.Actions.StopAndRestart
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
@@ -101,14 +99,9 @@ internal class MpyClearReplAction : MpyAction(
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun performAction(e: AnActionEvent) {
-        val sure =
-            MessageDialogBuilder.yesNo("Clear REPL", "Are you sure you want to clear the REPL terminal?").ask(project)
-
-        if (sure) {
-            val terminal = project.service<MpyComponentRegistryService>().getTerminal()
-            val widget = UIUtil.findComponentOfType(terminal?.component, JediTermWidget::class.java)
-            widget?.terminalPanel?.clearBuffer()
-        }
+        val terminal = project.service<MpyComponentRegistryService>().getTerminal()
+        val widget = UIUtil.findComponentOfType(terminal?.component, JediTermWidget::class.java)
+        widget?.terminalPanel?.clearBuffer()
     }
 }
 
