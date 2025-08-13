@@ -18,11 +18,8 @@
 package dev.micropythontools.actions
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionUpdateThread.BGT
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -30,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -38,7 +36,6 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PathUtilRt.Platform
-import com.intellij.util.asSafely
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
@@ -53,6 +50,7 @@ import dev.micropythontools.ui.FileSystemNode
 import dev.micropythontools.ui.VolumeRootNode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.awt.datatransfer.StringSelection
 import java.nio.charset.StandardCharsets
 
 internal class MpyRefreshAction : MpyReplAction(
@@ -358,6 +356,50 @@ internal class MpyOpenFileAction : MpyReplAction(
     }
 }
 
+internal class MpyCopyPathActionGroup : ActionGroup("Copy Path/Reference", true) {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override fun update(e: AnActionEvent) {
+        val widget = e.project?.service<MpyDeviceService>()?.fileSystemWidget
+        e.presentation.isEnabled = widget?.selectedFiles()?.isNotEmpty() == true
+    }
+
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+        arrayOf(MpyCopyAbsolutePathAction(), MpyCopyFileNameAction())
+}
+
+/** Copies each selected item's device path (one per line), preserving selection order. */
+internal abstract class MpyCopyPathAction(text: String, private val copyAbsolutePath: Boolean) : AnAction(text) {
+    override fun getActionUpdateThread(): ActionUpdateThread = BGT
+
+    override fun update(e: AnActionEvent) {
+        val widget = e.project?.service<MpyDeviceService>()?.fileSystemWidget
+        e.presentation.isEnabled = widget?.selectedFiles()?.isNotEmpty() == true
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+        val widget = e.project?.service<MpyDeviceService>()?.fileSystemWidget ?: return
+
+        // Preserve selection order as reported by the Tree (matches IDEA behavior).
+        val nodes: List<FileSystemNode> =
+            widget.tree.selectionPaths?.mapNotNull { it.lastPathComponent as? FileSystemNode }.orEmpty()
+
+        if (nodes.isEmpty()) return
+
+        val payload = nodes.joinToString(separator = "\n") { if (copyAbsolutePath) it.fullName else it.name }
+        CopyPasteManager.getInstance().setContents(StringSelection(payload))
+    }
+}
+
+internal class MpyCopyAbsolutePathAction : MpyCopyPathAction("Absolute Path", true) {
+    init {
+        val base = ActionManager.getInstance().getAction("CopyAbsolutePath")
+        shortcutSet = base.shortcutSet
+    }
+}
+
+internal class MpyCopyFileNameAction : MpyCopyPathAction("File Name", false)
+
 internal class MpyNewActionGroup : ActionGroup("New", true) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
@@ -513,30 +555,43 @@ internal class MpyCreateFolderAction : MpyReplAction(
     }
 
     override fun dialogToShowFirst(e: AnActionEvent): DialogResult {
-        val parent =
-            deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull().asSafely<DirNode>() ?: return DialogResult(
-                false,
-                null
-            )
+        val selection =
+            deviceService.fileSystemWidget?.selectedFiles()?.firstOrNull() ?: return DialogResult(false, null)
+
+        // Resolve target directory from selection (folder OR file’s parent)
+        val targetDir: DirNode = when (selection) {
+            is DirNode -> selection
+            is FileNode -> selection.parent as? DirNode
+        } ?: return DialogResult(false, null)
+
+        fun joinPath(parent: String, child: String): String =
+            if (parent == "/") "/$child" else "$parent/$child"
 
         val validator = object : InputValidator {
             override fun checkInput(inputString: String): Boolean {
-                if (!PathUtilRt.isValidFileName(inputString, Platform.UNIX, true, Charsets.US_ASCII)) return false
-                return parent.children().asSequence().none { it.asSafely<FileSystemNode>()?.name == inputString }
+                if (!PathUtilRt.isValidFileName(
+                        inputString,
+                        Platform.UNIX,
+                        true,
+                        Charsets.US_ASCII
+                    )
+                ) return false
+                return targetDir.children().asSequence().none { (it as? FileSystemNode)?.name == inputString }
             }
 
-            override fun canClose(inputString: String): Boolean = checkInput(inputString)
+            override fun canClose(inputString: String) = checkInput(inputString)
         }
 
         val newName = Messages.showInputDialog(
             project,
-            "Name:", "Create New Folder", AllIcons.Actions.AddDirectory,
-            "", validator
-        )
+            "Name:",
+            "Create New Folder",
+            AllIcons.Actions.AddDirectory,
+            "",
+            validator
+        ) ?: return DialogResult(false, null)
 
-        return DialogResult(
-            !newName.isNullOrEmpty(),
-            "${parent.fullName}/$newName"
-        )
+        val newFolderPath = joinPath(targetDir.fullName, newName)
+        return DialogResult(true, newFolderPath)
     }
 }

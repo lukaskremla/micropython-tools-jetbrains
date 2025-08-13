@@ -126,12 +126,26 @@
             <group id="dev.micropythontools.fs.MpyNewActionGroup"
                    class="dev.micropythontools.actions.MpyNewActionGroup">
             </group>
+
             <separator/>
+
+            <reference ref="$Cut"/>
+            <reference ref="$Copy"/>
+            <group id="dev.micropythontools.fs.MpyCopyPathActionGroup"
+                   class="dev.micropythontools.actions.MpyCopyPathActionGroup">
+            </group>
+
+            <reference ref="$Paste"/>
+
+            <separator/>
+
             <action id="dev.micropythontools.fs.MpyOpenFileAction"
                     class="dev.micropythontools.actions.MpyOpenFileAction"/>
             <reference ref="dev.micropythontools.fs.MpyRefreshAction"/>
             <reference ref="dev.micropythontools.fs.MpyDownloadAction"/>
+
             <separator/>
+
             <reference ref="dev.micropythontools.fs.MpyDeleteAction"/>
         </group>
 

@@ -17,7 +17,7 @@
 import os
 
 
-def m(s, d):
+def m(s, d, c):
     ba = bytearray(1024)
     mv = memoryview(ba)
 
@@ -29,4 +29,5 @@ def m(s, d):
                     break
                 f_dest.write(mv[0:n])
 
-    os.remove(s)
+    if not c:
+        os.remove(s)
