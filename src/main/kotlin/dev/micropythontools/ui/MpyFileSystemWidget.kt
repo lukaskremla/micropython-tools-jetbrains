@@ -119,11 +119,9 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         add(actionToolbar.component, BorderLayout.NORTH)
         deviceService.stateListeners.add {
             when (it) {
-                State.CONNECTED, State.TTY_DETACHED -> {
-                }
+                State.CONNECTED, State.TTY_DETACHED -> {}
 
-                State.DISCONNECTING,
-                State.DISCONNECTED, State.CONNECTING -> {
+                State.DISCONNECTING, State.DISCONNECTED, State.CONNECTING -> {
                     ApplicationManager.getApplication().invokeLater({
                         tree.model = null
                     }, ModalityState.any())

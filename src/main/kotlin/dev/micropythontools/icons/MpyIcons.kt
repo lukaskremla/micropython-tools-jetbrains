@@ -19,9 +19,11 @@ package dev.micropythontools.icons
 import com.intellij.openapi.util.IconLoader
 
 internal object MpyIcons {
-    val connectActive = IconLoader.getIcon("/icons/connectActive.svg", MpyIcons::class.java)
-    val micropythonTw = IconLoader.getIcon("/icons/micropythonTw.svg", MpyIcons::class.java)
-    val Source = IconLoader.getIcon("/icons/MpySource.svg", MpyIcons::class.java)
-    val plugin = IconLoader.getIcon("/icons/pluginIcon.svg", MpyIcons::class.java)
-    val Volume = IconLoader.getIcon("/icons/volume.svg", MpyIcons::class.java)
+    val connectActive = getFromPath("/icons/connectActive.svg")
+    val micropythonTw = getFromPath("/icons/micropythonTw.svg")
+    val Source = getFromPath("/icons/MpySource.svg")
+    val plugin = getFromPath("/icons/pluginIcon.svg")
+    val Volume = getFromPath("/icons/volume.svg")
+
+    private fun getFromPath(path: String) = IconLoader.getIcon(path, MpyIcons::class.java)
 }
