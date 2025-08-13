@@ -19,6 +19,7 @@ package dev.micropythontools.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
+import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -419,35 +420,81 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
     private val pasteProvider = object : PasteProvider {
         override fun isPastePossible(context: DataContext) = true
+
         override fun isPasteEnabled(context: DataContext): Boolean {
             val clip = CopyPasteManager.getInstance().contents ?: return false
-            if (!clip.isDataFlavorSupported(FS_CLIP_FLAVOR)) return false
-            return singleTargetDirForSelection() != null
+            val hasFsClipboard = clip.isDataFlavorSupported(FS_CLIP_FLAVOR)
+            val hasProjectFiles = FileCopyPasteUtil.isFileListFlavorAvailable(clip.transferDataFlavors)
+            return (hasFsClipboard || hasProjectFiles) && singleTargetDirForSelection() != null
         }
 
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
         override fun performPaste(context: DataContext) {
             val copyPasteManager = CopyPasteManager.getInstance()
-            val clip = copyPasteManager.contents?.getTransferData(FS_CLIP_FLAVOR) as? FsClipboard ?: return
+            val clip = copyPasteManager.contents ?: return
             val target = singleTargetDirForSelection() ?: return
 
-            // Resolve fresh nodes by path (selections can be stale after refresh)
-            val nodes = resolveNodes(clip.paths)
-            if (nodes.isEmpty()) return
+            if (clip.isDataFlavorSupported(FS_CLIP_FLAVOR)) {
+                val fsClip = try {
+                    clip.getTransferData(FS_CLIP_FLAVOR) as? FsClipboard
+                } catch (_: Exception) {
+                    null
+                } ?: return
 
-            ApplicationManager.getApplication().invokeLater {
-                kotlinx.coroutines.runBlocking {
-                    val ok = moveNodesToTarget(
-                        nodes, target,
-                        shouldCopy = clip.op == ClipOp.COPY
-                    )
-                    if (ok && clip.op == ClipOp.CUT) {
-                        // optional: clear clipboard to avoid “repeat move” confusion
-                        CopyPasteManager.getInstance().setContents(StringSelection(""))
+                // Resolve fresh nodes by path (selections can be stale after refresh)
+                val nodes = resolveNodes(fsClip.paths)
+                if (nodes.isEmpty()) return
+
+                ApplicationManager.getApplication().invokeLater {
+                    kotlinx.coroutines.runBlocking {
+                        val ok = moveNodesToTarget(
+                            nodes = nodes,
+                            targetNode = target,
+                            shouldCopy = fsClip.op == ClipOp.COPY
+                        )
+                        if (ok && fsClip.op == ClipOp.CUT) {
+                            // optional: clear clipboard to avoid “repeat move” confusion
+                            CopyPasteManager.getInstance().setContents(StringSelection(""))
+                        }
                     }
                 }
+                return
             }
+
+            if (!FileCopyPasteUtil.isFileListFlavorAvailable(clip.transferDataFlavors)) return
+
+            val filesToUpload = try {
+                FileCopyPasteUtil.getFileList(clip)
+                    ?.mapNotNull { StandardFileSystems.local().findFileByPath(it.path) }
+                    ?.toSet() ?: emptySet()
+            } catch (e: Exception) {
+                Notifications.Bus.notify(
+                    Notification(
+                        MpyBundle.message("notification.group.name"),
+                        "Collecting files to upload from clipboard failed: $e",
+                        NotificationType.ERROR
+                    ), project
+                )
+                return
+            }
+
+            if (filesToUpload.isEmpty()) return
+
+            // Remove children when parent is present (mirror your DnD sanitize)
+            val sanitizedFiles = filesToUpload.filter { candidate ->
+                filesToUpload.none { potentialParent ->
+                    VfsUtil.isAncestor(potentialParent, candidate, true)
+                }
+            }.toSet()
+
+            val parentFolders = sanitizedFiles.map { it.parent }.toSet()
+
+            project.service<MpyTransferService>().performUpload(
+                initialFilesToUpload = sanitizedFiles,
+                relativeToFolders = parentFolders,
+                targetDestination = target.fullName
+            )
         }
     }
 
