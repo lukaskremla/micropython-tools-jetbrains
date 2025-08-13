@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SimpleTextAttributes
@@ -97,7 +98,20 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                     value is DirNode -> AllIcons.Nodes.Folder
                     else -> FileTypeRegistry.getInstance().getFileTypeByFileName(value.name).icon
                 }
-                append(value.name)
+
+                if (isNodeCut(value)) {
+                    val dimmed = ColorUtil.withAlpha(
+                        foreground,
+                        0.7
+                    ) // fade current foreground (roughly equal to what the project tree does)
+                    append(
+                        value.name,
+                        SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, dimmed)
+                    )
+                } else {
+                    append(value.name)
+                }
+
                 if (value is FileNode) {
                     append("  ${value.size} bytes", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
                 } else if (value is VolumeRootNode) {
@@ -120,6 +134,11 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         val actions = actionManager.getAction("dev.micropythontools.fs.FSToolbarGroup") as ActionGroup
         val actionToolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR, actions, true)
         actionToolbar.targetComponent = this
+
+        val cpListener = CopyPasteManager.ContentChangedListener { _, _ ->
+            tree.repaint()
+        }
+        CopyPasteManager.getInstance().addContentChangedListener(cpListener, deviceService)
 
         add(JBScrollPane(tree), BorderLayout.CENTER)
         add(actionToolbar.component, BorderLayout.NORTH)
@@ -344,6 +363,18 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
             .toCollection(allNodes)
 
         return allNodes
+    }
+
+    private fun isNodeCut(node: FileSystemNode): Boolean {
+        val clip = CopyPasteManager.getInstance().contents ?: return false
+        if (!clip.isDataFlavorSupported(FS_CLIP_FLAVOR)) return false
+        val data = try {
+            clip.getTransferData(FS_CLIP_FLAVOR) as? FsClipboard
+        } catch (_: Exception) {
+            null
+        } ?: return false
+        if (data.op != ClipOp.CUT) return false
+        return node.fullName in data.paths
     }
 
     private fun filterOutChildSelections(nodes: Array<FileSystemNode>): Array<FileSystemNode> {
