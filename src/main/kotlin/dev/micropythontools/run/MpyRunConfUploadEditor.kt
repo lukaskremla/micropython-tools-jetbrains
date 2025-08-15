@@ -26,7 +26,6 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.setEmptyState
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
@@ -40,19 +39,13 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyTransferService
-import dev.micropythontools.settings.isRunConfTargetPathValid
-import dev.micropythontools.settings.normalizeMpyPath
-import dev.micropythontools.settings.questionMarkIcon
-import dev.micropythontools.settings.validateMpyPath
+import dev.micropythontools.core.MpyValidators
+import dev.micropythontools.icons.MpyIcons
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.*
 import javax.swing.table.DefaultTableCellRenderer
 
-
-/**
- * @authors Lukas Kremla
- */
 private data class FlashParameters(
     var uploadMode: Int,
     var selectedPaths: MutableList<String>,
@@ -65,9 +58,6 @@ private data class FlashParameters(
     var excludedPaths: MutableList<String>
 )
 
-/**
- * @authors Lukas Kremla
- */
 private data class SourceItem(
     private val project: Project,
     val path: String
@@ -85,14 +75,10 @@ private data class SourceItem(
             VfsUtil.isAncestor(mpySource, virtualFile, false)
         }
 
-    val icon = if (isValid)
-        IconLoader.getIcon("icons/MpySource.svg", this::class.java)
+    val icon = if (isValid) MpyIcons.Source
     else AllIcons.General.Error
 }
 
-/**
- * @authors Lukas Kremla
- */
 private data class ExcludedItem(val path: String) {
     // This check isn't perfect, but with the limited information about excluded paths, it is the best choice
     val isDirectory = !path.substringAfterLast("/").contains(".")
@@ -104,9 +90,6 @@ private data class ExcludedItem(val path: String) {
     }
 }
 
-/**
- * @authors Lukas Kremla
- */
 internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) :
     SettingsEditor<MpyRunConfUpload>() {
 
@@ -267,10 +250,10 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             dialog.centerPanel(panel)
 
             dialog.setOkOperation {
-                val validationResult = validateMpyPath(textField.text)
+                val validationResult = MpyValidators.validateMpyPath(textField.text)
 
                 if (validationResult == null) {
-                    val normalizedPath = normalizeMpyPath(textField.text, true)
+                    val normalizedPath = MpyValidators.normalizeMpyPath(textField.text, true)
 
                     val model = excludedPathsTable.listTableModel
                     model.addRow(ExcludedItem(normalizedPath))
@@ -317,10 +300,10 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                 dialog.centerPanel(panel)
 
                 dialog.setOkOperation {
-                    val validationResult = validateMpyPath(textField.text)
+                    val validationResult = MpyValidators.validateMpyPath(textField.text)
 
                     if (validationResult == null) {
-                        val normalizedPath = normalizeMpyPath(textField.text, true)
+                        val normalizedPath = MpyValidators.normalizeMpyPath(textField.text, true)
 
                         model.setItem(selectedRow, ExcludedItem(normalizedPath))
                         sortExcludedItemsTable(excludedPathsTable)
@@ -441,7 +424,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                         .columns(15)
                         .gap(RightGap.SMALL)
                         .validationInfo { field ->
-                            val validationResult = isRunConfTargetPathValid(field.text)
+                            val validationResult = MpyValidators.isRunConfTargetPathValid(field.text)
 
                             if (validationResult != null) {
                                 error(validationResult)
@@ -481,7 +464,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                     .bindSelected(parameters::synchronize)
                     .gap(RightGap.SMALL)
 
-                cell(JBLabel(questionMarkIcon).apply {
+                cell(JBLabel(AllIcons.General.ContextHelp).apply {
                     toolTipText = "Synchronize device file system to only contain uploaded files and folders"
                 })
             }
@@ -519,7 +502,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
 
             excludedPaths.addAll(excludedPathsTableItemsPaths)
 
-            val normalizedUploadToPath = normalizeMpyPath(uploadToPath, true)
+            val normalizedUploadToPath = MpyValidators.normalizeMpyPath(uploadToPath, true)
 
             uploadToTextField.component.text = normalizedUploadToPath
 

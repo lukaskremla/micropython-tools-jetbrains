@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.project.stateStore
 import com.jetbrains.python.sdk.PythonSdkUtil
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.sourceroots.MpySourceRootType
 import dev.micropythontools.ui.*
@@ -49,10 +50,6 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
-
-/**
- * @author Lukas Kremla, elmot
- */
 @Service(Service.Level.PROJECT)
 internal class MpyTransferService(private val project: Project) {
     private fun VirtualFile.leadingDot() = this.name.startsWith(".")
@@ -383,7 +380,7 @@ internal class MpyTransferService(private val project: Project) {
                 if (fileToTargetPath.isEmpty() && folderToTargetPath.isEmpty() && targetPathsToRemove.isEmpty()) {
                     Notifications.Bus.notify(
                         Notification(
-                            NOTIFICATION_GROUP,
+                            MpyBundle.message("notification.group.name"),
                             "All files are up to date",
                             NotificationType.INFORMATION
                         ), project
@@ -510,7 +507,7 @@ internal class MpyTransferService(private val project: Project) {
                     if (!fileToTargetPath.isEmpty() || !folderToTargetPath.isEmpty()) {
                         Notifications.Bus.notify(
                             Notification(
-                                NOTIFICATION_GROUP,
+                                MpyBundle.message("notification.group.name"),
                                 "Uploaded files don't match with the expected sizes. Please try to re-run the upload.",
                                 NotificationType.WARNING
                             ), project

@@ -1,6 +1,17 @@
 The Changelog
 =============
 
+0.6.0 - xx.8.2025
+------------------
+
+* Removed confirmation dialog from clear REPl action
+* Reworked and improved open File action
+* Added an option to refresh and edit on-device files
+* Added a "New" action for creating files and folders on-device like in the project view
+* Added Copy, Cut, Paste file context menu actions toi the File System view
+* Increased command execution timeout (extra large uploads on slower boards are less likely to timeout)
+* Fixed connection integrity monitoring not working on Windows
+
 0.5.12 - 28.7.2025
 ------------------
 

@@ -24,16 +24,13 @@ import jssc.SerialPortException
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 
-/**
- * @author elmot
- */
 internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
     val port = SerialPort(comm.connectionParameters.portName)
 
     override val isConnected: Boolean
         get() = try {
+            port.getLinesStatus()
             port.isOpened && port.getInputBufferBytesCount() >= 0
-            true
         } catch (_: SerialPortException) {
             false
         }

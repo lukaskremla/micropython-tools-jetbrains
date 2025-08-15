@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.mpyfile
+package dev.micropythontools.core
 
-import com.intellij.openapi.fileTypes.UserBinaryFileType
-import dev.micropythontools.icons.MpyIcons
-import javax.swing.Icon
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginId
 
-internal class MpyFileType : UserBinaryFileType() {
-    override fun getName() = "MicroPython Bytecode"
-    override fun getDescription() = "MicroPython bytecode file"
-    override fun getDefaultExtension() = "mpy"
-    override fun getIcon(): Icon = MpyIcons.plugin
+internal object MpyPluginInfo {
+    const val PLUGIN_ID = "micropython-tools-jetbrains"
+
+    val pluginDescriptor: IdeaPluginDescriptor
+        get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))
+            ?: throw RuntimeException("The $PLUGIN_ID plugin cannot find itself")
+
+    val sandboxPath: String
+        get() = pluginDescriptor.pluginPath.toString()
 }

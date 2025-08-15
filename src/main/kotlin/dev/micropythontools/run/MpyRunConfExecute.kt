@@ -27,9 +27,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.ui.NOTIFICATION_GROUP
 
 internal class MpyRunConfExecute(
     project: Project,
@@ -40,7 +40,6 @@ internal class MpyRunConfExecute(
     factory,
     name
 ), LocatableConfiguration {
-
     private fun getFileName(): String {
         val path = options.path
         if (path.isNullOrBlank()) return ""
@@ -85,7 +84,7 @@ internal class MpyRunConfExecute(
         } catch (e: RuntimeConfigurationError) {
             Notifications.Bus.notify(
                 Notification(
-                    NOTIFICATION_GROUP,
+                    MpyBundle.message("notification.group.name"),
                     "Cannot run \"${name}\". ${e.localizedMessage}",
                     NotificationType.ERROR
                 ), project

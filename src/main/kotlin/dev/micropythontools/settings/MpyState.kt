@@ -18,11 +18,9 @@ package dev.micropythontools.settings
 
 import com.intellij.openapi.components.BaseState
 
-/**
- * @author Lukas Kremla
- */
 internal class MpyState : BaseState() {
     var isPluginEnabled by property(false)
+    var autoClearRepl by property(true)
     var usingUart by property(true)
     var enableManualEditing by property(false)
     var filterManufacturers by property(true)

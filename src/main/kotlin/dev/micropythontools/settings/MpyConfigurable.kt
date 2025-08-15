@@ -18,6 +18,7 @@ package dev.micropythontools.settings
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.icons.AllIcons
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -39,6 +40,8 @@ import com.intellij.util.ui.ListTableModel
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
 import dev.micropythontools.communication.performReplAction
+import dev.micropythontools.core.MpyValidators
+import dev.micropythontools.stubs.MpyStubPackageService
 import dev.micropythontools.util.MpyStubPackageService
 import dev.micropythontools.util.StubPackage
 import jssc.SerialPort
@@ -48,9 +51,6 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 
-/**
- * @author Lukas Kremla
- */
 private data class ConfigurableParameters(
     var isPluginEnabled: Boolean,
     var usingUart: Boolean,
@@ -68,9 +68,6 @@ private data class ConfigurableParameters(
     var activeStubsPackage: String
 )
 
-/**
- * @author Lukas Kremla
- */
 internal class MpyConfigurable(private val project: Project) :
     BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
 
@@ -228,7 +225,7 @@ internal class MpyConfigurable(private val project: Project) :
                             })
                                 .bindText(parameters::webReplIp)
                                 .validationInfo { field ->
-                                    val msg = messageForBrokenIp(field.text)
+                                    val msg = MpyValidators.messageForBrokenIp(field.text)
                                     msg?.let { error(it).withOKEnabled() }
                                 }
                                 .applyToComponent {
@@ -241,7 +238,7 @@ internal class MpyConfigurable(private val project: Project) :
                             intTextField()
                                 .bindIntText(parameters::webReplPort)
                                 .validationInfo { field ->
-                                    val msg = messageForBrokenPort(field.text)
+                                    val msg = MpyValidators.messageForBrokenPort(field.text)
                                     msg?.let { error(it).withOKEnabled() }
                                 }
                                 .applyToComponent {
@@ -256,7 +253,7 @@ internal class MpyConfigurable(private val project: Project) :
                                 .comment("(4-9 characters)")
                                 .columns(21)
                                 .validationInfo { field ->
-                                    val msg = messageForBrokenPassword(field.password)
+                                    val msg = MpyValidators.messageForBrokenPassword(field.password)
                                     msg?.let { error(it).withOKEnabled() }
                                 }
                         }
@@ -290,7 +287,7 @@ internal class MpyConfigurable(private val project: Project) :
                             .bindSelected(parameters::legacyVolumeSupportEnabled)
                             .gap(RightGap.SMALL)
 
-                        cell(JBLabel(questionMarkIcon).apply {
+                        cell(JBLabel(AllIcons.General.ContextHelp).apply {
                             toolTipText =
                                 "Enables scanning for additional mounted volumes on MicroPython versions older than 1.25.0.<br>" +
                                         " May slow down filesystem refreshes."

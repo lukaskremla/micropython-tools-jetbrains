@@ -18,26 +18,27 @@
 package dev.micropythontools.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
+import com.intellij.ide.*
+import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionPlaces.TOOLWINDOW_CONTENT
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SimpleTextAttributes
@@ -49,16 +50,17 @@ import com.intellij.util.asSafely
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.tree.TreeUtil
 import dev.micropythontools.communication.*
+import dev.micropythontools.core.MpyScripts
+import dev.micropythontools.i18n.MpyBundle
+import dev.micropythontools.icons.MpyIcons
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.settings.retrieveMpyScriptAsString
-import dev.micropythontools.settings.volumeIcon
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.StringSelection
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.IOException
@@ -69,10 +71,11 @@ import javax.swing.TransferHandler
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
+private enum class ClipOp { COPY, CUT }
+private data class FsClipboard(val op: ClipOp, val paths: List<String>) : java.io.Serializable
 
-/**
- * @authors elmot, Lukas Kremla
- */
+private val FS_CLIP_FLAVOR = DataFlavor(FsClipboard::class.java, "MicroPython FS Clipboard")
+
 internal class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>(BorderLayout()) {
     val tree: Tree = Tree(newTreeModel())
 
@@ -91,11 +94,24 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 value as FileSystemNode
                 icon = when {
                     // Only non "/" root volumes have a separate icon, otherwise it's meant to get the DirNode icon
-                    value is VolumeRootNode && !value.isFileSystemRoot -> volumeIcon
+                    value is VolumeRootNode && !value.isFileSystemRoot -> MpyIcons.Volume
                     value is DirNode -> AllIcons.Nodes.Folder
                     else -> FileTypeRegistry.getInstance().getFileTypeByFileName(value.name).icon
                 }
-                append(value.name)
+
+                if (isNodeCut(value)) {
+                    val dimmed = ColorUtil.withAlpha(
+                        foreground,
+                        0.7
+                    ) // fade current foreground (roughly equal to what the project tree does)
+                    append(
+                        value.name,
+                        SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, dimmed)
+                    )
+                } else {
+                    append(value.name)
+                }
+
                 if (value is FileNode) {
                     append("  ${value.size} bytes", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
                 } else if (value is VolumeRootNode) {
@@ -108,26 +124,29 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         })
         val actionManager = ActionManager.getInstance()
         EditSourceOnDoubleClickHandler.install(tree) {
-            val action = actionManager.getAction("micropythontools.repl.OpenMpyFileAction")
+            val action = actionManager.getAction("dev.micropythontools.fs.MpyOpenFileAction")
             actionManager.tryToExecute(action, null, tree, TOOLWINDOW_CONTENT, true)
         }
-        val popupActions = actionManager.getAction("micropythontools.repl.FSContextMenu") as ActionGroup
+        val popupActions = actionManager.getAction("dev.micropythontools.fs.FSContextMenuGroup") as ActionGroup
         PopupHandler.installFollowingSelectionTreePopup(tree, popupActions, ActionPlaces.POPUP)
         TreeUtil.installActions(tree)
 
-        val actions = actionManager.getAction("micropythontools.repl.FSToolbar") as ActionGroup
+        val actions = actionManager.getAction("dev.micropythontools.fs.FSToolbarGroup") as ActionGroup
         val actionToolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR, actions, true)
         actionToolbar.targetComponent = this
+
+        val cpListener = CopyPasteManager.ContentChangedListener { _, _ ->
+            tree.repaint()
+        }
+        CopyPasteManager.getInstance().addContentChangedListener(cpListener, deviceService)
 
         add(JBScrollPane(tree), BorderLayout.CENTER)
         add(actionToolbar.component, BorderLayout.NORTH)
         deviceService.stateListeners.add {
             when (it) {
-                State.CONNECTED, State.TTY_DETACHED -> {
-                }
+                State.CONNECTED, State.TTY_DETACHED -> {}
 
-                State.DISCONNECTING,
-                State.DISCONNECTED, State.CONNECTING -> {
+                State.DISCONNECTING, State.DISCONNECTED, State.CONNECTING -> {
                     ApplicationManager.getApplication().invokeLater({
                         tree.model = null
                     }, ModalityState.any())
@@ -145,14 +164,6 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
             private val virtualFileFlavor =
                 DataFlavor("application/x-java-file-list; class=java.util.List", "List of virtual files")
             private val flavors = arrayOf(nodesFlavor, virtualFileFlavor)
-
-            private fun filterOutChildSelections(nodes: Array<FileSystemNode>): Array<FileSystemNode> {
-                return nodes.filter { node ->
-                    nodes.none { potentialParent ->
-                        potentialParent != node && node.fullName.startsWith(potentialParent.fullName + "/")
-                    }
-                }.toTypedArray()
-            }
 
             override fun createTransferable(c: JComponent): Transferable? {
                 val tree = c as Tree
@@ -233,107 +244,8 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                             return false
                         }
 
-                        val result = performReplAction(
-                            project = project,
-                            connectionRequired = false,
-                            description = "Moving files...",
-                            requiresRefreshAfter = true,
-                            cancelledMessage = "Move operation cancelled",
-                            { reporter ->
-                                var sure = false
-
-                                withContext(Dispatchers.EDT) {
-                                    sure = MessageDialogBuilder.yesNo(
-                                        "Move Dropped Item(s)",
-                                        "Are you sure you want to move the Dropped items?"
-                                    ).ask(project)
-                                }
-
-                                if (!sure) return@performReplAction PerformReplActionResult(null, false)
-
-                                reporter.text("Checking for move conflicts...")
-                                reporter.fraction(null)
-
-                                quietRefresh(reporter)
-
-                                val targetChildren = targetNode.children().asSequence()
-                                    .mapNotNull { it as? FileSystemNode }
-                                    .toList()
-
-                                val targetChildNames = targetChildren.map { it.name }
-
-                                val foundConflicts = (nodes.any {
-                                    targetChildNames.contains(it.name)
-                                })
-
-                                if (foundConflicts) {
-                                    var wasOverwriteConfirmed = false
-
-                                    withContext(Dispatchers.EDT) {
-                                        val clickResult = MessageDialogBuilder.Message(
-                                            "Overwrite Destination Paths?",
-                                            "One or more of the items being moved already exists in the target location. " +
-                                                    "Do you want to overwrite the destination item(s)?"
-                                        ).asWarning().buttons("Replace", "Cancel").defaultButton("Cancel").show(project)
-
-                                        wasOverwriteConfirmed = clickResult == "Replace"
-                                    }
-
-                                    if (!wasOverwriteConfirmed) return@performReplAction false
-                                }
-
-                                reporter.text("Moving items...")
-                                reporter.fraction(null)
-
-                                val isCrossVolumeTransfer = allNodes()
-                                    .filter { it is VolumeRootNode && !it.isFileSystemRoot }
-                                    .map { it.fullName }
-                                    .any { volumePath ->
-                                        targetNode.fullName.startsWith(volumePath) ||
-                                                nodes.any { node ->
-                                                    node.fullName.startsWith(volumePath)
-                                                }
-                                    }
-
-                                val commands = if (isCrossVolumeTransfer) {
-                                    mutableListOf(
-                                        retrieveMpyScriptAsString("move_file_over_volumes_base.py")
-                                    )
-                                } else {
-                                    mutableListOf("import os")
-                                }
-
-                                val currentPathToNewPath = mutableMapOf<String, String>()
-                                val pathsToRemove = mutableSetOf<String>()
-                                nodes.forEach { node ->
-                                    val newPath = "${targetNode.fullName}/${node.name}"
-                                    currentPathToNewPath[node.fullName] = newPath
-
-                                    if (foundConflicts && targetChildNames.contains(node.name)) pathsToRemove.add(
-                                        newPath
-                                    )
-
-                                    commands.add(
-                                        if (isCrossVolumeTransfer) {
-                                            "___m(\"${node.fullName}\", \"$newPath\")"
-                                        } else {
-                                            "os.rename(\"${node.fullName}\", \"$newPath\")"
-                                        }
-                                    )
-                                }
-
-                                if (isCrossVolumeTransfer) {
-                                    commands.add("del ___m")
-                                    commands.add("import gc")
-                                    commands.add("gc.collect()")
-                                }
-
-                                deviceService.recursivelySafeDeletePaths(pathsToRemove)
-
-                                deviceService.blindExecute(commands)
-                            }
-                        )
-                        if (result == false) return false
+                        val result = moveNodesToTarget(nodes, targetNode, false)
+                        if (!result) return false
                     }
 
                     support.isDataFlavorSupported(virtualFileFlavor) -> {
@@ -347,7 +259,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                         } catch (e: Exception) {
                             Notifications.Bus.notify(
                                 Notification(
-                                    NOTIFICATION_GROUP,
+                                    MpyBundle.message("notification.group.name"),
                                     "Drag and drop file collection failed: $e",
                                     NotificationType.ERROR
                                 ), project
@@ -389,6 +301,15 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 return true
             }
         }
+        // Register providers on the tree:
+        DataManager.registerDataProvider(tree) { dataId ->
+            when {
+                PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> copyProvider
+                PlatformDataKeys.CUT_PROVIDER.`is`(dataId) -> cutProvider
+                PlatformDataKeys.PASTE_PROVIDER.`is`(dataId) -> pasteProvider
+                else -> null
+            }
+        }
     }
 
     fun updateEmptyText() {
@@ -422,6 +343,305 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         }
     }
 
+    fun selectedFiles(): Collection<FileSystemNode> {
+        return tree.selectionPaths?.mapNotNull { it.lastPathComponent.asSafely<FileSystemNode>() } ?: emptyList()
+    }
+
+    fun allNodes(): Collection<FileSystemNode> {
+        val allNodes = mutableListOf<FileSystemNode>()
+        val root = tree.model.root as DirNode
+        TreeUtil.treeNodeTraverser(root)
+            .traverse(TreeTraversal.POST_ORDER_DFS)
+            .mapNotNull {
+                when (it) {
+                    is InvisibleRootNode -> null
+                    is DirNode -> it
+                    is FileNode -> it
+                    else -> null
+                }
+            }
+            .toCollection(allNodes)
+
+        return allNodes
+    }
+
+    private fun isNodeCut(node: FileSystemNode): Boolean {
+        val clip = CopyPasteManager.getInstance().contents ?: return false
+        if (!clip.isDataFlavorSupported(FS_CLIP_FLAVOR)) return false
+        val data = try {
+            clip.getTransferData(FS_CLIP_FLAVOR) as? FsClipboard
+        } catch (_: Exception) {
+            null
+        } ?: return false
+        if (data.op != ClipOp.CUT) return false
+        return node.fullName in data.paths
+    }
+
+    private fun filterOutChildSelections(nodes: Array<FileSystemNode>): Array<FileSystemNode> {
+        return nodes.filter { node ->
+            nodes.none { potentialParent ->
+                potentialParent != node && node.fullName.startsWith(potentialParent.fullName + "/")
+            }
+        }.toTypedArray()
+    }
+
+    private fun toClipboardContent(op: ClipOp, items: List<String>): Transferable {
+        val human = buildString {
+            append(if (op == ClipOp.CUT) "Cut " else "Copied ")
+            append(items.size).append(if (items.size == 1) " item: " else " items: ")
+            append(items.take(3).joinToString(", "))
+            if (items.size > 3) append(" …")
+        }
+        return object : Transferable {
+            override fun getTransferDataFlavors() =
+                arrayOf(DataFlavor.stringFlavor, FS_CLIP_FLAVOR)
+
+            override fun isDataFlavorSupported(flavor: DataFlavor) =
+                flavor == DataFlavor.stringFlavor || flavor == FS_CLIP_FLAVOR
+
+            override fun getTransferData(flavor: DataFlavor): Any =
+                when (flavor) {
+                    DataFlavor.stringFlavor -> human
+                    FS_CLIP_FLAVOR -> FsClipboard(op, items)
+                    else -> throw UnsupportedFlavorException(flavor)
+                }
+        }
+    }
+
+    // Resolve clipboard paths into current nodes (after a refresh, nodes are new instances)
+    private fun resolveNodes(paths: List<String>): Array<FileSystemNode> {
+        val byPath = allNodes().associateBy { it.fullName }
+        return paths.mapNotNull { byPath[it] }.toTypedArray()
+    }
+
+    private fun singleTargetDirForSelection(): DirNode? {
+        val sel = selectedFiles()
+        if (sel.isEmpty()) return null
+        val targets =
+            sel.map { (it as? DirNode)?.fullName ?: (it.parent as FileSystemNode).fullName }.distinct()
+        if (targets.size != 1) return null
+        return allNodes().firstOrNull { it is DirNode && it.fullName == targets.single() } as? DirNode
+    }
+
+    private val copyProvider = object : CopyProvider {
+        override fun isCopyEnabled(ctx: DataContext) =
+            selectedFiles().isNotEmpty() && selectedFiles().none { it is VolumeRootNode }
+
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+        override fun isCopyVisible(ctx: DataContext) = true
+        override fun performCopy(ctx: DataContext) {
+            val items = filterOutChildSelections(selectedFiles().toTypedArray()).map { it.fullName }
+            CopyPasteManager.getInstance().setContents(toClipboardContent(ClipOp.COPY, items))
+        }
+    }
+
+    private val cutProvider = object : CutProvider {
+        override fun isCutEnabled(ctx: DataContext) =
+            selectedFiles().isNotEmpty() && selectedFiles().none { it is VolumeRootNode }
+
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+        override fun isCutVisible(ctx: DataContext) = true
+        override fun performCut(ctx: DataContext) {
+            val items = filterOutChildSelections(selectedFiles().toTypedArray()).map { it.fullName }
+            CopyPasteManager.getInstance().setContents(toClipboardContent(ClipOp.CUT, items))
+        }
+    }
+
+    private val pasteProvider = object : PasteProvider {
+        override fun isPastePossible(context: DataContext) = true
+
+        override fun isPasteEnabled(context: DataContext): Boolean {
+            val clip = CopyPasteManager.getInstance().contents ?: return false
+            val hasFsClipboard = clip.isDataFlavorSupported(FS_CLIP_FLAVOR)
+            val hasProjectFiles = FileCopyPasteUtil.isFileListFlavorAvailable(clip.transferDataFlavors)
+            return (hasFsClipboard || hasProjectFiles) && singleTargetDirForSelection() != null
+        }
+
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+        override fun performPaste(context: DataContext) {
+            val copyPasteManager = CopyPasteManager.getInstance()
+            val clip = copyPasteManager.contents ?: return
+            val target = singleTargetDirForSelection() ?: return
+
+            if (clip.isDataFlavorSupported(FS_CLIP_FLAVOR)) {
+                val fsClip = try {
+                    clip.getTransferData(FS_CLIP_FLAVOR) as? FsClipboard
+                } catch (_: Exception) {
+                    null
+                } ?: return
+
+                // Resolve fresh nodes by path (selections can be stale after refresh)
+                val nodes = resolveNodes(fsClip.paths)
+                if (nodes.isEmpty()) return
+
+                ApplicationManager.getApplication().invokeLater {
+                    kotlinx.coroutines.runBlocking {
+                        val ok = moveNodesToTarget(
+                            nodes = nodes,
+                            targetNode = target,
+                            shouldCopy = fsClip.op == ClipOp.COPY
+                        )
+                        if (ok && fsClip.op == ClipOp.CUT) {
+                            // optional: clear clipboard to avoid “repeat move” confusion
+                            CopyPasteManager.getInstance().setContents(StringSelection(""))
+                        }
+                    }
+                }
+                return
+            }
+
+            if (!FileCopyPasteUtil.isFileListFlavorAvailable(clip.transferDataFlavors)) return
+
+            val filesToUpload = try {
+                FileCopyPasteUtil.getFileList(clip)
+                    ?.mapNotNull { StandardFileSystems.local().findFileByPath(it.path) }
+                    ?.toSet() ?: emptySet()
+            } catch (e: Exception) {
+                Notifications.Bus.notify(
+                    Notification(
+                        MpyBundle.message("notification.group.name"),
+                        "Collecting files to upload from clipboard failed: $e",
+                        NotificationType.ERROR
+                    ), project
+                )
+                return
+            }
+
+            if (filesToUpload.isEmpty()) return
+
+            // Remove children when parent is present (mirror your DnD sanitize)
+            val sanitizedFiles = filesToUpload.filter { candidate ->
+                filesToUpload.none { potentialParent ->
+                    VfsUtil.isAncestor(potentialParent, candidate, true)
+                }
+            }.toSet()
+
+            val parentFolders = sanitizedFiles.map { it.parent }.toSet()
+
+            project.service<MpyTransferService>().performUpload(
+                initialFilesToUpload = sanitizedFiles,
+                relativeToFolders = parentFolders,
+                targetDestination = target.fullName
+            )
+        }
+    }
+
+    private fun moveNodesToTarget(
+        nodes: Array<FileSystemNode>,
+        targetNode: DirNode,
+        shouldCopy: Boolean
+    ): Boolean {
+        val confirmTitle = if (shouldCopy) "Copy Items" else "Move Items"
+        val progressTitle = if (shouldCopy) "Copying items..." else "Moving items..."
+
+        val result = performReplAction(
+            project = project,
+            connectionRequired = false,
+            description = progressTitle,
+            requiresRefreshAfter = true,
+            cancelledMessage = "Move operation cancelled",
+            { reporter ->
+                var sure = false
+
+                withContext(Dispatchers.EDT) {
+                    sure = MessageDialogBuilder.yesNo(
+                        confirmTitle,
+                        "Are you sure you want to move the Dropped items?"
+                    ).ask(project)
+                }
+
+                if (!sure) return@performReplAction PerformReplActionResult(null, false)
+
+                reporter.text("Checking for move conflicts...")
+                reporter.fraction(null)
+
+                quietRefresh(reporter)
+
+                val targetChildren = targetNode.children().asSequence()
+                    .mapNotNull { it as? FileSystemNode }
+                    .toList()
+
+                val targetChildNames = targetChildren.map { it.name }
+
+                val foundConflicts = (nodes.any {
+                    targetChildNames.contains(it.name)
+                })
+
+                if (foundConflicts) {
+                    var wasOverwriteConfirmed = false
+
+                    withContext(Dispatchers.EDT) {
+                        val clickResult = MessageDialogBuilder.Message(
+                            "Overwrite Destination Paths?",
+                            "One or more of the items being moved already exists in the target location. " +
+                                    "Do you want to overwrite the destination item(s)?"
+                        ).asWarning().buttons("Replace", "Cancel").defaultButton("Cancel").show(project)
+
+                        wasOverwriteConfirmed = clickResult == "Replace"
+                    }
+
+                    if (!wasOverwriteConfirmed) return@performReplAction false
+                }
+
+                reporter.text(progressTitle)
+                reporter.fraction(null)
+
+                val isCrossVolumeTransfer = allNodes()
+                    .filter { it is VolumeRootNode && !it.isFileSystemRoot }
+                    .map { it.fullName }
+                    .any { volumePath ->
+                        targetNode.fullName.startsWith(volumePath) ||
+                                nodes.any { node ->
+                                    node.fullName.startsWith(volumePath)
+                                }
+                    }
+
+                val commands = if (isCrossVolumeTransfer || shouldCopy) {
+                    mutableListOf(
+                        MpyScripts.retrieveMpyScriptAsString("move_file_base.py")
+                    )
+                } else {
+                    mutableListOf("import os")
+                }
+
+                val currentPathToNewPath = mutableMapOf<String, String>()
+                val pathsToRemove = mutableSetOf<String>()
+                nodes.forEach { node ->
+                    val newPath = "${targetNode.fullName}/${node.name}"
+                    currentPathToNewPath[node.fullName] = newPath
+
+                    if (foundConflicts && targetChildNames.contains(node.name)) pathsToRemove.add(
+                        newPath
+                    )
+
+                    commands.add(
+                        if (isCrossVolumeTransfer || shouldCopy) {
+                            "___m(\"${node.fullName}\", \"$newPath\", ${if (shouldCopy) "True" else "False"})"
+                        } else {
+                            "os.rename(\"${node.fullName}\", \"$newPath\")"
+                        }
+                    )
+                }
+
+                if (isCrossVolumeTransfer) {
+                    commands.add("del ___m")
+                    commands.add("import gc")
+                    commands.add("gc.collect()")
+                }
+
+                print(commands.joinToString("\n"))
+
+                deviceService.recursivelySafeDeletePaths(pathsToRemove)
+
+                deviceService.blindExecute(commands)
+            }
+        )
+        return result != false
+    }
+
     suspend fun refresh(reporter: RawProgressReporter) =
         doRefresh(reporter, hash = false, disconnectOnCancel = true, isInitialRefresh = false, useReporter = true)
 
@@ -433,28 +653,6 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
     suspend fun initialRefresh(reporter: RawProgressReporter) =
         doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = true, useReporter = true)
-
-    fun selectedFiles(): Collection<FileSystemNode> {
-        return tree.selectionPaths?.mapNotNull { it.lastPathComponent.asSafely<FileSystemNode>() } ?: emptyList()
-    }
-
-    fun allNodes(): Collection<FileSystemNode> {
-        val allNodes = mutableListOf<FileSystemNode>()
-        val root = tree.model.root as DirNode
-        TreeUtil.treeNodeTraverser(root)
-            .traverse(TreeTraversal.POST_ORDER_DFS)
-            .mapNotNull {
-                when (val node = it) {
-                    is InvisibleRootNode -> null
-                    is DirNode -> node
-                    is FileNode -> node
-                    else -> null
-                }
-            }
-            .toCollection(allNodes)
-
-        return allNodes
-    }
 
     private fun newTreeModel() = DefaultTreeModel(InvisibleRootNode(), true)
 
@@ -484,7 +682,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         val newModel = newTreeModel()
         val executionResult: String
 
-        val fileSystemScanScript = retrieveMpyScriptAsString("scan_file_system.py")
+        val fileSystemScanScript = MpyScripts.retrieveMpyScriptAsString("scan_file_system.py")
             .replace(
                 "___l=False",
                 "___l=${if (settings.state.legacyVolumeSupportEnabled) "True" else "False"}"
@@ -634,7 +832,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
     }
 }
 
-internal sealed class FileSystemNode(@NonNls val fullName: String, @NonNls val name: String) :
+internal sealed class FileSystemNode(val fullName: String, val name: String) :
     DefaultMutableTreeNode() {
     override fun toString(): String = name
 

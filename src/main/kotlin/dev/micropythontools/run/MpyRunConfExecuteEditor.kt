@@ -25,17 +25,11 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
-/**
- * @authors Lukas Kremla
- */
 private data class ExecuteParameters(
     var path: String,
     var switchToReplOnSuccess: Boolean
 )
 
-/**
- * @authors Lukas Kremla
- */
 internal class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfExecute) :
     SettingsEditor<MpyRunConfExecute>() {
     private val parameters = with(runConfiguration.options) {

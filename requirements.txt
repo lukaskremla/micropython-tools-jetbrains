@@ -1,2 +1,2 @@
-requests~=2.32.3
+requests~=2.32.4
 python_minifier~=2.11.3

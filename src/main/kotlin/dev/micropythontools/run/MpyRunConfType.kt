@@ -17,16 +17,13 @@
 package dev.micropythontools.run
 
 import com.intellij.execution.configurations.ConfigurationTypeBase
-import com.intellij.openapi.util.IconLoader
+import dev.micropythontools.icons.MpyIcons
 
-/**
- * @author Lukas Kremla
- */
 internal class MpyRunConfType : ConfigurationTypeBase(
     ID,
     "MicroPython Tools",
     "MicroPython Tools Run Configuration Type",
-    IconLoader.getIcon("/icons/pluginIcon.svg", this::class.java)
+    MpyIcons.plugin
 ) {
     init {
         // Multiple factories can be added here to achieve similar behavior to, for example docker, configurations

@@ -23,7 +23,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.io.toByteArray
-import dev.micropythontools.ui.NOTIFICATION_GROUP
+import dev.micropythontools.i18n.MpyBundle
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
@@ -41,9 +41,6 @@ private const val PASSWORD_PROMPT = "Password:"
 private const val LOGIN_SUCCESS = "WebREPL connected"
 private const val LOGIN_FAIL = "Access denied"
 
-/**
- * @author elmot
- */
 internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
     // Properties
     override val isConnected: Boolean
@@ -208,7 +205,7 @@ internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                         //Counterparty closed the connection
                         Notifications.Bus.notify(
                             Notification(
-                                NOTIFICATION_GROUP,
+                                MpyBundle.message("notification.group.name"),
                                 "WebREPL connection error - Code:$code ($reason)",
                                 NotificationType.ERROR
                             ), comm.project
