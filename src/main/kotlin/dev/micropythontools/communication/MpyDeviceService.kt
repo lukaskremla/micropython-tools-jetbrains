@@ -382,10 +382,10 @@ internal class MpyDeviceService(val project: Project) : Disposable {
             val responseFields = scriptResponse.split("&")
 
             deviceInformation = DeviceInformation(
-                defaultFreeMem = responseFields.getOrNull(1)?.toIntOrNull(),
-                hasCRC32 = responseFields.getOrNull(2)?.toBoolean() == true,
-                canEncodeBase64 = responseFields.getOrNull(3)?.toBoolean() == true,
-                canDecodeBase64 = responseFields.getOrNull(4)?.toBoolean() == true
+                defaultFreeMem = responseFields.getOrNull(0)?.toIntOrNull(),
+                hasCRC32 = responseFields.getOrNull(1)?.toBoolean() == true,
+                canEncodeBase64 = responseFields.getOrNull(2)?.toBoolean() == true,
+                canDecodeBase64 = responseFields.getOrNull(3)?.toBoolean() == true
             )
         } else {
             deviceInformation = DeviceInformation()
