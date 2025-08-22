@@ -193,6 +193,7 @@ internal class MpyTransferService(private val project: Project) {
 
         val pathsToExclude = excludedPaths.toMutableSet()
 
+        var startedUploading = false
         var uploadedSuccessfully = false
 
         // Define the initially collected maps here to allow final verification in the clean-up action
@@ -203,7 +204,7 @@ internal class MpyTransferService(private val project: Project) {
             project = project,
             connectionRequired = true,
             description = "Upload",
-            requiresRefreshAfter = true,
+            requiresRefreshAfter = false,
             action = { reporter ->
                 reporter.text("collecting files and creating directories...")
                 reporter.fraction(null)
@@ -415,6 +416,10 @@ internal class MpyTransferService(private val project: Project) {
                     }
                 }
 
+                // A file system refresh should happen on cancellation now
+                @Suppress("AssignedValueIsNeverRead") // it is used
+                startedUploading = true
+
                 // Perform synchronization
                 if (shouldSynchronize && targetPathsToRemove.isNotEmpty()) {
                     reporter.text("Performing synchronization...")
@@ -483,6 +488,8 @@ internal class MpyTransferService(private val project: Project) {
                         deviceService.setBaudrate(SerialPort.BAUDRATE_115200)
                     }
                 }
+
+                if (startedUploading) deviceService.fileSystemWidget?.refresh(reporter)
             },
             finalCheckAction = {
                 if (uploadedSuccessfully) {

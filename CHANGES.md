@@ -11,6 +11,7 @@ The Changelog
 * Added Copy, Cut, Paste file context menu actions toi the File System view
 * Increased command execution timeout (extra large uploads on slower boards are less likely to timeout)
 * Fixed connection integrity monitoring not working on Windows
+* Made sure that a file system refresh doesn't happen when a pre-upload device file system scan is cancelled
 
 0.5.12 - 28.7.2025
 ------------------

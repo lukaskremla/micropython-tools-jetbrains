@@ -576,8 +576,10 @@ internal fun <T> performReplAction(
             }
         }
     } finally {
+        println(wasCancelled)
         if (mainActionExecuted || wasCancelled) {
             runWithModalProgressBlocking(project, "Cleaning up after board operation...") {
+                println("Before running clean up action")
                 reportRawProgress { reporter ->
                     var error: String? = null
 
