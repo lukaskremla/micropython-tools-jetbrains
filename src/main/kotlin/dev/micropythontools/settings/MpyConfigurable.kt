@@ -16,17 +16,16 @@
 
 package dev.micropythontools.settings
 
-import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.icons.AllIcons
-import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.*
 import com.intellij.ui.components.JBCheckBox
@@ -37,19 +36,23 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
+import com.intellij.util.ui.UIUtil
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
 import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.core.MpyValidators
 import dev.micropythontools.stubs.MpyStubPackageService
-import dev.micropythontools.util.MpyStubPackageService
-import dev.micropythontools.util.StubPackage
+import dev.micropythontools.stubs.StubPackage
 import jssc.SerialPort
 import kotlinx.coroutines.runBlocking
 import java.awt.Dimension
+import javax.swing.JLabel
+import javax.swing.JTable
+import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
+import javax.swing.table.DefaultTableCellRenderer
 
 private data class ConfigurableParameters(
     var isPluginEnabled: Boolean,
@@ -73,11 +76,15 @@ internal class MpyConfigurable(private val project: Project) :
 
     private val settings = project.service<MpySettingsService>()
     private val deviceService = project.service<MpyDeviceService>()
-    private val mpyStubPackageService = project.service<MpyStubPackageService>()
+    private val stubPackageService = project.service<MpyStubPackageService>()
 
     private val isConnected
-        get() = (deviceService.state == State.CONNECTED || deviceService.state == State.CONNECTING ||
+        get() = (deviceService.state == State.CONNECTED ||
+                deviceService.state == State.CONNECTING ||
                 deviceService.state == State.TTY_DETACHED)
+
+    private val stubsAndPluginEnabled
+        get() = pluginEnabledCheckBox.component.isSelected && stubsEnabledCheckBox.component.isSelected
 
     private val parameters = with(settings.state) {
         runWithModalProgressBlocking(project, "Retrieving settings...") {
@@ -97,7 +104,7 @@ internal class MpyConfigurable(private val project: Project) :
                 ssid = wifiCredentials.userName ?: "",
                 wifiPassword = wifiCredentials.getPasswordAsString() ?: "",
                 areStubsEnabled = areStubsEnabled,
-                activeStubsPackage = mpyStubPackageService.getExistingStubPackage(),
+                activeStubsPackage = stubPackageService.getSelectedStubPackageName(),
             )
         }
     }
@@ -115,13 +122,11 @@ internal class MpyConfigurable(private val project: Project) :
     private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
-    private lateinit var areStubsEnabled: Cell<JBCheckBox>
+    private lateinit var stubsEnabledCheckBox: Cell<JBCheckBox>
 
     override fun createPanel(): DialogPanel {
         val portSelectModel = MutableCollectionComboBoxModel<String>()
         updatePortSelectModel(portSelectModel, true)
-
-        val availableStubs = mpyStubPackageService.getAvailableStubs()
 
         settingsPanel = panel {
             row {
@@ -186,13 +191,13 @@ internal class MpyConfigurable(private val project: Project) :
                                     if (editorComponent is javax.swing.JTextField) {
                                         editorComponent.document.addDocumentListener(object :
                                             javax.swing.event.DocumentListener {
-                                            override fun insertUpdate(e: javax.swing.event.DocumentEvent?) =
+                                            override fun insertUpdate(e: DocumentEvent?) =
                                                 updateModel()
 
-                                            override fun removeUpdate(e: javax.swing.event.DocumentEvent?) =
+                                            override fun removeUpdate(e: DocumentEvent?) =
                                                 updateModel()
 
-                                            override fun changedUpdate(e: javax.swing.event.DocumentEvent?) =
+                                            override fun changedUpdate(e: DocumentEvent?) =
                                                 updateModel()
 
                                             private fun updateModel() {
@@ -290,7 +295,7 @@ internal class MpyConfigurable(private val project: Project) :
                         cell(JBLabel(AllIcons.General.ContextHelp).apply {
                             toolTipText =
                                 "Enables scanning for additional mounted volumes on MicroPython versions older than 1.25.0.<br>" +
-                                        " May slow down filesystem refreshes."
+                                        " May slow down filesystem refreshes on MicroPython versions older than 1.25.0."
                         })
                     }
 
@@ -302,15 +307,9 @@ internal class MpyConfigurable(private val project: Project) :
 
                 group("MicroPython Stubs") {
                     row {
-                        areStubsEnabled = checkBox("Enable MicroPython stubs")
+                        stubsEnabledCheckBox = checkBox("Enable MicroPython stubs")
                             .bindSelected(parameters::areStubsEnabled)
                     }
-
-                    val stubPackages = emptyList<StubPackage>()
-                    /*mutableListOf(
-                    StubPackage("micropython-esp32", "1.20.0", true),
-                    StubPackage("micropython-rp2", "1.19.1", false)
-                )*/
 
                     // Column definitions
                     val stubColumns = arrayOf(
@@ -318,17 +317,104 @@ internal class MpyConfigurable(private val project: Project) :
                             override fun valueOf(item: StubPackage): String = item.name
                         },
                         object : ColumnInfo<StubPackage, String>("Version") {
-                            override fun valueOf(item: StubPackage): String = item.version
+                            override fun valueOf(item: StubPackage): String = item.mpyVersion
                         }
                     )
+
+                    var stubPackages = emptyList<StubPackage>()
 
                     val tableModel: ListTableModel<StubPackage> = ListTableModel(*stubColumns)
                     tableModel.items = stubPackages
 
-                    val pkgs = mpyStubPackageService.getStubPackages()
-
                     val table = TableView(tableModel)
                     table.setShowGrid(false)
+                    table.preferredScrollableViewportSize = Dimension(600, 250)
+
+                    ApplicationManager.getApplication().executeOnPooledThread {
+                        val data = stubPackageService.getStubPackages()
+                        SwingUtilities.invokeLater {
+                            tableModel.items = data
+                            tableModel.fireTableDataChanged()
+                        }
+                    }
+
+                    table.setDefaultRenderer(String::class.java, object : DefaultTableCellRenderer() {
+                        override fun getTableCellRendererComponent(
+                            table: JTable,
+                            value: Any?,
+                            isSelected: Boolean,
+                            hasFocus: Boolean,
+                            row: Int,
+                            column: Int
+                        ): java.awt.Component {
+                            val c = super.getTableCellRendererComponent(
+                                table,
+                                value,
+                                isSelected,
+                                hasFocus,
+                                row,
+                                column
+                            ) as JLabel
+
+                            val modelRow = table.convertRowIndexToModel(row)
+                            val stubPackage = (table.model as ListTableModel<*>).items[modelRow]
+
+                            if (stubPackage !is StubPackage) return c
+
+                            val shouldGray = !stubsAndPluginEnabled ||
+                                    !stubPackage.isInstalled
+
+                            val base = if (isSelected)
+                                UIUtil.getTableSelectionForeground(true)
+                            else
+                                UIUtil.getTableForeground()
+
+                            c.foreground = when {
+                                shouldGray -> UIUtil.getLabelDisabledForeground()
+                                stubPackage.isUpToDate -> base
+                                else -> JBColor.BLUE
+                            }
+
+                            return c
+                        }
+                    })
+
+                    // Search field logic
+                    val searchField = SearchTextField()
+                    searchField.minimumSize = Dimension(350, 0)
+                    searchField.textEditor.document.addDocumentListener(object : DocumentAdapter() {
+                        override fun textChanged(e: DocumentEvent) {
+                            val filterText = searchField.text.lowercase()
+                            tableModel.items = stubPackages.filter {
+                                it.name.lowercase().contains(filterText) ||
+                                        it.mpyVersion.lowercase().contains(filterText)
+                            }
+                        }
+                    })
+
+                    fun refreshTable() {
+                        ApplicationManager.getApplication().executeOnPooledThread {
+                            stubPackages = stubPackageService.getStubPackages()
+
+                            // re-apply current search filter
+                            val q = searchField.text.lowercase()
+                            val filtered = if (q.isBlank()) {
+                                stubPackages
+                            } else {
+                                stubPackages.filter {
+                                    it.name.lowercase().contains(q) || it.mpyVersion.lowercase().contains(q)
+                                }
+                            }
+
+                            // push into the model & notify
+                            tableModel.items = filtered
+                            tableModel.fireTableDataChanged()
+
+                            if (table.selectedRow >= tableModel.rowCount) {
+                                table.clearSelection()
+                            }
+                        }
+                    }
 
                     // Setup ToolbarDecorator with buttons
                     val decoratedPanel = ToolbarDecorator.createDecorator(table)
@@ -341,8 +427,22 @@ internal class MpyConfigurable(private val project: Project) :
                                 this.templatePresentation.text = "Apply"
                             }
 
+                            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+                            override fun update(e: AnActionEvent) {
+                                ApplicationManager.getApplication().executeOnPooledThread {
+                                    val selectedStubPackageName = stubPackageService.getSelectedStubPackageName()
+
+                                    e.presentation.isEnabled = stubsAndPluginEnabled &&
+                                            table.selectedObject?.name != selectedStubPackageName
+                                }
+                            }
+
                             override fun actionPerformed(e: AnActionEvent) {
-                                TODO("Not yet implemented")
+                                stubPackageService.updateLibrary(
+                                    table.selectedObject?.name
+                                        ?: throw RuntimeException("Selected stub package name can't be null")
+                                )
                             }
                         })
                         .addExtraAction(object : AnAction() {
@@ -351,18 +451,39 @@ internal class MpyConfigurable(private val project: Project) :
                                 this.templatePresentation.text = "Unapply"
                             }
 
+                            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+                            override fun update(e: AnActionEvent) {
+                                ApplicationManager.getApplication().executeOnPooledThread {
+                                    val selectedStubPackageName = stubPackageService.getSelectedStubPackageName()
+
+                                    e.presentation.isEnabled = stubsAndPluginEnabled &&
+                                            table.selectedObject?.name == selectedStubPackageName
+                                }
+                            }
+
                             override fun actionPerformed(e: AnActionEvent) {
-                                TODO("Not yet implemented")
+                                stubPackageService.updateLibrary("")
                             }
                         })
                         .addExtraAction(object : AnAction() {
                             init {
                                 this.templatePresentation.icon = AllIcons.Actions.Download
-                                this.templatePresentation.text = "Download"
+                                this.templatePresentation.text = "Install/Update"
+                            }
+
+                            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+                            override fun update(e: AnActionEvent) {
+                                e.presentation.isEnabled = stubsAndPluginEnabled && table.selectedObject != null
                             }
 
                             override fun actionPerformed(e: AnActionEvent) {
-                                TODO("Not yet implemented")
+                                val selected: StubPackage = table.selectedObject ?: return
+                                ApplicationManager.getApplication().executeOnPooledThread {
+                                    stubPackageService.install(selected)
+                                }
+                                refreshTable()
                             }
                         })
                         .addExtraAction(object : AnAction() {
@@ -371,8 +492,18 @@ internal class MpyConfigurable(private val project: Project) :
                                 this.templatePresentation.text = "Delete"
                             }
 
+                            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+                            override fun update(e: AnActionEvent) {
+                                e.presentation.isEnabled = stubsAndPluginEnabled && table.selectedObject != null
+                            }
+
                             override fun actionPerformed(e: AnActionEvent) {
-                                TODO("Not yet implemented")
+                                val selected: StubPackage = table.selectedObject ?: return
+                                ApplicationManager.getApplication().executeOnPooledThread {
+                                    stubPackageService.delete(selected)
+                                }
+                                refreshTable()
                             }
                         })
                         .addExtraAction(object : AnAction() {
@@ -381,84 +512,26 @@ internal class MpyConfigurable(private val project: Project) :
                                 this.templatePresentation.text = "Refresh"
                             }
 
+                            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+                            override fun update(e: AnActionEvent) {
+                                e.presentation.isEnabled = stubsAndPluginEnabled
+                            }
+
                             override fun actionPerformed(e: AnActionEvent) {
-                                TODO("Not yet implemented")
+                                refreshTable()
                             }
                         })
                         .createPanel()
 
-                    // Search field logic
-                    val searchField = SearchTextField()
-                    searchField.textEditor.document.addDocumentListener(object : DocumentAdapter() {
-                        override fun textChanged(e: DocumentEvent) {
-                            val filterText = searchField.text.lowercase()
-                            tableModel.items = stubPackages.filter {
-                                it.name.lowercase().contains(filterText) ||
-                                        it.version.lowercase().contains(filterText)
-                            }
-                        }
-                    })
-
-                    // Integrate into DSL layout
                     row {
                         cell(searchField)
-                            .align(Align.FILL)
-                    }
+                    }.enabledIf(stubsEnabledCheckBox.selected)
                     row {
                         cell(decoratedPanel)
-                            .align(Align.FILL)
                             .resizableColumn()
-                    }
-
-                    row {
-                        cell(
-                            TextFieldWithAutoCompletion(
-                                project,
-                                object : TextFieldWithAutoCompletionListProvider<String>(availableStubs) {
-                                    override fun getItems(
-                                        prefix: String?,
-                                        cached: Boolean,
-                                        parameters: CompletionParameters?
-                                    ): MutableCollection<String> {
-                                        return if (prefix.isNullOrEmpty()) {
-                                            availableStubs.toMutableList()
-                                        } else {
-                                            availableStubs.filter { it.contains(prefix, ignoreCase = true) }
-                                                .toMutableList()
-                                        }
-                                    }
-
-                                    override fun getLookupString(item: String) = item
-                                },
-                                true,
-                                parameters.activeStubsPackage
-                            ).apply {
-                                setPreferredWidth(450)
-                            }
-                        )
-                            .bind(
-                                { component -> component.text.takeIf { it.isNotBlank() } ?: "" },
-                                { component, text -> component.text = text },
-                                parameters::activeStubsPackage.toMutableProperty()
-                            )
-                            .label("Stubs package: ")
-                            .comment(
-                                "Note: Library changes may not take effect immediately after IDE startup. " +
-                                        "If the changes don't appear right away, close the settings, wait a few seconds and try again.<br>" +
-                                        "Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubs\">Jos Verlinde</a>",
-                                maxLineLength = 60
-                            )
-                            .validationInfo { field ->
-                                val text = field.text
-
-                                if (!availableStubs.contains(text) || text.isBlank()) {
-                                    ValidationInfo("Invalid stubs package name!")
-                                } else null
-                            }
-                            .applyToComponent {
-                                toolTipText = "Type \"micropython\" to browse available packages"
-                            }
-                    }.enabledIf(areStubsEnabled.selected)
+                            .comment("Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubs\">Jos Verlinde</a>")
+                    }.enabledIf(stubsEnabledCheckBox.selected)
                 }.topGap(TopGap.SMALL)
             }.enabledIf(pluginEnabledCheckBox.selected)
         }.apply {
@@ -507,7 +580,7 @@ internal class MpyConfigurable(private val project: Project) :
 
             val stubPackageToUse = if (areStubsEnabled) activeStubsPackage else null
 
-            mpyStubPackageService.updateLibrary(stubPackageToUse)
+            stubPackageService.updateLibrary(stubPackageToUse)
 
             runWithModalProgressBlocking(project, "Saving settings...") {
                 settings.saveWebReplPassword(webReplPassword)
@@ -516,7 +589,7 @@ internal class MpyConfigurable(private val project: Project) :
         }
     }
 
-    fun updatePortSelectModel(
+    private fun updatePortSelectModel(
         portSelectModel: MutableCollectionComboBoxModel<String>,
         isInitialUpdate: Boolean = false
     ) {
