@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.communication.performReplAction
+import dev.micropythontools.i18n.MpyBundle
 
 internal class MpyRunConfUploadState(
     private val project: Project,
@@ -96,10 +97,11 @@ internal class MpyRunConfUploadState(
                 if (resetOnSuccess) {
                     performReplAction(
                         project,
-                        false,
-                        "Soft reset",
-                        false,
-                        "Soft reset cancelled",
+                        connectionRequired = false,
+                        requiresRefreshAfter = false,
+                        description = MpyBundle.message("repl.reset.hotkey.description"),
+                        cancelledMessage = MpyBundle.message("repl.reset.hotkey.cancelled"),
+                        timedOutMessage = MpyBundle.message("repl.reset.hotkey.timeout"),
                         { deviceService.reset() })
                 }
                 if (switchToReplOnSuccess) deviceService.activateRepl()

@@ -29,6 +29,7 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ui.JBUI
 import dev.micropythontools.communication.MpyDeviceService
+import dev.micropythontools.i18n.MpyBundle
 import java.nio.charset.StandardCharsets
 import java.util.function.Function
 import javax.swing.*
@@ -67,10 +68,10 @@ internal class MpyEditorNotificationProvider : EditorNotificationProvider {
 
             if (!file.isWritable) {
                 // READ-ONLY MODE
-                panel.add(JLabel("Viewing file in read-only mode"))
+                panel.add(JLabel(MpyBundle.message("edit.on.device.file.notification.label.readonly")))
                 panel.add(Box.createHorizontalStrut(10))
                 panel.add(Box.createHorizontalGlue())
-                panel.add(JButton("Edit").apply {
+                panel.add(JButton(MpyBundle.message("edit.on.device.file.notification.button.edit")).apply {
                     addActionListener {
                         // Re-open the file as writable
                         MpyEditableFileController.reOpenFile(project, file, doc, makeWritable = true)
@@ -78,22 +79,22 @@ internal class MpyEditorNotificationProvider : EditorNotificationProvider {
                 })
             } else {
                 // EDIT MODE
-                panel.add(JLabel("Editing file"))
+                panel.add(JLabel(MpyBundle.message("edit.on.device.file.notification.label.editing")))
                 panel.add(Box.createHorizontalStrut(10))
                 panel.add(Box.createHorizontalGlue())
-                panel.add(JButton("Save").apply {
+                panel.add(JButton(MpyBundle.message("edit.on.device.file.notification.button.save")).apply {
                     isEnabled = isModified
                     addActionListener {
                         MpyEditableFileController.saveFromEditor(project, file, doc, deviceService)
                     }
                 })
-                panel.add(JButton("Cancel").apply {
+                panel.add(JButton(MpyBundle.message("edit.on.device.file.notification.button.cancel")).apply {
                     addActionListener {
                         var canContinue = true
                         if (isModified) {
                             canContinue = MessageDialogBuilder.yesNo(
-                                "Discard changes",
-                                "You have unsaved changes. Are you sure you want to discard them?"
+                                MpyBundle.message("edit.on.device.file.notification.dialog.discard.title"),
+                                MpyBundle.message("edit.on.device.file.notification.dialog.discard.message")
                             ).ask(project)
                         }
 
@@ -111,13 +112,13 @@ internal class MpyEditorNotificationProvider : EditorNotificationProvider {
                 })
             }
 
-            panel.add(JButton("Refresh").apply {
+            panel.add(JButton(MpyBundle.message("edit.on.device.file.notification.button.refresh")).apply {
                 addActionListener {
                     var canContinue = true
                     if (MpyEditableFileController.isModified(file, doc)) {
                         canContinue = MessageDialogBuilder.yesNo(
-                            "Refresh open file",
-                            "You have unsaved changes. Refreshing the file will discard them. Are you sure you want to continue?"
+                            MpyBundle.message("edit.on.device.file.notification.dialog.refresh.title"),
+                            MpyBundle.message("edit.on.device.file.notification.dialog.refresh.message")
                         ).ask(project)
                     }
                     if (!canContinue) return@addActionListener

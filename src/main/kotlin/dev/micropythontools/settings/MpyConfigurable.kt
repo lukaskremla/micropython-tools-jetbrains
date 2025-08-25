@@ -37,7 +37,6 @@ import dev.micropythontools.communication.State
 import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.core.MpyValidators
 import dev.micropythontools.stubs.MpyStubPackageService
-import jssc.SerialPort
 import kotlinx.coroutines.runBlocking
 import java.awt.Dimension
 import javax.swing.event.PopupMenuEvent
@@ -259,9 +258,10 @@ internal class MpyConfigurable(private val project: Project) :
                                 performReplAction(
                                     project,
                                     false,
-                                    "Disconnecting...",
                                     false,
+                                    "Disconnecting...",
                                     "Disconnect operation cancelled",
+                                    "Disconnect operation timed out",
                                     { reporter -> deviceService.disconnect(reporter) }
                                 )
 
@@ -377,15 +377,6 @@ internal class MpyConfigurable(private val project: Project) :
             settings.state.enableManualEditing = enableManualEditing
             settings.state.filterManufacturers = filterManufacturers
             settings.state.portName = portName.takeUnless { it == EMPTY_PORT_NAME_TEXT }
-
-            // Force create these manually-configured settings
-            if (settings.state.increaseBaudrateForFileTransfers == "") {
-                settings.state.increaseBaudrateForFileTransfers = "false"
-            }
-
-            if (settings.state.increasedFileTransferBaudrate == "") {
-                settings.state.increasedFileTransferBaudrate = "${SerialPort.BAUDRATE_115200}"
-            }
 
             settings.state.webReplIp = webReplIp
             settings.state.webReplPort = webReplPort

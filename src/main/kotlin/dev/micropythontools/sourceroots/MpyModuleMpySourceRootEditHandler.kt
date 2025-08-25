@@ -19,6 +19,7 @@ package dev.micropythontools.sourceroots
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler
 import com.intellij.ui.JBColor
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -28,7 +29,7 @@ import javax.swing.Icon
 internal class MpyModuleMpySourceRootEditHandler :
     ModuleSourceRootEditHandler<JavaSourceRootProperties>(MpySourceRootType.SOURCE) {
     override fun getRootTypeName(): @Nls(capitalization = Nls.Capitalization.Title) String {
-        return "MicroPython Sources"
+        return MpyBundle.message("mpy.sources.root.type.name")
     }
 
     override fun getRootIcon(): Icon {
@@ -44,7 +45,7 @@ internal class MpyModuleMpySourceRootEditHandler :
     }
 
     override fun getRootsGroupTitle(): @Nls(capitalization = Nls.Capitalization.Title) String {
-        return "MicroPython Sources"
+        return MpyBundle.message("mpy.sources.root.type.name")
     }
 
     override fun getRootsGroupColor(): Color {
@@ -55,6 +56,6 @@ internal class MpyModuleMpySourceRootEditHandler :
     }
 
     override fun getUnmarkRootButtonText(): @Nls(capitalization = Nls.Capitalization.Title) String {
-        return "Unmark as MicroPython Sources"
+        return MpyBundle.message("mpy.sources.root.type.unmark.name")
     }
 }

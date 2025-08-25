@@ -58,21 +58,10 @@ import java.util.concurrent.TimeUnit
 internal typealias StateListener = (State) -> Unit
 
 internal data class DeviceInformation(
-    var version: String = "Unknown",
-    var description: String = "Unknown",
-    val defaultFreeMem: Int? = null,
+    val defaultFreeMem: Int = 0,
     var hasCRC32: Boolean = false,
     var canEncodeBase64: Boolean = false,
     var canDecodeBase64: Boolean = false,
-    var platform: String? = null,
-    var byteorder: String? = null,
-    var maxsize: Long? = null,
-    var mpyVersion: Int? = null,
-    var mpySubversion: Int? = null,
-    var mpyArchIdx: Int? = null,
-    var mpyArchName: String? = null,
-    var wordSize: Int? = null,
-    var smallIntBits: Int? = null
 )
 
 internal data class ConnectionParameters(
@@ -182,8 +171,8 @@ internal class MpyDeviceService(val project: Project) : Disposable {
 
             val settings = project.service<MpySettingsService>()
 
-            val device = if (settings.state.usingUart) settings.state.portName else settings.webReplUrl
-            reporter.text("Connecting to $device")
+            val device = if (settings.state.usingUart) settings.state.portName ?: "" else settings.webReplUrl
+            reporter.text(MpyBundle.message("comm.progress.connecting", device))
             reporter.fraction(null)
 
             var msg: String? = null
@@ -191,7 +180,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
             if (settings.state.usingUart) {
                 val portName = settings.state.portName ?: ""
                 if (portName.isBlank()) {
-                    msg = "No port is selected"
+                    msg = MpyBundle.message("comm.error.connecting.no.port")
                     connectionParameters = null
                 } else {
                     connectionParameters = ConnectionParameters(portName)
@@ -200,7 +189,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
             } else {
                 val url = settings.webReplUrl
                 val password = withContext(Dispatchers.EDT) {
-                    runWithModalProgressBlocking(project, "Retrieving credentials...") {
+                    runWithModalProgressBlocking(project, MpyBundle.message("comm.progress.retrieving.credentials")) {
                         project.service<MpySettingsService>().retrieveWebReplPassword()
                     }
                 }
@@ -225,8 +214,11 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                     val result = Messages.showIdeaMessageDialog(
                         project,
                         msg,
-                        "Cannot Connect",
-                        arrayOf("OK", "Settings..."),
+                        MpyBundle.message("comm.error.cannot.connect.dialog.title"),
+                        arrayOf(
+                            MpyBundle.message("comm.error.cannot.connect.dialog.ok.button"),
+                            MpyBundle.message("comm.error.cannot.connect.dialog.settings.button")
+                        ),
                         1,
                         AllIcons.General.ErrorDialog,
                         null
@@ -258,7 +250,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
             Notifications.Bus.notify(
                 Notification(
                     MpyBundle.message("notification.group.name"),
-                    "Connection attempt timed out",
+                    MpyBundle.message("comm.error.connection.timeout"),
                     NotificationType.ERROR
                 ), project
             )
@@ -269,7 +261,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                 Notifications.Bus.notify(
                     Notification(
                         MpyBundle.message("notification.group.name"),
-                        "Connection attempt cancelled",
+                        MpyBundle.message("comm.error.connection.cancelled"),
                         NotificationType.INFORMATION
                     ), project
                 )
@@ -281,10 +273,10 @@ internal class MpyDeviceService(val project: Project) : Disposable {
 
     suspend fun disconnect(reporter: RawProgressReporter?) {
         if (settings.state.usingUart) {
-            reporter?.text("Disconnecting from ${settings.state.portName}")
+            reporter?.text(MpyBundle.message("comm.progress.disconnecting", settings.state.portName ?: ""))
             stopSerialConnectionMonitoring()
         } else {
-            reporter?.text("Disconnecting from ${settings.webReplUrl}")
+            reporter?.text(MpyBundle.message("comm.progress.disconnecting", settings.webReplUrl))
         }
 
         reporter?.fraction(null)
@@ -303,8 +295,6 @@ internal class MpyDeviceService(val project: Project) : Disposable {
 
     suspend fun download(deviceFileName: String): ByteArray =
         comm.download(deviceFileName)
-
-    suspend fun setBaudrate(baudrate: Int) = comm.setBaudrate(baudrate)
 
     suspend fun instantRun(code: String) {
         clearTerminalIfNeeded()
@@ -393,52 +383,38 @@ internal class MpyDeviceService(val project: Project) : Disposable {
             val responseFields = scriptResponse.split("&")
 
             deviceInformation = DeviceInformation(
-                version = responseFields.getOrNull(0) ?: "Unknown",
-                description = responseFields.getOrNull(1) ?: "Unknown",
-                defaultFreeMem = responseFields.getOrNull(2)?.toIntOrNull(),
-                hasCRC32 = responseFields.getOrNull(3)?.toBoolean() == true,
-                canEncodeBase64 = responseFields.getOrNull(4)?.toBoolean() == true,
-                canDecodeBase64 = responseFields.getOrNull(5)?.toBoolean() == true,
-                platform = responseFields.getOrNull(6),
-                byteorder = responseFields.getOrNull(7),
-                maxsize = responseFields.getOrNull(8)?.toLongOrNull(),
-                mpyVersion = responseFields.getOrNull(9)?.toIntOrNull(),
-                mpySubversion = responseFields.getOrNull(10)?.toIntOrNull(),
-                mpyArchIdx = responseFields.getOrNull(11)?.toIntOrNull(),
-                mpyArchName = responseFields.getOrNull(12),
-                wordSize = responseFields.getOrNull(13)?.toIntOrNull(),
-                smallIntBits = responseFields.getOrNull(14)?.toIntOrNull()
+                defaultFreeMem = responseFields.getOrNull(0)?.toIntOrNull()
+                    ?: throw RuntimeException(MpyBundle.message("comm.error.initialization.freemem")),
+                hasCRC32 = responseFields.getOrNull(1)?.toBoolean() == true,
+                canEncodeBase64 = responseFields.getOrNull(2)?.toBoolean() == true,
+                canDecodeBase64 = responseFields.getOrNull(3)?.toBoolean() == true
             )
         } else {
             deviceInformation = DeviceInformation()
         }
 
-        val message: String? = if (!deviceInformation.hasCRC32) {
+        val messageKey: String? = if (!deviceInformation.hasCRC32) {
             if (!deviceInformation.canDecodeBase64) {
-                "The connected board is missing the crc32 and a2b_base64 binascii functions. " +
-                        "The already uploaded files check won't work and uploads may be slower."
+                "comm.error.initialization.dialog.message.missing.crc32.and.base64"
             } else {
-                "The connected board is missing the crc32 binascii function." +
-                        "The already uploaded files check won't work."
+                "comm.error.initialization.dialog.message.missing.crc32"
             }
         } else if (!deviceInformation.canDecodeBase64) {
-            "The connected board is missing the a2b_base64 binascii function. " +
-                    "Uploads may be slower."
+            "comm.error.initialization.dialog.message.missing.base64"
         } else {
             null
         }
 
-        if (message != null) {
+        if (messageKey != null) {
             withContext(Dispatchers.EDT) {
                 MessageDialogBuilder.Message(
-                    "Missing MicroPython Libraries",
-                    message
-                ).asWarning().buttons("Acknowledge").show(project)
+                    MpyBundle.message("comm.error.initialization.dialog.title"),
+                    MpyBundle.message(messageKey)
+                ).asWarning()
+                    .buttons(MpyBundle.message("comm.error.initialization.dialog.acknowledge.button"))
+                    .show(project)
             }
         }
-        //println(deviceInformation)
-        //println(deviceInformation.getMpyCrossArgs())
-        //println(deviceInformation.supportsMpyCompilation())
     }
 
     private suspend fun connect() = comm.connect()
@@ -460,8 +436,8 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                     Notifications.Bus.notify(
                         Notification(
                             MpyBundle.message("notification.group.name"),
-                            "Connection To Device Lost",
-                            "Connection to the device was lost unexpectedly. This may have been caused by a disconnected cable or a network issue.",
+                            MpyBundle.message("comm.error.connection.checker.connection.lost.dialog.title"),
+                            MpyBundle.message("comm.error.connection.checker.connection.lost.dialog.message"),
                             NotificationType.ERROR
                         )
                     )
@@ -502,9 +478,10 @@ internal class MpyDeviceService(val project: Project) : Disposable {
 internal fun <T> performReplAction(
     project: Project,
     connectionRequired: Boolean,
-    @NlsContexts.DialogMessage description: String,
     requiresRefreshAfter: Boolean,
-    cancelledMessage: String? = null,
+    @NlsContexts.DialogMessage description: String,
+    cancelledMessage: String,
+    timedOutMessage: String,
     action: suspend (RawProgressReporter) -> T,
     cleanUpAction: (suspend (RawProgressReporter) -> Unit)? = null,
     finalCheckAction: (() -> Unit)? = null
@@ -521,7 +498,10 @@ internal fun <T> performReplAction(
         }
 
         if (deviceToConnectTo == null ||
-            !MessageDialogBuilder.yesNo("No device is connected", "Connect to $deviceToConnectTo?").ask(project)
+            !MessageDialogBuilder.yesNo(
+                MpyBundle.message("comm.connection.required.dialog.title"),
+                MpyBundle.message("comm.connection.required.dialog.message", deviceToConnectTo)
+            ).ask(project)
         ) {
             return null
         }
@@ -534,7 +514,7 @@ internal fun <T> performReplAction(
     var wasCancelled = false
 
     try {
-        runWithModalProgressBlocking(project, "Communicating with the board...") {
+        runWithModalProgressBlocking(project, MpyBundle.message("comm.progress.communicating.with.device")) {
             reportRawProgress { reporter ->
                 var error: String? = null
                 var errorType = NotificationType.ERROR
@@ -547,19 +527,23 @@ internal fun <T> performReplAction(
 
                     mainActionExecuted = true
                 } catch (_: TimeoutCancellationException) {
-                    error = "$description timed out"
+                    error = timedOutMessage
                 } catch (e: CancellationException) {
                     wasCancelled = true
 
-                    error = cancelledMessage ?: "$description cancelled"
+                    error = cancelledMessage
                     errorType = NotificationType.INFORMATION
                     throw e
                 } catch (e: IOException) {
-                    error = "$description I/O error - ${e.localizedMessage ?: e.message ?: "No message"}"
+                    val noMsg = MpyBundle.message("comm.error.no.message")
+                    val ioLabel = MpyBundle.message("comm.error.io.label")
+                    val msg = e.localizedMessage ?: e.message ?: noMsg
+                    error = "$description $ioLabel - $msg"
                 } catch (e: Exception) {
-                    error = e.localizedMessage ?: e.message
-                    error = if (error.isNullOrBlank()) "$description error - ${e::class.simpleName}"
-                    else "$description error - ${e::class.simpleName}: $error"
+                    val errLabel = MpyBundle.message("comm.error.error.label")
+                    val base = "$description $errLabel - ${e::class.simpleName}"
+                    val msg = e.localizedMessage ?: e.message
+                    error = if (msg.isNullOrBlank()) base else "$base: $msg"
                 } finally {
                     withContext(NonCancellable) {
                         if (!error.isNullOrBlank()) {
@@ -576,10 +560,8 @@ internal fun <T> performReplAction(
             }
         }
     } finally {
-        println(wasCancelled)
         if (mainActionExecuted || wasCancelled) {
-            runWithModalProgressBlocking(project, "Cleaning up after board operation...") {
-                println("Before running clean up action")
+            runWithModalProgressBlocking(project, MpyBundle.message("comm.progress.cleaning.up.after.operation")) {
                 reportRawProgress { reporter ->
                     var error: String? = null
 
@@ -601,18 +583,19 @@ internal fun <T> performReplAction(
 
                         cleanUpActionExecuted = true
                     } catch (_: TimeoutCancellationException) {
-                        error = "Clean up action timed out"
+                        error = MpyBundle.message("comm.error.cleanup.timeout")
                     } catch (e: CancellationException) {
-                        error = "Clean up action cancelled"
+                        error = MpyBundle.message("comm.error.cleanup.cancelled")
                         throw e
+
                     } catch (e: Throwable) {
-                        error = e.localizedMessage ?: e.message
-                        error = if (error.isNullOrBlank()) {
-                            "$description error - ${e::class.simpleName}"
-                        } else {
-                            "$description error - ${e::class.simpleName}: $error"
-                        }
-                        error = "Clean up Exception: $error"
+                        val errLabel = MpyBundle.message("comm.error.error.label")
+                        val base = "$description $errLabel - ${e::class.simpleName}"
+                        val msg = e.localizedMessage ?: e.message ?: MpyBundle.message("comm.error.no.message")
+                        val core = if (msg.isBlank()) base else "$base: $msg"
+
+                        error = MpyBundle.message("comm.cleanup.exception.prefix", core)
+
                     } finally {
                         withContext(NonCancellable) {
                             if (!error.isNullOrBlank()) {
@@ -621,7 +604,7 @@ internal fun <T> performReplAction(
                                 Notifications.Bus.notify(
                                     Notification(
                                         MpyBundle.message("notification.group.name"),
-                                        "$error - disconnecting to prevent a de-synchronized state",
+                                        "$error - ${MpyBundle.message("comm.cleanup.prevent.desync")}",
                                         NotificationType.ERROR
                                     ), project
                                 )

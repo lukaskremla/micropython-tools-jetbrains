@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtil
 import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpySettingsService
 
 internal abstract class MpyUploadActionBase(
@@ -35,7 +36,8 @@ internal abstract class MpyUploadActionBase(
         enabledWhen = EnabledWhen.PLUGIN_ENABLED,
         requiresConnection = true,
         requiresRefreshAfter = false, // A manual performReplAction is called by the uploading class
-        cancelledMessage = "Upload cancelled"
+        cancelledMessage = MpyBundle.message("action.upload.cancelled"),
+        timedOutMessage = MpyBundle.message("action.upload.timeout")
     )
 ) {
     init {
@@ -45,8 +47,7 @@ internal abstract class MpyUploadActionBase(
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 }
 
-@Suppress("DialogTitleCapitalization")
-internal class MpyUploadActionGroup : ActionGroup("Upload Item(s) to MicroPython Device", true) {
+internal class MpyUploadActionGroup : ActionGroup(MpyBundle.message("action.upload.group.text"), true) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
@@ -88,18 +89,18 @@ internal class MpyUploadActionGroup : ActionGroup("Upload Item(s) to MicroPython
 
         if (fileCount == 0) {
             if (folderCount == 1) {
-                e.presentation.text = "Upload Folder to MicroPython Device"
+                e.presentation.text = MpyBundle.message("action.upload.group.text.folder.one")
             } else {
-                e.presentation.text = "Upload Folders to MicroPython Device"
+                e.presentation.text = MpyBundle.message("action.upload.group.text.folder.multiple")
             }
         } else if (folderCount == 0) {
             if (fileCount == 1) {
-                e.presentation.text = "Upload File to MicroPython Device"
+                e.presentation.text = MpyBundle.message("action.upload.group.text.file.one")
             } else {
-                e.presentation.text = "Upload Files to MicroPython Device"
+                e.presentation.text = MpyBundle.message("action.upload.group.text.file.multiple")
             }
         } else {
-            e.presentation.text = "Upload Items to MicroPython Device"
+            e.presentation.text = MpyBundle.message("action.upload.group.text.items")
         }
     }
 
@@ -108,7 +109,8 @@ internal class MpyUploadActionGroup : ActionGroup("Upload Item(s) to MicroPython
     }
 }
 
-internal class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload to Device Root \"/\"") {
+internal class MpyUploadRelativeToDeviceRootAction :
+    MpyUploadActionBase(MpyBundle.message("action.upload.relative.to.text.root")) {
     override fun performAction(e: AnActionEvent) {
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
 
@@ -132,8 +134,8 @@ internal class MpyUploadRelativeToDeviceRootAction : MpyUploadActionBase("Upload
     }
 }
 
-@Suppress("DialogTitleCapitalization")
-internal class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Relative to") {
+internal class MpyUploadRelativeToParentAction :
+    MpyUploadActionBase(MpyBundle.message("action.upload.relative.to.text")) {
     override fun performAction(e: AnActionEvent) {
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
 
@@ -142,6 +144,7 @@ internal class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Rel
         transferService.uploadItems(files.toSet())
     }
 
+    @Suppress("DialogTitleCapitalization")
     override fun customUpdate(e: AnActionEvent) {
         val sourcesRoots = transferService.collectMpySourceRoots()
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
@@ -151,28 +154,36 @@ internal class MpyUploadRelativeToParentAction : MpyUploadActionBase("Upload Rel
             return
         }
 
-        if (files.all { sourcesRoots.contains(it) }) {
+        if (files.all { it in sourcesRoots }) {
             e.presentation.isEnabledAndVisible = false
+            return
         }
-        if (files.none { candidateFile ->
-                sourcesRoots.any { sourceRoot ->
-                    VfsUtil.isAncestor(sourceRoot, candidateFile, false)
+
+        val rootsHit = files.mapNotNull { f ->
+            sourcesRoots.firstOrNull { root -> VfsUtil.isAncestor(root, f, false) }
+        }.toSet()
+
+        when {
+            rootsHit.isEmpty() -> {
+                e.presentation.text = MpyBundle.message("action.upload.relative.to.text.project.root")
+            }
+
+            files.all { f -> sourcesRoots.any { r -> VfsUtil.isAncestor(r, f, false) } } -> {
+                e.presentation.text = if (rootsHit.size == 1) {
+                    MpyBundle.message("action.upload.relative.to.text.sources.root.one")
+                } else {
+                    MpyBundle.message("action.upload.relative.to.text.sources.root.multiple")
                 }
-            }) {
-            e.presentation.text = "Upload Relative to Project Root"
-        } else if (files.all { candidateFile ->
-                sourcesRoots.any { sourceRoot ->
-                    VfsUtil.isAncestor(sourceRoot, candidateFile, false)
-                }
-            }) {
-            e.presentation.text = "Upload Relative to MicroPython Sources Root(s)"
-        } else {
-            e.presentation.text = "Upload relative to... (mixed selection)"
+            }
+
+            else -> {
+                e.presentation.text = MpyBundle.message("action.upload.relative.to.text.mixed.selection")
+            }
         }
     }
 }
 
-internal class MpyUploadProjectAction : MpyUploadActionBase("Upload Project") {
+internal class MpyUploadProjectAction : MpyUploadActionBase(MpyBundle.message("action.upload.project.text")) {
     init {
         this.templatePresentation.icon = AllIcons.Actions.Upload
     }

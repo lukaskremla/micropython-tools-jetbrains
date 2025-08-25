@@ -16,6 +16,7 @@
 
 package dev.micropythontools.core
 
+import dev.micropythontools.i18n.MpyBundle
 import org.jetbrains.annotations.Nls
 
 internal object MpyValidators {
@@ -23,7 +24,7 @@ internal object MpyValidators {
 
     fun messageForBrokenIp(ip: String): @Nls String? {
         if (ip.isEmpty()) {
-            return "Host/IP address must not be empty."
+            return MpyBundle.message("core.validation.address.empty")
         }
 
         val ipPattern = Regex("^\\d{1,3}(\\.\\d{1,3}){3}$")
@@ -33,7 +34,7 @@ internal object MpyValidators {
         return when {
             ipPattern.matches(ip) -> null
             hostnamePattern.matches(ip) -> null
-            else -> "Invalid Host or IP address: \"$ip\""
+            else -> MpyBundle.message("core.validation.address.invalid.host", ip)
         }
     }
 
@@ -41,16 +42,16 @@ internal object MpyValidators {
         val portNumber = port.toIntOrNull()
 
         return when {
-            port.isEmpty() -> "Port must not be empty."
-            portNumber == null -> "Port must be a valid number."
-            portNumber !in 1..65535 -> "Port number must be between 1 and 65535."
+            port.isEmpty() -> MpyBundle.message("core.validation.port.empty")
+            portNumber == null -> MpyBundle.message("core.validation.port.invalid.number")
+            portNumber !in 1..65535 -> MpyBundle.message("core.validation.port.invalid.range")
             else -> null
         }
     }
 
     fun messageForBrokenPassword(password: CharArray): @Nls String? {
         return if (password.size !in WEBREPL_PASSWORD_LENGTH_RANGE) {
-            "Allowed password length is $WEBREPL_PASSWORD_LENGTH_RANGE"
+            MpyBundle.message("core.validation.password.length", WEBREPL_PASSWORD_LENGTH_RANGE)
         } else null
     }
 
@@ -65,16 +66,16 @@ internal object MpyValidators {
         }
 
         if (foundForbiddenCharacters.isNotEmpty()) {
-            return "Found forbidden characters: $foundForbiddenCharacters"
+            return MpyBundle.message("core.validation.mpy.path.forbidden.characters", foundForbiddenCharacters)
         }
 
         // A just-in-case limit, to prevent over-inflating the synchronization script
         if (path.length > 256) {
-            return "Path is too long (maximum 256 characters)"
+            return MpyBundle.message("core.validation.path.too.long")
         }
 
         if (path.isEmpty() && !isEmptyPathValid) {
-            return "Path can't be empty!"
+            return MpyBundle.message("core.validation.path.empty")
         }
 
         return null
@@ -116,7 +117,7 @@ internal object MpyValidators {
 
         return validationResult
             ?: if (targetPath.contains(".")) {
-                "The path before file cannot contain a \".\""
+                MpyBundle.message("core.validation.normalize.path.leading.dot")
             } else {
                 null
             }

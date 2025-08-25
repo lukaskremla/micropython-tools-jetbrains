@@ -57,6 +57,7 @@ import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.datatransfer.DataFlavor
@@ -74,7 +75,7 @@ import javax.swing.tree.DefaultTreeModel
 private enum class ClipOp { COPY, CUT }
 private data class FsClipboard(val op: ClipOp, val paths: List<String>) : java.io.Serializable
 
-private val FS_CLIP_FLAVOR = DataFlavor(FsClipboard::class.java, "MicroPython FS Clipboard")
+private val FS_CLIP_FLAVOR = DataFlavor(FsClipboard::class.java, MpyBundle.message("file.system.clipboard.flavour"))
 
 internal class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>(BorderLayout()) {
     val tree: Tree = Tree(newTreeModel())
@@ -113,10 +114,19 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 }
 
                 if (value is FileNode) {
-                    append("  ${value.size} bytes", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+                    append(
+                        "  ${MpyBundle.message("file.system.file.size", value.size)}",
+                        SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES
+                    )
                 } else if (value is VolumeRootNode) {
                     append(
-                        "  ${formatVolumeSize(value.freeSize)} free of ${formatVolumeSize(value.totalSize)}",
+                        "  ${
+                            MpyBundle.message(
+                                "file.system.free.volume.space",
+                                formatVolumeSize(value.freeSize),
+                                formatVolumeSize(value.totalSize)
+                            )
+                        }",
                         SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES
                     )
                 }
@@ -160,9 +170,12 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
         tree.transferHandler = object : TransferHandler() {
             private val nodesFlavor =
-                DataFlavor(Array<FileSystemNode>::class.java, "Array of MicroPython file system nodes")
+                DataFlavor(Array<FileSystemNode>::class.java, MpyBundle.message("file.system.nodes.flavour"))
             private val virtualFileFlavor =
-                DataFlavor("application/x-java-file-list; class=java.util.List", "List of virtual files")
+                DataFlavor(
+                    "application/x-java-file-list; class=java.util.List",
+                    MpyBundle.message("file.system.virtual.file.flavour")
+                )
             private val flavors = arrayOf(nodesFlavor, virtualFileFlavor)
 
             override fun createTransferable(c: JComponent): Transferable? {
@@ -260,7 +273,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                             Notifications.Bus.notify(
                                 Notification(
                                     MpyBundle.message("notification.group.name"),
-                                    "Drag and drop file collection failed: $e",
+                                    MpyBundle.message("file.system.error.dnd.file.collection.failed", e),
                                     NotificationType.ERROR
                                 ), project
                             )
@@ -272,8 +285,8 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
                         val sure = if (!settings.state.showUploadPreviewDialog) {
                             MessageDialogBuilder.yesNo(
-                                "Upload Dropped Item(s)",
-                                "Are you sure you want to upload the dropped items?"
+                                MpyBundle.message("file.system.show.upload.dropped.items.dialog.title"),
+                                MpyBundle.message("file.system.show.upload.dropped.items.dialog.text")
                             ).ask(project)
                         } else {
                             true
@@ -316,19 +329,26 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         tree.emptyText.clear()
 
         if (!settings.state.isPluginEnabled) {
-            tree.emptyText.appendText("MicroPython support is disabled")
-            tree.emptyText.appendLine("Change settings...", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+            tree.emptyText.appendText(MpyBundle.message("file.system.empty.text.micropython.support.disabled"))
+            tree.emptyText.appendLine(
+                MpyBundle.message("file.system.empty.text.micropython.support.disabled.change.settings.button"),
+                SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
+            ) {
                 ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
             }
         } else {
-            tree.emptyText.appendText("No device connected")
-            tree.emptyText.appendLine("Connect device", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+            tree.emptyText.appendText(MpyBundle.message("file.system.empty.text.micropython.no.device.connected"))
+            tree.emptyText.appendLine(
+                MpyBundle.message("file.system.empty.text.micropython.no.device.connected.connect.button"),
+                SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
+            ) {
                 performReplAction(
                     project,
-                    false,
-                    "Connecting...",
-                    false,
-                    "Connection attempt cancelled",
+                    connectionRequired = false,
+                    requiresRefreshAfter = false,
+                    description = MpyBundle.message("action.connect.text"),
+                    cancelledMessage = MpyBundle.message("action.connect.cancelled"),
+                    timedOutMessage = MpyBundle.message("action.connect.timeout"),
                     { reporter ->
                         deviceService.doConnect(reporter, isConnectAction = true)
                     }
@@ -336,7 +356,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
             }
 
             tree.emptyText.appendLine("")
-            tree.emptyText.appendLine("Find usage tips, report bugs or ask questions on our ")
+            tree.emptyText.appendLine("${MpyBundle.message("file.system.empty.text.find.usage.tips.on.our.github.label")} ")
             tree.emptyText.appendText("GitHub", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
                 BrowserUtil.browse("https://github.com/lukaskremla/micropython-tools-jetbrains")
             }
@@ -503,7 +523,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 Notifications.Bus.notify(
                     Notification(
                         MpyBundle.message("notification.group.name"),
-                        "Collecting files to upload from clipboard failed: $e",
+                        MpyBundle.message("file.system.error.collecting.clipboard.upload.files.failed", e),
                         NotificationType.ERROR
                     ), project
                 )
@@ -534,28 +554,43 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         targetNode: DirNode,
         shouldCopy: Boolean
     ): Boolean {
-        val confirmTitle = if (shouldCopy) "Copy Items" else "Move Items"
-        val progressTitle = if (shouldCopy) "Copying items..." else "Moving items..."
+        val confirmTitle =
+            if (shouldCopy) MpyBundle.message("file.system.move.to.target.confirm.title.copy") else MpyBundle.message("file.system.move.to.target.confirm.title.move")
+        val progressTitle =
+            if (shouldCopy) MpyBundle.message("file.system.move.to.target.confirm.progress.copy") else MpyBundle.message(
+                "file.system.move.to.target.confirm.progress.move"
+            )
+        val cancelledMessage =
+            if (shouldCopy) MpyBundle.message("file.system.move.to.target.confirm.cancelled.copy") else MpyBundle.message(
+                "file.system.move.to.target.confirm.timeout.copy"
+            )
+        val timedOutMessage =
+            if (shouldCopy) MpyBundle.message("file.system.move.to.target.confirm.cancelled.move") else MpyBundle.message(
+                "file.system.move.to.target.confirm.timeout.move"
+            )
+        val confirmMessage =
+            if (shouldCopy) MpyBundle.message("file.system.move.confirm.dialog.message.copy") else MpyBundle.message("file.system.move.confirm.dialog.message.move")
 
         val result = performReplAction(
             project = project,
             connectionRequired = false,
-            description = progressTitle,
             requiresRefreshAfter = true,
-            cancelledMessage = "Move operation cancelled",
+            description = progressTitle,
+            cancelledMessage = cancelledMessage,
+            timedOutMessage = timedOutMessage,
             { reporter ->
                 var sure = false
 
                 withContext(Dispatchers.EDT) {
                     sure = MessageDialogBuilder.yesNo(
                         confirmTitle,
-                        "Are you sure you want to move the Dropped items?"
+                        confirmMessage
                     ).ask(project)
                 }
 
                 if (!sure) return@performReplAction PerformReplActionResult(null, false)
 
-                reporter.text("Checking for move conflicts...")
+                reporter.text(MpyBundle.message("file.system.move.progress.checking.for.conflicts"))
                 reporter.fraction(null)
 
                 quietRefresh(reporter)
@@ -575,12 +610,16 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
                     withContext(Dispatchers.EDT) {
                         val clickResult = MessageDialogBuilder.Message(
-                            "Overwrite Destination Paths?",
-                            "One or more of the items being moved already exists in the target location. " +
-                                    "Do you want to overwrite the destination item(s)?"
-                        ).asWarning().buttons("Replace", "Cancel").defaultButton("Cancel").show(project)
+                            MpyBundle.message("file.system.move.overwrite.dialog.title"),
+                            MpyBundle.message("file.system.move.overwrite.dialog.message")
+                        ).asWarning().buttons(
+                            MpyBundle.message("file.system.move.overwrite.dialog.button.replace"),
+                            MpyBundle.message("file.system.move.overwrite.dialog.button.cancel")
+                        ).defaultButton(MpyBundle.message("file.system.move.overwrite.dialog.button.cancel"))
+                            .show(project)
 
-                        wasOverwriteConfirmed = clickResult == "Replace"
+                        wasOverwriteConfirmed =
+                            clickResult == MpyBundle.message("file.system.move.overwrite.dialog.button.replace")
                     }
 
                     if (!wasOverwriteConfirmed) return@performReplAction false
@@ -674,7 +713,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         useReporter: Boolean
     ): Int? {
         if (useReporter) {
-            reporter.text("Updating file system view...")
+            reporter.text(MpyBundle.message("file.system.refresh.progress"))
             reporter.fraction(null)
         }
 
@@ -699,6 +738,9 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
             // information about the file system state, such as uploads
             // In that scenario it shouldn't return to the connected state to prevent emitting extra MicroPython banners
             executionResult = deviceService.blindExecute(fileSystemScanScript, !useReporter)
+        } catch (e: TimeoutCancellationException) {
+            deviceService.disconnect(reporter)
+            throw IOException(MpyBundle.message("file.system.error.refresh.timeout"), e)
         } catch (e: CancellationException) {
             if (disconnectOnCancel) {
                 deviceService.disconnect(reporter)
@@ -713,13 +755,13 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
             if (isInitialRefresh || disconnectOnCancel) {
                 throw e
             } else if (useReporter) {
-                throw IOException("Micropython filesystem scan cancelled, the board has been disconnected", e)
+                throw IOException(MpyBundle.message("file.system.error.refresh.cancelled"))
             } else {
                 return null
             }
         } catch (e: Throwable) {
             deviceService.disconnect(reporter)
-            throw IOException("Micropython filesystem scan failed, ${e.localizedMessage}", e)
+            throw IOException(MpyBundle.message("file.system.error.refresh.failed", e.localizedMessage), e)
         }
 
         val freeMemBytes = executionResult.lines().last().toInt()
@@ -761,7 +803,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                         // Append leading slash, to prevent situations where a file with full path of:
                         // "/sdsm.py" from getting split like: "/sd/sm.py"
                         .find { fullName.startsWith(if (it.isFileSystemRoot) "/" else "${it.fullName}/") }
-                        ?: throw IllegalStateException("Couldn't find parent root node")
+                        ?: throw IllegalStateException(MpyBundle.message("file.system.error.refresh.could.not.find.parent.node"))
 
                     // Collect names of all directories/files in the full path
                     val names = fullName

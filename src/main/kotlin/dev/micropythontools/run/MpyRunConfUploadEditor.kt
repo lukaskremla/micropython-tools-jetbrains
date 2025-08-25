@@ -40,6 +40,7 @@ import com.intellij.util.ui.ListTableModel
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.core.MpyValidators
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -198,13 +199,14 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
     }
 
     private fun sourcesTable(emptyText: String) = TableView<SourceItem>().apply {
-        val column = object : ColumnInfo<SourceItem, String>("Source Path") {
-            override fun valueOf(item: SourceItem) = item.displayText
+        val column =
+            object : ColumnInfo<SourceItem, String>(MpyBundle.message("run.conf.upload.editor.source.table.label")) {
+                override fun valueOf(item: SourceItem) = item.displayText
 
-            override fun getRenderer(item: SourceItem) = DefaultTableCellRenderer().apply {
-                icon = item.icon
+                override fun getRenderer(item: SourceItem) = DefaultTableCellRenderer().apply {
+                    icon = item.icon
+                }
             }
-        }
 
         model = ListTableModel<SourceItem>(column)
         tableHeader = null
@@ -214,11 +216,14 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
         preferredScrollableViewportSize = Dimension(250, 150)
     }
 
-    private val availableSourcesTable = sourcesTable("No available MicroPython Sources Roots")
-    private val selectedSourcesTable = sourcesTable("No selected MicroPython Sources Roots")
+    private val availableSourcesTable =
+        sourcesTable(MpyBundle.message("run.conf.upload.editor.source.table.empty.text.none.available"))
+    private val selectedSourcesTable =
+        sourcesTable(MpyBundle.message("run.conf.upload.editor.source.table.empty.text.none.selected"))
 
     private val excludedPathsTable = TableView<ExcludedItem>().apply {
-        val column = object : ColumnInfo<ExcludedItem, String>("Excluded Path") {
+        val column = object :
+            ColumnInfo<ExcludedItem, String>(MpyBundle.message("run.conf.upload.editor.excluded.table.label")) {
             override fun valueOf(item: ExcludedItem) = item.path
 
             override fun getRenderer(item: ExcludedItem) = DefaultTableCellRenderer().apply {
@@ -229,7 +234,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
         model = ListTableModel<ExcludedItem>(column)
         tableHeader = null
         setShowGrid(false)
-        setEmptyState("No excluded paths")
+        setEmptyState(MpyBundle.message("run.conf.upload.editor.excluded.table.empty.text"))
         selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
         preferredScrollableViewportSize = Dimension(500, 100)
     }
@@ -238,14 +243,14 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
         .disableUpDownActions()
         .setAddAction {
             val dialog = DialogBuilder(runConfiguration.project)
-            dialog.title("Add Excluded Path")
+            dialog.title(MpyBundle.message("run.conf.upload.editor.excluded.add.dialog.title"))
 
             val textField = JBTextField().apply {
                 preferredSize = Dimension(300, preferredSize.height)
             }
 
             val panel = JPanel(BorderLayout())
-            panel.add(JBLabel("Path: "), BorderLayout.WEST)
+            panel.add(JBLabel("${MpyBundle.message("run.conf.upload.editor.excluded.path.label")} "), BorderLayout.WEST)
             panel.add((textField), BorderLayout.CENTER)
             dialog.centerPanel(panel)
 
@@ -288,14 +293,17 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                 val currentItem = model.getItem(selectedRow)
 
                 val dialog = DialogBuilder(runConfiguration.project)
-                dialog.title("Edit Excluded Path")
+                dialog.title(MpyBundle.message("run.conf.upload.editor.excluded.edit.dialog.title"))
 
                 val textField = JBTextField(currentItem.path).apply {
                     preferredSize = Dimension(300, preferredSize.height)
                 }
 
                 val panel = JPanel(BorderLayout())
-                panel.add(JBLabel("Path: "), BorderLayout.WEST)
+                panel.add(
+                    JBLabel("${MpyBundle.message("run.conf.upload.editor.excluded.path.label")} "),
+                    BorderLayout.WEST
+                )
                 panel.add((textField), BorderLayout.CENTER)
                 dialog.centerPanel(panel)
 
@@ -336,35 +344,43 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
         configurationPanel = panel {
             buttonsGroup {
                 row {
-                    label("Type: ")
-                    uploadProjectRadioButton = radioButton("Project")
-                        .bindSelected({ parameters.uploadMode == 0 }, { if (it) parameters.uploadMode = 0 })
-                        .applyToComponent {
-                            addActionListener {
-                                if (runConfiguration.isGeneratedName) {
-                                    runConfiguration.suggestedName()
+                    label("${MpyBundle.message("run.conf.upload.editor.type.selector.label")} ")
+                    uploadProjectRadioButton =
+                        radioButton(MpyBundle.message("run.conf.upload.editor.type.selector.button.project"))
+                            .bindSelected({ parameters.uploadMode == 0 }, { if (it) parameters.uploadMode = 0 })
+                            .applyToComponent {
+                                addActionListener {
+                                    if (runConfiguration.isGeneratedName) {
+                                        runConfiguration.suggestedName()
+                                    }
                                 }
                             }
-                        }
-                        .comment("Learn about how uploads work <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md#uploads\">here</a>")
-                    useSelectedPathsRadioButton = radioButton("Selected MPY sources roots")
-                        .bindSelected({ parameters.uploadMode == 1 }, { if (it) parameters.uploadMode = 1 })
-                        .applyToComponent {
-                            addActionListener {
-                                if (runConfiguration.isGeneratedName) {
-                                    runConfiguration.suggestedName()
+                            .comment(
+                                MpyBundle.message(
+                                    "run.conf.upload.editor.comment.learn.about",
+                                    "https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md#uploads"
+                                )
+                            )
+                    useSelectedPathsRadioButton =
+                        radioButton(MpyBundle.message("run.conf.upload.editor.type.selector.button.selected"))
+                            .bindSelected({ parameters.uploadMode == 1 }, { if (it) parameters.uploadMode = 1 })
+                            .applyToComponent {
+                                addActionListener {
+                                    if (runConfiguration.isGeneratedName) {
+                                        runConfiguration.suggestedName()
+                                    }
                                 }
                             }
-                        }
-                    usePathRadiobutton = radioButton("Custom path")
-                        .bindSelected({ parameters.uploadMode == 2 }, { if (it) parameters.uploadMode = 2 })
-                        .applyToComponent {
-                            addActionListener {
-                                if (runConfiguration.isGeneratedName) {
-                                    runConfiguration.suggestedName()
+                    usePathRadiobutton =
+                        radioButton(MpyBundle.message("run.conf.upload.editor.type.selector.button.path"))
+                            .bindSelected({ parameters.uploadMode == 2 }, { if (it) parameters.uploadMode = 2 })
+                            .applyToComponent {
+                                addActionListener {
+                                    if (runConfiguration.isGeneratedName) {
+                                        runConfiguration.suggestedName()
+                                    }
                                 }
                             }
-                        }
                 }
             }
 
@@ -372,7 +388,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                 row {
                     cell(JBScrollPane(availableSourcesTable))
                         .align(AlignX.FILL)
-                        .label("Available MPY sources roots:", LabelPosition.TOP)
+                        .label(MpyBundle.message("run.conf.upload.editor.tables.label.available"), LabelPosition.TOP)
                         .resizableColumn()
 
                     panel {
@@ -390,16 +406,16 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
 
                     cell(JBScrollPane(selectedSourcesTable))
                         .align(AlignX.FILL)
-                        .label("Selected MPY sources roots:", LabelPosition.TOP)
+                        .label(MpyBundle.message("run.conf.upload.editor.tables.label.selected"), LabelPosition.TOP)
                         .resizableColumn()
                 }
             }.visibleIf(useSelectedPathsRadioButton.selected)
 
             panel {
-                row("Source path: ") {
+                row("${MpyBundle.message("run.conf.upload.editor.custom.path.label")} ") {
                     textFieldWithBrowseButton(
                         FileChooserDescriptor(true, true, false, false, false, false)
-                            .withTitle("Select Path")
+                            .withTitle(MpyBundle.message("run.conf.upload.editor.custom.path.file.chooser.title"))
                             .withRoots(runConfiguration.project.guessProjectDir()),
                         runConfiguration.project
                     ).apply {
@@ -418,7 +434,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                     }.align(AlignX.FILL)
                 }
 
-                row("Upload to: ") {
+                row("${MpyBundle.message("run.conf.upload.editor.upload.to.label")} ") {
                     uploadToTextField = textField()
                         .bindText(parameters::uploadToPath)
                         .columns(15)
@@ -443,39 +459,40 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                         }
                 }
 
-                targetPathRow = row("Target path: ") {
+                targetPathRow = row("${MpyBundle.message("run.conf.upload.editor.target.path.label")} ") {
                     targetPathLabel = label("")
                 }
                 handlePathChange(parameters.uploadToPath, parameters.path)
             }.visibleIf(usePathRadiobutton.selected)
 
             row {
-                checkBox("Reset on success")
+                checkBox(MpyBundle.message("run.conf.upload.editor.checkbox.reset.on.success"))
                     .bindSelected(parameters::resetOnSuccess)
             }
 
             row {
-                checkBox("Switch to REPL tab on success")
+                checkBox(MpyBundle.message("run.conf.upload.editor.checkbox.switch.to.repl"))
                     .bindSelected(parameters::switchToReplOnSuccess)
             }
 
             row {
-                synchronizeCheckbox = checkBox("Synchronize")
+                synchronizeCheckbox = checkBox(MpyBundle.message("run.conf.upload.editor.checkbox.synchronize"))
                     .bindSelected(parameters::synchronize)
                     .gap(RightGap.SMALL)
 
                 cell(JBLabel(AllIcons.General.ContextHelp).apply {
-                    toolTipText = "Synchronize device file system to only contain uploaded files and folders"
+                    toolTipText = MpyBundle.message("run.conf.upload.editor.tooltip.synchronize")
                 })
             }
 
             row {
-                excludePathsCheckbox = checkBox("Exclude paths from synchronization")
-                    .bindSelected(parameters::excludePaths)
-                    .gap(RightGap.SMALL)
+                excludePathsCheckbox =
+                    checkBox(MpyBundle.message("run.conf.upload.editor.checkbox.exclude.from.synchronization"))
+                        .bindSelected(parameters::excludePaths)
+                        .gap(RightGap.SMALL)
             }.visibleIf(synchronizeCheckbox.selected)
 
-            collapsibleGroup("Paths Excluded from Synchronization") {
+            collapsibleGroup(MpyBundle.message("run.conf.upload.editor.collapsible.group.excluded.paths.title")) {
                 row {
                     cell(excludedPathsTableWithToolbar)
                 }

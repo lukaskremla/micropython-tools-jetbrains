@@ -38,14 +38,14 @@
 
     <idea-version since-build="243"/>
 
-    <resource-bundle>messages.MpyBundle</resource-bundle>
+    <resource-bundle>localization.MpyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Settings -->
         <projectConfigurable groupId="language"
                              id="dev.micropythontools.configurable"
                              key="configurable.name"
-                             bundle="messages.MpyBundle"
+                             bundle="localization.MpyBundle"
                              instance="dev.micropythontools.settings.MpyConfigurable"/>
 
         <!-- File handling -->
@@ -59,7 +59,7 @@
         <localInspection language="Python"
                          key="inspection.name"
                          groupKey="inspection.group.name"
-                         bundle="messages.MpyBundle"
+                         bundle="localization.MpyBundle"
                          enabledByDefault="true"
                          implementationClass="dev.micropythontools.inspections.MpyStubPackageInspection"/>
 
@@ -68,7 +68,7 @@
         <notificationGroup displayType="BALLOON"
                            id="dev.micropythontools.notification.group"
                            key="notification.group.name"
-                           bundle="messages.MpyBundle"/>
+                           bundle="localization.MpyBundle"/>
 
         <!-- Run configurations -->
         <configurationType implementation="dev.micropythontools.run.MpyRunConfType"/>

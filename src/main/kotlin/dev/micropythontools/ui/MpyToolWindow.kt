@@ -33,6 +33,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.terminal.TerminalMode
 import com.jediterm.terminal.TtyConnector
 import dev.micropythontools.communication.MpyDeviceService
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import javax.swing.Icon
@@ -46,13 +47,15 @@ internal class MpyToolWindow() : ToolWindowFactory, DumbAware {
         val newDisposable = Disposer.newDisposable(toolWindow.disposable, "MpyToolWindowDisposable")
 
         val fileSystemWidget = FileSystemWidget(project)
-        val fileSystemContent = ContentFactory.getInstance().createContent(fileSystemWidget, "File System", true)
+        val fileSystemContent = ContentFactory.getInstance()
+            .createContent(fileSystemWidget, MpyBundle.message("toolwindow.file.system.tab.title"), true)
         fileSystemContent.setDisposer(newDisposable)
         toolWindow.contentManager.addContent(fileSystemContent)
         componentRegistryService.registerFileSystem(fileSystemWidget)
 
         val jediTermWidget = jediTermWidget(project, newDisposable, deviceService.ttyConnector)
-        val terminalContent = ContentFactory.getInstance().createContent(jediTermWidget, "REPL", true)
+        val terminalContent = ContentFactory.getInstance()
+            .createContent(jediTermWidget, MpyBundle.message("toolwindow.repl.tab.title"), true)
         terminalContent.setDisposer(newDisposable)
         toolWindow.contentManager.addContent(terminalContent)
         componentRegistryService.registerTerminalContent(terminalContent)

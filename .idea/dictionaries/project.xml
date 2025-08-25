@@ -3,6 +3,7 @@
     <words>
       <w>baudrate</w>
       <w>baudrates</w>
+      <w>bbase</w>
       <w>elmot</w>
       <w>kremla</w>
       <w>micropythontools</w>
@@ -10,6 +11,7 @@
       <w>sdsm</w>
       <w>sourceroots</w>
       <w>verlinde</w>
+      <w>webrepl</w>
     </words>
   </dictionary>
 </component>

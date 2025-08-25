@@ -36,17 +36,20 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.ui.UIUtil
 import com.jediterm.terminal.ui.JediTermWidget
 import com.jetbrains.python.PythonFileType
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.ui.MpyComponentRegistryService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal class MpyInterruptAction : MpyReplAction(
-    "Interrupt",
+    MpyBundle.message("action.interrupt.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
-        requiresRefreshAfter = false
+        requiresRefreshAfter = false,
+        cancelledMessage = MpyBundle.message("action.interrupt.cancelled"),
+        timedOutMessage = MpyBundle.message("action.interrupt.timeout")
     )
 ) {
     init {
@@ -56,19 +59,20 @@ internal class MpyInterruptAction : MpyReplAction(
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        reporter.text("Interrupting...")
+        reporter.text(MpyBundle.message("action.interrupt.progress"))
         deviceService.interrupt()
     }
 }
 
 internal class MpySoftResetAction : MpyReplAction(
-    "Reset",
+    MpyBundle.message("action.reset.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = false,
-        cancelledMessage = "Reset cancelled"
+        cancelledMessage = MpyBundle.message("action.reset.cancelled"),
+        timedOutMessage = MpyBundle.message("action.reset.timeout")
     )
 ) {
     init {
@@ -78,18 +82,20 @@ internal class MpySoftResetAction : MpyReplAction(
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter) {
-        reporter.text("Resetting...")
+        reporter.text(MpyBundle.message("action.reset.progress"))
         deviceService.reset()
     }
 }
 
 internal class MpyClearReplAction : MpyAction(
-    "Clear REPL",
+    MpyBundle.message("action.clear.repl.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.ALWAYS,
         requiresConnection = false,
-        requiresRefreshAfter = false
+        requiresRefreshAfter = false,
+        cancelledMessage = "",
+        timedOutMessage = ""
     )
 ) {
     init {
@@ -106,13 +112,14 @@ internal class MpyClearReplAction : MpyAction(
 }
 
 internal class MpyExecuteFileInReplAction : MpyReplAction(
-    "Execute File in REPL",
+    MpyBundle.message("action.execute.file.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.PLUGIN_ENABLED,
         enabledWhen = EnabledWhen.PLUGIN_ENABLED,
         requiresConnection = true,
         requiresRefreshAfter = false,
-        cancelledMessage = "REPL execution cancelled"
+        cancelledMessage = MpyBundle.message("action.execute.cancelled"),
+        timedOutMessage = MpyBundle.message("action.execute.timeout")
     )
 ) {
     init {
@@ -127,7 +134,7 @@ internal class MpyExecuteFileInReplAction : MpyReplAction(
         }
 
         val code = e.getData(CommonDataKeys.VIRTUAL_FILE)?.readText() ?: return
-        reporter.text("Executing file in REPL...")
+        reporter.text(MpyBundle.message("action.execute.file.progress"))
         deviceService.instantRun(code)
     }
 
@@ -153,13 +160,14 @@ internal class MpyExecuteFileInReplAction : MpyReplAction(
 }
 
 internal class MpyExecuteFragmentInReplAction : MpyReplAction(
-    "Execute Fragment in REPL",
+    MpyBundle.message("action.execute.fragment.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.PLUGIN_ENABLED,
         enabledWhen = EnabledWhen.PLUGIN_ENABLED,
         requiresConnection = true,
         requiresRefreshAfter = false,
-        cancelledMessage = "REPL execution cancelled"
+        cancelledMessage = MpyBundle.message("action.execute.cancelled"),
+        timedOutMessage = MpyBundle.message("action.execute.timeout")
     )
 ) {
     init {
@@ -175,7 +183,13 @@ internal class MpyExecuteFragmentInReplAction : MpyReplAction(
         val code = withContext(Dispatchers.EDT) {
             val editor = editor(project) ?: return@withContext null
             val emptySelection = editor.selectionModel.getSelectedText(true).isNullOrBlank()
-            reporter.text(if (emptySelection) "Executing Line in REPL..." else "Executing Selection in REPL...")
+            reporter.text(
+                if (emptySelection) {
+                    MpyBundle.message("action.execute.fragment.progress.line")
+                } else {
+                    MpyBundle.message("action.execute.fragment.progress.selection")
+                }
+            )
 
             var text = editor.selectionModel.getSelectedText(true)
             if (text.isNullOrBlank()) {
@@ -202,6 +216,10 @@ internal class MpyExecuteFragmentInReplAction : MpyReplAction(
         }
         val emptySelection = editor.selectionModel.getSelectedText(true).isNullOrBlank()
         e.presentation.text =
-            if (emptySelection) "Execute Line in REPL" else "Execute Selection in REPL"
+            if (emptySelection) {
+                MpyBundle.message("action.execute.fragment.text.line")
+            } else {
+                MpyBundle.message("action.execute.fragment.text.selection")
+            }
     }
 }

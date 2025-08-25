@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import dev.micropythontools.i18n.MpyBundle
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -41,7 +42,7 @@ internal class MpyFileEditor(private val file: VirtualFile) :
                 String.format("%02X ", it)
             }
         } catch (e: Exception) {
-            textArea.text = "Unable to read .mpy file: ${e.message}"
+            textArea.text = MpyBundle.message("mpy.file.error.unable.to.read", e.message ?: "")
         }
 
         component.add(textArea, BorderLayout.CENTER)
@@ -51,7 +52,7 @@ internal class MpyFileEditor(private val file: VirtualFile) :
 
     override fun getPreferredFocusedComponent(): JComponent = component
 
-    override fun getName(): String = "MicroPython Bytecode File Editor"
+    override fun getName(): String = MpyBundle.message("mpy.file.editor.name")
 
     override fun setState(state: FileEditorState) {}
 

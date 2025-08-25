@@ -48,7 +48,7 @@ internal class MpyRunConfExecute(
     }
 
     override fun suggestedName(): String {
-        val baseName = "Execute ${getFileName()}"
+        val baseName = MpyBundle.message("run.conf.execute.suggested.name", getFileName())
 
         if (name == baseName) return baseName
 
@@ -65,7 +65,8 @@ internal class MpyRunConfExecute(
         return "$baseName ($counter)"
     }
 
-    override fun isGeneratedName(): Boolean = "Execute ${getFileName()}" == name
+    override fun isGeneratedName(): Boolean =
+        MpyBundle.message("run.conf.execute.suggested.name", getFileName()) == name
 
     val options: MpyRunConfExecuteOptions
         get() = super.getOptions() as MpyRunConfExecuteOptions
@@ -85,7 +86,7 @@ internal class MpyRunConfExecute(
             Notifications.Bus.notify(
                 Notification(
                     MpyBundle.message("notification.group.name"),
-                    "Cannot run \"${name}\". ${e.localizedMessage}",
+                    MpyBundle.message("run.conf.error.cannot.run", name, e.localizedMessage),
                     NotificationType.ERROR
                 ), project
             )
@@ -100,17 +101,17 @@ internal class MpyRunConfExecute(
 
         if (!project.service<MpySettingsService>().state.isPluginEnabled) {
             throw RuntimeConfigurationError(
-                "MicroPython support was not enabled for this project",
+                MpyBundle.message("run.conf.error.mpy.support.not.enabled"),
                 Runnable { ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java) }
             )
         }
 
         val path = options.path
         val message = when {
-            path.isNullOrEmpty() -> "No file path specified. Please select a file to execute"
-            !path.endsWith(".py") && !path.endsWith(".mpy") -> "The specified path is not a valid \".py\" or \".mpy\" file"
+            path.isNullOrEmpty() -> MpyBundle.message("run.conf.execute.error.path.empty")
+            !path.endsWith(".py") && !path.endsWith(".mpy") -> MpyBundle.message("run.conf.execute.error.invalid.extension")
             StandardFileSystems.local()
-                .findFileByPath(path) == null -> "File not found: \"$path\". Please select a valid file"
+                .findFileByPath(path) == null -> MpyBundle.message("run.conf.execute.error.file.not.found", path)
 
             else -> null
         }

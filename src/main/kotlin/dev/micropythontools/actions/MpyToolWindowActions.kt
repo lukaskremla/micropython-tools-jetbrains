@@ -27,13 +27,18 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.EMPTY_PORT_NAME_TEXT
 import dev.micropythontools.settings.EMPTY_URL_TEXT
 import dev.micropythontools.settings.MpySettingsService
 import javax.swing.JComponent
 
 internal class MpyAutoClearAction :
-    CheckboxAction("Auto Clear REPL", "Automatically clear REPL console on upload/reset", null),
+    CheckboxAction(
+        MpyBundle.message("action.auto.clear.repl.text"),
+        MpyBundle.message("action.auto.clear.repl.description"),
+        null
+    ),
     DumbAware {
 
     override fun getActionUpdateThread(): ActionUpdateThread = BGT

@@ -84,13 +84,13 @@ internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                                 while (!isConnected && time > 0) {
                                     checkCanceled()
                                     if (webSocketClient?.connectionErrorMessage != null) {
-                                        throw ConnectionException("WebREPL connection failed: ${webSocketClient?.connectionErrorMessage}")
+                                        throw ConnectionException("${MpyBundle.message("webrepl.error.connection.attempt.failed")}: ${webSocketClient?.connectionErrorMessage}")
                                     }
                                     delay(SHORT_DELAY)
                                     time -= SHORT_DELAY.toInt()
                                 }
                                 if (!isConnected) {
-                                    throw ConnectException("WebREPL connection failed")
+                                    throw ConnectException(MpyBundle.message("webrepl.error.connection.attempt.failed"))
                                 }
                             }
                             withTimeout(SHORT_TIMEOUT) {
@@ -100,11 +100,21 @@ internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                                         loginBuffer.length < PASSWORD_PROMPT.length -> delay(SHORT_DELAY)
                                         loginBuffer.length > PASSWORD_PROMPT.length * 2 -> {
                                             loginBuffer.setLength(PASSWORD_PROMPT.length * 2)
-                                            throw ConnectException("Password exchange error. Received prompt: $loginBuffer")
+                                            throw ConnectException(
+                                                MpyBundle.message(
+                                                    "webrepl.error.password.exchange.failed",
+                                                    loginBuffer
+                                                )
+                                            )
                                         }
 
                                         loginBuffer.toString().contains(PASSWORD_PROMPT) -> break
-                                        else -> throw ConnectException("Password exchange error. Received prompt: $loginBuffer")
+                                        else -> throw ConnectException(
+                                            MpyBundle.message(
+                                                "webrepl.error.password.exchange.failed",
+                                                loginBuffer
+                                            )
+                                        )
                                     }
                                 }
                                 loginBuffer.setLength(0)
@@ -113,7 +123,7 @@ internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                                     checkCanceled()
                                     when {
                                         loginBuffer.contains(LOGIN_SUCCESS) -> break
-                                        loginBuffer.contains(LOGIN_FAIL) -> throw ConnectException("Access denied")
+                                        loginBuffer.contains(LOGIN_FAIL) -> throw ConnectException(MpyBundle.message("webrepl.error.access.denied"))
                                         else -> delay(SHORT_DELAY)
                                     }
                                 }
@@ -131,8 +141,14 @@ internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                             }
                             webSocketClient?.reset()
                             when (e) {
-                                is TimeoutCancellationException -> throw ConnectException("Password exchange timeout. Received prompt: $loginBuffer")
-                                is InterruptedException -> throw ConnectException("Connection interrupted")
+                                is TimeoutCancellationException -> throw ConnectException(
+                                    MpyBundle.message(
+                                        "webrepl.error.password.exchange.timout",
+                                        loginBuffer
+                                    )
+                                )
+
+                                is InterruptedException -> throw ConnectException(MpyBundle.message("webrepl.error.connection.interrupted"))
                                 else -> throw e
                             }
                         } finally {
@@ -206,11 +222,11 @@ internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                         Notifications.Bus.notify(
                             Notification(
                                 MpyBundle.message("notification.group.name"),
-                                "WebREPL connection error - Code:$code ($reason)",
+                                MpyBundle.message("webrepl.error.connection.error", code, reason),
                                 NotificationType.ERROR
                             ), comm.project
                         )
-                        throw IOException("Connection closed. Code:$code ($reason)")
+                        throw IOException(MpyBundle.message("webrepl.error.connection.closed", code, reason))
                     }
                 } finally {
                     if (!resetInProgress) {

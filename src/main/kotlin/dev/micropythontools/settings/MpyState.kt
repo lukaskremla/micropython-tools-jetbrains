@@ -25,8 +25,6 @@ internal class MpyState : BaseState() {
     var enableManualEditing by property(false)
     var filterManufacturers by property(true)
     var portName by string("")
-    var increaseBaudrateForFileTransfers by string("")
-    var increasedFileTransferBaudrate by string("")
     var webReplIp by string(DEFAULT_WEBREPL_IP)
     var webReplPort by property(DEFAULT_WEBREPL_PORT)
     var legacyVolumeSupportEnabled by property(false)

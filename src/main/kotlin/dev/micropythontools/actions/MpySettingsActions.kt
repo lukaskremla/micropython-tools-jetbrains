@@ -21,15 +21,18 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpyConfigurable
 
 internal class MpyOpenSettingsAction : MpyAction(
-    "Settings",
+    MpyBundle.message("action.settings.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.ALWAYS,
         requiresConnection = false,
-        requiresRefreshAfter = false
+        requiresRefreshAfter = false,
+        "",
+        ""
     )
 ) {
     init {

@@ -22,16 +22,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.communication.State
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
 
 internal class MpyConnectAction : MpyReplAction(
-    "Connect",
+    MpyBundle.message("action.connect.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.DISCONNECTED,
         enabledWhen = EnabledWhen.DISCONNECTED,
         requiresConnection = false,
         requiresRefreshAfter = false,
-        cancelledMessage = "Connection attempt cancelled"
+        cancelledMessage = MpyBundle.message("action.connect.cancelled"),
+        timedOutMessage = MpyBundle.message("action.connect.timeout")
     )
 ) {
     init {
@@ -46,12 +48,14 @@ internal class MpyConnectAction : MpyReplAction(
 }
 
 internal class MpyDisconnectAction : MpyReplAction(
-    "Disconnect",
+    MpyBundle.message("action.disconnect.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.CONNECTED,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = false,
         requiresRefreshAfter = false,
+        MpyBundle.message("action.disconnect.cancelled"),
+        MpyBundle.message("action.disconnect.timeout")
     )
 ) {
     init {

@@ -14,6 +14,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorNotifications
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.performReplAction
+import dev.micropythontools.i18n.MpyBundle
 import java.nio.charset.StandardCharsets
 
 /**
@@ -68,8 +69,8 @@ internal object MpyEditableFileController {
         deviceService: MpyDeviceService
     ) {
         val proceed = MessageDialogBuilder.yesNo(
-            "Save changes",
-            "This will replace the version of the file on the device. Are you sure?"
+            MpyBundle.message("edit.on.device.file.save.dialog.title"),
+            MpyBundle.message("edit.on.device.file.save.dialog.message")
         ).ask(project)
         if (!proceed) return
 
@@ -79,8 +80,10 @@ internal object MpyEditableFileController {
         performReplAction(
             project,
             true,
-            "Saving the edited file",
-            true,
+            requiresRefreshAfter = false,
+            description = MpyBundle.message("edit.on.device.file.save.description"),
+            cancelledMessage = MpyBundle.message("edit.on.device.file.save.cancelled"),
+            timedOutMessage = MpyBundle.message("edit.on.device.file.save.timeout"),
             action = { reporter ->
                 reporter.details(remotePath)
 
@@ -92,9 +95,11 @@ internal object MpyEditableFileController {
                     uploadedKB += (uploadedBytes / 1000).coerceIn(uploadedBytes / 1000, totalBytes / 1000)
                     progress = (progress + uploadedBytes / totalBytes).coerceIn(0.0, 1.0)
                     reporter.text(
-                        "Saving the edited file | ${
-                            "%.2f".format(uploadedKB)
-                        } KB of ${"%.2f".format(totalBytes / 1000)} KB"
+                        MpyBundle.message(
+                            "edit.on.device.file.save.progress",
+                            "%.2f".format(uploadedKB),
+                            "%.2f".format(totalBytes / 1000)
+                        )
                     )
                     reporter.fraction(progress)
                 }
@@ -104,7 +109,6 @@ internal object MpyEditableFileController {
                     updatedContent,
                     ::progressCallback,
                     deviceService.deviceInformation.defaultFreeMem
-                        ?: throw RuntimeException("DefaultFreeMem is undefined")
                 )
 
                 // Mark saved state and switch to view mode
@@ -123,8 +127,8 @@ internal object MpyEditableFileController {
         val modified = isModified(file, doc)
         val proceed = if (modified) {
             MessageDialogBuilder.yesNo(
-                "Refresh open file",
-                "You have unsaved changes. Refreshing the file will discard them. Are you sure you want to continue?"
+                MpyBundle.message("edit.on.device.file.re.open.dialog.unsaved.title"),
+                MpyBundle.message("edit.on.device.file.re.open.dialog.unsaved.message")
             ).ask(project)
         } else true
 
@@ -134,10 +138,12 @@ internal object MpyEditableFileController {
         performReplAction(
             project,
             true,
-            "Refresh edited file",
-            false,
+            requiresRefreshAfter = false,
+            MpyBundle.message("edit.on.device.file.re.open.description"),
+            MpyBundle.message("edit.on.device.file.re.open.cancelled"),
+            MpyBundle.message("edit.on.device.file.re.open.timeout"),
             action = { reporter ->
-                reporter.text("Updating opened file...")
+                reporter.text(MpyBundle.message("edit.on.device.file.re.open.progress"))
 
                 var text = deviceService.download(remotePath).toString(StandardCharsets.UTF_8)
                 if (file.fileType != PlainTextFileType.INSTANCE) {

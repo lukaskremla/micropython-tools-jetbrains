@@ -45,6 +45,7 @@ import dev.micropythontools.editor.MPY_TOOLS_EDITABLE_FILE_SIGNATURE
 import dev.micropythontools.editor.MPY_TOOLS_EDITABLE_FILE_SIGNATURE_KEY
 import dev.micropythontools.editor.ORIGINAL_CONTENT_KEY
 import dev.micropythontools.editor.REMOTE_PATH_KEY
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.ui.DirNode
 import dev.micropythontools.ui.FileNode
 import dev.micropythontools.ui.FileSystemNode
@@ -55,13 +56,14 @@ import java.awt.datatransfer.StringSelection
 import java.nio.charset.StandardCharsets
 
 internal class MpyRefreshAction : MpyReplAction(
-    "Refresh",
+    MpyBundle.message("action.refresh.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.PLUGIN_ENABLED,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = false,
         requiresRefreshAfter = false, // This option isn't used, refresh is instead called explicitly, (allows cancellation)
-        cancelledMessage = "Refresh operation cancelled"
+        cancelledMessage = MpyBundle.message("action.refresh.cancelled"),
+        timedOutMessage = MpyBundle.message("action.refresh.timeout")
     )
 ) {
     init {
@@ -76,13 +78,14 @@ internal class MpyRefreshAction : MpyReplAction(
 }
 
 internal class MpyDeleteAction : MpyReplAction(
-    "Delete",
+    MpyBundle.message("action.delete.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = true,
-        cancelledMessage = "Deletion operation cancelled"
+        cancelledMessage = MpyBundle.message("action.delete.cancelled"),
+        timedOutMessage = MpyBundle.message("action.delete.timeout")
     )
 ) {
     init {
@@ -133,17 +136,9 @@ internal class MpyDeleteAction : MpyReplAction(
 
         for (file in selectedFiles) {
             when (file) {
-                is VolumeRootNode -> {
-                    volumeCount++
-                }
-
-                is DirNode -> {
-                    folderCount++
-                }
-
-                else -> {
-                    fileCount++
-                }
+                is VolumeRootNode -> volumeCount++
+                is DirNode -> folderCount++
+                else -> fileCount++
             }
         }
 
@@ -151,70 +146,71 @@ internal class MpyDeleteAction : MpyReplAction(
             if (selectedFiles.size == 1) {
                 if ((selectedFiles.first() as VolumeRootNode).isFileSystemRoot) {
                     AppropriateText(
-                        reporterText = "Deleting device contents...",
-                        dialogTitle = "Delete Device Contents",
-                        dialogMessage = "Are you sure you want to permanently delete the device contents?"
+                        reporterText = MpyBundle.message("action.delete.progress.device"),
+                        dialogTitle = MpyBundle.message("action.delete.dialog.title.device"),
+                        dialogMessage = MpyBundle.message("action.delete.dialog.message.device")
                     )
                 } else {
                     AppropriateText(
-                        reporterText = "Deleting volume contents...",
-                        dialogTitle = "Delete Volume Contents",
-                        dialogMessage = "Are you sure you want to permanently delete the volume contents?"
+                        reporterText = MpyBundle.message("action.delete.progress.volume"),
+                        dialogTitle = MpyBundle.message("action.delete.dialog.title.volume"),
+                        dialogMessage = MpyBundle.message("action.delete.dialog.message.volume.one")
                     )
                 }
             } else {
                 AppropriateText(
-                    reporterText = "Deleting volume contents...",
-                    dialogTitle = "Delete Volume Contents",
-                    dialogMessage = "Are you sure you want to permanently delete the contents of these volumes?"
+                    reporterText = MpyBundle.message("action.delete.progress.volume"),
+                    dialogTitle = MpyBundle.message("action.delete.dialog.title.volume"),
+                    dialogMessage = MpyBundle.message("action.delete.dialog.message.volume.multiple")
                 )
             }
         } else if (fileCount == 0 && !selectedFiles.any { it.isRoot }) {
             if (folderCount == 1) {
                 AppropriateText(
-                    reporterText = "Deleting folder...",
-                    dialogTitle = "Delete Folder",
-                    dialogMessage = "Are you sure you want to permanently delete this folder and all its contents?"
+                    reporterText = MpyBundle.message("action.delete.progress.folder.one"),
+                    dialogTitle = MpyBundle.message("action.delete.dialog.title.folder.one"),
+                    dialogMessage = MpyBundle.message("action.delete.dialog.message.folder.one")
                 )
             } else {
                 AppropriateText(
-                    reporterText = "Deleting folders...",
-                    dialogTitle = "Delete Folders",
-                    dialogMessage = "Are you sure you want to permanently delete these folders and all their contents?"
+                    reporterText = MpyBundle.message("action.delete.progress.folder.multiple"),
+                    dialogTitle = MpyBundle.message("action.delete.dialog.title.folder.multiple"),
+                    dialogMessage = MpyBundle.message("action.delete.dialog.message.folder.multiple")
                 )
             }
         } else if (folderCount == 0) {
             if (fileCount == 1) {
                 AppropriateText(
-                    reporterText = "Deleting file...",
-                    dialogTitle = "Delete File",
-                    dialogMessage = "Are you sure you want to permanently delete this file?"
+                    reporterText = MpyBundle.message("action.delete.progress.file.one"),
+                    dialogTitle = MpyBundle.message("action.delete.dialog.title.file.one"),
+                    dialogMessage = MpyBundle.message("action.delete.dialog.message.file.one")
                 )
             } else {
                 AppropriateText(
-                    reporterText = "Deleting files...",
-                    dialogTitle = "Delete Files",
-                    dialogMessage = "Are you sure you want to permanently delete these files?"
+                    reporterText = MpyBundle.message("action.delete.progress.file.multiple"),
+                    dialogTitle = MpyBundle.message("action.delete.dialog.title.file.multiple"),
+                    dialogMessage = MpyBundle.message("action.delete.dialog.message.file.multiple")
                 )
             }
         } else {
             AppropriateText(
-                reporterText = "Deleting items...",
-                dialogTitle = "Delete Items",
-                dialogMessage = "Are you sure you want to permanently delete these items?"
+                reporterText = MpyBundle.message("action.delete.progress.items"),
+                dialogTitle = MpyBundle.message("action.delete.dialog.title.items"),
+                dialogMessage = MpyBundle.message("action.delete.dialog.message.items")
             )
         }
     }
 }
 
 internal class MpyDownloadAction : MpyAction(
-    "Download",
+    MpyBundle.message("action.download.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = false,
-        cancelledMessage = "Download operation cancelled"
+        cancelledMessage = MpyBundle.message("action.download.cancelled"),
+        timedOutMessage = MpyBundle.message("action.download.timeout")
     )
 ) {
     init {
@@ -231,7 +227,7 @@ internal class MpyDownloadAction : MpyAction(
 
             if (selectedFiles.isNullOrEmpty()) {
                 e.presentation.isEnabled = false
-                e.presentation.text = "Download"
+                e.presentation.text = MpyBundle.message("action.download.text")
                 return
             }
 
@@ -247,21 +243,21 @@ internal class MpyDownloadAction : MpyAction(
             }
 
             if (selectedFiles.size == 1 && selectedFiles.first().isRoot) {
-                e.presentation.text = "Download Device Contents"
+                e.presentation.text = MpyBundle.message("action.download.text.device")
             } else if (fileCount == 0 && !selectedFiles.any { it.isRoot }) {
-                if (folderCount == 1) {
-                    e.presentation.text = "Download Folder \"${selectedFiles.first().name}\""
+                e.presentation.text = if (folderCount == 1) {
+                    MpyBundle.message("action.download.text.folder.one", selectedFiles.first().name)
                 } else {
-                    e.presentation.text = "Download Folders"
+                    MpyBundle.message("action.download.text.folder.multiple")
                 }
             } else if (folderCount == 0) {
-                if (fileCount == 1) {
-                    e.presentation.text = "Download File \"${selectedFiles.first().name}\""
+                e.presentation.text = if (fileCount == 1) {
+                    MpyBundle.message("action.download.text.file.one", selectedFiles.first().name)
                 } else {
-                    e.presentation.text = "Download Files"
+                    MpyBundle.message("action.download.text.file.multiple")
                 }
             } else {
-                e.presentation.text = "Download Items"
+                e.presentation.text = MpyBundle.message("action.download.text.items")
             }
         }
     }
@@ -272,13 +268,14 @@ internal class MpyDownloadAction : MpyAction(
 }
 
 internal class MpyOpenFileAction : MpyReplAction(
-    "Open File",
+    MpyBundle.message("action.open.file.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = false,
-        cancelledMessage = "Open operation cancelled"
+        cancelledMessage = MpyBundle.message("action.open.file.cancelled"),
+        timedOutMessage = MpyBundle.message("action.open.file.timeout")
     )
 ) {
     init {
@@ -292,7 +289,13 @@ internal class MpyOpenFileAction : MpyReplAction(
             deviceService.fileSystemWidget?.selectedFiles()?.mapNotNull { it as? FileNode } ?: emptyList()
         }
 
-        reporter.text(if (selectedFiles.size == 1) "Opening file..." else "Opening files...")
+        reporter.text(
+            if (selectedFiles.size == 1) {
+                MpyBundle.message("action.open.file.progress.file.one")
+            } else {
+                MpyBundle.message("action.open.file.progress.file.multiple")
+            }
+        )
         for (file in selectedFiles) {
             // Avoid opening a new editor if one already exists for this remote path
             var foundExistingEditor = false
@@ -351,13 +354,15 @@ internal class MpyOpenFileAction : MpyReplAction(
         val fileNodes = selectedFiles?.filterIsInstance<FileNode>()
 
         when {
-            fileNodes.isNullOrEmpty() || fileNodes.count() == 1 -> e.presentation.text = "Open File"
-            else -> e.presentation.text = "Open Files"
+            fileNodes.isNullOrEmpty() || fileNodes.count() == 1 -> e.presentation.text =
+                MpyBundle.message("action.open.file.text")
+
+            else -> e.presentation.text = MpyBundle.message("action.open.file.text.multiple")
         }
     }
 }
 
-internal class MpyCopyPathActionGroup : ActionGroup("Copy Path/Reference", true) {
+internal class MpyCopyPathActionGroup : ActionGroup(MpyBundle.message("action.copy.path.group.text"), true) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
@@ -392,7 +397,10 @@ internal abstract class MpyCopyPathAction(text: String, private val copyAbsolute
     }
 }
 
-internal class MpyCopyAbsolutePathAction : MpyCopyPathAction("Absolute Path", true) {
+internal class MpyCopyFileNameAction : MpyCopyPathAction(MpyBundle.message("action.copy.path.file.name.text"), false)
+
+internal class MpyCopyAbsolutePathAction :
+    MpyCopyPathAction(MpyBundle.message("action.copy.path.absolute.path.text"), true) {
     init {
         val base = ActionManager.getInstance().getAction("CopyAbsolutePath")
         shortcutSet = base.shortcutSet
@@ -400,13 +408,14 @@ internal class MpyCopyAbsolutePathAction : MpyCopyPathAction("Absolute Path", tr
 }
 
 internal class MpyRenameAction : MpyReplAction(
-    "Rename...",
+    MpyBundle.message("action.rename.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = true,
-        cancelledMessage = "File renaming operation cancelled"
+        cancelledMessage = MpyBundle.message("action.rename.cancelled"),
+        timedOutMessage = MpyBundle.message("action.rename.timeout")
     )
 ) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
@@ -443,8 +452,8 @@ internal class MpyRenameAction : MpyReplAction(
 
         val newName = Messages.showInputDialog(
             project,
-            "New name:",
-            "Rename",
+            MpyBundle.message("action.rename.dialog.message"),
+            MpyBundle.message("action.rename.dialog.title"),
             AllIcons.Actions.Edit,
             currentName,
             validator
@@ -463,7 +472,7 @@ internal class MpyRenameAction : MpyReplAction(
         val newName = dialogResult as? String ?: return
         if (newName == selection.name) return  // no-op
 
-        reporter.text("Renaming...")
+        reporter.text(MpyBundle.message("action.rename.progress"))
 
         val oldPath = selection.fullName
         val parentPath = parentDir.fullName
@@ -479,9 +488,7 @@ internal class MpyRenameAction : MpyReplAction(
     }
 }
 
-internal class MpyCopyFileNameAction : MpyCopyPathAction("File Name", false)
-
-internal class MpyNewActionGroup : ActionGroup("New", true) {
+internal class MpyNewActionGroup : ActionGroup(MpyBundle.message("action.new.group.text"), true) {
     override fun getActionUpdateThread(): ActionUpdateThread = BGT
 
     override fun update(e: AnActionEvent) {
@@ -498,13 +505,14 @@ internal class MpyNewActionGroup : ActionGroup("New", true) {
 }
 
 internal class MpyCreatePythonFileAction : MpyReplAction(
-    "Python File",
+    MpyBundle.message("action.create.file.text.python"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = true,
-        cancelledMessage = "File creation cancelled"
+        cancelledMessage = MpyBundle.message("action.create.file.cancelled"),
+        timedOutMessage = MpyBundle.message("action.create.file.timeout")
     )
 ) {
     init {
@@ -531,8 +539,12 @@ internal class MpyCreatePythonFileAction : MpyReplAction(
             override fun canClose(inputString: String) = checkInput(inputString)
         }
         val raw = Messages.showInputDialog(
-            project, "Name:", "Create New Python File",
-            PythonFileType.INSTANCE.icon, "", validator
+            project,
+            MpyBundle.message("action.create.dialog.message"),
+            MpyBundle.message("action.create.file.dialog.title.python"),
+            PythonFileType.INSTANCE.icon,
+            "",
+            validator
         )
         val name = raw?.let(::ensurePy)
         return DialogResult(!name.isNullOrBlank(), "$parentPath/$name")
@@ -544,13 +556,13 @@ internal class MpyCreatePythonFileAction : MpyReplAction(
         dialogResult: Any?
     ) {
         val remotePath = dialogResult as? String ?: return
-        reporter.text("Creating file...")
+        reporter.text(MpyBundle.message("action.create.file.progress"))
 
         deviceService.upload(
             remotePath,
             ByteArray(0),
             progressCallback = {},
-            freeMemBytes = deviceService.deviceInformation.defaultFreeMem ?: throw RuntimeException("Free mem is null")
+            freeMemBytes = deviceService.deviceInformation.defaultFreeMem
         )
     }
 
@@ -559,13 +571,14 @@ internal class MpyCreatePythonFileAction : MpyReplAction(
 }
 
 internal class MpyCreateFileAction : MpyReplAction(
-    "File",
+    MpyBundle.message("action.create.file.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = true,
-        cancelledMessage = "File creation cancelled"
+        cancelledMessage = MpyBundle.message("action.create.file.cancelled"),
+        timedOutMessage = MpyBundle.message("action.create.file.timeout")
     )
 ) {
     init {
@@ -587,8 +600,12 @@ internal class MpyCreateFileAction : MpyReplAction(
             override fun canClose(inputString: String) = checkInput(inputString)
         }
         val name = Messages.showInputDialog(
-            project, "Name:", "Create New File",
-            AllIcons.Actions.New, "", validator
+            project,
+            MpyBundle.message("action.create.dialog.message"),
+            MpyBundle.message("action.create.file.dialog.title"),
+            AllIcons.Actions.New,
+            "",
+            validator
         )
         return DialogResult(!name.isNullOrBlank(), "$parentPath/$name")
     }
@@ -599,24 +616,25 @@ internal class MpyCreateFileAction : MpyReplAction(
         dialogResult: Any?
     ) {
         val remotePath = dialogResult as? String ?: return
-        reporter.text("Creating file...")
+        reporter.text(MpyBundle.message("action.create.file.progress"))
         deviceService.upload(
             remotePath,
             ByteArray(0),
             progressCallback = {},
-            freeMemBytes = deviceService.deviceInformation.defaultFreeMem ?: throw RuntimeException("Free mem is null")
+            freeMemBytes = deviceService.deviceInformation.defaultFreeMem
         )
     }
 }
 
 internal class MpyCreateFolderAction : MpyReplAction(
-    "New Folder",
+    MpyBundle.message("action.create.folder.text"),
     MpyActionOptions(
         visibleWhen = VisibleWhen.ALWAYS,
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = true,
-        cancelledMessage = "New folder creation cancelled"
+        cancelledMessage = MpyBundle.message("action.create.folder.cancelled"),
+        timedOutMessage = MpyBundle.message("action.create.folder.timeout")
     )
 ) {
     init {
@@ -629,7 +647,7 @@ internal class MpyCreateFolderAction : MpyReplAction(
     override suspend fun performAction(e: AnActionEvent, reporter: RawProgressReporter, dialogResult: Any?) {
         val newFolderPath = dialogResult as String
 
-        reporter.text("Creating a new folder...")
+        reporter.text(MpyBundle.message("action.create.folder.progress"))
         deviceService.safeCreateDirectories(
             setOf(newFolderPath)
         )
@@ -665,8 +683,8 @@ internal class MpyCreateFolderAction : MpyReplAction(
 
         val newName = Messages.showInputDialog(
             project,
-            "Name:",
-            "Create New Folder",
+            MpyBundle.message("action.create.dialog.message"),
+            MpyBundle.message("action.create.folder.dialog.title"),
             AllIcons.Actions.AddDirectory,
             "",
             validator

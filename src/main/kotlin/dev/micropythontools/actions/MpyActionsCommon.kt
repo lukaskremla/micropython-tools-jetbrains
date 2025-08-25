@@ -47,7 +47,8 @@ internal data class MpyActionOptions(
     val enabledWhen: EnabledWhen,
     val requiresConnection: Boolean,
     val requiresRefreshAfter: Boolean,
-    val cancelledMessage: String? = null
+    val cancelledMessage: String,
+    val timedOutMessage: String
 )
 
 internal data class DialogResult(
@@ -146,11 +147,12 @@ internal abstract class MpyReplAction(
         if (!dialogResult.shouldExecute) return
 
         performReplAction(
-            project,
-            options.requiresConnection,
-            actionDescription,
-            options.requiresRefreshAfter,
-            options.cancelledMessage ?: "$actionDescription cancelled",
+            project = project,
+            connectionRequired = options.requiresConnection,
+            requiresRefreshAfter = options.requiresRefreshAfter,
+            description = actionDescription,
+            cancelledMessage = options.cancelledMessage,
+            timedOutMessage = options.timedOutMessage,
             { reporter ->
                 performAction(e, reporter, dialogResult.resultToPass)
             }

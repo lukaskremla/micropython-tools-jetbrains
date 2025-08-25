@@ -38,6 +38,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.tree.TreeUtil
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
 import java.awt.Color
 import java.awt.Dimension
@@ -60,7 +61,8 @@ internal class MpyUploadPreview(
 
     private val deviceService = project.service<MpyDeviceService>()
     private val transferService = project.service<MpyTransferService>()
-    private val projectDir = project.guessProjectDir() ?: throw IllegalStateException("Can't guess project dir")
+    private val projectDir = project.guessProjectDir()
+        ?: throw IllegalStateException(MpyBundle.message("upload.preview.error.cannot.guess.project.dir"))
 
     private fun getFolderIcon(virtualFile: VirtualFile): Icon {
         val excludedRoots = transferService.collectExcluded()
@@ -332,14 +334,14 @@ internal class MpyUploadPreview(
         volumeRootNodes: List<PreviewVolumeRootNode>
     ): PreviewVolumeRootNode {
         return volumeRootNodes.find { node.fullName.startsWith(it.fullName) }
-            ?: throw IllegalStateException("Couldn't find parent volume root")
+            ?: throw IllegalStateException(MpyBundle.message("upload.preview.error.cannot.find.parent.volume"))
     }
 
     private val projectTree = com.intellij.ui.treeStructure.Tree(createProjectTreeModel())
     private val deviceTree = com.intellij.ui.treeStructure.Tree(createDeviceTreeModel())
 
     init {
-        title = "Upload Preview"
+        title = MpyBundle.message("upload.preview.title")
         deviceTree.isRootVisible = false
 
         projectTree.setCellRenderer(object : ColoredTreeCellRenderer() {
@@ -418,11 +420,13 @@ internal class MpyUploadPreview(
 
                 cell(InvisibleDividerSplitter().apply {
                     firstComponent = JBScrollPane(projectTree).apply {
-                        border = BorderFactory.createTitledBorder("Project Structure")
+                        border =
+                            BorderFactory.createTitledBorder(MpyBundle.message("upload.preview.project.structure.title"))
                         minimumSize = Dimension(450, 400)
                     }
                     secondComponent = JBScrollPane(deviceTree).apply {
-                        border = BorderFactory.createTitledBorder("Device Preview")
+                        border =
+                            BorderFactory.createTitledBorder(MpyBundle.message("upload.preview.device.preview.title"))
                         minimumSize = Dimension(450, 400)
                     }
                     setResizeEnabled(false)
@@ -431,15 +435,40 @@ internal class MpyUploadPreview(
 
             panel {
                 row {
-                    comment("Upload preview dialog can be disabled in the settings")
+                    comment(MpyBundle.message("upload.preview.can.be.disabled.comment"))
                 }
 
                 row {
-                    cell(createLegendItem("Added", FileStatus.ADDED.color)).gap(RightGap.SMALL)
-                    cell(createLegendItem("Changed", FileStatus.MODIFIED.color)).gap(RightGap.SMALL)
-                    cell(createLegendItem("Deleted", FileStatus.DELETED_FROM_FS.color)).gap(RightGap.SMALL)
-                    cell(createLegendItem("Unchanged", FileStatus.NOT_CHANGED.color)).gap(RightGap.SMALL)
-                    cell(createLegendItem("Skipped/Excluded", FileStatus.IGNORED.color)).gap(RightGap.SMALL)
+                    cell(
+                        createLegendItem(
+                            MpyBundle.message("upload.preview.color.legend.added"),
+                            FileStatus.ADDED.color
+                        )
+                    ).gap(RightGap.SMALL)
+                    cell(
+                        createLegendItem(
+                            MpyBundle.message("upload.preview.color.legend.changed"),
+                            FileStatus.MODIFIED.color
+                        )
+                    ).gap(RightGap.SMALL)
+                    cell(
+                        createLegendItem(
+                            MpyBundle.message("upload.preview.color.legend.deleted"),
+                            FileStatus.DELETED_FROM_FS.color
+                        )
+                    ).gap(RightGap.SMALL)
+                    cell(
+                        createLegendItem(
+                            MpyBundle.message("upload.preview.color.legend.unchanged"),
+                            FileStatus.NOT_CHANGED.color
+                        )
+                    ).gap(RightGap.SMALL)
+                    cell(
+                        createLegendItem(
+                            MpyBundle.message("upload.preview.color.legend.skipped.excluded"),
+                            FileStatus.IGNORED.color
+                        )
+                    ).gap(RightGap.SMALL)
                 }
             }.customize(UnscaledGaps(0, 4, 0, 0))
         }

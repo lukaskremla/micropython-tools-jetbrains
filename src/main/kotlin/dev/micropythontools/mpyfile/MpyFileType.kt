@@ -17,12 +17,13 @@
 package dev.micropythontools.mpyfile
 
 import com.intellij.openapi.fileTypes.UserBinaryFileType
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
 import javax.swing.Icon
 
 internal class MpyFileType : UserBinaryFileType() {
-    override fun getName() = "MicroPython Bytecode"
-    override fun getDescription() = "MicroPython bytecode file"
+    override fun getName() = MpyBundle.message("mpy.file.type.name")
+    override fun getDescription() = MpyBundle.message("mpy.file.type.description")
     override fun getDefaultExtension() = "mpy"
     override fun getIcon(): Icon = MpyIcons.plugin
 }

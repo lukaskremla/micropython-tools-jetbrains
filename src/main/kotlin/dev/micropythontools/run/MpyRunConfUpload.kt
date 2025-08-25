@@ -63,9 +63,9 @@ internal class MpyRunConfUpload(
 
     override fun suggestedName(): String {
         val baseName = when (options.uploadMode) {
-            0 -> "Upload Project"
-            1 -> "Upload Selection"
-            else -> "Upload ${getFileName()}"
+            0 -> MpyBundle.message("run.conf.upload.name.project")
+            1 -> MpyBundle.message("run.conf.upload.name.selection")
+            else -> MpyBundle.message("run.conf.upload.name.item", getFileName())
         }
 
         if (name == baseName) return baseName
@@ -84,8 +84,11 @@ internal class MpyRunConfUpload(
     }
 
     override fun isGeneratedName(): Boolean {
-        val isCustomPathGenerated = "Upload ${getFileName()}" == name
-        val isProjectOrSelectedGenerated = listOf("Upload Project", "Upload Selection").any { it in name }
+        val isCustomPathGenerated = MpyBundle.message("run.conf.upload.name.item", getFileName()) == name
+        val isProjectOrSelectedGenerated = listOf(
+            MpyBundle.message("run.conf.upload.name.project"),
+            MpyBundle.message("run.conf.upload.name.selection")
+        ).any { it in name }
 
         return isCustomPathGenerated || isProjectOrSelectedGenerated
     }
@@ -122,7 +125,7 @@ internal class MpyRunConfUpload(
             Notifications.Bus.notify(
                 Notification(
                     MpyBundle.message("notification.group.name"),
-                    "Cannot run \"${name}\". ${e.localizedMessage}",
+                    MpyBundle.message("run.conf.error.cannot.run", name, e.localizedMessage),
                     NotificationType.ERROR
                 ), project
             )
@@ -139,7 +142,7 @@ internal class MpyRunConfUpload(
 
         if (!settings.state.isPluginEnabled) {
             throw RuntimeConfigurationError(
-                "MicroPython support was not enabled for this project",
+                MpyBundle.message("run.conf.error.mpy.support.not.enabled"),
                 Runnable { ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java) }
             )
         }
@@ -148,7 +151,7 @@ internal class MpyRunConfUpload(
         if (options.uploadMode == 1) {
             if (options.selectedPaths.any { StandardFileSystems.local().findFileByPath(it) == null }) {
                 throw RuntimeConfigurationError(
-                    "One or more of the selected MicroPython Sources Roots no longer exists"
+                    MpyBundle.message("run.conf.upload.error.selected.root.does.not.exist")
                 )
             }
 
@@ -159,7 +162,7 @@ internal class MpyRunConfUpload(
                     }
                 }) {
                 throw RuntimeConfigurationError(
-                    "One or more of the selected roots is no longer marked as a MicroPython Sources Root"
+                    MpyBundle.message("run.conf.upload.error.selected.root.no.longer.marked")
                 )
             }
         }
@@ -170,12 +173,12 @@ internal class MpyRunConfUpload(
             val file = StandardFileSystems.local().findFileByPath(path ?: "")
             if (path == null || file == null) {
                 throw RuntimeConfigurationError(
-                    "File not found: \"$path\". Please select a valid file or folder"
+                    MpyBundle.message("run.conf.upload.error.file.not.found", path ?: "\"\"")
                 )
             }
             if (transferService.collectExcluded().contains(file)) {
                 throw RuntimeConfigurationError(
-                    "File excluded: \"$path\". Excluded folders and their children can't be uploaded"
+                    MpyBundle.message("run.conf.upload.error.file.excluded", path)
                 )
             }
             val targetPath = options.uploadToPath

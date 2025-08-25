@@ -48,9 +48,16 @@ internal class MpyRunConfExecuteState(
             FileDocumentManager.getInstance().saveAllDocuments()
             val file = StandardFileSystems.local().findFileByPath(path)!!
             val code = file.readText()
-            performReplAction(project, true, "Run code", false, "REPL execution cancelled", { _ ->
-                deviceService.instantRun(code)
-            })
+            performReplAction(
+                project,
+                connectionRequired = true,
+                requiresRefreshAfter = false,
+                description = MpyBundle.message("action.execute.file.text"),
+                cancelledMessage = MpyBundle.message("action.execute.cancelled"),
+                timedOutMessage = MpyBundle.message("action.execute.timeout"),
+                { _ ->
+                    deviceService.instantRun(code)
+                })
 
             if (switchToReplOnSuccess) deviceService.activateRepl()
 
@@ -59,8 +66,8 @@ internal class MpyRunConfExecuteState(
             Notifications.Bus.notify(
                 Notification(
                     MpyBundle.message("notification.group.name"),
-                    "Failed to execute \"${fileName}\"",
-                    "An error occurred: ${e.message ?: e.javaClass.simpleName}",
+                    MpyBundle.message("run.conf.error.failed.to.execute.title", fileName),
+                    MpyBundle.message("run.conf.error.failed.to.execute.message", e.message ?: e.javaClass.simpleName),
                     NotificationType.ERROR
                 ), project
             )

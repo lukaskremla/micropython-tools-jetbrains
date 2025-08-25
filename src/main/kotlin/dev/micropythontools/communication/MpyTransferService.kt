@@ -44,9 +44,7 @@ import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.sourceroots.MpySourceRootType
 import dev.micropythontools.ui.*
-import jssc.SerialPort
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
@@ -203,10 +201,12 @@ internal class MpyTransferService(private val project: Project) {
         performReplAction(
             project = project,
             connectionRequired = true,
-            description = "Upload",
             requiresRefreshAfter = false,
+            description = MpyBundle.message("upload.operation.description"),
+            cancelledMessage = MpyBundle.message("upload.operation.cancelled"),
+            timedOutMessage = MpyBundle.message("upload.operation.timeout"),
             action = { reporter ->
-                reporter.text("collecting files and creating directories...")
+                reporter.text(MpyBundle.message("upload.progress.collecting.files"))
                 reporter.fraction(null)
 
                 withContext(Dispatchers.EDT) {
@@ -281,20 +281,12 @@ internal class MpyTransferService(private val project: Project) {
                     projectDir
                 )
 
-                if (settings.state.usingUart && settings.state.increaseBaudrateForFileTransfers == "true") {
-                    reporter.text("Increasing serial connection baudrate...")
-
-                    deviceService.setBaudrate(
-                        settings.state.increasedFileTransferBaudrate?.toIntOrNull() ?: SerialPort.BAUDRATE_115200
-                    )
-                }
-
-                reporter.text("Analyzing device files and preparing upload...")
+                reporter.text(MpyBundle.message("upload.progress.analyzing.and.preparing"))
                 val freeMemBytes = if (deviceService.deviceInformation.hasCRC32) {
                     deviceService.fileSystemWidget?.quietHashingRefresh(reporter)
                 } else {
                     deviceService.fileSystemWidget?.quietRefresh(reporter)
-                }
+                } ?: deviceService.deviceInformation.defaultFreeMem
 
                 // Traverse and collect all file system nodes
                 val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
@@ -382,7 +374,7 @@ internal class MpyTransferService(private val project: Project) {
                     Notifications.Bus.notify(
                         Notification(
                             MpyBundle.message("notification.group.name"),
-                            "All files are up to date",
+                            MpyBundle.message("upload.notification.up.to.date"),
                             NotificationType.INFORMATION
                         ), project
                     )
@@ -422,7 +414,7 @@ internal class MpyTransferService(private val project: Project) {
 
                 // Perform synchronization
                 if (shouldSynchronize && targetPathsToRemove.isNotEmpty()) {
-                    reporter.text("Performing synchronization...")
+                    reporter.text(MpyBundle.message("upload.progress.synchronizing"))
 
                     // Delete remaining existing target paths that aren't a part of the upload
                     deviceService.recursivelySafeDeletePaths(targetPathsToRemove)
@@ -446,11 +438,13 @@ internal class MpyTransferService(private val project: Project) {
                     uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
 
                     reporter.text(
-                        "Uploading: file $uploadedFiles of ${fileToTargetPath.size} | ${
-                            "%.2f".format(
-                                uploadedKB
-                            )
-                        } KB of ${"%.2f".format(totalBytes / 1000)} KB"
+                        MpyBundle.message(
+                            "upload.progress.uploading",
+                            uploadedFiles,
+                            fileToTargetPath.size,
+                            "%.2f".format(uploadedKB),
+                            "%.2f".format(totalBytes / 1000)
+                        )
                     )
                     reporter.fraction(uploadProgress)
                 }
@@ -462,7 +456,7 @@ internal class MpyTransferService(private val project: Project) {
                         path,
                         file.contentsToByteArray(),
                         ::progressCallbackHandler,
-                        freeMemBytes ?: throw (RuntimeException("Free mem bytes is undefined before upload"))
+                        freeMemBytes
                     )
 
                     uploadedFiles++
@@ -474,21 +468,13 @@ internal class MpyTransferService(private val project: Project) {
                 // The upload methods handle creating parent files internally,
                 // however, this is necessary to ensure that empty folders get created too
                 if (folderToTargetPath.isNotEmpty()) {
-                    reporter.text("Creating directories...")
+                    reporter.text(MpyBundle.message("upload.progress.creating.directories"))
                     deviceService.safeCreateDirectories(folderToTargetPath.values.toSet())
                 }
 
                 uploadedSuccessfully = true
             },
             cleanUpAction = { reporter ->
-                withContext(NonCancellable) {
-                    if (settings.state.usingUart && settings.state.increaseBaudrateForFileTransfers == "true") {
-                        reporter.text("Restoring the original serial connection baudrate...")
-
-                        deviceService.setBaudrate(SerialPort.BAUDRATE_115200)
-                    }
-                }
-
                 if (startedUploading) deviceService.fileSystemWidget?.refresh(reporter)
             },
             finalCheckAction = {
@@ -515,7 +501,7 @@ internal class MpyTransferService(private val project: Project) {
                         Notifications.Bus.notify(
                             Notification(
                                 MpyBundle.message("notification.group.name"),
-                                "Uploaded files don't match with the expected sizes. Please try to re-run the upload.",
+                                MpyBundle.message("upload.notification.verification.failed"),
                                 NotificationType.WARNING
                             ), project
                         )
@@ -530,10 +516,12 @@ internal class MpyTransferService(private val project: Project) {
         performReplAction(
             project = project,
             connectionRequired = true,
-            description = "Download",
             requiresRefreshAfter = false,
+            description = MpyBundle.message("download.operation.description"),
+            cancelledMessage = MpyBundle.message("download.operation.cancelled"),
+            timedOutMessage = MpyBundle.message("download.operation.timeout"),
             action = { reporter ->
-                reporter.text("Collecting files to download...")
+                reporter.text(MpyBundle.message("download.operation.collecting.files"))
                 reporter.fraction(null)
 
                 val deviceService = project.service<MpyDeviceService>()
@@ -595,7 +583,7 @@ internal class MpyTransferService(private val project: Project) {
                 parentNameToFile.forEach { (parentName, node) ->
                     val name = if (parentName.isEmpty()) node.name else "$parentName/${node.name}"
 
-                    reporter.text("Downloading: file $downloadedFiles of ${parentNameToFile.size}")
+                    reporter.text(MpyBundle.message("download.progress.downloading", downloadedFiles, parentNameToFile))
                     reporter.fraction(downloadedFiles.toDouble() * singleFileProgress)
                     reporter.details(name)
 
@@ -609,7 +597,12 @@ internal class MpyTransferService(private val project: Project) {
                                 try {
                                     destination!!.findOrCreateFile(name).setBinaryContent(content!!)
                                 } catch (e: Throwable) {
-                                    throw IOException("Error writing files - ${e.localizedMessage}")
+                                    throw IOException(
+                                        MpyBundle.message(
+                                            "download.error.writing.files",
+                                            e.localizedMessage
+                                        )
+                                    )
                                 }
                             }
                         } else {
@@ -617,12 +610,17 @@ internal class MpyTransferService(private val project: Project) {
                                 try {
                                     destination!!.findOrCreateDirectory(name)
                                 } catch (e: Throwable) {
-                                    throw IOException("Error writing files - ${e.localizedMessage}")
+                                    throw IOException(
+                                        MpyBundle.message(
+                                            "download.error.writing.files",
+                                            e.localizedMessage
+                                        )
+                                    )
                                 }
                             }
                         }
                     } catch (e: Throwable) {
-                        throw IOException("Error writing files - ${e.localizedMessage}")
+                        throw IOException(MpyBundle.message("download.error.writing.files", e.localizedMessage))
                     }
 
                     downloadedFiles++

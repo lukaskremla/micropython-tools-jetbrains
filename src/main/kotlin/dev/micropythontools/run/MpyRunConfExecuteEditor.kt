@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import dev.micropythontools.i18n.MpyBundle
 import javax.swing.JComponent
 
 private data class ExecuteParameters(
@@ -43,10 +44,10 @@ internal class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfE
 
     override fun createEditor(): JComponent {
         configurationPanel = panel {
-            row("Source path: ") {
+            row("${MpyBundle.message("run.conf.execute.editor.label.source.path")} ") {
                 textFieldWithBrowseButton(
                     FileChooserDescriptor(true, false, false, false, false, false)
-                        .withTitle("Select Path")
+                        .withTitle(MpyBundle.message("run.conf.execute.editor.file.chooser.title"))
                         .withRoots(runConfiguration.project.guessProjectDir()),
                     runConfiguration.project
                 ).apply {
@@ -63,7 +64,7 @@ internal class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfE
                 }.align(AlignX.FILL)
             }
             row {
-                checkBox("Switch to REPL tab on success")
+                checkBox(MpyBundle.message("run.conf.execute.editor.checkbox.switch.to.repl"))
                     .bindSelected(parameters::switchToReplOnSuccess)
             }
         }

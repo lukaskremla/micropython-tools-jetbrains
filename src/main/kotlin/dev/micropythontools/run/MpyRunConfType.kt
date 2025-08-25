@@ -17,12 +17,13 @@
 package dev.micropythontools.run
 
 import com.intellij.execution.configurations.ConfigurationTypeBase
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
 
 internal class MpyRunConfType : ConfigurationTypeBase(
     ID,
-    "MicroPython Tools",
-    "MicroPython Tools Run Configuration Type",
+    MpyBundle.message("run.conf.type.name"),
+    MpyBundle.message("run.conf.type.description"),
     MpyIcons.plugin
 ) {
     init {

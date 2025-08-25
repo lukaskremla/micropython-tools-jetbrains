@@ -26,13 +26,12 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.ExceptionUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import dev.micropythontools.core.MpyScripts
 import dev.micropythontools.i18n.MpyBundle
-import jssc.SerialPort
+import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -70,7 +69,7 @@ internal open class MpyComm(
         deviceService.stateListeners.forEach { it(newValue) }
     }
 
-    internal var connectionParameters: ConnectionParameters = ConnectionParameters("http://192.168.4.1:8266", "")
+    internal var connectionParameters: ConnectionParameters = ConnectionParameters(DEFAULT_WEBREPL_URL, "")
 
     @Volatile
     private var mpyClient: MpyClient? = null
@@ -132,7 +131,7 @@ internal open class MpyComm(
 
         // Expect at least 10 KB of free memory as a safe minimum
         if (freeMemBytes < 10000) {
-            throw IOException("Insufficient free memory for upload. Please reset the device.")
+            throw IOException(MpyBundle.message("upload.error.insufficient.memory"))
         }
 
         // this is 80% OR 10KB, not the intended policy
@@ -231,36 +230,6 @@ internal open class MpyComm(
         }
     }
 
-    suspend fun setBaudrate(baudrate: Int) {
-        checkConnected()
-        commMutex.withLock {
-            if (mpyClient is MpySerialClient) {
-                // Reconfigure the REPL to the specified baudrate
-                doBlindExecute(
-                    "import machine, time; machine.UART(0, baudrate=$baudrate); time.sleep(2)",
-                    redirectToRepl = true
-                )
-
-                // Move back to TTY_DETACHED
-                state = State.TTY_DETACHED
-
-                // Reconfigure the JSSC to the specified baudrate
-                (mpyClient as MpySerialClient).port.setParams(
-                    baudrate,
-                    SerialPort.DATABITS_8,
-                    SerialPort.STOPBITS_1,
-                    SerialPort.PARITY_NONE
-                )
-
-                // Clear the garbage output that switching baudrates causes
-                offTtyByteBuffer.reset()
-
-                // Return to CONNECTED state
-                state = State.CONNECTED
-            }
-        }
-    }
-
     override fun dispose() {
         close()
     }
@@ -293,7 +262,7 @@ internal open class MpyComm(
         offTtyByteBuffer.reset()
         commMutex.withLock {
             try {
-                mpyClient = createClient().connect("Connecting to $name")
+                mpyClient = createClient().connect(MpyBundle.message("comm.progress.connecting", name))
             } catch (e: Exception) {
                 state = State.DISCONNECTED
                 throw e
@@ -325,17 +294,27 @@ internal open class MpyComm(
 
                     if (foundEotCharacters > 2) {
                         ApplicationManager.getApplication().invokeLater {
-                            runWithModalProgressBlocking(project, "Leaving instant run raw REPL") {
-                                withTimeout(SHORT_TIMEOUT) {
-                                    state = State.TTY_DETACHED
-                                    // Interrupt running code
-                                    mpyClient?.send("\u0003")
-                                    mpyClient?.send("\u0002")
-                                    if (state == State.TTY_DETACHED) {
-                                        state = State.CONNECTED
+                            performReplAction(
+                                project = project,
+                                connectionRequired = false,
+                                requiresRefreshAfter = false,
+                                description = MpyBundle.message("execute.cleanup.description"),
+                                cancelledMessage = MpyBundle.message("execute.cleanup.cancelled"),
+                                timedOutMessage = MpyBundle.message("execute.cleanup.timeout"),
+                                { reporter ->
+                                    reporter.text(MpyBundle.message("execute.cleanup.progress"))
+
+                                    withTimeout(SHORT_TIMEOUT) {
+                                        state = State.TTY_DETACHED
+                                        // Interrupt running code
+                                        mpyClient?.send("\u0003")
+                                        mpyClient?.send("\u0002")
+                                        if (state == State.TTY_DETACHED) {
+                                            state = State.CONNECTED
+                                        }
                                     }
                                 }
-                            }
+                            )
                         }
 
                         shouldExitRawRepl = false
@@ -354,7 +333,7 @@ internal open class MpyComm(
                             Notifications.Bus.notify(
                                 Notification(
                                     MpyBundle.message("notification.group.name"),
-                                    "Error writing to the IDE terminal widget. Please connect again and retry.",
+                                    MpyBundle.message("terminal.error.write"),
                                     NotificationType.ERROR
                                 ), deviceService.project
                             )
@@ -397,7 +376,7 @@ internal open class MpyComm(
                     mpyClient?.send("\u0004")
                 }
             } catch (e: TimeoutCancellationException) {
-                throw IOException("Timed out while performing reset", e)
+                throw IOException(MpyBundle.message("repl.reset.error.timeout"), e)
             }
         }
 
@@ -410,12 +389,12 @@ internal open class MpyComm(
             mpyWebsocketClient.closeBlocking()
 
             try {
-                mpyWebsocketClient.connect("Reconnecting WebREPL After Reset...")
+                mpyWebsocketClient.connect(MpyBundle.message("webrepl.reset.reconnect"))
             } catch (e: TimeoutCancellationException) {
                 Notifications.Bus.notify(
                     Notification(
                         MpyBundle.message("notification.group.name"),
-                        "Connection attempt timed out",
+                        MpyBundle.message("webrepl.reset.reconnect.error.timeout"),
                         NotificationType.ERROR
                     ), project
                 )
@@ -424,7 +403,7 @@ internal open class MpyComm(
                 Notifications.Bus.notify(
                     Notification(
                         MpyBundle.message("notification.group.name"),
-                        "Connection attempt cancelled",
+                        MpyBundle.message("webrepl.reset.reconnect.error.cancelled"),
                         NotificationType.ERROR
                     ), project
                 )
@@ -453,7 +432,7 @@ internal open class MpyComm(
                     }
                 }
             } catch (e: TimeoutCancellationException) {
-                throw IOException("Timed out while interrupting running code", e)
+                throw IOException(MpyBundle.message("repl.interrupt.error.timeout"), e)
             }
         }
     }
@@ -539,7 +518,7 @@ internal open class MpyComm(
     internal fun checkConnected() {
         when (state) {
             State.CONNECTED, State.TTY_DETACHED -> {}
-            else -> throw IOException("Not connected")
+            else -> throw IOException(MpyBundle.message("comm.error.not.connected"))
         }
     }
 
@@ -677,7 +656,7 @@ internal open class MpyComm(
                                 }
                             }
                         } catch (_: TimeoutCancellationException) {
-                            throw IOException("Timed out waiting for raw REPL being ready")
+                            throw IOException(MpyBundle.message("comm.error.raw.repl.prompt.timeout"))
                         }
 
                         // Clear the buffer before establishing a raw paste mode handshake
@@ -694,7 +673,7 @@ internal open class MpyComm(
                                 }
                             }
                         } catch (_: TimeoutCancellationException) {
-                            throw IOException("Timed out waiting for raw paste mode response")
+                            throw IOException(MpyBundle.message("comm.error.raw.paste.missing.initial.bytes"))
                         }
 
                         // Read exactly two bytes that indicate whether raw paste mode was established successfully
@@ -714,17 +693,16 @@ internal open class MpyComm(
                             b0 == 0x52.toByte() && b1 == 0x00.toByte() ||
                                     b0 == 0x72.toByte() && b1 == 0x61.toByte()
                                 -> {
-                                throw IOException("Device failed to enter raw paste mode. Please try again and if it doesn't help open an issue on our GitHub.")
+                                throw IOException(MpyBundle.message("comm.error.raw.paste.rejected"))
                             }
 
                             // Unknown response
                             else -> {
+                                val b0Hex = "%02X".format(b0.toInt() and 0xFF)
+                                val b1Hex = "%02X".format(b1.toInt() and 0xFF)
+
                                 throw IOException(
-                                    ("Unknown raw paste response: \"b0=0x%02X b1=0x%02X\". " +
-                                            "Please try again and if it doesn't help open an issue on our GitHub.").format(
-                                        b0,
-                                        b1
-                                    )
+                                    MpyBundle.message("comm.error.raw.paste.unknown.response", b0Hex, b1Hex)
                                 )
                             }
                         }
@@ -737,12 +715,12 @@ internal open class MpyComm(
                                 }
                             }
                         } catch (_: TimeoutCancellationException) {
-                            throw IOException("Timed out waiting for raw paste mode flow control bytes")
+                            throw IOException(MpyBundle.message("comm.error.raw.paste.initial.flow.control.timeout"))
                         }
                     }
                 }
             } catch (_: TimeoutCancellationException) {
-                throw IOException("Timed out while establishing raw paste mode")
+                throw IOException(MpyBundle.message("comm.error.raw.paste.timeout"))
             }
 
             // Read two flow control bytes
@@ -774,8 +752,8 @@ internal open class MpyComm(
                                 checkCanceled()
                             }
                         }
-                    } catch (e: TimeoutCancellationException) {
-                        throw IOException("Timed out waiting for raw paste mode flow control bytes: $e")
+                    } catch (_: TimeoutCancellationException) {
+                        throw IOException(MpyBundle.message("comm.error.raw.paste.flow.control.timeout"))
                     }
 
                     // Read one flow control byte
@@ -789,9 +767,7 @@ internal open class MpyComm(
                         // Acknowledge (Ctrl-D)
                         mpyClient?.send("\u0004")
                         throw IOException(
-                            "Device aborted raw paste mode. " +
-                                    "The device's memory might be fragmented or insufficient for this operation. " +
-                                    "Please reset the board and retry."
+                            MpyBundle.message("comm.error.raw.paste.aborted")
                         )
                     }
                 }
@@ -839,7 +815,7 @@ internal open class MpyComm(
                     ) checkCanceled()
                 }
             } catch (_: TimeoutCancellationException) {
-                throw IOException("Timed out while executing command: $command")
+                throw IOException(MpyBundle.message("comm.error.execution.timeout", command))
             }
 
             // Decode the output
@@ -959,9 +935,18 @@ internal open class MpyComm(
             if (state == State.CONNECTED) {
                 // Soft reset will terminate the WebREPL session
                 if (text.contains('\u0004') && mpyClient is MpyWebSocketClient) {
-                    runWithModalProgressBlocking(project, "Soft Resetting Device...") {
-                        reset()
-                    }
+                    performReplAction(
+                        project = project,
+                        connectionRequired = false,
+                        requiresRefreshAfter = false,
+                        description = MpyBundle.message("repl.reset.hotkey.description"),
+                        cancelledMessage = MpyBundle.message("repl.reset.hotkey.cancelled"),
+                        timedOutMessage = MpyBundle.message("repl.reset.hotkey.timeout"),
+                        { reporter ->
+                            reporter.text(MpyBundle.message("repl.reset.hotkey.progress"))
+                            reset()
+                        }
+                    )
                     return
                 }
 
