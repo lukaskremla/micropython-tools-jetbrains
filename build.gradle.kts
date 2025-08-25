@@ -16,6 +16,7 @@ repositories {
 
 plugins {
     kotlin("jvm") version "2.1.21"
+    kotlin("plugin.serialization") version "2.1.21"
     id("org.jetbrains.intellij.platform") version "2.6.0"
 }
 
@@ -43,6 +44,7 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
     }
     implementation("com.fazecast:jSerialComm:2.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     // Relies on a custom fork of the Java-Websocket library made for this plugin
     // https://github.com/lukaskremla/Java-WebSocket
     implementation(files(project.property("javaWebsocket").toString()))
