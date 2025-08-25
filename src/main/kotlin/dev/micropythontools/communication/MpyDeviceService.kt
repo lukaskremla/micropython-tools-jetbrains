@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit
 internal typealias StateListener = (State) -> Unit
 
 internal data class DeviceInformation(
-    val defaultFreeMem: Int? = null,
+    val defaultFreeMem: Int = 0,
     var hasCRC32: Boolean = false,
     var canEncodeBase64: Boolean = false,
     var canDecodeBase64: Boolean = false,
@@ -383,21 +383,11 @@ internal class MpyDeviceService(val project: Project) : Disposable {
             val responseFields = scriptResponse.split("&")
 
             deviceInformation = DeviceInformation(
-                version = responseFields.getOrNull(0) ?: "Unknown",
-                description = responseFields.getOrNull(1) ?: "Unknown",
-                defaultFreeMem = responseFields.getOrNull(2)?.toIntOrNull(),
-                hasCRC32 = responseFields.getOrNull(3)?.toBoolean() == true,
-                canEncodeBase64 = responseFields.getOrNull(4)?.toBoolean() == true,
-                canDecodeBase64 = responseFields.getOrNull(5)?.toBoolean() == true,
-                platform = responseFields.getOrNull(6),
-                byteorder = responseFields.getOrNull(7),
-                maxsize = responseFields.getOrNull(8)?.toLongOrNull(),
-                mpyVersion = responseFields.getOrNull(9)?.toIntOrNull(),
-                mpySubversion = responseFields.getOrNull(10)?.toIntOrNull(),
-                mpyArchIdx = responseFields.getOrNull(11)?.toIntOrNull(),
-                mpyArchName = responseFields.getOrNull(12),
-                wordSize = responseFields.getOrNull(13)?.toIntOrNull(),
-                smallIntBits = responseFields.getOrNull(14)?.toIntOrNull()
+                defaultFreeMem = responseFields.getOrNull(0)?.toIntOrNull()
+                    ?: throw RuntimeException(MpyBundle.message("comm.error.initialization.freemem")),
+                hasCRC32 = responseFields.getOrNull(1)?.toBoolean() == true,
+                canEncodeBase64 = responseFields.getOrNull(2)?.toBoolean() == true,
+                canDecodeBase64 = responseFields.getOrNull(3)?.toBoolean() == true
             )
         } else {
             deviceInformation = DeviceInformation()
