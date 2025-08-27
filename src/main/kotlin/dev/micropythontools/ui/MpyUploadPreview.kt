@@ -366,9 +366,9 @@ internal class MpyUploadPreview(
                 leaf: Boolean, row: Int, hasFocus: Boolean,
             ) {
                 value as PreviewNode
-                icon = when {
-                    value is PreviewVolumeRootNode && !value.isFileSystemRoot -> MpyIcons.Volume
-                    value is PreviewDirNode -> AllIcons.Nodes.Folder
+                icon = when (value) {
+                    is PreviewVolumeRootNode if !value.isFileSystemRoot -> MpyIcons.Volume
+                    is PreviewDirNode -> AllIcons.Nodes.Folder
                     else -> FileTypeRegistry.getInstance().getFileTypeByFileName(value.name).icon
                 }
 

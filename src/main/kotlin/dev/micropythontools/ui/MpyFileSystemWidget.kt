@@ -93,12 +93,13 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 leaf: Boolean, row: Int, hasFocus: Boolean,
             ) {
                 value as FileSystemNode
-                icon = when {
-                    // Only non "/" root volumes have a separate icon, otherwise it's meant to get the DirNode icon
-                    value is VolumeRootNode && !value.isFileSystemRoot -> MpyIcons.Volume
-                    value is DirNode -> AllIcons.Nodes.Folder
-                    else -> FileTypeRegistry.getInstance().getFileTypeByFileName(value.name).icon
-                }
+                icon =
+                    when (value) {
+                        // Only non "/" root volumes have a separate icon, otherwise it's meant to get the DirNode icon
+                        is VolumeRootNode if !value.isFileSystemRoot -> MpyIcons.Volume
+                        is DirNode -> AllIcons.Nodes.Folder
+                        else -> FileTypeRegistry.getInstance().getFileTypeByFileName(value.name).icon
+                    }
 
                 if (isNodeCut(value)) {
                     val dimmed = ColorUtil.withAlpha(
