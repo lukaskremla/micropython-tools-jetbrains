@@ -27,7 +27,7 @@ dependencies {
         val pythonPlugin = project.property("pythonPlugin").toString()
 
         create(type, version) {
-            useInstaller = false
+            useInstaller.set(false)
         }
 
         jetbrainsRuntime()
