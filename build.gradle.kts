@@ -101,25 +101,23 @@ intellijPlatform {
     }
 }
 
+@Suppress("unused")
 intellijPlatformTesting {
-    runIde {
-        register("runPyCharmProfessional") {
-            type = IntelliJPlatformType.PyCharmProfessional
-            version = project.property("testPlatformVersion").toString()
-        }
+    val runPyCharmProfessional by runIde.registering {
+        type = IntelliJPlatformType.PyCharmProfessional
+        version = project.property("testPlatformVersion").toString()
+    }
 
-        register("runPyCharmCommunity") {
-            type = IntelliJPlatformType.PyCharmCommunity
-            version = project.property("testPlatformVersion").toString()
-        }
+    val runPyCharmCommunity by runIde.registering {
+        type = IntelliJPlatformType.PyCharmCommunity
+        version = project.property("testPlatformVersion").toString()
+    }
 
-        register("runCLion") {
-            type = IntelliJPlatformType.CLion
-            version = project.property("testPlatformVersion").toString()
-
-            plugins {
-                plugin(project.property("pythonPlugin").toString())
-            }
+    val runCLion by runIde.registering {
+        type = IntelliJPlatformType.CLion
+        version = project.property("testPlatformVersion").toString()
+        plugins {
+            plugin(project.property("pythonPlugin").toString())
         }
     }
 }
