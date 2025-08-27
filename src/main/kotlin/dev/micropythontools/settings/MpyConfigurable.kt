@@ -521,7 +521,7 @@ internal class MpyConfigurable(private val project: Project) :
 
                                 e.presentation.isEnabled = stubsAndPluginEnabled &&
                                         selectedObjects.size == 1 &&
-                                        selectedObjects.first().name != selectedStubPackageHiddenField.component.text &&
+                                        "${selectedObjects.first().name}_${selectedObjects.first().mpyVersion}" != selectedStubPackageHiddenField.component.text &&
                                         selectedObjects.first().isInstalled
                             }
 
@@ -546,7 +546,7 @@ internal class MpyConfigurable(private val project: Project) :
 
                                 e.presentation.isEnabled = stubsAndPluginEnabled &&
                                         selectedObjects.size == 1 &&
-                                        selectedObjects.first().name == selectedStubPackageHiddenField.component.text &&
+                                        "${selectedObjects.first().name}_${selectedObjects.first().mpyVersion}" == selectedStubPackageHiddenField.component.text &&
                                         selectedObjects.first().isInstalled
                             }
 
