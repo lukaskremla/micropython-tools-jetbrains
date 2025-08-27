@@ -134,7 +134,6 @@ tasks {
         from("$rootDir") {
             into("micropython-tools-jetbrains")
             include("scripts/")
-            include("stubs/")
         }
 
         from("$rootDir/libs") {

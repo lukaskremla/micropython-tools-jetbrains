@@ -16,10 +16,47 @@
 
 package dev.micropythontools.core
 
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
+import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.statistics.version
+import dev.micropythontools.i18n.MpyBundle
 
 @Service(Service.Level.PROJECT)
 internal class MpyPythonInterpreterService(private val project: Project) {
+    fun runPythonCode(args: List<String>): String {
+        val sdk = findPythonSdk() ?: return ""
+        val command = listOf(sdk.homePath) + args
 
+        val process = CapturingProcessHandler(GeneralCommandLine(command))
+        val output = process.runProcess(10_000)
+        return when {
+            output.isCancelled -> throw ExecutionException(MpyBundle.message("python.service.code.execution.cancelled"))
+            output.isTimeout -> throw ExecutionException(MpyBundle.message("python.service.code.execution.timed_out"))
+            output.exitCode != 0 -> throw ExecutionException(MpyBundle.message("python.service.code.execution.failed"))
+            else -> {
+                output.toString()
+            }
+        }
+    }
+
+    fun checkValid(): ValidationResult {
+        findPythonSdk() ?: return ValidationResult(MpyBundle.message("python.service.validation.requires.valid.sdk"))
+
+        return ValidationResult.OK
+    }
+
+    private fun findPythonSdk(): Sdk? {
+        return project
+            .modules
+            .mapNotNull { PythonSdkUtil.findPythonSdk(it) }
+            .firstOrNull { it.version.isAtLeast(LanguageLevel.PYTHON310) }
+    }
 }

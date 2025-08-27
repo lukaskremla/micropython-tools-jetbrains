@@ -1,0 +1,23 @@
+<html lang="en">
+<body>
+<p>Detects when a valid Python 3.10+ interpreter is not configured for MicroPython tooling.</p>
+
+<p>
+    This inspection ensures that the required Python interpreter is available and properly configured.
+    The MicroPython Tools plugin relies on a local Python 3.10+ interpreter to install and manage stub packages using
+    pip.
+    Without a valid interpreter, stub installation and background tooling may fail silently.
+</p>
+
+<p>
+    To resolve this, configure a Python 3.10+ interpreter under
+    <a href="settings://PythonInterpreter">Project Settings → Python Interpreter</a> and ensure it is assigned to your
+    module.
+</p>
+
+<pre><code>// No Python interpreter configured or version &lt; 3.10
+</code></pre>
+<!-- tooltip end -->
+<p>This inspection also supports quick fixes to open the interpreter settings dialog directly.</p>
+</body>
+</html>

@@ -22,6 +22,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
@@ -34,9 +35,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.readText
 import com.jetbrains.python.library.PythonLibraryType
 import dev.micropythontools.core.MpyPaths
+import dev.micropythontools.core.MpyPythonInterpreterService
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
@@ -47,18 +50,15 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.json.JSONObject
-import java.io.IOException
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
-import java.util.zip.ZipInputStream
 import javax.swing.JComponent
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.pathString
-import kotlin.io.path.writeBytes
 
 internal data class StubPackage(
     val name: String,
@@ -125,20 +125,21 @@ internal class MpyStubPackageService(private val project: Project) {
         var stubValidationText: String? = null
 
         // Try to find the stub package
-        val stubPackage = getStubPackages().find { it.name == activeStubsPackageName }
+        val stubPackage = getStubPackages().first.find { "${it.name}_${it.mpyVersion}" == activeStubsPackageName }
 
         if (settings.state.areStubsEnabled) {
             if (activeStubsPackageName.isBlank()) {
-                stubValidationText = "No stub package selected"
+                stubValidationText = MpyBundle.message("stub.service.validation.no.package")
             } else if (stubPackage == null || !stubPackage.isInstalled) {
-                stubValidationText = "Invalid stub package selected"
+                stubValidationText = MpyBundle.message("stub.service.validation.invalid.package")
             }
         }
 
         return if (stubValidationText != null) {
             return ValidationResult(
                 stubValidationText,
-                object : FacetConfigurationQuickFix("Change Settings") {
+                object :
+                    FacetConfigurationQuickFix(MpyBundle.message("stub.service.validation.change.button.settings")) {
                     override fun run(place: JComponent?) {
                         ApplicationManager.getApplication().invokeLater {
                             ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
@@ -155,7 +156,7 @@ internal class MpyStubPackageService(private val project: Project) {
         DumbService.getInstance(project).smartInvokeLater {
             ApplicationManager.getApplication().runWriteAction {
                 // Try to find the stub package
-                val stubPackage = getStubPackages().find { it.name == newStubPackageName }
+                val stubPackage = getStubPackages().first.find { "${it.name}_${it.mpyVersion}" == newStubPackageName }
 
                 if (!settings.state.areStubsEnabled || stubPackage == null || !stubPackage.isInstalled) {
                     return@runWriteAction
@@ -170,6 +171,7 @@ internal class MpyStubPackageService(private val project: Project) {
 
                 // Add roots
                 val rootUrl = "${MpyPaths.stubBaseDir}/$newStubPackageName"
+
                 val stdlibUrl = "$rootUrl/stdlib"
 
                 val rootFile = LocalFileSystem.getInstance().findFileByPath(rootUrl)
@@ -238,23 +240,23 @@ internal class MpyStubPackageService(private val project: Project) {
         }
     }
 
-    fun getStubPackages(): List<StubPackage> {
+    /**
+     * Returns a pair: (sorted list of stub packages, fetchedRemoteOk)
+     * Sorted so that installed first, then by mpyVersion desc, then name A→Z, then variant A→Z.
+     */
+    fun getStubPackages(): Pair<List<StubPackage>, Boolean> {
         val remoteStubPackages = getRemoteStubPackages()
 
         val stubPackages = mutableListOf<StubPackage>()
-
         val installedStubPackages = getInstalledStubPackages()
-
         stubPackages.addAll(installedStubPackages)
 
         remoteStubPackages.forEach { remotePackage ->
             val remoteFullName = "${remotePackage.name}_${remotePackage.mpyVersion}"
-
-            if (installedStubPackages.none { installedPackage ->
-                    val localFullName = "${installedPackage.name}_${installedPackage.mpyVersion}"
-                    remoteFullName == localFullName
-                }
-            ) {
+            val isAlreadyInstalled = installedStubPackages.any { installed ->
+                "${installed.name}_${installed.mpyVersion}" == remoteFullName
+            }
+            if (!isAlreadyInstalled) {
                 stubPackages.add(
                     StubPackage(
                         remotePackage.name,
@@ -271,7 +273,9 @@ internal class MpyStubPackageService(private val project: Project) {
             }
         }
 
-        return stubPackages
+        // 👉 Apply preferred sort before returning
+        val sorted = sortStubPackages(stubPackages)
+        return Pair(sorted, remoteStubPackages.isNotEmpty())
     }
 
     private fun getLocalStubPackage(packageName: String, mpyVersion: String): StubPackage? {
@@ -332,7 +336,7 @@ internal class MpyStubPackageService(private val project: Project) {
             Notifications.Bus.notify(
                 Notification(
                     MpyBundle.message("notification.group.name"),
-                    "Failed to retrieve available remote stub packages. Please check your internet connection",
+                    MpyBundle.message("stub.service.failed.to.get.remote.stubs"),
                     NotificationType.ERROR
                 )
             )
@@ -362,73 +366,88 @@ internal class MpyStubPackageService(private val project: Project) {
     /**
      * Method for installing or updating stub packages
      */
-    fun install(stubPackage: StubPackage): Boolean {
-        val (resolvedBoardVersion, boardUrl) =
-            getExactVersionAndUrl(stubPackage.name, stubPackage.mpyVersion) ?: return false
-        val (resolvedStdlibVersion, stdlibUrl) =
-            getExactVersionAndUrl(MpyPaths.STDLIB_STUB_PACKAGE_NAME, stubPackage.mpyVersion) ?: return false
+    fun install(stubPackage: StubPackage) {
+        val (resolvedBoardVersion, _) =
+            getExactVersionAndUrl(stubPackage.name, stubPackage.mpyVersion) ?: return
+        val (resolvedStdlibVersion, _) = if (isAtLeast123(stubPackage.mpyVersion)) {
+            getExactVersionAndUrl(MpyPaths.STDLIB_STUB_PACKAGE_NAME, stubPackage.mpyVersion) ?: return
+        } else {
+            "" to ""
+        }
 
         val targetDir = MpyPaths.stubBaseDir.resolve("${stubPackage.name}_${stubPackage.mpyVersion}")
 
         ensureDirs(MpyPaths.stubBaseDir, targetDir)
 
-        var boardArchivePath: Path? = null
-        var stdlibArchivePath: Path? = null
-        try {
-            // board
-            val boardBytes = client.send(
-                HttpRequest.newBuilder().uri(URI.create(boardUrl)).build(),
-                HttpResponse.BodyHandlers.ofByteArray()
-            ).body()
-            boardArchivePath = Files.createTempFile("${stubPackage.name}-${resolvedBoardVersion}", ".zip")
-            Files.write(boardArchivePath, boardBytes)
-            unzip(boardArchivePath, targetDir)
+        val pythonService = project.service<MpyPythonInterpreterService>()
 
+        // board
+        val boardCommand = listOf(
+            "-m", "pip", "install",
+            "${stubPackage.name}~=$resolvedBoardVersion",
+            "--target", targetDir.absolutePathString(),
+            "--disable-pip-version-check",
+            "--quiet",
+            "--upgrade"
+        ).toMutableList()
+
+        if (isAtLeast123(stubPackage.mpyVersion)) boardCommand.add("--no-deps")
+
+        pythonService.runPythonCode(boardCommand)
+
+        if (isAtLeast123(stubPackage.mpyVersion)) {
             // stdlib
-            val stdlibBytes = client.send(
-                HttpRequest.newBuilder().uri(URI.create(stdlibUrl)).build(),
-                HttpResponse.BodyHandlers.ofByteArray()
-            ).body()
-            stdlibArchivePath =
-                Files.createTempFile("${MpyPaths.STDLIB_STUB_PACKAGE_NAME}-${resolvedStdlibVersion}", ".zip")
-            Files.write(stdlibArchivePath, stdlibBytes)
-            unzip(stdlibArchivePath, targetDir)
-
-            // metadata
-            val json = Json { prettyPrint = true }
-            val payload = StubPackageJson(
-                family = stubPackage.family,
-                board = stubPackage.board,
-                variant = stubPackage.variant,
-                boardStubVersion = resolvedBoardVersion,
-                stdlibStubVersion = resolvedStdlibVersion
+            val stdlibCommand = listOf(
+                "-m", "pip", "install",
+                "${MpyPaths.STDLIB_STUB_PACKAGE_NAME}~=$resolvedStdlibVersion",
+                "--target", targetDir.absolutePathString(),
+                "--no-deps",
+                "--disable-pip-version-check",
+                "--quiet",
+                "--upgrade"
             )
-            targetDir.resolve(MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
-                .writeBytes(json.encodeToString(payload).toByteArray())
 
-            LocalFileSystem.getInstance()
-                .refreshAndFindFileByIoFile(targetDir.toFile())
-                ?.refresh(true, true)
-
-            return true
-        } catch (e: Exception) {
-            Notifications.Bus.notify(
-                Notification(
-                    MpyBundle.message("notification.group.name"),
-                    "Stub installation failed: ${e.message}",
-                    NotificationType.ERROR
-                ), project
-            )
-            return false
-        } finally {
-            boardArchivePath?.let { runCatching { Files.deleteIfExists(it) } }
-            stdlibArchivePath?.let { runCatching { Files.deleteIfExists(it) } }
+            pythonService.runPythonCode(stdlibCommand)
         }
+
+        // metadata
+        val json = Json { prettyPrint = true }
+        val payload = StubPackageJson(
+            family = stubPackage.family,
+            board = stubPackage.board,
+            variant = stubPackage.variant,
+            boardStubVersion = resolvedBoardVersion,
+            stdlibStubVersion = resolvedStdlibVersion
+        )
+
+        val lfs = LocalFileSystem.getInstance()
+        val dirVf = lfs.refreshAndFindFileByPath(targetDir.pathString) ?: return
+
+        val text = json.encodeToString(payload)
+
+        runWriteAction {
+            // create if missing, otherwise reuse
+            val fileVf = dirVf.findChild(MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
+                ?: dirVf.createChildData(this, MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
+
+            com.intellij.openapi.vfs.VfsUtil.saveText(fileVf, text)
+            // ensure VFS is up-to-date for subsequent reads
+            fileVf.refresh(false, false)
+        }
+
+        LocalFileSystem.getInstance()
+            .refreshAndFindFileByIoFile(targetDir.toFile())
+            ?.refresh(true, true)
+
+        return
     }
 
     fun delete(stubPackage: StubPackage) {
         val targetDir = MpyPaths.stubBaseDir.resolve("${stubPackage.name}_${stubPackage.mpyVersion}")
-        runCatching { Files.deleteIfExists(targetDir) }
+        runWriteAction {
+            StandardFileSystems.local().findFileByPath(targetDir.absolutePathString())
+                ?.delete(MpyStubPackageService)
+        }
     }
 
     /**
@@ -493,22 +512,37 @@ internal class MpyStubPackageService(private val project: Project) {
         return if (url != null) chosenVersion to url else null
     }
 
-    private fun unzip(zipFile: Path, targetDir: Path) {
-        Files.createDirectories(targetDir)
-        ZipInputStream(Files.newInputStream(zipFile)).use { zis ->
-            var entry = zis.nextEntry
-            while (entry != null) {
-                val outPath = targetDir.resolve(entry.name).normalize()
-                if (!outPath.startsWith(targetDir)) throw IOException("Zip traversal attack detected!")
-
-                if (entry.isDirectory) {
-                    Files.createDirectories(outPath)
-                } else {
-                    Files.createDirectories(outPath.parent)
-                    Files.copy(zis, outPath, StandardCopyOption.REPLACE_EXISTING)
-                }
-                entry = zis.nextEntry
-            }
-        }
+    private fun sortStubPackages(pkgs: List<StubPackage>): List<StubPackage> {
+        return pkgs.sortedWith(
+            compareBy<StubPackage> { !it.isInstalled } // installed first
+                .thenComparator { a, b -> compareVersionsDesc(a.mpyVersion, b.mpyVersion) } // newest version first
+                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name } // name A→Z
+                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.variant } // variant A→Z
+        )
     }
+
+    private fun versionKey(v: String): IntArray {
+        val base = v.substringBefore(".post")
+        val post = v.substringAfter(".post", "").toIntOrNull()
+        val nums = base.split('.').map { it.toIntOrNull() ?: 0 }
+        val major = nums.getOrNull(0) ?: 0
+        val minor = nums.getOrNull(1) ?: 0
+        val patch = nums.getOrNull(2) ?: 0
+        return intArrayOf(major, minor, patch, if (post != null) 1 else 0, post ?: 0)
+    }
+
+    fun compareVersions(a: String, b: String): Int {
+        val ka = versionKey(a)
+        val kb = versionKey(b)
+        for (i in 0 until maxOf(ka.size, kb.size)) {
+            val x = ka.getOrNull(i) ?: 0
+            val y = kb.getOrNull(i) ?: 0
+            if (x != y) return x.compareTo(y)
+        }
+        return 0
+    }
+
+    fun compareVersionsDesc(a: String, b: String): Int = -compareVersions(a, b)
+
+    fun isAtLeast123(version: String): Boolean = compareVersions(version, "1.23.0") >= 0
 }

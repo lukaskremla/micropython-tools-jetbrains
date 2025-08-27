@@ -115,18 +115,14 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
                 if (value is FileNode) {
                     append(
-                        "  ${MpyBundle.message("file.system.file.size", value.size)}",
+                        "  ${value.size} ${MpyBundle.message("file.system.file.size.x.bytes")}",
                         SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES
                     )
                 } else if (value is VolumeRootNode) {
                     append(
-                        "  ${
-                            MpyBundle.message(
-                                "file.system.free.volume.space",
-                                formatVolumeSize(value.freeSize),
-                                formatVolumeSize(value.totalSize)
-                            )
-                        }",
+                        "  ${formatVolumeSize(value.freeSize)} " +
+                                MpyBundle.message("file.system.free.volume.space.x.free.of.y") +
+                                " ${formatVolumeSize(value.totalSize)}",
                         SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES
                     )
                 }

@@ -26,8 +26,13 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.*
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
@@ -41,14 +46,16 @@ import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
 import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.core.MpyValidators
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.stubs.MpyStubPackageService
 import dev.micropythontools.stubs.StubPackage
-import jssc.SerialPort
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.NotNull
 import java.awt.Dimension
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTable
-import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
@@ -72,7 +79,7 @@ private data class ConfigurableParameters(
 )
 
 internal class MpyConfigurable(private val project: Project) :
-    BoundSearchableConfigurable("MicroPython Tools", "dev.micropythontools.settings") {
+    BoundSearchableConfigurable(MpyBundle.message("configurable.name"), "dev.micropythontools.settings") {
 
     private val settings = project.service<MpySettingsService>()
     private val deviceService = project.service<MpyDeviceService>()
@@ -87,7 +94,7 @@ internal class MpyConfigurable(private val project: Project) :
         get() = pluginEnabledCheckBox.component.isSelected && stubsEnabledCheckBox.component.isSelected
 
     private val parameters = with(settings.state) {
-        runWithModalProgressBlocking(project, "Retrieving settings...") {
+        runWithModalProgressBlocking(project, MpyBundle.message("configurable.progress.retrieving.settings")) {
             val wifiCredentials = settings.retrieveWifiCredentials()
 
             ConfigurableParameters(
@@ -123,6 +130,8 @@ internal class MpyConfigurable(private val project: Project) :
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
     private lateinit var stubsEnabledCheckBox: Cell<JBCheckBox>
+    private lateinit var selectedStubPackageLabel: Cell<JLabel>
+    private lateinit var selectedStubPackageHiddenField: Cell<com.intellij.ui.components.JBTextField>
 
     override fun createPanel(): DialogPanel {
         val portSelectModel = MutableCollectionComboBoxModel<String>()
@@ -130,44 +139,53 @@ internal class MpyConfigurable(private val project: Project) :
 
         settingsPanel = panel {
             row {
-                pluginEnabledCheckBox = checkBox("Enable MicroPython support")
+                pluginEnabledCheckBox = checkBox(MpyBundle.message("configurable.plugin.enabled.checkbox.text"))
                     .bindSelected(parameters::isPluginEnabled)
-                    .comment("Find usage tips, report bugs or ask questions on <a href=\"https://github.com/lukaskremla/micropython-tools-jetbrains\">GitHub</a>")
+                    .comment(
+                        MpyBundle.message(
+                            "configurable.plugin.enabled.checkbox.comment",
+                            "https://github.com/lukaskremla/micropython-tools-jetbrains"
+                        )
+                    )
             }
 
             panel {
-                connectionGroup = group("Connection") {
+                connectionGroup = group(MpyBundle.message("configurable.connection.group.title")) {
                     buttonsGroup {
                         row {
-                            label("Type: ")
-                            serialRadioButton = radioButton("Serial")
-                                .bindSelected(parameters::usingUart)
+                            label("${MpyBundle.message("configurable.connection.type.selector.label")} ")
+                            serialRadioButton =
+                                radioButton(MpyBundle.message("configurable.connection.radio.button.serial"))
+                                    .bindSelected(parameters::usingUart)
 
-                            webReplRadioButton = radioButton("WebREPL")
-                                .bindSelected({ !parameters.usingUart }, { parameters.usingUart = !it })
+                            webReplRadioButton =
+                                radioButton(MpyBundle.message("configurable.connection.radio.button.webrepl"))
+                                    .bindSelected({ !parameters.usingUart }, { parameters.usingUart = !it })
                         }
                     }
 
                     indent {
                         row {
-                            enableManualEditingCheckbox = checkBox("Edit port manually")
-                                .bindSelected(parameters::enableManualEditing)
-                                .applyToComponent {
-                                    addActionListener {
-                                        val comboBox = portSelectComboBox.component
-                                        comboBox.isEditable = isSelected
-                                        comboBox.revalidate()
-                                        comboBox.repaint()
+                            enableManualEditingCheckbox =
+                                checkBox(MpyBundle.message("configurable.enable.manual.port.editing.checkbox.text"))
+                                    .bindSelected(parameters::enableManualEditing)
+                                    .applyToComponent {
+                                        addActionListener {
+                                            val comboBox = portSelectComboBox.component
+                                            comboBox.isEditable = isSelected
+                                            comboBox.revalidate()
+                                            comboBox.repaint()
+                                        }
                                     }
-                                }
                         }
                         row {
-                            filterManufacturersCheckBox = checkBox("Filter out devices with unknown manufacturers")
-                                .bindSelected(parameters::filterManufacturers)
+                            filterManufacturersCheckBox =
+                                checkBox(MpyBundle.message("configurable.filter.out.unknown.manufacturers.checkbox.text"))
+                                    .bindSelected(parameters::filterManufacturers)
                         }
                         row {
                             portSelectComboBox = comboBox(portSelectModel)
-                                .label("Port: ")
+                                .label("${MpyBundle.message("configurable.port.select.combobox.label")} ")
                                 .columns(20)
                                 .bindItem(
                                     { parameters.portName },
@@ -214,7 +232,7 @@ internal class MpyConfigurable(private val project: Project) :
                     }.visibleIf(serialRadioButton.selected)
 
                     indent {
-                        row("URL: ") {
+                        row("${MpyBundle.message("configurable.webrepl.url.label")} ") {
                             cell().apply { }
                             @Suppress("DialogTitleCapitalization")
                             label("ws://").gap(RightGap.SMALL)
@@ -234,7 +252,7 @@ internal class MpyConfigurable(private val project: Project) :
                                     msg?.let { error(it).withOKEnabled() }
                                 }
                                 .applyToComponent {
-                                    toolTipText = "IP of the target device"
+                                    toolTipText = MpyBundle.message("configurable.webrepl.url.tooltip")
                                 }
                                 .gap(RightGap.SMALL)
 
@@ -247,15 +265,15 @@ internal class MpyConfigurable(private val project: Project) :
                                     msg?.let { error(it).withOKEnabled() }
                                 }
                                 .applyToComponent {
-                                    toolTipText = "Default WebREPL port is 8266"
+                                    toolTipText = MpyBundle.message("configurable.webrepl.url.textbox.tooltip")
                                 }
                                 .columns(6)
                         }
 
-                        row("Password: ") {
+                        row("${MpyBundle.message("configurable.webrepl.password.textbox.label")} ") {
                             passwordField()
                                 .bindText(parameters::webReplPassword)
-                                .comment("(4-9 characters)")
+                                .comment(MpyBundle.message("configurable.webrepl.password.textbox.comment"))
                                 .columns(21)
                                 .validationInfo { field ->
                                     val msg = MpyValidators.messageForBrokenPassword(field.password)
@@ -268,14 +286,14 @@ internal class MpyConfigurable(private val project: Project) :
                 indent {
                     indent {
                         row {
-                            comment("A board is currently connected. <a>Disconnect</a>", action = {
+                            comment(MpyBundle.message("configurable.board.currently.connected.comment"), action = {
                                 performReplAction(
                                     project,
-                                    false,
-                                    false,
-                                    "Disconnecting...",
-                                    "Disconnect operation cancelled",
-                                    "Disconnect operation timed out",
+                                    connectionRequired = false,
+                                    requiresRefreshAfter = false,
+                                    description = MpyBundle.message("action.disconnect.text"),
+                                    cancelledMessage = MpyBundle.message("action.disconnect.cancelled"),
+                                    timedOutMessage = MpyBundle.message("action.disconnect.timeout"),
                                     { reporter -> deviceService.disconnect(reporter) }
                                 )
 
@@ -287,54 +305,104 @@ internal class MpyConfigurable(private val project: Project) :
                     }
                 }.visible(isConnected)
 
-                group("Communication Settings") {
+                group(MpyBundle.message("configurable.communication.group.title")) {
                     row {
-                        checkBox("Enable legacy volume support (pre-1.25.0)")
+                        checkBox(MpyBundle.message("configurable.legacy.volume.support.checkbox.text"))
                             .bindSelected(parameters::legacyVolumeSupportEnabled)
                             .gap(RightGap.SMALL)
 
                         cell(JBLabel(AllIcons.General.ContextHelp).apply {
-                            toolTipText =
-                                "Enables scanning for additional mounted volumes on MicroPython versions older than 1.25.0.<br>" +
-                                        " May slow down filesystem refreshes on MicroPython versions older than 1.25.0."
+                            toolTipText = MpyBundle.message("configurable.legacy.volume.support.checkbox.tooltip")
                         })
                     }
 
                     row {
-                        checkBox("Show upload preview dialog")
+                        checkBox(MpyBundle.message("configurable.show.upload.preview.checkbox.title"))
                             .bindSelected(parameters::showUploadPreviewDialog)
                     }
                 }.bottomGap(BottomGap.NONE).topGap(TopGap.SMALL)
 
-                group("MicroPython Stubs") {
+                group(MpyBundle.message("configurable.stubs.group.title")) {
                     row {
-                        stubsEnabledCheckBox = checkBox("Enable MicroPython stubs")
+                        stubsEnabledCheckBox = checkBox(MpyBundle.message("configurable.enable.stubs.checkbox.text"))
                             .bindSelected(parameters::areStubsEnabled)
                     }
 
+                    row {
+                        selectedStubPackageLabel = label("")
+                            .apply {
+                                this.component.icon = AllIcons.Actions.Checked
+                            }
+
+                        // Invisible binder so the panel tracks modifications to activeStubsPackage
+                        selectedStubPackageHiddenField = textField()
+                            .bindText(parameters::activeStubsPackage)
+                            .visible(false)
+                    }
+
+                    fun updateSelectedLabel() {
+                        selectedStubPackageLabel.component.text =
+                            if (selectedStubPackageHiddenField.component.text.isBlank())
+                                MpyBundle.message("configurable.selected.stub.package.label.text.empty")
+                            else
+                                MpyBundle.message(
+                                    "configurable.selected.stub.package.label.text",
+                                    selectedStubPackageHiddenField.component.text
+                                )
+                    }
+
+                    updateSelectedLabel()
+
+                    val activeKey = { parameters.activeStubsPackage }
+
+                    fun versionKey(v: String): List<Int> {
+                        val (base, post) = v.split(".post", limit = 2).let { it[0] to it.getOrNull(1) }
+                        val nums = base.split('.').mapNotNull { it.toIntOrNull() }
+                        return nums + listOf(if (post != null) 1 else 0, post?.toIntOrNull() ?: 0)
+                    }
+
+                    fun List<StubPackage>.withActiveFirst(): List<StubPackage> =
+                        this.sortedWith(
+                            compareByDescending<StubPackage> { "${it.name}_${it.mpyVersion}" == activeKey() }
+                                .thenByDescending { it.isInstalled }
+                                .thenComparator { a, b ->
+                                    // compare versionKey lists descending
+                                    val ka = versionKey(a.mpyVersion)
+                                    val kb = versionKey(b.mpyVersion)
+                                    for (i in 0 until maxOf(ka.size, kb.size)) {
+                                        val x = ka.getOrNull(i) ?: 0
+                                        val y = kb.getOrNull(i) ?: 0
+                                        if (x != y) return@thenComparator y.compareTo(x)
+                                    }
+                                    0
+                                }
+                                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name }
+                        )
+
                     // Column definitions
                     val stubColumns = arrayOf(
-                        object : ColumnInfo<StubPackage, String>("Name") {
+                        object :
+                            ColumnInfo<StubPackage, String>(MpyBundle.message("configurable.stub.package.column.label.name")) {
                             override fun valueOf(item: StubPackage): String = item.name
                         },
-                        object : ColumnInfo<StubPackage, String>("Version") {
+                        object :
+                            ColumnInfo<StubPackage, String>(MpyBundle.message("configurable.stub.package.column.label.version")) {
                             override fun valueOf(item: StubPackage): String = item.mpyVersion
                         }
                     )
 
-                    var stubPackages = emptyList<StubPackage>()
+                    var stubPackages: List<StubPackage> = emptyList()
 
                     val tableModel: ListTableModel<StubPackage> = ListTableModel(*stubColumns)
-                    tableModel.items = stubPackages
 
                     val table = TableView(tableModel)
                     table.setShowGrid(false)
                     table.preferredScrollableViewportSize = Dimension(600, 250)
 
                     ApplicationManager.getApplication().executeOnPooledThread {
-                        val data = stubPackageService.getStubPackages()
-                        SwingUtilities.invokeLater {
-                            tableModel.items = data
+                        val data = stubPackageService.getStubPackages().first
+                        ApplicationManager.getApplication().invokeLater {
+                            tableModel.items = data.withActiveFirst()
                             tableModel.fireTableDataChanged()
                         }
                     }
@@ -370,10 +438,14 @@ internal class MpyConfigurable(private val project: Project) :
                             else
                                 UIUtil.getTableForeground()
 
+                            val isSelected =
+                                "${stubPackage.name}_${stubPackage.mpyVersion}" == selectedStubPackageHiddenField.component.text
+
                             c.foreground = when {
                                 shouldGray -> UIUtil.getLabelDisabledForeground()
-                                stubPackage.isUpToDate -> base
-                                else -> JBColor.BLUE
+                                !stubPackage.isUpToDate -> JBColor.BLUE
+                                isSelected -> JBColor.GREEN
+                                else -> base
                             }
 
                             return c
@@ -393,26 +465,39 @@ internal class MpyConfigurable(private val project: Project) :
                         }
                     })
 
-                    fun refreshTable() {
-                        ApplicationManager.getApplication().executeOnPooledThread {
-                            stubPackages = stubPackageService.getStubPackages()
+                    fun refreshTable(e: AnActionEvent) {
+                        val app = ApplicationManager.getApplication()
+                        app.executeOnPooledThread {
+                            val (newStubPackages, fetchedRemote) = stubPackageService.getStubPackages()
 
-                            // re-apply current search filter
-                            val q = searchField.text.lowercase()
-                            val filtered = if (q.isBlank()) {
-                                stubPackages
-                            } else {
-                                stubPackages.filter {
-                                    it.name.lowercase().contains(q) || it.mpyVersion.lowercase().contains(q)
+                            stubPackages = newStubPackages
+
+                            app.invokeLater {
+                                // re-apply current search filter
+                                val q = searchField.text.lowercase()
+                                val filtered = if (q.isBlank()) {
+                                    stubPackages
+                                } else {
+                                    stubPackages.filter {
+                                        it.name.lowercase().contains(q) || it.mpyVersion.lowercase().contains(q)
+                                    }
                                 }
-                            }
 
-                            // push into the model & notify
-                            tableModel.items = filtered
-                            tableModel.fireTableDataChanged()
+                                // push into the model & notify
+                                tableModel.items = filtered.withActiveFirst()
+                                tableModel.fireTableDataChanged()
 
-                            if (table.selectedRow >= tableModel.rowCount) {
-                                table.clearSelection()
+                                if (table.selectedRow >= tableModel.rowCount) {
+                                    table.clearSelection()
+                                }
+
+                                if (!fetchedRemote) {
+                                    val source = e.inputEvent?.component as? JComponent ?: return@invokeLater
+                                    showBalloon(
+                                        source,
+                                        MpyBundle.message("configurable.error.failed.to.get.remote.stub.packages")
+                                    )
+                                }
                             }
                         }
                     }
@@ -425,92 +510,151 @@ internal class MpyConfigurable(private val project: Project) :
                         .addExtraAction(object : AnAction() {
                             init {
                                 this.templatePresentation.icon = AllIcons.Actions.Checked
-                                this.templatePresentation.text = "Apply"
+                                this.templatePresentation.text =
+                                    MpyBundle.message("configurable.stub.table.button.select")
                             }
 
                             override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
                             override fun update(e: AnActionEvent) {
-                                ApplicationManager.getApplication().executeOnPooledThread {
-                                    val selectedStubPackageName = stubPackageService.getSelectedStubPackageName()
+                                val selectedObjects = table.selectedObjects
 
-                                    e.presentation.isEnabled = stubsAndPluginEnabled &&
-                                            table.selectedObject?.name != selectedStubPackageName
-                                }
+                                e.presentation.isEnabled = stubsAndPluginEnabled &&
+                                        selectedObjects.size == 1 &&
+                                        selectedObjects.first().name != selectedStubPackageHiddenField.component.text &&
+                                        selectedObjects.first().isInstalled
                             }
 
                             override fun actionPerformed(e: AnActionEvent) {
-                                stubPackageService.updateLibrary(
-                                    table.selectedObject?.name
-                                        ?: throw RuntimeException("Selected stub package name can't be null")
-                                )
+                                val selected = table.selectedObject ?: return
+                                val key = "${selected.name}_${selected.mpyVersion}"
+                                selectedStubPackageHiddenField.component.text = key
+                                updateSelectedLabel()
                             }
                         })
                         .addExtraAction(object : AnAction() {
                             init {
                                 this.templatePresentation.icon = AllIcons.Diff.Remove
-                                this.templatePresentation.text = "Unapply"
+                                this.templatePresentation.text =
+                                    MpyBundle.message("configurable.stub.table.button.deselect")
                             }
 
                             override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
                             override fun update(e: AnActionEvent) {
-                                ApplicationManager.getApplication().executeOnPooledThread {
-                                    val selectedStubPackageName = stubPackageService.getSelectedStubPackageName()
+                                val selectedObjects = table.selectedObjects
 
-                                    e.presentation.isEnabled = stubsAndPluginEnabled &&
-                                            table.selectedObject?.name == selectedStubPackageName
-                                }
+                                e.presentation.isEnabled = stubsAndPluginEnabled &&
+                                        selectedObjects.size == 1 &&
+                                        selectedObjects.first().name == selectedStubPackageHiddenField.component.text &&
+                                        selectedObjects.first().isInstalled
                             }
 
                             override fun actionPerformed(e: AnActionEvent) {
-                                stubPackageService.updateLibrary("")
+                                selectedStubPackageHiddenField.component.text = ""
+                                updateSelectedLabel()
                             }
                         })
                         .addExtraAction(object : AnAction() {
                             init {
                                 this.templatePresentation.icon = AllIcons.Actions.Download
-                                this.templatePresentation.text = "Install/Update"
+                                this.templatePresentation.text =
+                                    MpyBundle.message("configurable.stub.table.button.install.update")
                             }
 
                             override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
                             override fun update(e: AnActionEvent) {
-                                e.presentation.isEnabled = stubsAndPluginEnabled && table.selectedObject != null
+                                val selected = table.selectedObject
+
+                                e.presentation.isEnabled = stubsAndPluginEnabled &&
+                                        selected != null &&
+                                        (!selected.isUpToDate || !selected.isInstalled)
                             }
 
                             override fun actionPerformed(e: AnActionEvent) {
-                                val selected: StubPackage = table.selectedObject ?: return
-                                ApplicationManager.getApplication().executeOnPooledThread {
-                                    stubPackageService.install(selected)
+                                val selected: List<StubPackage> = table.selectedObjects
+                                val app = ApplicationManager.getApplication()
+
+                                try {
+                                    runWithModalProgressBlocking(
+                                        project,
+                                        MpyBundle.message("configurable.progress.installing.stub.packages.title")
+                                    ) {
+                                        reportRawProgress { reporter ->
+                                            var i = 1
+                                            selected.forEach {
+                                                reporter.text(
+                                                    MpyBundle.message(
+                                                        "configurable.progress.installing.stub.packages.text",
+                                                        i,
+                                                        selected.size
+                                                    )
+                                                )
+                                                reporter.fraction(
+                                                    (i.toDouble() / selected.size.toDouble())
+                                                        .coerceIn(0.0, 1.0)
+                                                )
+                                                reporter.details("${it.name}_${it.mpyVersion}")
+                                                stubPackageService.install(it)
+                                                i++
+                                            }
+                                        }
+                                    }
+
+                                    refreshTable(e)
+                                } catch (err: CancellationException) {
+                                    refreshTable(e)
+                                    throw err
+                                } catch (err: Throwable) {
+                                    app.invokeLater {
+                                        val source =
+                                            e.inputEvent?.component as? JComponent ?: return@invokeLater
+                                        showBalloon(source, err.localizedMessage)
+                                    }
                                 }
-                                refreshTable()
                             }
                         })
                         .addExtraAction(object : AnAction() {
                             init {
                                 this.templatePresentation.icon = AllIcons.General.Delete
-                                this.templatePresentation.text = "Delete"
+                                this.templatePresentation.text =
+                                    MpyBundle.message("configurable.stub.table.button.delete")
                             }
 
                             override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
                             override fun update(e: AnActionEvent) {
-                                e.presentation.isEnabled = stubsAndPluginEnabled && table.selectedObject != null
+                                val selected = table.selectedObject
+
+                                e.presentation.isEnabled = stubsAndPluginEnabled &&
+                                        selected != null &&
+                                        selected.isInstalled
                             }
 
                             override fun actionPerformed(e: AnActionEvent) {
-                                val selected: StubPackage = table.selectedObject ?: return
-                                ApplicationManager.getApplication().executeOnPooledThread {
-                                    stubPackageService.delete(selected)
+                                val selected: List<StubPackage> = table.selectedObjects
+                                val app = ApplicationManager.getApplication()
+                                try {
+                                    selected.forEach {
+                                        stubPackageService.delete(it)
+                                    }
+
+                                    refreshTable(e)
+                                } catch (err: Throwable) {
+                                    app.invokeLater {
+                                        val source =
+                                            e.inputEvent?.component as? JComponent ?: return@invokeLater
+                                        showBalloon(source, err.localizedMessage)
+                                    }
                                 }
-                                refreshTable()
                             }
                         })
                         .addExtraAction(object : AnAction() {
                             init {
                                 this.templatePresentation.icon = AllIcons.Actions.Refresh
-                                this.templatePresentation.text = "Refresh"
+                                this.templatePresentation.text =
+                                    MpyBundle.message("configurable.stub.table.button.refresh")
                             }
 
                             override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -520,7 +664,7 @@ internal class MpyConfigurable(private val project: Project) :
                             }
 
                             override fun actionPerformed(e: AnActionEvent) {
-                                refreshTable()
+                                refreshTable(e)
                             }
                         })
                         .createPanel()
@@ -531,7 +675,12 @@ internal class MpyConfigurable(private val project: Project) :
                     row {
                         cell(decoratedPanel)
                             .resizableColumn()
-                            .comment("Stubs authored by <a href=\"https://github.com/Josverl/micropython-stubs\">Jos Verlinde</a>")
+                            .comment(
+                                MpyBundle.message(
+                                    "configurable.stubs.authored.by.comment",
+                                    "https://github.com/Josverl/micropython-stubs"
+                                )
+                            )
                     }.enabledIf(stubsEnabledCheckBox.selected)
                 }.topGap(TopGap.SMALL)
             }.enabledIf(pluginEnabledCheckBox.selected)
@@ -574,7 +723,7 @@ internal class MpyConfigurable(private val project: Project) :
 
             stubPackageService.updateLibrary(stubPackageToUse)
 
-            runWithModalProgressBlocking(project, "Saving settings...") {
+            runWithModalProgressBlocking(project, MpyBundle.message("configurable.progress.saving.settings")) {
                 settings.saveWebReplPassword(webReplPassword)
                 settings.saveWifiCredentials(ssid, wifiPassword)
             }
@@ -602,5 +751,13 @@ internal class MpyConfigurable(private val project: Project) :
                 EMPTY_PORT_NAME_TEXT
             }
         }
+    }
+
+    private fun showBalloon(@NotNull component: JComponent, message: String) {
+        JBPopupFactory.getInstance()
+            .createHtmlTextBalloonBuilder(message, MessageType.ERROR, null)
+            .setFadeoutTime(5000)
+            .createBalloon()
+            .show(RelativePoint.getCenterOf(component), Balloon.Position.above)
     }
 }

@@ -1,6 +1,21 @@
 <html lang="en">
 <body>
-<p>Detects problems with MicroPython stub package management configuration.
+<p>Detects when no MicroPython stub package is selected while stubs are enabled.</p>
+
+<p>
+    This inspection helps identify projects where stub support is enabled but no valid stub package has been configured.
+    Without a selected stub package, essential IDE features such as autocompletion, type checking, and documentation
+    lookup will not function for MicroPython-specific APIs.
 </p>
+
+<p>
+    To fix this, go to <a href="settings://dev.micropythontools.settings.MpyConfigurable">MicroPython Tools Settings</a>
+    and select or install a stub package that matches your board and MicroPython version.
+</p>
+
+<pre><code>// Stub support is enabled, but no package is selected:
+</code></pre>
+<!-- tooltip end -->
+<p>This issue is commonly encountered after project import or first-time plugin setup.</p>
 </body>
 </html>

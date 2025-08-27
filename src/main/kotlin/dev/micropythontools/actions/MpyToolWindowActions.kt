@@ -53,7 +53,7 @@ internal class MpyAutoClearAction :
         e.project?.service<MpySettingsService>()?.state?.autoClearRepl == true
 
     override fun setSelected(e: AnActionEvent, state: Boolean) =
-        e.project?.service<MpySettingsService>()?.state?.isPluginEnabled = state
+        e.project?.service<MpySettingsService>()?.state?.autoClearRepl = state
 }
 
 internal class MpyConnectionSelectorAction : ComboBoxAction(), DumbAware {

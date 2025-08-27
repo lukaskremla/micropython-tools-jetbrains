@@ -63,6 +63,15 @@
                          enabledByDefault="true"
                          implementationClass="dev.micropythontools.inspections.MpyStubPackageInspection"/>
 
+        <!-- Inspections -->
+        <!--suppress PluginXmlCapitalization -->
+        <localInspection language="Python"
+                         key="inspection.name"
+                         groupKey="inspection.group.name"
+                         bundle="localization.MpyBundle"
+                         enabledByDefault="true"
+                         implementationClass="dev.micropythontools.inspections.MpyPythonInspection"/>
+
         <!-- Notifications -->
         <!--suppress PluginXmlCapitalization -->
         <notificationGroup displayType="BALLOON"
