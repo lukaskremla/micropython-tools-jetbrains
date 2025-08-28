@@ -638,6 +638,13 @@ internal class MpyConfigurable(private val project: Project) :
                                 try {
                                     selected.forEach {
                                         stubPackageService.delete(it)
+
+                                        if ("${it.name}_${it.mpyVersion}" == selectedStubPackageHiddenField.component.text) {
+                                            selectedStubPackageHiddenField.component.text = ""
+                                            parameters.activeStubsPackage = ""
+                                            stubPackageService.updateLibrary("")
+                                            updateSelectedLabel()
+                                        }
                                     }
 
                                     refreshTable(e)

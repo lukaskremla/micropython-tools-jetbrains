@@ -425,14 +425,15 @@ internal class MpyStubPackageService(private val project: Project) {
 
         val text = json.encodeToString(payload)
 
-        runWriteAction {
-            // create if missing, otherwise reuse
-            val fileVf = dirVf.findChild(MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
-                ?: dirVf.createChildData(this, MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
+        val app = ApplicationManager.getApplication()
+        app.invokeAndWait {
+            runWriteAction {
+                val fileVf = dirVf.findChild(MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
+                    ?: dirVf.createChildData(this, MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
 
-            com.intellij.openapi.vfs.VfsUtil.saveText(fileVf, text)
-            // ensure VFS is up-to-date for subsequent reads
-            fileVf.refresh(false, false)
+                com.intellij.openapi.vfs.VfsUtil.saveText(fileVf, text)
+                fileVf.refresh(false, false)
+            }
         }
 
         LocalFileSystem.getInstance()
