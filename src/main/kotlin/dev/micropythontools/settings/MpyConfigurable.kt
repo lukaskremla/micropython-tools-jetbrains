@@ -333,10 +333,10 @@ internal class MpyConfigurable(private val project: Project) :
                     }
 
                     row {
-                        selectedStubPackageLabel = label("")
-                            .apply {
-                                this.component.icon = AllIcons.Actions.Checked
-                            }
+                        selectedStubPackageLabel = label("").apply {
+                            this.component.foreground = UIUtil.getContextHelpForeground()
+                            this.component.font = JBUI.Fonts.smallFont()
+                        }
 
                         // Invisible binder so the panel tracks modifications to activeStubsPackage
                         selectedStubPackageHiddenField = textField()
