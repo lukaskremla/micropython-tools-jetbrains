@@ -1,17 +1,18 @@
 The Changelog
 =============
 
-0.6.0 - xx.8.2025
+0.6.0 - 28.8.2025
 ------------------
 
-* Removed confirmation dialog from clear REPl action
-* Reworked and improved open File action
-* Added an option to refresh and edit on-device files
-* Added a "New" action for creating files and folders on-device like in the project view
-* Added Copy, Cut, Paste file context menu actions toi the File System view
-* Increased command execution timeout (extra large uploads on slower boards are less likely to timeout)
-* Fixed connection integrity monitoring not working on Windows
-* Made sure that a file system refresh doesn't happen when a pre-upload device file system scan is cancelled
+* Removed confirmation dialog from Clear REPL action
+* Reworked and improved Open File action
+* Added option to refresh and edit on-device files
+* Added “New” action for creating files and folders on-device
+* Added Copy, Cut, and Paste context menu actions to the File System view
+* Increased command execution timeout to reduce failures on large uploads
+* Fixed connection integrity monitoring on Windows
+* Reworked stub package management with on-demand installation and updating
+* Prevented file system refresh when a pre-upload scan is cancelled
 
 0.5.12 - 28.7.2025
 ------------------
