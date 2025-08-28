@@ -30,7 +30,6 @@ jobs:
       - name: Run scripts
         run: |
           python project-scripts/minify_scripts.py
-          python project-scripts/update_stubs.py
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
