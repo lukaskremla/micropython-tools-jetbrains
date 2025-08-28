@@ -37,6 +37,8 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.readText
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.library.PythonLibraryType
 import dev.micropythontools.core.MpyPaths
 import dev.micropythontools.core.MpyPythonInterpreterService
@@ -127,17 +129,52 @@ internal class MpyStubPackageService(private val project: Project) {
         // Try to find the stub package
         val stubPackage = getStubPackages().first.find { "${it.name}_${it.mpyVersion}" == activeStubsPackageName }
 
+        var isUpdateFix = false
+
         if (settings.state.areStubsEnabled) {
             if (activeStubsPackageName.isBlank()) {
                 stubValidationText = MpyBundle.message("stub.service.validation.no.package")
             } else if (stubPackage == null || !stubPackage.isInstalled) {
                 stubValidationText = MpyBundle.message("stub.service.validation.invalid.package")
+            } else if (!stubPackage.isUpToDate) {
+                stubValidationText = MpyBundle.message("stub.service.validation.pending.update")
+                isUpdateFix = true
             }
         }
 
         return if (stubValidationText != null) {
-            return ValidationResult(
-                stubValidationText,
+            val fix = if (isUpdateFix) {
+                object :
+                    FacetConfigurationQuickFix(MpyBundle.message("stub.service.validation.install.update")) {
+                    override fun run(place: JComponent?) {
+                        ApplicationManager.getApplication().invokeLater {
+                            runWithModalProgressBlocking(
+                                project,
+                                MpyBundle.message("configurable.progress.installing.stub.packages.title")
+                            ) {
+                                reportRawProgress { reporter ->
+                                    reporter.text(MpyBundle.message("stub.service.progress.text"))
+                                    reporter.details("${stubPackage!!.name}_${stubPackage.mpyVersion}")
+                                    try {
+                                        install(stubPackage)
+                                    } catch (e: Throwable) {
+                                        Notifications.Bus.notify(
+                                            Notification(
+                                                MpyBundle.message("notification.group.name"),
+                                                MpyBundle.message(
+                                                    "stub.service.error.update.failed.notification",
+                                                    e.localizedMessage
+                                                ),
+                                                NotificationType.ERROR
+                                            ), project
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
                 object :
                     FacetConfigurationQuickFix(MpyBundle.message("stub.service.validation.change.button.settings")) {
                     override fun run(place: JComponent?) {
@@ -146,7 +183,9 @@ internal class MpyStubPackageService(private val project: Project) {
                         }
                     }
                 }
-            )
+            }
+
+            return ValidationResult(stubValidationText, fix)
         } else {
             ValidationResult.OK
         }

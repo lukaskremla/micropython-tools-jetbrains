@@ -17,12 +17,12 @@
 package dev.micropythontools.settings
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -31,15 +31,18 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.ui.*
+import com.intellij.ui.JBColor
+import com.intellij.ui.MutableCollectionComboBoxModel
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.UIUtil
 import dev.micropythontools.communication.MpyDeviceService
@@ -77,6 +80,7 @@ private data class ConfigurableParameters(
     var areStubsEnabled: Boolean,
     var activeStubsPackage: String
 )
+
 
 internal class MpyConfigurable(private val project: Project) :
     BoundSearchableConfigurable(MpyBundle.message("configurable.name"), "dev.micropythontools.settings") {
@@ -396,16 +400,13 @@ internal class MpyConfigurable(private val project: Project) :
                     val tableModel: ListTableModel<StubPackage> = ListTableModel(*stubColumns)
 
                     val table = TableView(tableModel)
+
+                    val columnModel = table.columnModel
+                    columnModel.getColumn(0).preferredWidth = 420 // name
+                    columnModel.getColumn(1).preferredWidth = 180 // version
+
                     table.setShowGrid(false)
                     table.preferredScrollableViewportSize = Dimension(600, 250)
-
-                    ApplicationManager.getApplication().executeOnPooledThread {
-                        val data = stubPackageService.getStubPackages().first
-                        ApplicationManager.getApplication().invokeLater {
-                            tableModel.items = data.withActiveFirst()
-                            tableModel.fireTableDataChanged()
-                        }
-                    }
 
                     table.setDefaultRenderer(String::class.java, object : DefaultTableCellRenderer() {
                         override fun getTableCellRendererComponent(
@@ -452,18 +453,26 @@ internal class MpyConfigurable(private val project: Project) :
                         }
                     })
 
-                    // Search field logic
-                    val searchField = SearchTextField()
-                    searchField.minimumSize = Dimension(350, 0)
-                    searchField.textEditor.document.addDocumentListener(object : DocumentAdapter() {
-                        override fun textChanged(e: DocumentEvent) {
-                            val filterText = searchField.text.lowercase()
-                            tableModel.items = stubPackages.filter {
-                                it.name.lowercase().contains(filterText) ||
-                                        it.mpyVersion.lowercase().contains(filterText)
-                            }
+                    var currentQuery = ""
+
+                    fun applyFilterAndRefresh() {
+                        val q = currentQuery.lowercase()
+                        val filtered = if (q.isBlank()) stubPackages else stubPackages.filter {
+                            it.name.lowercase().contains(q) || it.mpyVersion.lowercase().contains(q)
                         }
-                    })
+                        tableModel.items = filtered.withActiveFirst()
+                        tableModel.fireTableDataChanged()
+                    }
+
+                    ApplicationManager.getApplication().executeOnPooledThread {
+                        val data = stubPackageService.getStubPackages().first
+                        ApplicationManager.getApplication().invokeLater {
+                            // Keep backing list in sync
+                            stubPackages = data
+                            // Apply current query (so if user already typed, it filters immediately)
+                            applyFilterAndRefresh()
+                        }
+                    }
 
                     fun refreshTable(e: AnActionEvent) {
                         val app = ApplicationManager.getApplication()
@@ -473,24 +482,7 @@ internal class MpyConfigurable(private val project: Project) :
                             stubPackages = newStubPackages
 
                             app.invokeLater {
-                                // re-apply current search filter
-                                val q = searchField.text.lowercase()
-                                val filtered = if (q.isBlank()) {
-                                    stubPackages
-                                } else {
-                                    stubPackages.filter {
-                                        it.name.lowercase().contains(q) || it.mpyVersion.lowercase().contains(q)
-                                    }
-                                }
-
-                                // push into the model & notify
-                                tableModel.items = filtered.withActiveFirst()
-                                tableModel.fireTableDataChanged()
-
-                                if (table.selectedRow >= tableModel.rowCount) {
-                                    table.clearSelection()
-                                }
-
+                                applyFilterAndRefresh()
                                 if (!fetchedRemote) {
                                     val source = e.inputEvent?.component as? JComponent ?: return@invokeLater
                                     showBalloon(
@@ -500,6 +492,35 @@ internal class MpyConfigurable(private val project: Project) :
                                 }
                             }
                         }
+                    }
+
+                    class TableSearchAction(
+                        private val onQueryChanged: (String) -> Unit
+                    ) : AnAction(), DumbAware, CustomComponentAction, RightAlignedToolbarAction {
+
+                        override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+                            val field = SearchTextField()
+                            field.textEditor.emptyText.text = "Search…"
+                            field.textEditor.document.addDocumentListener(object : com.intellij.ui.DocumentAdapter() {
+                                override fun textChanged(e: DocumentEvent) {
+                                    onQueryChanged(field.text.trim())
+                                }
+                            })
+                            // Size it like a toolbar control
+                            field.minimumSize = JBUI.size(180, 28)
+                            field.preferredSize = JBUI.size(220, 28)
+                            return field
+                        }
+
+                        override fun actionPerformed(e: AnActionEvent) {
+                            // no-op (we react on text changes)
+                        }
+
+                        override fun update(e: AnActionEvent) {
+                            e.presentation.isEnabled = stubsAndPluginEnabled
+                        }
+
+                        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
                     }
 
                     // Setup ToolbarDecorator with buttons
@@ -674,11 +695,14 @@ internal class MpyConfigurable(private val project: Project) :
                                 refreshTable(e)
                             }
                         })
+                        .addExtraAction(
+                            TableSearchAction { query ->
+                                currentQuery = query
+                                applyFilterAndRefresh()
+                            }
+                        )
                         .createPanel()
 
-                    row {
-                        cell(searchField)
-                    }.enabledIf(stubsEnabledCheckBox.selected)
                     row {
                         cell(decoratedPanel)
                             .resizableColumn()
