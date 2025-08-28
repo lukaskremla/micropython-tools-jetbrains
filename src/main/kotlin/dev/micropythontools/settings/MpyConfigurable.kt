@@ -495,7 +495,8 @@ internal class MpyConfigurable(private val project: Project) :
                     }
 
                     class TableSearchAction(
-                        private val onQueryChanged: (String) -> Unit
+                        private val onQueryChanged: (String) -> Unit,
+                        private val isEnabledSupplier: () -> Boolean
                     ) : AnAction(), DumbAware, CustomComponentAction, RightAlignedToolbarAction {
 
                         override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -517,7 +518,20 @@ internal class MpyConfigurable(private val project: Project) :
                         }
 
                         override fun update(e: AnActionEvent) {
-                            e.presentation.isEnabled = stubsAndPluginEnabled
+                            e.presentation.isEnabled = isEnabledSupplier()
+                        }
+
+                        override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+                            val enabled = presentation.isEnabled
+                            component.isEnabled = enabled
+
+                            (component as? SearchTextField)?.let { f ->
+                                f.isEnabled = enabled
+                                f.textEditor.isEnabled = enabled
+                                f.textEditor.isEditable = enabled
+                                f.textEditor.isFocusable = enabled
+                                if (!enabled) f.text = ""
+                            }
                         }
 
                         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -696,10 +710,11 @@ internal class MpyConfigurable(private val project: Project) :
                             }
                         })
                         .addExtraAction(
-                            TableSearchAction { query ->
+                            TableSearchAction(onQueryChanged = { query ->
                                 currentQuery = query
                                 applyFilterAndRefresh()
-                            }
+                            }, isEnabledSupplier = { stubsAndPluginEnabled }
+                            )
                         )
                         .createPanel()
 
