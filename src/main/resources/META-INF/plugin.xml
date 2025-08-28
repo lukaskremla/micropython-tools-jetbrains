@@ -48,6 +48,9 @@
                              bundle="localization.MpyBundle"
                              instance="dev.micropythontools.settings.MpyConfigurable"/>
 
+        <!-- JPS plugin for MpyJpsModelSerializerExtension -->
+        <jps.plugin/>
+
         <!-- File handling -->
         <fileEditorProvider implementation="dev.micropythontools.mpyfile.MpyFileEditorProvider"/>
         <fileType name="MicroPython Bytecode"
