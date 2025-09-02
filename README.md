@@ -4,6 +4,8 @@
 [![JetBrains IntelliJ Rating](https://img.shields.io/jetbrains/plugin/r/rating/26227-micropython-tools?label=Rating)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 [![Reviews](https://img.shields.io/badge/Reviews-10-brightgreen)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 
+简体中文翻译版本：[请参阅此处](https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/README_zh-CN.md)
+
 This plugin brings MicroPython support into JetBrains IDEs.
 It provides reliable device file system integration, REPL support, stub package management, and smooth workflows for
 developing both hobbyist and professional MicroPython projects.
