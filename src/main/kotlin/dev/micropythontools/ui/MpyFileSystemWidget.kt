@@ -668,8 +668,6 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                     commands.add("gc.collect()")
                 }
 
-                print(commands.joinToString("\n"))
-
                 deviceService.recursivelySafeDeletePaths(pathsToRemove)
 
                 deviceService.blindExecute(commands)
@@ -826,6 +824,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 }
             }
         }
+
         TreeUtil.sort(newModel, object : Comparator<FileSystemNode> {
             override fun compare(node1: FileSystemNode, node2: FileSystemNode): Int {
                 if ((node1 is DirNode) == (node2 is DirNode)) {

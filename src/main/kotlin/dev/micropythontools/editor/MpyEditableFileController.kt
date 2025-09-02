@@ -80,7 +80,7 @@ internal object MpyEditableFileController {
         performReplAction(
             project,
             true,
-            requiresRefreshAfter = false,
+            requiresRefreshAfter = true,
             description = MpyBundle.message("edit.on.device.file.save.description"),
             cancelledMessage = MpyBundle.message("edit.on.device.file.save.cancelled"),
             timedOutMessage = MpyBundle.message("edit.on.device.file.save.timeout"),

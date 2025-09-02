@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+0.6.1 - 2.9.2025
+------------------
+
+* Ensure the file system is refreshed after an edited file is saved
+
 0.6.0 - 28.8.2025
 ------------------
 

@@ -3,36 +3,31 @@
     <id>micropython-tools-jetbrains</id>
 
     <change-notes><![CDATA[
-        <h3>0.6.0 - 28-8-2025</h3>
+        <h3>0.6.1 - 2-9-2025</h3>
         <ul>
-            <li>Removed confirmation dialog from Clear REPL action</li>
-            <li>Reworked and improved Open File action</li>
-            <li>Added option to refresh and edit on-device files</li>
-            <li>Added “New” action for creating files and folders on-device</li>
-            <li>Added Copy, Cut, and Paste context menu actions to the File System view</li>
-            <li>Increased command execution timeout to reduce failures on large uploads</li>
-            <li>Fixed connection integrity monitoring on Windows</li>
-            <li>Reworked stub package management with on-demand installation and updating</li>
-            <li>Prevented file system refresh when a pre-upload scan is cancelled</li>
+            <li>Ensure the file system is refreshed after an edited file is saved</li>
         </ul>
         <br>
         <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
     ]]></change-notes>
 
     <description><![CDATA[
-        <p>Adds support for working with MicroPython devices to PyCharm.</p>
-        <p>Features:</p>
+        <p>Adds MicroPython support to JetBrains IDEs.</p>
+        <br>
+        <p>Main features:</p>
         <ul>
-            <li>Efficiently upload files to MPY boards (Serial, WebREPL)</li>
-            <li>Comfortably view and interact with the board's file system with drag and drop support</li>
-            <li>Built-in stub manager utilizing stubs by <a href="https://github.com/Josverl/micropython-stubs">Jos Verlinde</a></li>
-            <li>Upload preview dialog that shows how the file system will look after the upload</li>
-            <li>Observe code execution through REPL</li>
+          <li>Upload and synchronize files with MicroPython devices (Serial and WebREPL supported)</li>
+          <li>File System view with drag and drop, create/rename/delete, copy/cut/paste, and download</li>
+          <li>Stub package manager for <a href="https://github.com/Josverl/micropython-stubs">MicroPython stubs</a></li>
+          <li>On-device file editing (read-only by default, editable with save-to-device option)</li>
+          <li>REPL integration with reset, interrupt, and clear actions</li>
+          <li>Run configurations for Project, Selected Sources Roots, and Custom Paths</li>
+          <li>Mounted volume support (e.g. SD cards)</li>
         </ul>
-        <p>All microcontrollers and MicroPython versions above 1.20.0 should be supported. However, certain features might not be available on highly resource constrained microcontrollers such as the ESP8266.</a></p>
-        <p>Feedback and bug reports through GitHub are welcome!</p>
-        <p>More info and usage tips <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">on GitHub!</a></p>
-    ]]></description>
+        <br>
+        <p>Documentation, usage tips, and issue tracker are available on
+        <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">GitHub</a>.</p>
+]]></description>
 
     <version>SNAPSHOT</version>
     <vendor>Lukas Kremla</vendor>
