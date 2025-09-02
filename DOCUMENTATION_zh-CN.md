@@ -15,6 +15,8 @@
 - [File System Widget](#file-system-widget)
     - [Drag and Drop](#drag-and-drop-in-file-system-widget)
     - [Volume/SD card Support](#volume-support)
+    - [File System Context Menu](#file-system-context-menu)
+    - [Opening And Editing on-device files](#opening-and-editing-on-device-files)
 - [REPL Widget](#repl-widget)
 - [Uploads](#uploads)
     - [Run Configurations](#run-configurations)
@@ -119,11 +121,23 @@ modules (asyncio, time). This brings auto-completion, code checking and allows y
 
 ### Built-in stub package manager
 
-The plugin has a built-in MicroPython stub package manager. It utilizes MicroPython stubs by
-[Jos Verlinde](https://github.com/Josverl/micropython-stubs). The packages come bundled with the plugin, and you can
-select between them via the auto-completion text field.
+The plugin includes a stub package manager for the community-maintained MicroPython stubs
+by [Jos Verlinde](https://github.com/Josverl/micropython-stubs).
 
-Just start typing "micropython" and you'll be able to browse the available packages.
+The stub packages are shown in a table with a toolbar that lets you install, update, select, deselect, delete, and
+refresh them. A package must be installed before it can be selected. By default, no packages are installed (all entries
+appear grayed out).
+
+Table highlights:
+
+- Installed packages are shown in white and pinned to the top.
+- Update available packages are highlighted in blue.
+- Selected (active) packages are highlighted in green.
+
+If a selected package has an update pending, the IDE will display an in-editor inspection notice.
+
+A working internet connection is required to view, install, or update stub packages. Once installed, they remain
+available offline.
 
 ### Custom stub package
 
@@ -150,6 +164,30 @@ reflects the true state of the device's file system.
 
 You can also trigger a refresh manually via the toolbar action, this is useful for when you want to see changes your
 code has made.
+
+### File System Context Menu
+
+The file system context menu (right-click) provides the core actions you would expect from a fully featured OS file
+manager:
+
+- Create new files (.py or any other type) and directories
+- Copy / Cut / Paste (limited to project → device and device → device, never device → project)
+- Rename files or directories
+- Copy file or directory name / absolute path
+
+You can also download files from the device.
+
+⚠️ Note: Downloads are potentially destructive. Ensure the destination directory does not contain items that would
+conflict with the files being downloaded.
+
+#### Opening And Editing on-device files
+
+On-device files can be opened directly in the IDE in read-only mode, with the option to enter edit mode.
+
+- Edits persist as long as the editor tab remains open.
+- You can save the modified file back to the device (if connected), or discard the changes to restore the original
+  version.
+- The opened file can be refreshed if a device is connected
 
 ### Drag and Drop in File System Widget
 
