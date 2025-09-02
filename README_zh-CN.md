@@ -4,14 +4,14 @@
 [![JetBrains IntelliJ Rating](https://img.shields.io/jetbrains/plugin/r/rating/26227-micropython-tools?label=Rating)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 [![Reviews](https://img.shields.io/badge/Reviews-10-brightgreen)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 
-For English Speakers, please go: [English README](https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/README.md)
+**Translations:** [English](README.md) | [Simplified Chinese (简体中文)](README_zh-CN.md)
 
 这个插件将 MicroPython 支持引入 JetBrains 系列 IDE。
- 它提供了可靠的设备文件系统集成、REPL 支持、存根包管理，以及流畅的工作流程，
- 以便开发者能够顺利开展业余或专业的 MicroPython 项目。
+它提供了可靠的设备文件系统集成、REPL 支持、存根包管理，以及流畅的工作流程，
+以便开发者能够顺利开展业余或专业的 MicroPython 项目。
 
 该项目最初受 JetBrains 官方 MicroPython 插件启发，但随后经过完全重构并扩展为一个独立工具。
- 特别感谢 [Jos Verlinde](https://github.com/Josverl/micropython-stubs)
+特别感谢 [Jos Verlinde](https://github.com/Josverl/micropython-stubs), [Ilia Motornyi](https://github.com/elmot), [Andrey Vlasovskikh](https://github.com/vlasovskikh)
 
 ## 安装、开始和文档
 
