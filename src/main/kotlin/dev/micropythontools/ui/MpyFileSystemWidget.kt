@@ -826,6 +826,12 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 }
             }
         }
+
+        val dummyVolume = VolumeRootNode("/sd", "sd", 7970000000, 7970000000, false)
+        dummyVolume.add(DirNode("/sd/data", "data"))
+
+        (newModel.root as InvisibleRootNode).add(dummyVolume)
+        
         TreeUtil.sort(newModel, object : Comparator<FileSystemNode> {
             override fun compare(node1: FileSystemNode, node2: FileSystemNode): Int {
                 if ((node1 is DirNode) == (node2 is DirNode)) {

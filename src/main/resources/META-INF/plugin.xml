@@ -3,17 +3,9 @@
     <id>micropython-tools-jetbrains</id>
 
     <change-notes><![CDATA[
-        <h3>0.6.0 - 28-8-2025</h3>
+        <h3>0.6.1 - 2-9-2025</h3>
         <ul>
-            <li>Removed confirmation dialog from Clear REPL action</li>
-            <li>Reworked and improved Open File action</li>
-            <li>Added option to refresh and edit on-device files</li>
-            <li>Added “New” action for creating files and folders on-device</li>
-            <li>Added Copy, Cut, and Paste context menu actions to the File System view</li>
-            <li>Increased command execution timeout to reduce failures on large uploads</li>
-            <li>Fixed connection integrity monitoring on Windows</li>
-            <li>Reworked stub package management with on-demand installation and updating</li>
-            <li>Prevented file system refresh when a pre-upload scan is cancelled</li>
+            <li>Ensure the file system is refreshed after an edited file is saved</li>
         </ul>
         <br>
         <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>

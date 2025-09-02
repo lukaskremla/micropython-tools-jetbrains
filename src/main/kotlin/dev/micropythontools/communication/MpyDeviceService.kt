@@ -284,6 +284,9 @@ internal class MpyDeviceService(val project: Project) : Disposable {
         deviceInformation = DeviceInformation()
     }
 
+    /**
+     * The file system refresh must be executed after an upload otherwise the plugin will stay stuck in a detached state
+     */
     suspend fun upload(
         relativeName: String,
         contentsToByteArray: ByteArray,
