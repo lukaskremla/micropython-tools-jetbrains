@@ -11,7 +11,7 @@ For English Speakers, please go: [English README](https://github.com/lukaskremla
  以便开发者能够顺利开展业余或专业的 MicroPython 项目。
 
 该项目最初受 JetBrains 官方 MicroPython 插件启发，但随后经过完全重构并扩展为一个独立工具。
- 特别感谢 [Jos Verlinde](https://github.com/Josverl/micropython-stubs?utm_source=chatgpt.com)
+ 特别感谢 [Jos Verlinde](https://github.com/Josverl/micropython-stubs)
 
 ## 安装、开始和文档
 
@@ -61,13 +61,13 @@ For English Speakers, please go: [English README](https://github.com/lukaskremla
 
 ### MicroPython的Stubs
 
-- 内置Stubs管理集成了由 [Jos Verlinde](https://github.com/Josverl/micropython-stubs?utm_source=chatgpt.com)提供的所有可用于MicroPython的包。
+- 内置Stubs管理集成了由 [Jos Verlinde](https://github.com/Josverl/micropython-stubs)提供的所有可用于MicroPython的包。
 
 ### 设置
 
 ## MicroPython的Stubs
 
-- 按需安装并应用由[Jos Verlinde](https://github.com/Josverl/micropython-stubs?utm_source=chatgpt.com)提供的MicroPython Stubs
+- 按需安装并应用由[Jos Verlinde](https://github.com/Josverl/micropython-stubs)提供的MicroPython Stubs
 - 插件会自动跟踪Stubs版本，并在有可用更新时提示你。
 
 ![Settings](media/settings.png)
