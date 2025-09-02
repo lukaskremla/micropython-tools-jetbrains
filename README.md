@@ -2,39 +2,21 @@
 
 [![JetBrains IntelliJ Downloads](https://img.shields.io/jetbrains/plugin/d/26227-micropython-tools?label=Downloads)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 [![JetBrains IntelliJ Rating](https://img.shields.io/jetbrains/plugin/r/rating/26227-micropython-tools?label=Rating)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
+[![Reviews](https://img.shields.io/badge/Reviews-10-brightgreen)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 
-This is a fork of the [JetBrains IntelliJ MicroPython plugin](https://github.com/JetBrains/intellij-micropython).
-Credits to [Andrey Vlasovskikh](https://github.com/vlasovskikh) for creating the original plugin and
-to [Ilia Motornyi](https://github.com/elmot) for his original work on the communication layer and file system view.
+This plugin brings MicroPython support into JetBrains IDEs.
+It provides reliable device file system integration, REPL support, stub package management, and smooth workflows for
+developing both hobbyist and professional MicroPython projects.
 
-Many thanks also go to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for creating and maintaining the
-MicroPython stubs that this plugin uses.
-
-I have decided fork the original jetbrains plugin as its development had slowed and I wanted to focus on implementing
-more advanced features that I deem invaluable based on my professional experience working with MicroPython
-
-I believe that the MicroPython community needs robust, actively maintained and developed tools adding MicroPython
-support to modern industry-standard IDEs. My aim with this fork is to address this need.
-
-There will be frequent updates, I'm actively working on developing new features and fixing bugs in the existing
-code. If you run into any problems while using this plugin, please create an issue. For any suggestions or feature
-requests, feel free to start a discussion.
-
-Some of the features you can expect soon include:
-
-- Reworked stubs manager, allowing on-demand downloading and updating of stub packages
-- Integration with mpy-cross to allow compiling to bytecode
-
-Long term plans:
-
-- Built-in MicroPython firmware flashing support
-- After the full-release of this plugin I might consider also developing MicroPython plugins for VSCode
-  and possibly Visual Studio 2022
+Originally inspired by JetBrains’ MicroPython plugin, this project has since been fully reworked and expanded into a
+standalone tool. Credit to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for creating and maintaining the
+stubs used here, and to [Ilia Motornyi](https://github.com/elmot) and
+[Andrey Vlasovskikh](https://github.com/vlasovskikh) for their work on the original plugin.
 
 ## Installation, Getting Started and Documentation
 
 Usage tips and documentation are available
-[here](https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md)
+[here](https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/DOCUMENTATION.md).
 
 ## Features
 
@@ -44,6 +26,16 @@ Usage tips and documentation are available
 - Upload to or reorganize the file system via drag and drop
 - Supports mounted volumes (such as SD cards) and displays storage usage
   ![File System Widget](media/file_system.png)
+
+#### File System Actions
+
+- Create new files or directories
+- Fully working copy/cut/paste actions (project to device and device to device only)
+- Download source code from the device
+- Open and edit on-device files
+  ![File System Widget Context Menu](media/file_system_context_menu.png)
+- Edit or refresh the currently open on-device file
+  ![File System Widget Edit File](media/file_system_edit_file.png)
 
 ### REPL Widget
 
@@ -75,16 +67,21 @@ Usage tips and documentation are available
 - Built-in stubs management Integrates all available MicroPython stubs packages
   by [Jos Verlinde](https://github.com/Josverl/micropython-stubs)
 
+### Settings
+
+## MicroPython Stubs
+
+- Install and apply MicroPython stubs by [Jos Verlinde](https://github.com/Josverl/micropython-stubs) on-demand
+- The plugin automatically tracks the stubs versions and prompts you when an update is available
+
+![Settings](media/settings.png)
+
 ### Context Menu Actions
 
 - Quickly upload or execute selected files
   ![Context Menu File Actions](media/file_actions.png)
-- Custom "Mark as MicroPython Sources Root" action that allows compatibility with many different JetBrains IDEs
+- Custom "Mark as MicroPython Sources Root" action that allows compatibility with most JetBrains IDEs
   ![Context Menu MicroPython Sources Actions](media/micropython_sources.png)
-
-### Settings
-
-![Settings](media/settings.png)
 
 ## Requirements
 
