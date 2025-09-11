@@ -408,6 +408,9 @@ internal class MpyConfigurable(private val project: Project) :
                     table.setShowGrid(false)
                     table.preferredScrollableViewportSize = Dimension(600, 250)
 
+                    table.emptyText.appendLine(MpyBundle.message("configurable.stub.table.empty.text.nothing.to.show"))
+                    table.emptyText.appendLine(MpyBundle.message("configurable.stub.table.empty.text.check"))
+
                     table.setDefaultRenderer(String::class.java, object : DefaultTableCellRenderer() {
                         override fun getTableCellRendererComponent(
                             table: JTable,

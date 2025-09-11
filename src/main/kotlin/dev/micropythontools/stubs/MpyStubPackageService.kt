@@ -312,7 +312,6 @@ internal class MpyStubPackageService(private val project: Project) {
             }
         }
 
-        // 👉 Apply preferred sort before returning
         val sorted = sortStubPackages(stubPackages)
         return Pair(sorted, remoteStubPackages.isNotEmpty())
     }
@@ -372,13 +371,6 @@ internal class MpyStubPackageService(private val project: Project) {
         val response = try {
             client.send(request, HttpResponse.BodyHandlers.ofString())
         } catch (_: Throwable) {
-            Notifications.Bus.notify(
-                Notification(
-                    MpyBundle.message("notification.group.name"),
-                    MpyBundle.message("stub.service.failed.to.get.remote.stubs"),
-                    NotificationType.ERROR
-                )
-            )
             return emptyList()
         }
 

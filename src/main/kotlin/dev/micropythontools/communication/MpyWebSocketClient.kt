@@ -143,7 +143,7 @@ internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                             when (e) {
                                 is TimeoutCancellationException -> throw ConnectException(
                                     MpyBundle.message(
-                                        "webrepl.error.password.exchange.timout",
+                                        "webrepl.error.password.exchange.timeout",
                                         loginBuffer
                                     )
                                 )
