@@ -1,6 +1,12 @@
 The Changelog
 =============
 
+0.6.2 - 11.9.2025
+------------------
+
+* Improved no network state stub package manager handling
+* Removed no network IDE notification when stub package validation couldn't check for updates
+
 0.6.1 - 2.9.2025
 ------------------
 
