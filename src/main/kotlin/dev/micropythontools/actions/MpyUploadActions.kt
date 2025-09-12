@@ -36,6 +36,7 @@ internal abstract class MpyUploadActionBase(
         enabledWhen = EnabledWhen.PLUGIN_ENABLED,
         requiresConnection = true,
         requiresRefreshAfter = false, // A manual performReplAction is called by the uploading class
+        canRunInBackground = true,
         cancelledMessage = MpyBundle.message("action.upload.cancelled"),
         timedOutMessage = MpyBundle.message("action.upload.timeout")
     )

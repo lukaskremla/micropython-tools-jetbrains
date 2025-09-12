@@ -31,6 +31,7 @@ internal class MpyOpenSettingsAction : MpyAction(
         enabledWhen = EnabledWhen.ALWAYS,
         requiresConnection = false,
         requiresRefreshAfter = false,
+        canRunInBackground = false,
         "",
         ""
     )

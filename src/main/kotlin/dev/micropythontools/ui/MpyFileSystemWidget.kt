@@ -340,9 +340,10 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
             ) {
                 performReplAction(
-                    project,
+                    project = project,
                     connectionRequired = false,
                     requiresRefreshAfter = false,
+                    canRunInBackground = false,
                     description = MpyBundle.message("action.connect.text"),
                     cancelledMessage = MpyBundle.message("action.connect.cancelled"),
                     timedOutMessage = MpyBundle.message("action.connect.timeout"),
@@ -572,6 +573,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
             project = project,
             connectionRequired = false,
             requiresRefreshAfter = true,
+            canRunInBackground = false,
             description = progressTitle,
             cancelledMessage = cancelledMessage,
             timedOutMessage = timedOutMessage,

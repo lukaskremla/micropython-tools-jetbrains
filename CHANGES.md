@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+0.6.3 (2025.1.0) - 12.9.2025
+------------------
+
+* Switched to the JetBrains marketplace versioning scheme
+
 0.6.2 - 11.9.2025
 ------------------
 

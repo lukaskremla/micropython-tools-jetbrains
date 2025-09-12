@@ -62,6 +62,7 @@ internal class MpyRefreshAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = false,
         requiresRefreshAfter = false, // This option isn't used, refresh is instead called explicitly, (allows cancellation)
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.refresh.cancelled"),
         timedOutMessage = MpyBundle.message("action.refresh.timeout")
     )
@@ -84,6 +85,7 @@ internal class MpyDeleteAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = true,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.delete.cancelled"),
         timedOutMessage = MpyBundle.message("action.delete.timeout")
     )
@@ -209,6 +211,7 @@ internal class MpyDownloadAction : MpyAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = false,
+        canRunInBackground = true,
         cancelledMessage = MpyBundle.message("action.download.cancelled"),
         timedOutMessage = MpyBundle.message("action.download.timeout")
     )
@@ -274,6 +277,7 @@ internal class MpyOpenFileAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = false,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.open.file.cancelled"),
         timedOutMessage = MpyBundle.message("action.open.file.timeout")
     )
@@ -414,6 +418,7 @@ internal class MpyRenameAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = true,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.rename.cancelled"),
         timedOutMessage = MpyBundle.message("action.rename.timeout")
     )
@@ -511,6 +516,7 @@ internal class MpyCreatePythonFileAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = true,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.create.file.cancelled"),
         timedOutMessage = MpyBundle.message("action.create.file.timeout")
     )
@@ -577,6 +583,7 @@ internal class MpyCreateFileAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = true,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.create.file.cancelled"),
         timedOutMessage = MpyBundle.message("action.create.file.timeout")
     )
@@ -633,6 +640,7 @@ internal class MpyCreateFolderAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = true,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.create.folder.cancelled"),
         timedOutMessage = MpyBundle.message("action.create.folder.timeout")
     )

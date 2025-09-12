@@ -130,15 +130,10 @@ tasks {
             apiVersion = KotlinVersion.KOTLIN_2_2
         }
     }
-    withType<org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask> {
-        from("$rootDir") {
-            into("micropython-tools-jetbrains")
-            include("scripts/")
-        }
-
-        from("$rootDir/libs") {
-            into("micropython-tools-jetbrains/lib")
-            include(project.property("javaWebsocket").toString())
+    named<ProcessResources>("processResources") {
+        from("scripts") {
+            into("scripts")
+            include("**/*")
         }
     }
     test {

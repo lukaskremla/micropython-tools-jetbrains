@@ -295,6 +295,7 @@ internal class MpyConfigurable(private val project: Project) :
                                     project,
                                     connectionRequired = false,
                                     requiresRefreshAfter = false,
+                                    canRunInBackground = false,
                                     description = MpyBundle.message("action.disconnect.text"),
                                     cancelledMessage = MpyBundle.message("action.disconnect.cancelled"),
                                     timedOutMessage = MpyBundle.message("action.disconnect.timeout"),

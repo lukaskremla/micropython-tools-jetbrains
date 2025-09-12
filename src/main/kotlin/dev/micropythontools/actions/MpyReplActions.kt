@@ -48,6 +48,7 @@ internal class MpyInterruptAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = false,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.interrupt.cancelled"),
         timedOutMessage = MpyBundle.message("action.interrupt.timeout")
     )
@@ -71,6 +72,7 @@ internal class MpySoftResetAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = true,
         requiresRefreshAfter = false,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.reset.cancelled"),
         timedOutMessage = MpyBundle.message("action.reset.timeout")
     )
@@ -94,6 +96,7 @@ internal class MpyClearReplAction : MpyAction(
         enabledWhen = EnabledWhen.ALWAYS,
         requiresConnection = false,
         requiresRefreshAfter = false,
+        canRunInBackground = false,
         cancelledMessage = "",
         timedOutMessage = ""
     )
@@ -118,6 +121,7 @@ internal class MpyExecuteFileInReplAction : MpyReplAction(
         enabledWhen = EnabledWhen.PLUGIN_ENABLED,
         requiresConnection = true,
         requiresRefreshAfter = false,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.execute.cancelled"),
         timedOutMessage = MpyBundle.message("action.execute.timeout")
     )
@@ -166,6 +170,7 @@ internal class MpyExecuteFragmentInReplAction : MpyReplAction(
         enabledWhen = EnabledWhen.PLUGIN_ENABLED,
         requiresConnection = true,
         requiresRefreshAfter = false,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.execute.cancelled"),
         timedOutMessage = MpyBundle.message("action.execute.timeout")
     )

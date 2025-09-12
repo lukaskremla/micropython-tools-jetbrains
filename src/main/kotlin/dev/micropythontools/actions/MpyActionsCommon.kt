@@ -47,6 +47,7 @@ internal data class MpyActionOptions(
     val enabledWhen: EnabledWhen,
     val requiresConnection: Boolean,
     val requiresRefreshAfter: Boolean,
+    val canRunInBackground: Boolean,
     val cancelledMessage: String,
     val timedOutMessage: String
 )
@@ -150,6 +151,7 @@ internal abstract class MpyReplAction(
             project = project,
             connectionRequired = options.requiresConnection,
             requiresRefreshAfter = options.requiresRefreshAfter,
+            canRunInBackground = options.canRunInBackground,
             description = actionDescription,
             cancelledMessage = options.cancelledMessage,
             timedOutMessage = options.timedOutMessage,

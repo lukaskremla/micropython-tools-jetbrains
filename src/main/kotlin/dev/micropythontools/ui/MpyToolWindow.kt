@@ -59,6 +59,8 @@ internal class MpyToolWindow() : ToolWindowFactory, DumbAware {
         terminalContent.setDisposer(newDisposable)
         toolWindow.contentManager.addContent(terminalContent)
         componentRegistryService.registerTerminalContent(terminalContent)
+        componentRegistryService.registerToolWindow(toolWindow)
+        toolWindow.stripeTitle = "Kerel"
     }
 
     override val icon: Icon

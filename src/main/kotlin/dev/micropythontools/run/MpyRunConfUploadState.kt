@@ -99,6 +99,7 @@ internal class MpyRunConfUploadState(
                         project,
                         connectionRequired = false,
                         requiresRefreshAfter = false,
+                        canRunInBackground = false,
                         description = MpyBundle.message("repl.reset.hotkey.description"),
                         cancelledMessage = MpyBundle.message("repl.reset.hotkey.cancelled"),
                         timedOutMessage = MpyBundle.message("repl.reset.hotkey.timeout"),

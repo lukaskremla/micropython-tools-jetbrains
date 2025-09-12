@@ -52,6 +52,7 @@ internal class MpyRunConfExecuteState(
                 project,
                 connectionRequired = true,
                 requiresRefreshAfter = false,
+                canRunInBackground = false,
                 description = MpyBundle.message("action.execute.file.text"),
                 cancelledMessage = MpyBundle.message("action.execute.cancelled"),
                 timedOutMessage = MpyBundle.message("action.execute.timeout"),

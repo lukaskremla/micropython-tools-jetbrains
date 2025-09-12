@@ -32,6 +32,7 @@ internal class MpyConnectAction : MpyReplAction(
         enabledWhen = EnabledWhen.DISCONNECTED,
         requiresConnection = false,
         requiresRefreshAfter = false,
+        canRunInBackground = false,
         cancelledMessage = MpyBundle.message("action.connect.cancelled"),
         timedOutMessage = MpyBundle.message("action.connect.timeout")
     )
@@ -54,6 +55,7 @@ internal class MpyDisconnectAction : MpyReplAction(
         enabledWhen = EnabledWhen.CONNECTED,
         requiresConnection = false,
         requiresRefreshAfter = false,
+        canRunInBackground = false,
         MpyBundle.message("action.disconnect.cancelled"),
         MpyBundle.message("action.disconnect.timeout")
     )

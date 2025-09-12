@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Lukas Kremla
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package dev.micropythontools.editor
 
 import com.intellij.openapi.application.ApplicationManager
@@ -17,12 +33,6 @@ import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.i18n.MpyBundle
 import java.nio.charset.StandardCharsets
 
-/**
- * Centralizes common actions for editable device-backed files:
- * - Toggle view/edit by reopening a LightVirtualFile copy
- * - Save current editor contents to device (with progress)
- * - Refresh contents from device (with discard confirmation)
- */
 internal object MpyEditableFileController {
     fun isEditableMpyToolsFile(file: VirtualFile): Boolean =
         file.getUserData(MPY_TOOLS_EDITABLE_FILE_SIGNATURE_KEY) == MPY_TOOLS_EDITABLE_FILE_SIGNATURE
@@ -81,6 +91,7 @@ internal object MpyEditableFileController {
             project,
             true,
             requiresRefreshAfter = true,
+            canRunInBackground = false,
             description = MpyBundle.message("edit.on.device.file.save.description"),
             cancelledMessage = MpyBundle.message("edit.on.device.file.save.cancelled"),
             timedOutMessage = MpyBundle.message("edit.on.device.file.save.timeout"),
@@ -139,6 +150,7 @@ internal object MpyEditableFileController {
             project,
             true,
             requiresRefreshAfter = false,
+            canRunInBackground = false,
             MpyBundle.message("edit.on.device.file.re.open.description"),
             MpyBundle.message("edit.on.device.file.re.open.cancelled"),
             MpyBundle.message("edit.on.device.file.re.open.timeout"),

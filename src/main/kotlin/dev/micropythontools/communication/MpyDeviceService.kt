@@ -43,6 +43,7 @@ import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
 import dev.micropythontools.core.MpyScripts
 import dev.micropythontools.core.MpyValidators
+import dev.micropythontools.freemium.ProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
 import dev.micropythontools.settings.MpyConfigurable
@@ -108,6 +109,8 @@ internal class MpyDeviceService(val project: Project) : Disposable {
         get() = componentRegistryService.getFileSystemWidget()
 
     val stateListeners = mutableListOf<StateListener>()
+
+    var isPerformingReplAction = false
 
     // Also allow setting the value from outside MpyComm for complex scenarios (like with uploads),
     // if the initial quiet (stays in tty detached) refresh finds all files are up to date, the state needs to be reset
@@ -482,6 +485,7 @@ internal fun <T> performReplAction(
     project: Project,
     connectionRequired: Boolean,
     requiresRefreshAfter: Boolean,
+    canRunInBackground: Boolean,
     @NlsContexts.DialogMessage description: String,
     cancelledMessage: String,
     timedOutMessage: String,
@@ -491,145 +495,185 @@ internal fun <T> performReplAction(
 ): T? {
     val deviceService = project.service<MpyDeviceService>()
 
-    if (connectionRequired && deviceService.state != State.CONNECTED) {
-        val settings = project.service<MpySettingsService>()
+    try {
 
-        val deviceToConnectTo = when {
-            settings.state.usingUart -> settings.state.portName
+        if (deviceService.isPerformingReplAction) {
+            MessageDialogBuilder.Message(
+                "An Action is Already Running",
+                "Another REPL action is currently being performed, cancel it or wait for it to finish."
+            ).asWarning()
+                .buttons("Acknowledge")
+                .show(project)
 
-            else -> settings.webReplUrl
-        }
-
-        if (deviceToConnectTo == null ||
-            !MessageDialogBuilder.yesNo(
-                MpyBundle.message("comm.connection.required.dialog.title"),
-                MpyBundle.message("comm.connection.required.dialog.message", deviceToConnectTo)
-            ).ask(project)
-        ) {
             return null
         }
-    }
 
-    var result: T? = null
+        deviceService.isPerformingReplAction = true
 
-    var mainActionExecuted = false
-    var cleanUpActionExecuted = false
-    var wasCancelled = false
+        if (connectionRequired && deviceService.state != State.CONNECTED) {
+            val settings = project.service<MpySettingsService>()
 
-    try {
-        runWithModalProgressBlocking(project, MpyBundle.message("comm.progress.communicating.with.device")) {
-            reportRawProgress { reporter ->
-                var error: String? = null
-                var errorType = NotificationType.ERROR
+            val deviceToConnectTo = when {
+                settings.state.usingUart -> settings.state.portName
 
-                try {
-                    if (connectionRequired) {
-                        deviceService.doConnect(reporter)
-                    }
-                    result = action(reporter)
+                else -> settings.webReplUrl
+            }
 
-                    mainActionExecuted = true
-                } catch (_: TimeoutCancellationException) {
-                    error = timedOutMessage
-                } catch (e: CancellationException) {
-                    wasCancelled = true
-
-                    error = cancelledMessage
-                    errorType = NotificationType.INFORMATION
-                    throw e
-                } catch (e: IOException) {
-                    val noMsg = MpyBundle.message("comm.error.no.message")
-                    val ioLabel = MpyBundle.message("comm.error.io.label")
-                    val msg = e.localizedMessage ?: e.message ?: noMsg
-                    error = "$description $ioLabel - $msg"
-                } catch (e: Exception) {
-                    val errLabel = MpyBundle.message("comm.error.error.label")
-                    val base = "$description $errLabel - ${e::class.simpleName}"
-                    val msg = e.localizedMessage ?: e.message
-                    error = if (msg.isNullOrBlank()) base else "$base: $msg"
-                } finally {
-                    withContext(NonCancellable) {
-                        if (!error.isNullOrBlank()) {
-                            Notifications.Bus.notify(
-                                Notification(
-                                    MpyBundle.message("notification.group.name"),
-                                    error,
-                                    errorType
-                                ), project
-                            )
-                        }
-                    }
-                }
+            if (deviceToConnectTo == null ||
+                !MessageDialogBuilder.yesNo(
+                    MpyBundle.message("comm.connection.required.dialog.title"),
+                    MpyBundle.message("comm.connection.required.dialog.message", deviceToConnectTo)
+                ).ask(project)
+            ) {
+                return null
             }
         }
-    } finally {
-        if (mainActionExecuted || wasCancelled) {
-            runWithModalProgressBlocking(project, MpyBundle.message("comm.progress.cleaning.up.after.operation")) {
-                reportRawProgress { reporter ->
-                    var error: String? = null
 
-                    try {
-                        cleanUpAction?.let { cleanUpAction(reporter) }
+        val proService = project.service<ProServiceInterface>()
 
-                        val finalResult = result
-                        val shouldRefresh = when {
-                            finalResult is PerformReplActionResult<*> ->
-                                @Suppress("UNCHECKED_CAST")
-                                (finalResult as PerformReplActionResult<T>).shouldRefresh
+        if (canRunInBackground && proService.isActive) {
+            proService.coroutineScope.launch {
+                proService.performBackgroundReplAction(
+                    project,
+                    connectionRequired,
+                    requiresRefreshAfter,
+                    description,
+                    cancelledMessage,
+                    timedOutMessage,
+                    action,
+                    cleanUpAction,
+                    finalCheckAction
+                )
+            }
+            return null
+        } else {
+            var result: T? = null
 
-                            else -> true
-                        }
+            var mainActionExecuted = false
+            var cleanUpActionExecuted = false
+            var wasCancelled = false
 
-                        if (requiresRefreshAfter && shouldRefresh) {
-                            deviceService.fileSystemWidget?.refresh(reporter)
-                        }
+            try {
+                runWithModalProgressBlocking(project, MpyBundle.message("comm.progress.communicating.with.device")) {
+                    reportRawProgress { reporter ->
+                        var error: String? = null
+                        var errorType = NotificationType.ERROR
 
-                        cleanUpActionExecuted = true
-                    } catch (_: TimeoutCancellationException) {
-                        error = MpyBundle.message("comm.error.cleanup.timeout")
-                    } catch (e: CancellationException) {
-                        error = MpyBundle.message("comm.error.cleanup.cancelled")
-                        throw e
+                        try {
+                            if (connectionRequired) {
+                                deviceService.doConnect(reporter)
+                            }
+                            result = action(reporter)
 
-                    } catch (e: Throwable) {
-                        val errLabel = MpyBundle.message("comm.error.error.label")
-                        val base = "$description $errLabel - ${e::class.simpleName}"
-                        val msg = e.localizedMessage ?: e.message ?: MpyBundle.message("comm.error.no.message")
-                        val core = if (msg.isBlank()) base else "$base: $msg"
+                            mainActionExecuted = true
+                        } catch (_: TimeoutCancellationException) {
+                            error = timedOutMessage
+                        } catch (e: CancellationException) {
+                            wasCancelled = true
 
-                        error = MpyBundle.message("comm.cleanup.exception.prefix", core)
-
-                    } finally {
-                        withContext(NonCancellable) {
-                            if (!error.isNullOrBlank()) {
-                                deviceService.disconnect(reporter)
-
-                                Notifications.Bus.notify(
-                                    Notification(
-                                        MpyBundle.message("notification.group.name"),
-                                        "$error - ${MpyBundle.message("comm.cleanup.prevent.desync")}",
-                                        NotificationType.ERROR
-                                    ), project
-                                )
+                            error = cancelledMessage
+                            errorType = NotificationType.INFORMATION
+                            throw e
+                        } catch (e: IOException) {
+                            val noMsg = MpyBundle.message("comm.error.no.message")
+                            val ioLabel = MpyBundle.message("comm.error.io.label")
+                            val msg = e.localizedMessage ?: e.message ?: noMsg
+                            error = "$description $ioLabel - $msg"
+                        } catch (e: Exception) {
+                            val errLabel = MpyBundle.message("comm.error.error.label")
+                            val base = "$description $errLabel - ${e::class.simpleName}"
+                            val msg = e.localizedMessage ?: e.message
+                            error = if (msg.isNullOrBlank()) base else "$base: $msg"
+                        } finally {
+                            withContext(NonCancellable) {
+                                if (!error.isNullOrBlank()) {
+                                    Notifications.Bus.notify(
+                                        Notification(
+                                            MpyBundle.message("notification.group.name"),
+                                            error,
+                                            errorType
+                                        ), project
+                                    )
+                                }
                             }
                         }
                     }
                 }
+            } finally {
+                if (mainActionExecuted || wasCancelled) {
+                    runWithModalProgressBlocking(
+                        project,
+                        MpyBundle.message("comm.progress.cleaning.up.after.operation")
+                    ) {
+                        reportRawProgress { reporter ->
+                            var error: String? = null
+
+                            try {
+                                cleanUpAction?.let { cleanUpAction(reporter) }
+
+                                val finalResult = result
+                                val shouldRefresh = when {
+                                    finalResult is PerformReplActionResult<*> ->
+                                        @Suppress("UNCHECKED_CAST")
+                                        (finalResult as PerformReplActionResult<T>).shouldRefresh
+
+                                    else -> true
+                                }
+
+                                if (requiresRefreshAfter && shouldRefresh) {
+                                    deviceService.fileSystemWidget?.refresh(reporter)
+                                }
+
+                                cleanUpActionExecuted = true
+                            } catch (_: TimeoutCancellationException) {
+                                error = MpyBundle.message("comm.error.cleanup.timeout")
+                            } catch (e: CancellationException) {
+                                error = MpyBundle.message("comm.error.cleanup.cancelled")
+                                throw e
+
+                            } catch (e: Throwable) {
+                                val errLabel = MpyBundle.message("comm.error.error.label")
+                                val base = "$description $errLabel - ${e::class.simpleName}"
+                                val msg = e.localizedMessage ?: e.message ?: MpyBundle.message("comm.error.no.message")
+                                val core = if (msg.isBlank()) base else "$base: $msg"
+
+                                error = MpyBundle.message("comm.cleanup.exception.prefix", core)
+
+                            } finally {
+                                withContext(NonCancellable) {
+                                    if (!error.isNullOrBlank()) {
+                                        deviceService.disconnect(reporter)
+
+                                        Notifications.Bus.notify(
+                                            Notification(
+                                                MpyBundle.message("notification.group.name"),
+                                                "$error - ${MpyBundle.message("comm.cleanup.prevent.desync")}",
+                                                NotificationType.ERROR
+                                            ), project
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (mainActionExecuted && cleanUpActionExecuted && !wasCancelled) {
+                        finalCheckAction?.let { finalCheckAction() }
+                    }
+                }
             }
 
-            if (mainActionExecuted && cleanUpActionExecuted && !wasCancelled) {
-                finalCheckAction?.let { finalCheckAction() }
+            // At the end of performReplAction function
+            val finalResult = result
+            return when {
+                finalResult is PerformReplActionResult<*> ->
+                    @Suppress("UNCHECKED_CAST")
+                    (finalResult as PerformReplActionResult<T>).result
+
+                else -> finalResult
             }
         }
-    }
-
-    // At the end of performReplAction function
-    val finalResult = result
-    return when {
-        finalResult is PerformReplActionResult<*> ->
-            @Suppress("UNCHECKED_CAST")
-            (finalResult as PerformReplActionResult<T>).result
-
-        else -> finalResult
+    } finally {
+        deviceService.isPerformingReplAction = false
     }
 }

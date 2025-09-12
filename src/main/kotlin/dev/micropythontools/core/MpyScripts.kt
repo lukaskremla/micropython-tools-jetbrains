@@ -16,17 +16,12 @@
 
 package dev.micropythontools.core
 
-import java.io.File
-
 internal object MpyScripts {
-    /**
-     * Loads a MicroPython helper script from the plugin's bundled resources,
-     * stripping the first 15 metadata/header lines.
-     */
     fun retrieveMpyScriptAsString(scriptFileName: String): String {
-        val scriptPath = "${MpyPaths.microPythonScriptsPath}/$scriptFileName"
-        val retrievedScript = File(scriptPath).readText(Charsets.UTF_8)
-        val lines = retrievedScript.lines().toMutableList()
+        val resourcePath = "/scripts/MicroPythonMinified/$scriptFileName"
+        val stream = MpyScripts::class.java.getResourceAsStream(resourcePath)
+            ?: error("Script not found: $resourcePath")
+        val lines = stream.bufferedReader(Charsets.UTF_8).use { it.readLines() }.toMutableList()
         repeat(15) { if (lines.isNotEmpty()) lines.removeAt(0) }
         return lines.joinToString("\n")
     }
