@@ -41,7 +41,6 @@ import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.ui.JediTermWidget
-import dev.micropythontools.core.MpyScripts
 import dev.micropythontools.core.MpyValidators
 import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
@@ -122,6 +121,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
     var deviceInformation: DeviceInformation = DeviceInformation()
 
     private val settings = project.service<MpySettingsService>()
+    private val proService = project.service<MpyProServiceInterface>()
     private val componentRegistryService = project.service<MpyComponentRegistryService>()
     private var comm: MpyComm = createMpyComm()
     private var connectionChecker: ScheduledExecutorService? = null
@@ -343,9 +343,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
      * @param isConnectAction An optional parameter to be used by MpyConnectAction and FileSystemWidget empty text,
      * prevents duplicate cancellation notifications, since these actions handle their own cancellation notifications
      */
-    suspend
-
-    fun doConnect(reporter: RawProgressReporter, isConnectAction: Boolean = false) {
+    suspend fun doConnect(reporter: RawProgressReporter, isConnectAction: Boolean = false) {
         try {
             if (state == State.CONNECTED) return
 
@@ -556,49 +554,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
         }
     }
 
-    private suspend fun initializeDevice() {
-        val scriptFileName = "initialize_device.py"
-        val initializeDeviceScript = MpyScripts.retrieveMpyScriptAsString(scriptFileName)
-
-        val scriptResponse = blindExecute(initializeDeviceScript)
-
-        if (!scriptResponse.contains("ERROR")) {
-            val responseFields = scriptResponse.split("&")
-
-            deviceInformation = DeviceInformation(
-                defaultFreeMem = responseFields.getOrNull(0)?.toIntOrNull()
-                    ?: throw RuntimeException(MpyBundle.message("comm.error.initialization.freemem")),
-                hasCRC32 = responseFields.getOrNull(1)?.toBoolean() == true,
-                canEncodeBase64 = responseFields.getOrNull(2)?.toBoolean() == true,
-                canDecodeBase64 = responseFields.getOrNull(3)?.toBoolean() == true
-            )
-        } else {
-            deviceInformation = DeviceInformation()
-        }
-
-        val messageKey: String? = if (!deviceInformation.hasCRC32) {
-            if (!deviceInformation.canDecodeBase64) {
-                "comm.error.initialization.dialog.message.missing.crc32.and.base64"
-            } else {
-                "comm.error.initialization.dialog.message.missing.crc32"
-            }
-        } else if (!deviceInformation.canDecodeBase64) {
-            "comm.error.initialization.dialog.message.missing.base64"
-        } else {
-            null
-        }
-
-        if (messageKey != null) {
-            withContext(Dispatchers.EDT) {
-                MessageDialogBuilder.Message(
-                    MpyBundle.message("comm.error.initialization.dialog.title"),
-                    MpyBundle.message(messageKey)
-                ).asWarning()
-                    .buttons(MpyBundle.message("comm.error.initialization.dialog.acknowledge.button"))
-                    .show(project)
-            }
-        }
-    }
+    private suspend fun initializeDevice() = proService.initializeDevice(project)
 
     private suspend fun connect() = comm.connect()
 

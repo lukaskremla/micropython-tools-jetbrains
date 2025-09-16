@@ -16,9 +16,18 @@
 
 package dev.micropythontools.freemium
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.progress.RawProgressReporter
+import dev.micropythontools.communication.DeviceInformation
+import dev.micropythontools.communication.MpyDeviceService
+import dev.micropythontools.core.MpyScripts
+import dev.micropythontools.i18n.MpyBundle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
     override val hasProBits: Boolean = false
@@ -26,6 +35,52 @@ internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
 
     private fun fail(): Nothing =
         throw ProFeatureUnavailable("Pro feature is unavailable (not installed or not licensed).")
+
+    override suspend fun initializeDevice(project: Project) {
+        val deviceService = project.service<MpyDeviceService>()
+
+        val scriptFileName = "initialize_device.py"
+        val initializeDeviceScript = MpyScripts.retrieveMpyScriptAsString(scriptFileName)
+
+        val scriptResponse = deviceService.blindExecute(initializeDeviceScript)
+
+        if (!scriptResponse.contains("ERROR")) {
+            val responseFields = scriptResponse.split("&")
+
+            deviceService.deviceInformation = DeviceInformation(
+                defaultFreeMem = responseFields.getOrNull(0)?.toIntOrNull()
+                    ?: throw RuntimeException(MpyBundle.message("comm.error.initialization.freemem")),
+                hasCRC32 = responseFields.getOrNull(1)?.toBoolean() == true,
+                canEncodeBase64 = responseFields.getOrNull(2)?.toBoolean() == true,
+                canDecodeBase64 = responseFields.getOrNull(3)?.toBoolean() == true
+            )
+        } else {
+            deviceService.deviceInformation = DeviceInformation()
+        }
+
+        val messageKey: String? = if (!deviceService.deviceInformation.hasCRC32) {
+            if (!deviceService.deviceInformation.canDecodeBase64) {
+                "comm.error.initialization.dialog.message.missing.crc32.and.base64"
+            } else {
+                "comm.error.initialization.dialog.message.missing.crc32"
+            }
+        } else if (!deviceService.deviceInformation.canDecodeBase64) {
+            "comm.error.initialization.dialog.message.missing.base64"
+        } else {
+            null
+        }
+
+        if (messageKey != null) {
+            withContext(Dispatchers.EDT) {
+                MessageDialogBuilder.Message(
+                    MpyBundle.message("comm.error.initialization.dialog.title"),
+                    MpyBundle.message(messageKey)
+                ).asWarning()
+                    .buttons(MpyBundle.message("comm.error.initialization.dialog.acknowledge.button"))
+                    .show(project)
+            }
+        }
+    }
 
     override fun <T> performReplAction(
         project: Project,

@@ -28,6 +28,8 @@ internal interface MpyProServiceInterface {
     val isLicensed: Boolean
     val isActive: Boolean get() = hasProBits && isLicensed
 
+    suspend fun initializeDevice(project: Project)
+
     fun <T> performReplAction(
         project: Project,
         connectionRequired: Boolean,
