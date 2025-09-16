@@ -25,7 +25,6 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.communication.State
-import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.settings.MpySettingsService
 
 // ===== ENUMS AND BASE CLASSES =====
@@ -147,7 +146,7 @@ internal abstract class MpyReplAction(
 
         if (!dialogResult.shouldExecute) return
 
-        performReplAction(
+        deviceService.performReplAction(
             project = project,
             connectionRequired = options.requiresConnection,
             requiresRefreshAfter = options.requiresRefreshAfter,

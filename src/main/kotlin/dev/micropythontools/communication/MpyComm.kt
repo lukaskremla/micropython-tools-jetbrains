@@ -22,6 +22,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
@@ -30,6 +31,7 @@ import com.intellij.util.ExceptionUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import dev.micropythontools.core.MpyScripts
+import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
 import kotlinx.coroutines.*
@@ -112,6 +114,19 @@ internal open class MpyComm(
     ) {
         checkConnected()
 
+        val proService = project.service<MpyProServiceInterface>()
+
+        if (proService.isActive) {
+            return proService.upload(
+                fullName = fullName,
+                content = content,
+                progressCallback = progressCallback,
+                freeMemBytes = freeMemBytes,
+                canDecodeBase64 = deviceService.deviceInformation.canDecodeBase64,
+                doBlindExecute = ::doBlindExecute
+            )
+        }
+
         // Initialize the command list with necessary imports
         val setupCommands = mutableListOf("import os, gc")
 
@@ -185,7 +200,7 @@ internal open class MpyComm(
         // Remove the first upload command from the list and save it
         val firstUploadCommand = uploadCommands.removeFirst()
 
-        // Combine the setupCommand with the first u    ploadCommand to avoid extra REPL executions
+        // Combine the setupCommand with the first uploadCommand to avoid extra REPL executions
         commands[0] += "\n$firstUploadCommand"
 
         // Add there rest of the uploadCommands
@@ -197,9 +212,10 @@ internal open class MpyComm(
         commands.forEach { command ->
             doBlindExecute(
                 command,
-                progressCallback = progressCallback,
-                totalProgressCommandSize = totalProgressCommandSize,
+                progressCallback,
+                totalProgressCommandSize,
                 payloadSize = content.size,
+                redirectToRepl = false,
                 shouldStayDetached = true
             )
         }
@@ -294,7 +310,7 @@ internal open class MpyComm(
 
                     if (foundEotCharacters > 2) {
                         ApplicationManager.getApplication().invokeLater {
-                            performReplAction(
+                            deviceService.performReplAction(
                                 project = project,
                                 connectionRequired = false,
                                 requiresRefreshAfter = false,
@@ -936,7 +952,7 @@ internal open class MpyComm(
             if (state == State.CONNECTED) {
                 // Soft reset will terminate the WebREPL session
                 if (text.contains('\u0004') && mpyClient is MpyWebSocketClient) {
-                    performReplAction(
+                    deviceService.performReplAction(
                         project = project,
                         connectionRequired = false,
                         requiresRefreshAfter = false,

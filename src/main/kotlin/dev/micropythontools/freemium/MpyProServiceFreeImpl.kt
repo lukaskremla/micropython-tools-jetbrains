@@ -17,32 +17,42 @@
 package dev.micropythontools.freemium
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.progress.RawProgressReporter
-import kotlinx.coroutines.CoroutineScope
 
-internal class ProServiceFreeImpl(override val coroutineScope: CoroutineScope) : ProServiceInterface {
+internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
     override val hasProBits: Boolean = false
     override val isLicensed: Boolean = false
 
     private fun fail(): Nothing =
         throw ProFeatureUnavailable("Pro feature is unavailable (not installed or not licensed).")
 
-    override suspend fun <T> performBackgroundReplAction(
+    override fun <T> performReplAction(
         project: Project,
         connectionRequired: Boolean,
         requiresRefreshAfter: Boolean,
-        description: String,
+        canRunInBackground: Boolean,
+        @NlsContexts.DialogMessage description: String,
         cancelledMessage: String,
         timedOutMessage: String,
         action: suspend (RawProgressReporter) -> T,
         cleanUpAction: (suspend (RawProgressReporter) -> Unit)?,
         finalCheckAction: (() -> Unit)?
-    ): T? = fail()
+    ): T = fail()
 
-    override suspend fun compressUpload(
+    override suspend fun upload(
         fullName: String,
         content: ByteArray,
         progressCallback: (uploadedBytes: Double) -> Unit,
-        freeMemBytes: Int
-    ): ByteArray? = fail()
+        freeMemBytes: Int,
+        canDecodeBase64: Boolean,
+        doBlindExecute: suspend (
+            command: String,
+            progressCallback: ((uploadedBytes: Double) -> Unit),
+            totalProgressCommandSize: Int,
+            payloadSize: Int,
+            redirectToRepl: Boolean,
+            shouldStayDetached: Boolean
+        ) -> String
+    ) = fail()
 }

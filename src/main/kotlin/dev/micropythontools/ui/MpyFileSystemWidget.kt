@@ -49,7 +49,10 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.asSafely
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.tree.TreeUtil
-import dev.micropythontools.communication.*
+import dev.micropythontools.communication.MpyDeviceService
+import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.communication.PerformReplActionResult
+import dev.micropythontools.communication.State
 import dev.micropythontools.core.MpyScripts
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
@@ -339,7 +342,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 MpyBundle.message("file.system.empty.text.micropython.no.device.connected.connect.button"),
                 SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
             ) {
-                performReplAction(
+                deviceService.performReplAction(
                     project = project,
                     connectionRequired = false,
                     requiresRefreshAfter = false,
@@ -569,7 +572,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         val confirmMessage =
             if (shouldCopy) MpyBundle.message("file.system.move.confirm.dialog.message.copy") else MpyBundle.message("file.system.move.confirm.dialog.message.move")
 
-        val result = performReplAction(
+        val result = deviceService.performReplAction(
             project = project,
             connectionRequired = false,
             requiresRefreshAfter = true,

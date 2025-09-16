@@ -21,14 +21,8 @@ import dev.micropythontools.core.MpyPluginInfo.PLUGIN_ID
 import java.nio.file.Path
 
 internal object MpyPaths {
-    val scriptsPath: String
-        get() = "${MpyPluginInfo.sandboxPath}/scripts"
-
-    val microPythonScriptsPath: String
-        get() = "$scriptsPath/MicroPythonMinified"
-
-    val stubBaseDir: Path = PathManager.getSystemDir().resolve(PLUGIN_ID)
-
     const val STUB_PACKAGE_JSON_FILE_NAME = "micropython-stubs.json"
     const val STDLIB_STUB_PACKAGE_NAME = "micropython-stdlib-stubs"
+
+    val stubBaseDir: Path = PathManager.getSystemDir().resolve(PLUGIN_ID)
 }

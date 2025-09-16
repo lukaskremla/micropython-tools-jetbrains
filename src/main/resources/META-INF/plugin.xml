@@ -1,6 +1,10 @@
 <idea-plugin url="https://github.com/lukaskremla/micropython-tools-jetbrains">
     <name>MicroPython Tools</name>
+    <vendor>Lukas Kremla</vendor>
     <id>micropython-tools-jetbrains</id>
+
+    <version>2025.1.0</version>
+    <!--<product-descriptor code="PMPYTOOLS" release-date="20250913" release-version="20251" optional="true"/>-->
 
     <change-notes><![CDATA[
         <h3>0.6.3 (2025.1.0) - 12.9.2025</h3>
@@ -28,10 +32,6 @@
         <p>Documentation, usage tips, and issue tracker are available on
         <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">GitHub</a>.</p>
 ]]></description>
-
-    <version>2025.1.0</version>
-    <vendor>Lukas Kremla</vendor>
-    <product-descriptor code="PMPYTOOLS" release-date="20250913" release-version="20251"/>
 
     <dependencies>
         <plugin id="com.intellij.modules.lang"/>
@@ -106,8 +106,8 @@
         <editorNotificationProvider implementation="dev.micropythontools.editor.MpyEditorNotificationProvider"/>
 
         <projectService
-                serviceInterface="dev.micropythontools.freemium.ProServiceInterface"
-                serviceImplementation="dev.micropythontools.freemium.ProServiceFreeImpl"/>
+                serviceInterface="dev.micropythontools.freemium.MpyProServiceInterface"
+                serviceImplementation="dev.micropythontools.freemium.MpyProServiceFreeImpl"/>
     </extensions>
 
     <applicationListeners>

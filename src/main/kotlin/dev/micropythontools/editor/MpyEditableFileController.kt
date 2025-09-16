@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorNotifications
 import dev.micropythontools.communication.MpyDeviceService
-import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.i18n.MpyBundle
 import java.nio.charset.StandardCharsets
 
@@ -87,7 +86,7 @@ internal object MpyEditableFileController {
         val updatedContent = doc?.text?.toByteArray(StandardCharsets.UTF_8) ?: return
         val remotePath = file.getUserData(REMOTE_PATH_KEY) ?: return
 
-        performReplAction(
+        deviceService.performReplAction(
             project,
             true,
             requiresRefreshAfter = true,
@@ -146,7 +145,7 @@ internal object MpyEditableFileController {
         if (!proceed) return
         val remotePath = file.getUserData(REMOTE_PATH_KEY) ?: return
 
-        performReplAction(
+        deviceService.performReplAction(
             project,
             true,
             requiresRefreshAfter = false,

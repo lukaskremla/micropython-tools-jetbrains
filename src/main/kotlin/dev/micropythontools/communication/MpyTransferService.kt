@@ -50,6 +50,8 @@ import java.io.IOException
 
 @Service(Service.Level.PROJECT)
 internal class MpyTransferService(private val project: Project) {
+    private val deviceService = project.service<MpyDeviceService>()
+
     private fun VirtualFile.leadingDot() = this.name.startsWith(".")
 
     val VirtualFile.crc32: String
@@ -176,7 +178,6 @@ internal class MpyTransferService(private val project: Project) {
         FileDocumentManager.getInstance().saveAllDocuments()
 
         val settings = project.service<MpySettingsService>()
-        val deviceService = project.service<MpyDeviceService>()
 
         val excludedFolders = collectExcluded()
         val sourceFolders = collectMpySourceRoots()
@@ -198,7 +199,7 @@ internal class MpyTransferService(private val project: Project) {
         var fileToTargetPath = mutableMapOf<VirtualFile, String>()
         var folderToTargetPath = mutableMapOf<VirtualFile, String>()
 
-        performReplAction(
+        deviceService.performReplAction(
             project = project,
             connectionRequired = true,
             requiresRefreshAfter = false,
@@ -514,7 +515,7 @@ internal class MpyTransferService(private val project: Project) {
     }
 
     fun downloadDeviceFiles() {
-        performReplAction(
+        deviceService.performReplAction(
             project = project,
             connectionRequired = true,
             requiresRefreshAfter = false,

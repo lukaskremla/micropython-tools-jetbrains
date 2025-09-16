@@ -19,22 +19,21 @@ package dev.micropythontools.freemium
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.progress.RawProgressReporter
-import kotlinx.coroutines.CoroutineScope
 
 internal class ProFeatureUnavailable(message: String) : IllegalStateException(message)
 
 
-internal interface ProServiceInterface {
+internal interface MpyProServiceInterface {
     val hasProBits: Boolean
     val isLicensed: Boolean
     val isActive: Boolean get() = hasProBits && isLicensed
-    val coroutineScope: CoroutineScope
 
-    suspend fun <T> performBackgroundReplAction(
+    fun <T> performReplAction(
         project: Project,
         connectionRequired: Boolean,
         requiresRefreshAfter: Boolean,
-        @NlsContexts.ProgressText description: String,
+        canRunInBackground: Boolean,
+        @NlsContexts.DialogMessage description: String,
         cancelledMessage: String,
         timedOutMessage: String,
         action: suspend (RawProgressReporter) -> T,
@@ -42,10 +41,19 @@ internal interface ProServiceInterface {
         finalCheckAction: (() -> Unit)? = null
     ): T?
 
-    suspend fun compressUpload(
+    suspend fun upload(
         fullName: String,
         content: ByteArray,
         progressCallback: (uploadedBytes: Double) -> Unit,
-        freeMemBytes: Int
-    ): ByteArray?
+        freeMemBytes: Int,
+        canDecodeBase64: Boolean,
+        doBlindExecute: suspend (
+            command: String,
+            progressCallback: ((uploadedBytes: Double) -> Unit),
+            totalProgressCommandSize: Int,
+            payloadSize: Int,
+            redirectToRepl: Boolean,
+            shouldStayDetached: Boolean
+        ) -> String
+    )
 }

@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.readText
 import dev.micropythontools.communication.MpyDeviceService
-import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.i18n.MpyBundle
 
 internal class MpyRunConfExecuteState(
@@ -48,7 +47,7 @@ internal class MpyRunConfExecuteState(
             FileDocumentManager.getInstance().saveAllDocuments()
             val file = StandardFileSystems.local().findFileByPath(path)!!
             val code = file.readText()
-            performReplAction(
+            deviceService.performReplAction(
                 project,
                 connectionRequired = true,
                 requiresRefreshAfter = false,

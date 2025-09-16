@@ -47,7 +47,6 @@ import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.UIUtil
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
-import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.core.MpyValidators
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.stubs.MpyStubPackageService
@@ -291,7 +290,7 @@ internal class MpyConfigurable(private val project: Project) :
                     indent {
                         row {
                             comment(MpyBundle.message("configurable.board.currently.connected.comment"), action = {
-                                performReplAction(
+                                deviceService.performReplAction(
                                     project,
                                     connectionRequired = false,
                                     requiresRefreshAfter = false,

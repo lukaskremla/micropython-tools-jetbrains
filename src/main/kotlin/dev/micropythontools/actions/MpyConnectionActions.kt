@@ -71,7 +71,7 @@ internal class MpyDisconnectAction : MpyReplAction(
     }
 
     override fun customUpdate(e: AnActionEvent) {
-        if (deviceService.state != State.CONNECTED) {
+        if (deviceService.state !in listOf(State.CONNECTED, State.TTY_DETACHED)) {
             e.presentation.isEnabledAndVisible = false
         } else {
             Toggleable.setSelected(e.presentation, true)

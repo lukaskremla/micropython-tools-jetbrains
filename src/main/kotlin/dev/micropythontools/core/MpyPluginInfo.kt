@@ -16,18 +16,6 @@
 
 package dev.micropythontools.core
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.extensions.PluginId
-import dev.micropythontools.i18n.MpyBundle
-
 internal object MpyPluginInfo {
     const val PLUGIN_ID = "micropython-tools-jetbrains"
-
-    val pluginDescriptor: IdeaPluginDescriptor
-        get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))
-            ?: throw RuntimeException(MpyBundle.message("core.error.plugin.cannot.find.itself", PLUGIN_ID))
-
-    val sandboxPath: String
-        get() = pluginDescriptor.pluginPath.toString()
 }

@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
-import dev.micropythontools.communication.performReplAction
 import dev.micropythontools.i18n.MpyBundle
 
 internal class MpyRunConfUploadState(
@@ -95,7 +94,7 @@ internal class MpyRunConfUploadState(
             }
             if (success) {
                 if (resetOnSuccess) {
-                    performReplAction(
+                    deviceService.performReplAction(
                         project,
                         connectionRequired = false,
                         requiresRefreshAfter = false,
