@@ -35,9 +35,9 @@ Subject to the terms of this Agreement and, if applicable, those terms provided 
 Restrictions
 You agree not to, and you will not permit others to:
 
-?	License, sell, rent, lease, assign, distribute, transmit, host, outsource, disclose or otherwise commercially exploit the Application or make the Application available to any third party.
-?	Modify, make derivative works of, disassemble, decrypt, reverse compile or reverse engineer any part of the Application.
-?	Remove, alter or obscure any proprietary notice (including any notice of copyright or trademark) of MicroPython Tools or its affiliates, partners, suppliers or the licensors of the Application.
+*	License, sell, rent, lease, assign, distribute, transmit, host, outsource, disclose or otherwise commercially exploit the Application or make the Application available to any third party.
+*	Modify, make derivative works of, disassemble, decrypt, reverse compile or reverse engineer any part of the Application.
+*	Remove, alter or obscure any proprietary notice (including any notice of copyright or trademark) of MicroPython Tools or its affiliates, partners, suppliers or the licensors of the Application.
 
 Intellectual Property
 All intellectual property rights, including copyrights, patents, patent disclosures and inventions (whether patentable or not), trademarks service marks, trade secrets, know-how and other confidential information, trade dress, trade names, logos, corporate names and domain names, together with all of the good will associated there with, derivative works and all other rights (collectively, ?Intellectual Property Rights?) that are part of the Software that are otherwise owned by MicroPython Tools shall always remain the exclusive property of MicroPython Tools (or of its suppliers or licensors, if and when applicable). Nothing in this Agreement grants you (or any Organisation) a license to MicroPython Tools?s Intellectual Property Rights.
@@ -136,5 +136,5 @@ You may be subject to additional terms and conditions that apply when you use or
 Contact Us
 Don't hesitate to contact us if you have any questions about this Agreement.
 
-?	Via Email: lukas.kremla@protonmail.com
-?	Via Phone Number: +420703612216
+*	Via Email: lukas.kremla@protonmail.com
+*	Via Phone Number: +420703612216
