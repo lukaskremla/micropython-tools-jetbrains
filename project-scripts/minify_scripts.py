@@ -15,10 +15,9 @@
 """
 
 import os
+import python_minifier
 import re
 import shutil
-
-import python_minifier
 
 path = os.path.abspath(__file__)
 current_dir = os.path.dirname(path)
@@ -115,4 +114,7 @@ def do_minification(source_directory, target_directory):
 
 
 do_minification(mpy_source_dir, target_dir)
-do_minification(pro_source_dir, target_dir)
+try:
+    do_minification(pro_source_dir, target_dir)
+except:
+    pass
