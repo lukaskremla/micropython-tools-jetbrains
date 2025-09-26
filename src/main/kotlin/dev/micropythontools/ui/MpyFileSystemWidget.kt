@@ -124,9 +124,9 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                     )
                 } else if (value is VolumeRootNode) {
                     append(
-                        "  ${formatVolumeSize(value.freeSize)} " +
+                        "  ${formatSize(value.freeSize)} " +
                                 MpyBundle.message("file.system.free.volume.space.x.free.of.y") +
-                                " ${formatVolumeSize(value.totalSize)}",
+                                " ${formatSize(value.totalSize)}",
                         SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES
                     )
                 }
@@ -695,12 +695,22 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
     private fun newTreeModel() = DefaultTreeModel(InvisibleRootNode(), true)
 
-    private fun formatVolumeSize(bytes: Long): String {
+    fun formatSize(bytes: Long, showMoreKB: Boolean = false): String {
         return when {
             bytes >= 1_000_000_000_000 -> "%.2f TB".format(bytes / 1_000_000_000_000.0)
             bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
-            bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
+            bytes >= 1_000_000 && !showMoreKB && bytes <= 10_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
             bytes >= 1_000 -> "%.1f KB".format(bytes / 1_000.0)
+            else -> "$bytes bytes"
+        }
+    }
+
+    fun formatSize(bytes: Double, showMoreKB: Boolean = false): String {
+        return when {
+            bytes >= 1_000_000_000_000 -> "%.2f TB".format(bytes / 1_000_000_000_000.0)
+            bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
+            bytes >= 1_000_000 && !showMoreKB && bytes <= 10_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
+            bytes >= 1_000 -> "%.2f KB".format(bytes / 1_000.0)
             else -> "$bytes bytes"
         }
     }

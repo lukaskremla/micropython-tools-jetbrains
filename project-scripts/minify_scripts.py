@@ -15,14 +15,17 @@
 """
 
 import os
-import python_minifier
 import re
 import shutil
+
+import python_minifier
 
 path = os.path.abspath(__file__)
 current_dir = os.path.dirname(path)
 project_dir = os.path.dirname(current_dir)
+pro_project_dir = os.path.dirname(project_dir)
 
+pro_source_dir = os.path.join(pro_project_dir, "proScripts")
 mpy_source_dir = os.path.join(project_dir, "project-scripts/MicroPythonSource")
 scripts_dir = os.path.join(project_dir, "scripts")
 target_dir = os.path.join(scripts_dir, "MicroPythonMinified")
@@ -112,3 +115,4 @@ def do_minification(source_directory, target_directory):
 
 
 do_minification(mpy_source_dir, target_dir)
+do_minification(pro_source_dir, target_dir)

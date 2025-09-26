@@ -16,11 +16,15 @@
 
 package dev.micropythontools.freemium
 
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.communication.DeviceInformation
 import dev.micropythontools.communication.MpyDeviceService
@@ -28,13 +32,17 @@ import dev.micropythontools.core.MpyScripts
 import dev.micropythontools.i18n.MpyBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.swing.Icon
 
 internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
     override val hasProBits: Boolean = false
     override val isLicensed: Boolean = false
+    override val isActive: Boolean = false
+    override val lockIconToShow: Icon = AllIcons.Ide.Readonly
+    override val lockIconToolTipText = MpyBundle.message("pro.service.lock.tooltip.requires.license")
 
     private fun fail(): Nothing =
-        throw ProFeatureUnavailable("Pro feature is unavailable (not installed or not licensed).")
+        throw ProFeatureUnavailable(MpyBundle.message("pro.service.error.free.pro.unavailable"))
 
     override suspend fun initializeDevice(project: Project) {
         val deviceService = project.service<MpyDeviceService>()
@@ -95,12 +103,27 @@ internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
         finalCheckAction: (() -> Unit)?
     ): T = fail()
 
-    override suspend fun upload(
+    override fun getCompressUploadTotalSize(fileToTargetPath: MutableMap<VirtualFile, String>): Double = fail()
+
+    override suspend fun compressUpload(
+        project: Project,
         fullName: String,
-        content: ByteArray,
+        rawContent: ByteArray,
+        isCompressible: Boolean,
         progressCallback: (uploadedBytes: Double) -> Unit,
         freeMemBytes: Int,
-        canDecodeBase64: Boolean,
+        txtUpload: (
+            fullName: String,
+            content: ByteArray,
+            openMode: String,
+            index: Int,
+            maxChunkSize: Int
+        ) -> Pair<String, Int>,
+        binUpload: (
+            fullName: String,
+            content: ByteArray,
+            openMode: String
+        ) -> String,
         doBlindExecute: suspend (
             command: String,
             progressCallback: ((uploadedBytes: Double) -> Unit),
@@ -110,4 +133,10 @@ internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
             shouldStayDetached: Boolean
         ) -> String
     ) = fail()
+
+    override fun getMpyCrossRunConfiguration(
+        project: Project,
+        factory: ConfigurationFactory,
+        name: String
+    ): RunConfiguration = fail()
 }

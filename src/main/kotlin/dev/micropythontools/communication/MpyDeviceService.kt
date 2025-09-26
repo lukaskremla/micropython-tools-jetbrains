@@ -59,9 +59,9 @@ internal typealias StateListener = (State) -> Unit
 
 internal data class DeviceInformation(
     val defaultFreeMem: Int = 0,
-    var hasCRC32: Boolean = false,
-    var canEncodeBase64: Boolean = false,
-    var canDecodeBase64: Boolean = false,
+    val hasCRC32: Boolean = false,
+    val canEncodeBase64: Boolean = false,
+    val canDecodeBase64: Boolean = false,
 )
 
 internal data class ConnectionParameters(
@@ -241,11 +241,13 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                         val ioLabel = MpyBundle.message("comm.error.io.label")
                         val msg = e.localizedMessage ?: e.message ?: noMsg
                         error = "$description $ioLabel - $msg"
+                        deviceService.disconnect(reporter)
                     } catch (e: Exception) {
                         val errLabel = MpyBundle.message("comm.error.error.label")
                         val base = "$description $errLabel - ${e::class.simpleName}"
                         val msg = e.localizedMessage ?: e.message
                         error = if (msg.isNullOrBlank()) base else "$base: $msg"
+                        deviceService.disconnect(reporter)
                     } finally {
                         withContext(NonCancellable) {
                             if (!error.isNullOrBlank()) {

@@ -16,17 +16,23 @@
 
 package dev.micropythontools.freemium
 
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
+import javax.swing.Icon
 
 internal class ProFeatureUnavailable(message: String) : IllegalStateException(message)
 
 
 internal interface MpyProServiceInterface {
     val hasProBits: Boolean
-    val isLicensed: Boolean
-    val isActive: Boolean get() = hasProBits && isLicensed
+    val isLicensed: Boolean?
+    val isActive: Boolean
+    val lockIconToShow: Icon
+    val lockIconToolTipText: String
 
     suspend fun initializeDevice(project: Project)
 
@@ -43,12 +49,27 @@ internal interface MpyProServiceInterface {
         finalCheckAction: (() -> Unit)? = null
     ): T?
 
-    suspend fun upload(
+    fun getCompressUploadTotalSize(fileToTargetPath: MutableMap<VirtualFile, String>): Double
+
+    suspend fun compressUpload(
+        project: Project,
         fullName: String,
-        content: ByteArray,
+        rawContent: ByteArray,
+        isCompressible: Boolean,
         progressCallback: (uploadedBytes: Double) -> Unit,
         freeMemBytes: Int,
-        canDecodeBase64: Boolean,
+        txtUpload: (
+            fullName: String,
+            content: ByteArray,
+            openMode: String,
+            index: Int,
+            maxChunkSize: Int
+        ) -> Pair<String, Int>,
+        binUpload: (
+            fullName: String,
+            content: ByteArray,
+            openMode: String
+        ) -> String,
         doBlindExecute: suspend (
             command: String,
             progressCallback: ((uploadedBytes: Double) -> Unit),
@@ -58,4 +79,10 @@ internal interface MpyProServiceInterface {
             shouldStayDetached: Boolean
         ) -> String
     )
+
+    fun getMpyCrossRunConfiguration(
+        project: Project,
+        factory: ConfigurationFactory,
+        name: String
+    ): RunConfiguration
 }

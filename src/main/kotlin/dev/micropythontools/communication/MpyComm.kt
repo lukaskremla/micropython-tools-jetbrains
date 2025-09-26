@@ -117,12 +117,15 @@ internal open class MpyComm(
         val proService = project.service<MpyProServiceInterface>()
 
         if (proService.isActive) {
-            return proService.upload(
+            return proService.compressUpload(
+                project = project,
                 fullName = fullName,
-                content = content,
+                rawContent = content,
+                isCompressible = true,
                 progressCallback = progressCallback,
                 freeMemBytes = freeMemBytes,
-                canDecodeBase64 = deviceService.deviceInformation.canDecodeBase64,
+                txtUpload = ::txtUpload,
+                binUpload = ::binUpload,
                 doBlindExecute = ::doBlindExecute
             )
         }
@@ -152,7 +155,7 @@ internal open class MpyComm(
         // this is 80% OR 10KB, not the intended policy
         val freeMemBuffer = minOf(freeMemBytes / 5 * 4, 10000)
         // Leave the buffer free and use the rest of the memory
-        val maxChunkSize = freeMemBytes - freeMemBuffer
+        val maxChunkSize = (freeMemBytes - freeMemBuffer).coerceAtLeast(1024)
 
         // Determine if using base64 encoding is possible and viable
         val shouldEncodeBase64 = deviceService.deviceInformation.canDecodeBase64 &&

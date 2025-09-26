@@ -21,6 +21,7 @@ import com.intellij.openapi.util.IconLoader
 internal object MpyIcons {
     val connectActive = getFromPath("/icons/connectActive.svg")
     val micropythonTw = getFromPath("/icons/micropythonTw.svg")
+    val proBadge = getFromPath("/icons/pro_badge.svg")
     val Source = getFromPath("/icons/MpySource.svg")
     val plugin = getFromPath("/icons/pluginIcon.svg")
     val Volume = getFromPath("/icons/volume.svg")

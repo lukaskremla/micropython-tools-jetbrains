@@ -48,7 +48,9 @@ import com.intellij.util.ui.UIUtil
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.State
 import dev.micropythontools.core.MpyValidators
+import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
+import dev.micropythontools.icons.MpyIcons
 import dev.micropythontools.stubs.MpyStubPackageService
 import dev.micropythontools.stubs.StubPackage
 import kotlinx.coroutines.CancellationException
@@ -72,6 +74,8 @@ private data class ConfigurableParameters(
     var webReplIp: String,
     var webReplPort: Int,
     var webReplPassword: String,
+    var backgroundUploadsDownloads: Boolean,
+    var compressUploads: Boolean,
     var legacyVolumeSupportEnabled: Boolean,
     var showUploadPreviewDialog: Boolean,
     var ssid: String,
@@ -85,6 +89,7 @@ internal class MpyConfigurable(private val project: Project) :
     BoundSearchableConfigurable(MpyBundle.message("configurable.name"), "dev.micropythontools.settings") {
 
     private val settings = project.service<MpySettingsService>()
+    private val proService = project.service<MpyProServiceInterface>()
     private val deviceService = project.service<MpyDeviceService>()
     private val stubPackageService = project.service<MpyStubPackageService>()
 
@@ -109,6 +114,8 @@ internal class MpyConfigurable(private val project: Project) :
                 webReplIp = webReplIp ?: DEFAULT_WEBREPL_IP,
                 webReplPort = webReplPort,
                 webReplPassword = settings.retrieveWebReplPassword(),
+                backgroundUploadsDownloads = backgroundUploadsDownloads,
+                compressUploads = compressUploads,
                 legacyVolumeSupportEnabled = legacyVolumeSupportEnabled,
                 showUploadPreviewDialog = showUploadPreviewDialog,
                 ssid = wifiCredentials.userName ?: "",
@@ -311,17 +318,54 @@ internal class MpyConfigurable(private val project: Project) :
 
                 group(MpyBundle.message("configurable.communication.group.title")) {
                     row {
-                        checkBox(MpyBundle.message("configurable.legacy.volume.support.checkbox.text"))
+                        checkBox(MpyBundle.message("configurable.communication.background.uploads.downloads.checkbox.text"))
+                            .bindSelected(parameters::backgroundUploadsDownloads)
+                            .gap(RightGap.SMALL).enabled(proService.isActive)
+                            .enabled(proService.isActive)
+
+                        cell(JBLabel(AllIcons.General.ContextHelp).apply {
+                            toolTipText =
+                                MpyBundle.message("configurable.communication.background.uploads.downloads.checkbox.tooltip")
+                        }).gap(RightGap.SMALL)
+
+                        cell(JBLabel(proService.lockIconToShow).apply {
+                            toolTipText = proService.lockIconToolTipText
+                        }).gap(RightGap.SMALL)
+
+                        cell(JBLabel(MpyIcons.proBadge))
+                    }
+
+                    row {
+                        checkBox(MpyBundle.message("configurable.communication.compress.uploads.checkbox.text"))
+                            .bindSelected(parameters::compressUploads)
+                            .gap(RightGap.SMALL)
+                            .enabled(proService.isActive)
+
+                        cell(JBLabel(AllIcons.General.ContextHelp).apply {
+                            toolTipText =
+                                MpyBundle.message("configurable.communication.compress.uploads.checkbox.tooltip")
+                        }).gap(RightGap.SMALL)
+
+                        cell(JBLabel(proService.lockIconToShow).apply {
+                            toolTipText = proService.lockIconToolTipText
+                        }).gap(RightGap.SMALL)
+
+                        cell(JBLabel(MpyIcons.proBadge))
+                    }
+
+                    row {
+                        checkBox(MpyBundle.message("configurable.communication.legacy.volume.support.checkbox.text"))
                             .bindSelected(parameters::legacyVolumeSupportEnabled)
                             .gap(RightGap.SMALL)
 
                         cell(JBLabel(AllIcons.General.ContextHelp).apply {
-                            toolTipText = MpyBundle.message("configurable.legacy.volume.support.checkbox.tooltip")
+                            toolTipText =
+                                MpyBundle.message("configurable.communication.legacy.volume.support.checkbox.tooltip")
                         })
                     }
 
                     row {
-                        checkBox(MpyBundle.message("configurable.show.upload.preview.checkbox.title"))
+                        checkBox(MpyBundle.message("configurable.communication.show.upload.preview.checkbox.title"))
                             .bindSelected(parameters::showUploadPreviewDialog)
                     }
                 }.bottomGap(BottomGap.NONE).topGap(TopGap.SMALL)
@@ -764,6 +808,8 @@ internal class MpyConfigurable(private val project: Project) :
 
             settings.state.webReplIp = webReplIp
             settings.state.webReplPort = webReplPort
+            settings.state.backgroundUploadsDownloads = backgroundUploadsDownloads
+            settings.state.compressUploads = compressUploads
             settings.state.legacyVolumeSupportEnabled = legacyVolumeSupportEnabled
             settings.state.showUploadPreviewDialog = showUploadPreviewDialog
             settings.state.areStubsEnabled = areStubsEnabled

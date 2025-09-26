@@ -57,7 +57,7 @@
 
         <!-- File handling -->
         <fileEditorProvider implementation="dev.micropythontools.mpyfile.MpyFileEditorProvider"/>
-        <fileType name="|b|localization.MpyBundle|k|mpy.file.type.name|MicroPython Bytecode"
+        <fileType name="MicroPython Bytecode"
                   implementationClass="dev.micropythontools.mpyfile.MpyFileType"
                   extensions="mpy"/>
 

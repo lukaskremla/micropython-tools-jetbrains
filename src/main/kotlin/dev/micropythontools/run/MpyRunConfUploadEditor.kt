@@ -59,7 +59,7 @@ private data class FlashParameters(
     var excludedPaths: MutableList<String>
 )
 
-private data class SourceItem(
+internal data class SourceItem(
     private val project: Project,
     val path: String
 ) {

@@ -22,7 +22,7 @@ import dev.micropythontools.icons.MpyIcons
 import javax.swing.Icon
 
 internal class MpyFileType : UserBinaryFileType() {
-    override fun getName() = MpyBundle.message("mpy.file.type.name")
+    override fun getName() = "MicroPython Bytecode"
     override fun getDescription() = MpyBundle.message("mpy.file.type.description")
     override fun getDefaultExtension() = "mpy"
     override fun getIcon(): Icon = MpyIcons.plugin

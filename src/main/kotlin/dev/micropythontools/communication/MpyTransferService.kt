@@ -34,12 +34,14 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.project.stateStore
 import com.jetbrains.python.sdk.PythonSdkUtil
+import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.sourceroots.MpySourceRootType
@@ -47,6 +49,23 @@ import dev.micropythontools.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
+
+internal class CachedSnapshot(
+    val content: ByteArray,
+    val length: Long,
+    val crc32: String
+)
+
+private val SNAPSHOT_KEY = Key.create<CachedSnapshot>("mpy.upload.snapshot")
+
+internal fun VirtualFile.putSnapshot(snapshot: CachedSnapshot) {
+    this.putUserData(SNAPSHOT_KEY, snapshot)
+}
+
+internal fun VirtualFile.getSnapshot(): CachedSnapshot =
+    this.getUserData(SNAPSHOT_KEY)
+        ?: throw RuntimeException(MpyBundle.message("upload.error.cached.snapshot.not.found"))
+
 
 @Service(Service.Level.PROJECT)
 internal class MpyTransferService(private val project: Project) {
@@ -275,6 +294,16 @@ internal class MpyTransferService(private val project: Project) {
                     projectDir
                 )
 
+                fileToTargetPath.forEach { (file, _) ->
+                    file.putSnapshot(
+                        CachedSnapshot(
+                            file.contentsToByteArray(),
+                            file.length,
+                            file.crc32
+                        )
+                    )
+                }
+
                 folderToTargetPath = createVirtualFileToTargetPathMap(
                     foldersToUpload,
                     targetDestination,
@@ -319,8 +348,10 @@ internal class MpyTransferService(private val project: Project) {
                 val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
                 fileToTargetPath.keys.forEach { file ->
                     val path = fileToTargetPath[file]
-                    val size = file.length
-                    val hash = file.crc32
+
+                    val cachedSnapshot = file.getSnapshot()
+                    val size = cachedSnapshot.length
+                    val hash = cachedSnapshot.crc32
 
                     val matchingNode = targetPathToNode[path]
 
@@ -387,6 +418,17 @@ internal class MpyTransferService(private val project: Project) {
                     return@performReplAction PerformReplActionResult(null, false)
                 }
 
+                val proService = project.service<MpyProServiceInterface>()
+
+                val nominalTotalSize = fileToTargetPath.keys.sumOf { it.length }.toDouble()
+
+                val compressedTotalSize =
+                    if (proService.isActive && settings.state.compressUploads) proService.getCompressUploadTotalSize(
+                        fileToTargetPath
+                    ) else null
+                
+                val totalSize = compressedTotalSize ?: nominalTotalSize
+
                 if (settings.state.showUploadPreviewDialog) {
                     val shouldContinue = withContext(Dispatchers.EDT) {
                         val uploadPreview = MpyUploadPreview(
@@ -398,7 +440,9 @@ internal class MpyTransferService(private val project: Project) {
                             targetPathsToRemove,
                             fileToTargetPath,
                             folderToTargetPath,
-                            customPathFolders
+                            customPathFolders,
+                            nominalTotalSize,
+                            compressedTotalSize
                         )
 
                         return@withContext uploadPreview.showAndGet()
@@ -426,15 +470,12 @@ internal class MpyTransferService(private val project: Project) {
                 var uploadedKB = 0.0
                 var uploadedFiles = 1
 
-                // Calculate the total binary size of the upload
-                val totalBytes = fileToTargetPath.keys.sumOf { it.length }.toDouble()
-
                 fun progressCallbackHandler(uploadedBytes: Double) {
                     // Floating point arithmetic can be inaccurate,
                     // ensures the uploaded size won't go over the actual file size
-                    uploadedKB += (uploadedBytes / 1000).coerceIn((uploadedBytes / 1000), totalBytes / 1000)
+                    uploadedKB += (uploadedBytes / 1000).coerceIn((uploadedBytes / 1000), totalSize / 1000)
                     // Convert to double for maximal accuracy
-                    uploadProgress += (uploadedBytes / totalBytes)
+                    uploadProgress += (uploadedBytes / totalSize)
                     // Ensure that uploadProgress never goes over 1.0
                     // as floating point arithmetic can have minor inaccuracies
                     uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
@@ -445,7 +486,7 @@ internal class MpyTransferService(private val project: Project) {
                             uploadedFiles,
                             fileToTargetPath.size,
                             "%.2f".format(uploadedKB),
-                            "%.2f".format(totalBytes / 1000)
+                            "%.2f".format(totalSize / 1000)
                         )
                     )
                     reporter.fraction(uploadProgress)
@@ -456,7 +497,7 @@ internal class MpyTransferService(private val project: Project) {
 
                     deviceService.upload(
                         path,
-                        file.contentsToByteArray(),
+                        file.getSnapshot().content,
                         ::progressCallbackHandler,
                         freeMemBytes
                     )
@@ -487,7 +528,7 @@ internal class MpyTransferService(private val project: Project) {
                         if (node is FileNode) {
                             val file =
                                 fileToTargetPath.entries.firstOrNull { it.value == node.fullName }?.key ?: continue
-                            if (file.length != node.size) continue
+                            if (file.getSnapshot().length != node.size) continue
 
                             fileToTargetPath.values.remove(node.fullName)
                         }
@@ -586,7 +627,13 @@ internal class MpyTransferService(private val project: Project) {
                 parentNameToFile.forEach { (parentName, node) ->
                     val name = if (parentName.isEmpty()) node.name else "$parentName/${node.name}"
 
-                    reporter.text(MpyBundle.message("download.progress.downloading", downloadedFiles, parentNameToFile))
+                    reporter.text(
+                        MpyBundle.message(
+                            "download.progress.downloading",
+                            downloadedFiles,
+                            parentNameToFile.size
+                        )
+                    )
                     reporter.fraction(downloadedFiles.toDouble() * singleFileProgress)
                     reporter.details(name)
 

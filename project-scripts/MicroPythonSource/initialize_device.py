@@ -14,7 +14,6 @@
 * limitations under the License.
 """
 
-import binascii
 import gc
 
 
@@ -22,11 +21,15 @@ def m():
     try:
         default_free_mem = gc.mem_free()
 
-        has_crc32 = hasattr(binascii, "crc32")
-        can_encode_base64 = hasattr(binascii, "b2a_base64")
-        can_decode_base64 = hasattr(binascii, "a2b_base64")
+        try:
+            import binascii
+            has_crc32 = hasattr(binascii, "crc32")
+            can_encode_base64 = hasattr(binascii, "b2a_base64")
+            can_decode_base64 = hasattr(binascii, "a2b_base64")
+        except:
+            has_crc32, can_encode_base64, can_decode_base64 = False
 
-        print(default_free_mem, has_crc32, can_encode_base64, can_decode_base64, sep="&")
+        print(default_free_mem, has_crc32, can_encode_base64, can_decode_base64, can_deflate, sep="&")
 
     except Exception as e:
         print(f"ERROR: {e}")

@@ -31,10 +31,13 @@ import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
@@ -56,7 +59,9 @@ internal class MpyUploadPreview(
     private val targetPathsToRemove: Set<String>,
     private val fileToTargetPath: Map<VirtualFile, String>,
     private val folderToTargetPath: Map<VirtualFile, String>,
-    private val customPathFolders: Set<String>
+    private val customPathFolders: Set<String>,
+    private val nominalTotalSize: Double,
+    private val compressedTotalSize: Double?
 ) : DialogWrapper(true) {
 
     private val deviceService = project.service<MpyDeviceService>()
@@ -469,6 +474,39 @@ internal class MpyUploadPreview(
                             FileStatus.IGNORED.color
                         )
                     ).gap(RightGap.SMALL)
+
+                    if (compressedTotalSize != null && compressedTotalSize != 0.0 && deviceService.fileSystemWidget != null) {
+                        val percentage =
+                            if (nominalTotalSize > 0) (1.0 - (compressedTotalSize / nominalTotalSize)) * 100.0 else 0.0
+
+                        val percentageToShow = "%.1f".format(percentage)
+                        val reducedKBToShow = deviceService.fileSystemWidget?.formatSize(compressedTotalSize, true)
+                        val nominalTotalKBToShow = deviceService.fileSystemWidget?.formatSize(nominalTotalSize, true)
+                        val savedKBToShow =
+                            deviceService.fileSystemWidget?.formatSize(nominalTotalSize - compressedTotalSize, true)
+
+                        val txt =
+                            "${
+                                MpyBundle.message(
+                                    "upload.preview.compression.savings.text",
+                                    percentageToShow,
+                                    savedKBToShow!!
+                                )
+                            } · $nominalTotalKBToShow → $reducedKBToShow"
+
+                        val toolTipTxt = MpyBundle.message(
+                            "upload.preview.compression.savings.tooltip",
+                            savedKBToShow,
+                            nominalTotalKBToShow!!,
+                            reducedKBToShow!!
+                        )
+
+                        cell(JLabel(txt).apply {
+                            foreground = UIUtil.getContextHelpForeground()
+                            font = JBUI.Fonts.smallFont()
+                            toolTipText = toolTipTxt
+                        }).align(AlignX.RIGHT)
+                    }
                 }
             }.customize(UnscaledGaps(0, 4, 0, 0))
         }
