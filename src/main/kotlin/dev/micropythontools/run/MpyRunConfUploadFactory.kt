@@ -17,11 +17,12 @@
 package dev.micropythontools.run
 
 import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
 import dev.micropythontools.i18n.MpyBundle
 
-internal class MpyRunConfUploadFactory(type: MpyRunConfType) : ConfigurationFactory(type) {
+internal class MpyRunConfUploadFactory(type: ConfigurationTypeBase) : ConfigurationFactory(type) {
     override fun createTemplateConfiguration(project: Project): RunConfiguration {
         return MpyRunConfUpload(project, this, MpyBundle.message("run.conf.upload.name"))
     }

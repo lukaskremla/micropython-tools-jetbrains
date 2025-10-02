@@ -25,6 +25,7 @@ internal object MpyIcons {
     val Source = getFromPath("/icons/MpySource.svg")
     val plugin = getFromPath("/icons/pluginIcon.svg")
     val Volume = getFromPath("/icons/volume.svg")
+    val canBeAutoDetected = getFromPath("/icons/textAutoGenerate.svg")
 
     private fun getFromPath(path: String) = IconLoader.getIcon(path, MpyIcons::class.java)
 }

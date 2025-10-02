@@ -39,6 +39,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
@@ -141,7 +142,7 @@ internal class MpyConfigurable(private val project: Project) :
 
     private lateinit var stubsEnabledCheckBox: Cell<JBCheckBox>
     private lateinit var selectedStubPackageLabel: Cell<JLabel>
-    private lateinit var selectedStubPackageHiddenField: Cell<com.intellij.ui.components.JBTextField>
+    private lateinit var selectedStubPackageHiddenField: Cell<JBTextField>
 
     override fun createPanel(): DialogPanel {
         val portSelectModel = MutableCollectionComboBoxModel<String>()
@@ -247,7 +248,7 @@ internal class MpyConfigurable(private val project: Project) :
                             @Suppress("DialogTitleCapitalization")
                             label("ws://").gap(RightGap.SMALL)
 
-                            cell(object : com.intellij.ui.components.JBTextField(parameters.webReplIp) {
+                            cell(object : JBTextField(parameters.webReplIp) {
                                 // Width of 201 seems to be the best fit for making the ip and password fields' right edges line up
                                 private val fixedSize = Dimension(201, 34)
 

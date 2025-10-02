@@ -426,7 +426,7 @@ internal class MpyTransferService(private val project: Project) {
                     if (proService.isActive && settings.state.compressUploads) proService.getCompressUploadTotalSize(
                         fileToTargetPath
                     ) else null
-                
+
                 val totalSize = compressedTotalSize ?: nominalTotalSize
 
                 if (settings.state.showUploadPreviewDialog) {

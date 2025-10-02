@@ -30,7 +30,6 @@ internal class MpyRunConfType : ConfigurationTypeBase(
         // Multiple factories can be added here to achieve similar behavior to, for example docker, configurations
         addFactory(MpyRunConfUploadFactory(this))
         addFactory(MpyRunConfExecuteFactory(this))
-        addFactory(MpyRunConfMpyCrossFactory(this))
     }
 
     companion object {

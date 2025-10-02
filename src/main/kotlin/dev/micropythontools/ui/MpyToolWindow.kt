@@ -59,7 +59,6 @@ internal class MpyToolWindow() : ToolWindowFactory, DumbAware {
         terminalContent.setDisposer(newDisposable)
         toolWindow.contentManager.addContent(terminalContent)
         componentRegistryService.registerTerminalContent(terminalContent)
-        componentRegistryService.registerToolWindow(toolWindow)
     }
 
     override val icon: Icon

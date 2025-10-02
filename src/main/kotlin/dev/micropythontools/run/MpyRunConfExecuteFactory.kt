@@ -17,11 +17,12 @@
 package dev.micropythontools.run
 
 import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
 import dev.micropythontools.i18n.MpyBundle
 
-internal class MpyRunConfExecuteFactory(type: MpyRunConfType) : ConfigurationFactory(type) {
+internal class MpyRunConfExecuteFactory(type: ConfigurationTypeBase) : ConfigurationFactory(type) {
     override fun createTemplateConfiguration(project: Project): RunConfiguration {
         return MpyRunConfExecute(project, this, MpyBundle.message("run.conf.execute.name"))
     }
