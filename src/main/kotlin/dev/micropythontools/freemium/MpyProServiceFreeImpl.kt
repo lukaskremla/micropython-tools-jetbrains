@@ -16,8 +16,6 @@
 
 package dev.micropythontools.freemium
 
-import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -133,10 +131,4 @@ internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
             shouldStayDetached: Boolean
         ) -> String
     ) = fail()
-
-    override fun getMpyCrossRunConfiguration(
-        project: Project,
-        factory: ConfigurationFactory,
-        name: String
-    ): RunConfiguration = fail()
 }

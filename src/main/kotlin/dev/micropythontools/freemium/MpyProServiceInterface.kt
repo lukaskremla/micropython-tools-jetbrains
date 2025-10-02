@@ -16,8 +16,6 @@
 
 package dev.micropythontools.freemium
 
-import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
@@ -79,10 +77,4 @@ internal interface MpyProServiceInterface {
             shouldStayDetached: Boolean
         ) -> String
     )
-
-    fun getMpyCrossRunConfiguration(
-        project: Project,
-        factory: ConfigurationFactory,
-        name: String
-    ): RunConfiguration
 }
