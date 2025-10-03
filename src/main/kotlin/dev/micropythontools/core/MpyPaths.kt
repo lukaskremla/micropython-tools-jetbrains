@@ -16,9 +16,9 @@
 
 package dev.micropythontools.core
 
-import com.intellij.openapi.application.PathManager
-import dev.micropythontools.core.MpyPluginInfo.PLUGIN_ID
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 
 internal object MpyPaths {
     val scriptsPath: String
@@ -27,8 +27,37 @@ internal object MpyPaths {
     val microPythonScriptsPath: String
         get() = "$scriptsPath/MicroPythonMinified"
 
-    val stubBaseDir: Path = PathManager.getSystemDir().resolve(PLUGIN_ID)
+    val stubBaseDir: Path by lazy {
+        val base = globalAppDataBase()
+        val dir = base.resolve("stubs")
+        Files.createDirectories(dir)
+        dir
+    }
 
     const val STUB_PACKAGE_JSON_FILE_NAME = "micropython-stubs.json"
     const val STDLIB_STUB_PACKAGE_NAME = "micropython-stdlib-stubs"
+
+    private fun globalAppDataBase(): Path {
+        val os = System.getProperty("os.name").orEmpty().lowercase()
+        return when {
+            os.contains("win") -> {
+                // Prefer LOCALAPPDATA (machine-local); fallback to APPDATA; last resort: user.home
+                val local = System.getenv("LOCALAPPDATA")
+                val roaming = System.getenv("APPDATA")
+                Paths.get((local ?: roaming) ?: System.getProperty("user.home")).resolve(MpyPluginInfo.PLUGIN_ID)
+            }
+
+            os.contains("mac") || os.contains("darwin") -> {
+                Paths.get(System.getProperty("user.home"), "Library", "Application Support", MpyPluginInfo.PLUGIN_ID)
+            }
+
+            else -> {
+                // Linux/Unix – XDG first, then ~/.local/share
+                val xdg = System.getenv("XDG_DATA_HOME")
+                val base = if (!xdg.isNullOrBlank()) Paths.get(xdg)
+                else Paths.get(System.getProperty("user.home"), ".local", "share")
+                base.resolve(MpyPluginInfo.PLUGIN_ID.lowercase())
+            }
+        }
+    }
 }

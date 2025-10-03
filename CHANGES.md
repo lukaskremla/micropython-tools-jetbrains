@@ -1,6 +1,12 @@
 The Changelog
 =============
 
+0.6.3 - 3.10.2025
+------------------
+
+* Only check if the currently selected stub-package is up-to-date once an hour to improve performance
+* Moved stub packages to a location that will survive IDE updates and cache resets
+
 0.6.2 - 11.9.2025
 ------------------
 
