@@ -21,12 +21,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 internal object MpyPaths {
-    val scriptsPath: String
-        get() = "${MpyPluginInfo.sandboxPath}/scripts"
-
-    val microPythonScriptsPath: String
-        get() = "$scriptsPath/MicroPythonMinified"
-
     val stubBaseDir: Path by lazy {
         val base = globalAppDataBase()
         val dir = base.resolve("stubs")

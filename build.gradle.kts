@@ -49,7 +49,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     // Relies on a custom fork of the Java-Websocket library made for this plugin
     // https://github.com/lukaskremla/Java-WebSocket
-    implementation(files("oss/libs/Java-WebSocket-1.6.1-CUSTOM_FIX_ver2.jar"))
+    implementation(files("libs/Java-WebSocket-1.6.1-CUSTOM_FIX_ver2.jar"))
 }
 
 java {
