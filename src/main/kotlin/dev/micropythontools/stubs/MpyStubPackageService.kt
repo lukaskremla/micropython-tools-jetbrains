@@ -74,6 +74,15 @@ internal data class StubPackage(
     val stdlibStubVersion: String
 )
 
+private data class CachedStubPackageUpToDateInfo(
+    val name: String,
+    val mpyVersion: String,
+    val isUpToDate: Boolean,
+    val boardStubVersion: String,
+    val stdlibStubVersion: String,
+    val timeStamp: Long
+)
+
 private data class RemoteStubPackage(
     val name: String,
     val mpyVersion: String,
@@ -103,6 +112,7 @@ internal class MpyStubPackageService(private val project: Project) {
         )
     }
 
+    private var cachedStubPackageUpToDateInfo: CachedStubPackageUpToDateInfo? = null
     private val settings = project.service<MpySettingsService>()
     private val client: HttpClient = HttpClient.newHttpClient()
 
@@ -127,16 +137,53 @@ internal class MpyStubPackageService(private val project: Project) {
         var stubValidationText: String? = null
 
         // Try to find the stub package
-        val stubPackage = getStubPackages().first.find { "${it.name}_${it.mpyVersion}" == activeStubsPackageName }
+        val stubPackage =
+            getInstalledStubPackages(false).find { "${it.name}_${it.mpyVersion}" == activeStubsPackageName }
+
+        var cachedStubPackageUpToDateInfo = this.cachedStubPackageUpToDateInfo
+
+        val isCachedInfoValid = stubPackage != null &&
+                cachedStubPackageUpToDateInfo != null &&
+                cachedStubPackageUpToDateInfo.name == stubPackage.name &&
+                cachedStubPackageUpToDateInfo.mpyVersion == stubPackage.mpyVersion &&
+                cachedStubPackageUpToDateInfo.boardStubVersion == stubPackage.boardStubVersion &&
+                cachedStubPackageUpToDateInfo.stdlibStubVersion == stubPackage.stdlibStubVersion &&
+                cachedStubPackageUpToDateInfo.timeStamp + 3600L > System.currentTimeMillis() / 1000
+
+        val isUpToDate =
+            if (stubPackage == null) {
+                true // Default state is up-to-date if verification fails
+            } else if (!isCachedInfoValid) {
+                val newIsUpToDate = isUpToDate(
+                    stubPackage.name,
+                    stubPackage.mpyVersion,
+                    stubPackage.boardStubVersion,
+                    stubPackage.stdlibStubVersion
+                )
+
+                cachedStubPackageUpToDateInfo = CachedStubPackageUpToDateInfo(
+                    stubPackage.name,
+                    stubPackage.mpyVersion,
+                    newIsUpToDate,
+                    stubPackage.boardStubVersion,
+                    stubPackage.stdlibStubVersion,
+                    System.currentTimeMillis() / 1000
+                )
+
+                this.cachedStubPackageUpToDateInfo = cachedStubPackageUpToDateInfo
+                newIsUpToDate
+            } else {
+                cachedStubPackageUpToDateInfo.isUpToDate
+            }
 
         var isUpdateFix = false
 
         if (settings.state.areStubsEnabled) {
             if (activeStubsPackageName.isBlank()) {
                 stubValidationText = MpyBundle.message("stub.service.validation.no.package")
-            } else if (stubPackage == null || !stubPackage.isInstalled) {
+            } else if (stubPackage == null) {
                 stubValidationText = MpyBundle.message("stub.service.validation.invalid.package")
-            } else if (!stubPackage.isUpToDate) {
+            } else if (!isUpToDate) {
                 stubValidationText = MpyBundle.message("stub.service.validation.pending.update")
                 isUpdateFix = true
             }
@@ -316,7 +363,11 @@ internal class MpyStubPackageService(private val project: Project) {
         return Pair(sorted, remoteStubPackages.isNotEmpty())
     }
 
-    private fun getLocalStubPackage(packageName: String, mpyVersion: String): StubPackage? {
+    private fun getLocalStubPackage(
+        packageName: String,
+        mpyVersion: String,
+        checkUpToDate: Boolean = false
+    ): StubPackage? {
         val stubPackage = MpyPaths.stubBaseDir.resolve("${packageName}_$mpyVersion")
         val jsonPath = stubPackage.resolve(MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
 
@@ -334,6 +385,9 @@ internal class MpyStubPackageService(private val project: Project) {
         val boardStubVersion = jsonObject["boardStubVersion"]?.jsonPrimitive?.content ?: return null
         val stdlibStubVersion = jsonObject["stdlibStubVersion"]?.jsonPrimitive?.content ?: return null
 
+        val isUpToDate =
+            if (checkUpToDate) isUpToDate(packageName, mpyVersion, boardStubVersion, stdlibStubVersion) else true
+
         return StubPackage(
             packageName,
             mpyVersion,
@@ -341,13 +395,13 @@ internal class MpyStubPackageService(private val project: Project) {
             jsonObject["board"]?.jsonPrimitive?.content ?: return null,
             jsonObject["variant"]?.jsonPrimitive?.content ?: return null,
             true,
-            isUpToDate(packageName, mpyVersion, boardStubVersion, stdlibStubVersion),
+            isUpToDate,
             boardStubVersion,
             stdlibStubVersion
         )
     }
 
-    private fun getInstalledStubPackages(): List<StubPackage> {
+    private fun getInstalledStubPackages(checkUpToDate: Boolean = false): List<StubPackage> {
         val localStubPackagePaths = MpyPaths.stubBaseDir.toFile().listFiles()
             ?.filter { it.isDirectory }
             ?.sortedByDescending { it }
@@ -360,7 +414,7 @@ internal class MpyStubPackageService(private val project: Project) {
             ?: emptyList()
 
         return localStubPackagePaths.mapNotNull {
-            getLocalStubPackage(it.first, it.second)
+            getLocalStubPackage(it.first, it.second, checkUpToDate)
         }
     }
 

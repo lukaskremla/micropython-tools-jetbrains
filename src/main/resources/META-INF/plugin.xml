@@ -7,9 +7,10 @@
     <!--<product-descriptor code="PMPYTOOLS" release-date="20250913" release-version="20251" optional="true"/>-->
 
     <change-notes><![CDATA[
-        <h3>0.6.3 (2025.1.0) - 12.9.2025</h3>
+        <h3>0.6.3 - 3-10-2025</h3>
         <ul>
-            <li>Switched to the JetBrains marketplace versioning scheme</li>
+            <li>Only check if the currently selected stub-package is up-to-date once an hour to improve performance</li>
+            <li>Moved stub packages to a location that will survive IDE updates and cache resets</li>
         </ul>
         <br>
         <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
