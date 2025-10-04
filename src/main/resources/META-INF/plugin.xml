@@ -3,7 +3,7 @@
     <vendor>Lukas Kremla</vendor>
     <id>micropython-tools-jetbrains</id>
 
-    <version>2025.1.0</version>
+    <version>SNAPSHOT</version>
     <!--<product-descriptor code="PMPYTOOLS" release-date="20250913" release-version="20251" optional="true"/>-->
 
     <change-notes><![CDATA[

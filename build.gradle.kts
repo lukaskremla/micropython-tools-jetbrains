@@ -15,16 +15,16 @@ repositories {
 }
 
 plugins {
-    kotlin("jvm") version "2.2.10"
-    kotlin("plugin.serialization") version "2.2.10"
-    id("org.jetbrains.intellij.platform") version "2.7.2"
+    kotlin("jvm") version "2.2.20"
+    kotlin("plugin.serialization") version "2.2.20"
+    id("org.jetbrains.intellij.platform") version "2.9.0"
 }
 
 dependencies {
     intellijPlatform {
-        val type = project.property("platformType").toString()
-        val version = project.property("platformVersion").toString()
-        val pythonPlugin = project.property("pythonPlugin").toString()
+        val type = providers.gradleProperty("platformType").get()
+        val version = providers.gradleProperty("platformVersion").get()
+        val pythonPlugin = providers.gradleProperty("pythonPlugin").get()
 
         create(type, version) {
             useInstaller.set(false)
@@ -49,7 +49,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     // Relies on a custom fork of the Java-Websocket library made for this plugin
     // https://github.com/lukaskremla/Java-WebSocket
-    implementation(files(project.property("javaWebsocket").toString()))
+    implementation(files("oss/libs/Java-WebSocket-1.6.1-CUSTOM_FIX_ver2.jar"))
 }
 
 java {
@@ -67,7 +67,7 @@ kotlin {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = project.property("sinceBuild").toString()
+            sinceBuild = providers.gradleProperty("sinceBuild").get()
         }
     }
 
@@ -95,7 +95,7 @@ intellijPlatform {
                     ProductRelease.Channel.RELEASE,
                     ProductRelease.Channel.EAP
                 )
-                sinceBuild = project.property("sinceBuild").toString()
+                sinceBuild = providers.gradleProperty("sinceBuild").get()
             }
         }
     }
@@ -103,21 +103,23 @@ intellijPlatform {
 
 @Suppress("unused")
 intellijPlatformTesting {
+    val testPlatformVersion = providers.gradleProperty("testPlatformVersion")
+
     val runPyCharmProfessional by runIde.registering {
         type = IntelliJPlatformType.PyCharmProfessional
-        version = project.property("testPlatformVersion").toString()
+        version = testPlatformVersion
     }
 
     val runPyCharmCommunity by runIde.registering {
         type = IntelliJPlatformType.PyCharmCommunity
-        version = project.property("testPlatformVersion").toString()
+        version = testPlatformVersion
     }
 
     val runCLion by runIde.registering {
         type = IntelliJPlatformType.CLion
-        version = project.property("testPlatformVersion").toString()
+        version = testPlatformVersion
         plugins {
-            plugin(project.property("pythonPlugin").toString())
+            plugin(providers.gradleProperty("pythonPlugin"))
         }
     }
 }
