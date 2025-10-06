@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="publishPlugin" type="GradleRunConfiguration" factoryName="Gradle" editBeforeRun="true">
+  <configuration default="false" name="cleanBuildPlugin" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -10,7 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="publishPlugin" />
+          <option value="buildPlugin" />
           <option value="clean" />
         </list>
       </option>
