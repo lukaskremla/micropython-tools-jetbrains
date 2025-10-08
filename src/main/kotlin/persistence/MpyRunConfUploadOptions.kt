@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package state
+package persistence
 
 import com.intellij.execution.configurations.RunConfigurationOptions
 
-internal class MpyRunConfExecuteOptions : RunConfigurationOptions() {
+internal class MpyRunConfUploadOptions : RunConfigurationOptions() {
+    var uploadMode by property(0)
+    var selectedPaths by list<String>()
     var path by string("")
-    var switchToReplOnSuccess by property(true)
+    var uploadToPath by string("/")
+    var switchToReplOnSuccess by property(false)
+    var resetOnSuccess by property(true)
+    var synchronize by property(false)
+    var excludePaths by property(false)
+    var excludedPaths by list<String>()
 }

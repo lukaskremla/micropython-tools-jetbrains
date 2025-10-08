@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.readText
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.i18n.MpyBundle
-import state.MpyRunConfExecuteOptions
+import persistence.MpyRunConfExecuteOptions
 
 internal class MpyRunConfExecuteState(
     private val project: Project,

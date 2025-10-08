@@ -21,7 +21,7 @@ import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
 import dev.micropythontools.i18n.MpyBundle
-import state.MpyRunConfUploadOptions
+import persistence.MpyRunConfUploadOptions
 
 internal class MpyRunConfUploadFactory(type: ConfigurationTypeBase) : ConfigurationFactory(type) {
     override fun createTemplateConfiguration(project: Project): RunConfiguration {

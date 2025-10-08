@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package state
+package persistence
 
 import com.intellij.openapi.components.BaseState
 import dev.micropythontools.settings.DEFAULT_WEBREPL_IP
