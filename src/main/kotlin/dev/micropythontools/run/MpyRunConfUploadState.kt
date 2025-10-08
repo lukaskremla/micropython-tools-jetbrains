@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.i18n.MpyBundle
+import state.MpyRunConfUploadOptions
 
 internal class MpyRunConfUploadState(
     private val project: Project,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.run
+package state
 
 import com.intellij.execution.configurations.RunConfigurationOptions
 

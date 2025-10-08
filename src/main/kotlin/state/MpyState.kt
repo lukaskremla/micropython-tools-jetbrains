@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package dev.micropythontools.settings
+package state
 
 import com.intellij.openapi.components.BaseState
+import dev.micropythontools.settings.DEFAULT_WEBREPL_IP
+import dev.micropythontools.settings.DEFAULT_WEBREPL_PORT
 
 internal class MpyState : BaseState() {
     var isPluginEnabled by property(false)
