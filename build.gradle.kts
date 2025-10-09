@@ -137,6 +137,12 @@ tasks {
             into("scripts")
             include("**/*")
         }
+
+        // Include EULA.txt in the archive
+        from("") {
+            into("license")
+            include("EULA.txt")
+        }
     }
     test {
         testLogging.showExceptions = true
