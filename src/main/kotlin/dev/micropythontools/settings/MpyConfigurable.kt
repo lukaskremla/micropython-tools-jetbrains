@@ -24,9 +24,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -58,6 +56,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NotNull
 import java.awt.Dimension
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTable
@@ -329,9 +329,30 @@ internal class MpyConfigurable(private val project: Project) :
                                 MpyBundle.message("configurable.communication.background.uploads.downloads.checkbox.tooltip")
                         }).gap(RightGap.SMALL)
 
-                        cell(JBLabel(proService.lockIconToShow).apply {
+                        val lockIcon = cell(JBLabel(proService.lockIconToShow).apply {
                             toolTipText = proService.lockIconToolTipText
                         }).gap(RightGap.SMALL)
+
+                        if (!proService.isActive) {
+                            lockIcon.applyToComponent {
+                                addMouseListener(object : MouseAdapter() {
+                                    override fun mouseClicked(e: MouseEvent?) {
+                                        val sure = showYesNoDialog(
+                                            title = MpyBundle.message("pro.service.close.settings.for.license.dialog.title"),
+                                            message = MpyBundle.message("pro.service.close.settings.for.license.dialog.message"),
+                                            project = project
+                                        )
+
+                                        if (!sure) return
+
+                                        val dialog = DialogWrapper.findInstance(this@applyToComponent)
+                                        dialog?.close(DialogWrapper.OK_EXIT_CODE)
+
+                                        proService.requestLicense()
+                                    }
+                                })
+                            }
+                        }
 
                         cell(JBLabel(MpyIcons.proBadge))
                     }
@@ -347,9 +368,30 @@ internal class MpyConfigurable(private val project: Project) :
                                 MpyBundle.message("configurable.communication.compress.uploads.checkbox.tooltip")
                         }).gap(RightGap.SMALL)
 
-                        cell(JBLabel(proService.lockIconToShow).apply {
+                        val lockIcon = cell(JBLabel(proService.lockIconToShow).apply {
                             toolTipText = proService.lockIconToolTipText
                         }).gap(RightGap.SMALL)
+
+                        if (!proService.isActive) {
+                            lockIcon.applyToComponent {
+                                addMouseListener(object : MouseAdapter() {
+                                    override fun mouseClicked(e: MouseEvent?) {
+                                        val sure = showYesNoDialog(
+                                            title = MpyBundle.message("pro.service.close.settings.for.license.dialog.title"),
+                                            message = MpyBundle.message("pro.service.close.settings.for.license.dialog.message"),
+                                            project = project
+                                        )
+
+                                        if (!sure) return
+
+                                        val dialog = DialogWrapper.findInstance(this@applyToComponent)
+                                        dialog?.close(DialogWrapper.OK_EXIT_CODE)
+
+                                        proService.requestLicense()
+                                    }
+                                })
+                            }
+                        }
 
                         cell(JBLabel(MpyIcons.proBadge))
                     }

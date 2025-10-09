@@ -42,6 +42,7 @@ import dev.micropythontools.communication.MpyTransferService
 import dev.micropythontools.core.MpyValidators
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
+import dev.micropythontools.settings.MpySettingsService
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.*
@@ -499,6 +500,16 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             }.apply {
                 this.expanded = true
             }.visibleIf(synchronizeCheckbox.selected.and(excludePathsCheckbox.selected))
+        }
+
+        val isPluginEnabled = runConfiguration.project.service<MpySettingsService>().state.isPluginEnabled
+
+        if (!isPluginEnabled) {
+            configurationPanel.components.forEach {
+                it.isEnabled = false
+            }
+
+            configurationPanel.toolTipText = MpyBundle.message("run.conf.tooltip.plugin.not.enabled")
         }
 
         return configurationPanel

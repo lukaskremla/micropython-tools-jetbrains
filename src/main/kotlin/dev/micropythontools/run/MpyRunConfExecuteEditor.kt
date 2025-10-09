@@ -16,6 +16,7 @@
 
 package dev.micropythontools.run
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.guessProjectDir
@@ -24,6 +25,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import dev.micropythontools.i18n.MpyBundle
+import dev.micropythontools.settings.MpySettingsService
 import javax.swing.JComponent
 
 private data class ExecuteParameters(
@@ -67,6 +69,16 @@ internal class MpyRunConfExecuteEditor(private val runConfiguration: MpyRunConfE
                 checkBox(MpyBundle.message("run.conf.execute.editor.checkbox.switch.to.repl"))
                     .bindSelected(parameters::switchToReplOnSuccess)
             }
+        }
+
+        val isPluginEnabled = runConfiguration.project.service<MpySettingsService>().state.isPluginEnabled
+
+        if (!isPluginEnabled) {
+            configurationPanel.components.forEach {
+                it.isEnabled = false
+            }
+
+            configurationPanel.toolTipText = MpyBundle.message("run.conf.tooltip.plugin.not.enabled")
         }
 
         return configurationPanel

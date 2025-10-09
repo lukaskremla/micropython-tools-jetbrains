@@ -32,6 +32,8 @@ internal interface MpyProServiceInterface {
     val lockIconToShow: Icon
     val lockIconToolTipText: String
 
+    fun requestLicense(message: String? = null)
+
     suspend fun initializeDevice(project: Project)
 
     fun <T> performReplAction(

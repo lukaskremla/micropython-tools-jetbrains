@@ -42,6 +42,8 @@ internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
     private fun fail(): Nothing =
         throw ProFeatureUnavailable(MpyBundle.message("pro.service.error.free.pro.unavailable"))
 
+    override fun requestLicense(message: String?) = Unit
+
     override suspend fun initializeDevice(project: Project) {
         val deviceService = project.service<MpyDeviceService>()
 
