@@ -139,7 +139,7 @@ tasks {
         }
 
         // Include EULA.txt in the archive
-        from("") {
+        from(".") {
             into("license")
             include("EULA.txt")
         }
