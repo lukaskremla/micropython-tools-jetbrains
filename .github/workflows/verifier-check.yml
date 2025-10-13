@@ -1,8 +1,8 @@
 name: Verifier Check
 
 on:
-  schedule:
-    - cron: '0 3 * * 1'
+  #schedule:
+  #  - cron: '0 3 * * 1'
   workflow_dispatch:
 
 # Allow cancelling all previous runs for the same branch
