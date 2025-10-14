@@ -33,7 +33,7 @@ internal class MpyPythonInspection : LocalInspectionTool() {
             return emptyArray()
         }
 
-        val result = file.project.service<MpyPythonInterpreterService>().checkValid()
+        val result = file.project.service<MpyPythonInterpreterService>().checkInterpreterValid()
 
         if (result.isOk) return null
 
