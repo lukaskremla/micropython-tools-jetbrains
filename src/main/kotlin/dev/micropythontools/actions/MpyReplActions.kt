@@ -146,7 +146,7 @@ internal class MpyExecuteFileInReplAction : MpyReplAction(
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
         val file = files.firstOrNull() ?: return
 
-        val excludedItems = transferService.collectExcluded()
+        val excludedItems = projectFileService.collectExcluded()
 
         if (files.any { it.isDirectory } || excludedItems.any { excludedItem ->
                 files.any { candidate ->

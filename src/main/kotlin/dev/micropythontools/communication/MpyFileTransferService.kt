@@ -26,133 +26,26 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.project.modules
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
-import com.intellij.project.stateStore
-import com.jetbrains.python.sdk.PythonSdkUtil
+import dev.micropythontools.core.*
 import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.sourceroots.MpySourceRootType
 import dev.micropythontools.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
-internal class CachedSnapshot(
-    val content: ByteArray,
-    val length: Long,
-    val crc32: String
-)
-
-private val SNAPSHOT_KEY = Key.create<CachedSnapshot>("mpy.upload.snapshot")
-
-internal fun VirtualFile.putSnapshot(snapshot: CachedSnapshot) {
-    this.putUserData(SNAPSHOT_KEY, snapshot)
-}
-
-internal fun VirtualFile.getSnapshot(): CachedSnapshot =
-    this.getUserData(SNAPSHOT_KEY)
-        ?: throw RuntimeException(MpyBundle.message("upload.error.cached.snapshot.not.found"))
-
-
 @Service(Service.Level.PROJECT)
-internal class MpyTransferService(private val project: Project) {
+internal class MpyFileTransferService(private val project: Project) {
+    private val projectFileService = project.service<MpyProjectFileService>()
     private val deviceService = project.service<MpyDeviceService>()
-
-    private fun VirtualFile.leadingDot() = this.name.startsWith(".")
-
-    val VirtualFile.crc32: String
-        get() {
-            val localFileBytes = this.contentsToByteArray()
-            val crc = java.util.zip.CRC32()
-            crc.update(localFileBytes)
-            return "%08x".format(crc.value)
-        }
-
-    fun collectExcluded(): Set<VirtualFile> {
-        val ideaDir = project.stateStore.directoryStorePath?.let { VfsUtil.findFile(it, false) }
-        val excludes = if (ideaDir == null) mutableSetOf() else mutableSetOf(ideaDir)
-        project.modules.forEach { module ->
-            PythonSdkUtil.findPythonSdk(module)?.homeDirectory?.apply { excludes.add(this) }
-            module.rootManager.contentEntries.forEach { entry ->
-                excludes.addAll(entry.excludeFolderFiles)
-            }
-        }
-        return excludes
-    }
-
-    fun collectMpySourceRoots(): Set<VirtualFile> {
-        return project.modules.flatMap { module ->
-            module.rootManager.contentEntries
-                .flatMap { entry -> entry.getSourceFolders(MpySourceRootType.SOURCE).toList() }
-                .filter { mpySourceFolder ->
-                    mpySourceFolder.file?.let { !it.leadingDot() } == true
-                }
-                .mapNotNull { it.file }
-        }.toSet()
-    }
-
-    fun collectTestRoots(): Set<VirtualFile> {
-        return project.modules.flatMap { module ->
-            module.rootManager.contentEntries
-                .flatMap { entry -> entry.sourceFolders.toList() }
-                .filter { sourceFolder -> sourceFolder.isTestSource }
-                .mapNotNull { it.file }
-        }.toSet()
-    }
-
-    private fun collectProjectUploadables(): Set<VirtualFile> {
-        return project.modules.flatMap { module ->
-            module.rootManager.contentEntries
-                .mapNotNull { it.file }
-                .flatMap { it.children.toList() }
-                .filter { !it.leadingDot() }
-                .toMutableList()
-        }.toSet()
-    }
-
-    private fun createVirtualFileToTargetPathMap(
-        files: Set<VirtualFile>,
-        targetDestination: String? = "/",
-        relativeToFolders: Set<VirtualFile>?,
-        sourceFolders: Set<VirtualFile>,
-        projectDir: VirtualFile
-    ): MutableMap<VirtualFile, String> {
-        val normalizedTarget = targetDestination?.trim('/') ?: ""
-
-        return files.associateWithTo(mutableMapOf()) { file ->
-            val baseFolder = when {
-                // relativeToFolders have priority
-                !relativeToFolders.isNullOrEmpty() -> relativeToFolders.firstOrNull {
-                    VfsUtil.isAncestor(it, file, false)
-                }
-
-                else -> sourceFolders.firstOrNull {
-                    VfsUtil.isAncestor(it, file, false)
-                }
-            } ?: projectDir
-
-            val relativePath = VfsUtil.getRelativePath(file, baseFolder) ?: file.name
-
-            // Combine and normalize path
-            val combinedPath = "$normalizedTarget/$relativePath".trim('/')
-
-            // Ensure single leading slash
-            "/$combinedPath"
-        }
-    }
 
     fun uploadProject(
         excludedPaths: Set<String> = emptySet(),
@@ -193,21 +86,7 @@ internal class MpyTransferService(private val project: Project) {
         shouldExcludePaths: Boolean = false,
         customPathFolders: Set<String> = emptySet()
     ): Boolean {
-
-        FileDocumentManager.getInstance().saveAllDocuments()
-
         val settings = project.service<MpySettingsService>()
-
-        val excludedFolders = collectExcluded()
-        val sourceFolders = collectMpySourceRoots()
-        val testFolders = collectTestRoots()
-        val projectDir = project.guessProjectDir() ?: return false
-
-        var isProjectUpload = initialIsProjectUpload
-
-        var filesToUpload =
-            if (initialIsProjectUpload) collectProjectUploadables().toMutableList() else initialFilesToUpload.toMutableList()
-        val foldersToUpload = mutableSetOf<VirtualFile>()
 
         val pathsToExclude = excludedPaths.toMutableSet()
 
@@ -227,71 +106,17 @@ internal class MpyTransferService(private val project: Project) {
             cancelledMessage = MpyBundle.message("upload.operation.cancelled"),
             timedOutMessage = MpyBundle.message("upload.operation.timeout"),
             action = { reporter ->
-                reporter.text(MpyBundle.message("upload.progress.collecting.files"))
-                reporter.fraction(null)
-
-                withContext(Dispatchers.EDT) {
-                    project.guessProjectDir()?.refresh(false, true)
-                }
-
-                var i = 0
-                while (i < filesToUpload.size) {
-                    val file = filesToUpload[i]
-
-                    val shouldSkip = !file.isValid ||
-                            // Only skip leading dot files unless it's a project dir
-                            // or unless it's in the initial list, which means the user explicitly selected it
-                            (file.leadingDot() && file != projectDir && !initialFilesToUpload.contains(file)) ||
-                            // Skip files explicitly ignored by the IDE
-                            FileTypeRegistry.getInstance().isFileIgnored(file) ||
-                            // All excluded folders and their children are always meant to be skipped
-                            excludedFolders.any { VfsUtil.isAncestor(it, file, false) } ||
-                            // Skip test folders and their children if it's a project upload or if they weren't explicitly selected by the user
-                            (testFolders.any { VfsUtil.isAncestor(it, file, false) } &&
-                                    (isProjectUpload || !initialFilesToUpload.any {
-                                        VfsUtil.isAncestor(
-                                            it,
-                                            file,
-                                            false
-                                        )
-                                    })) ||
-                            // For project uploads, if at least one MicroPython Sources Root was selected
-                            // then only contents of MicroPython Sources Roots are to be uploaded
-                            (isProjectUpload && sourceFolders.isNotEmpty() &&
-                                    !sourceFolders.any { VfsUtil.isAncestor(it, file, false) })
-
-                    when {
-                        shouldSkip -> {
-                            filesToUpload.removeAt(i)
-                        }
-
-                        file == projectDir -> {
-                            // If a project root is found start over and treat this as a project upload
-                            i = 0
-                            filesToUpload.clear()
-                            filesToUpload = collectProjectUploadables().toMutableList()
-                            isProjectUpload = true
-                        }
-
-                        file.isDirectory -> {
-                            filesToUpload.addAll(file.children)
-                            filesToUpload.removeAt(i)
-
-                            foldersToUpload.add(file)
-                        }
-
-                        else -> i++
-                    }
-                }
+                val (filesToUpload, foldersToUpload) = projectFileService.collectFilesAndFolders(
+                    initialFilesToUpload,
+                    initialIsProjectUpload
+                )
 
                 val allItemsToUpload = filesToUpload.toSet() + foldersToUpload
 
-                fileToTargetPath = createVirtualFileToTargetPathMap(
+                fileToTargetPath = projectFileService.createVirtualFileToTargetPathMap(
                     filesToUpload.toSet(),
                     targetDestination,
-                    relativeToFolders,
-                    sourceFolders,
-                    projectDir
+                    relativeToFolders
                 )
 
                 fileToTargetPath.forEach { (file, _) ->
@@ -304,12 +129,10 @@ internal class MpyTransferService(private val project: Project) {
                     )
                 }
 
-                folderToTargetPath = createVirtualFileToTargetPathMap(
+                folderToTargetPath = projectFileService.createVirtualFileToTargetPathMap(
                     foldersToUpload,
                     targetDestination,
-                    relativeToFolders,
-                    sourceFolders,
-                    projectDir
+                    relativeToFolders
                 )
 
                 reporter.text(MpyBundle.message("upload.progress.analyzing.and.preparing"))
@@ -584,10 +407,14 @@ internal class MpyTransferService(private val project: Project) {
                         if (destination?.children?.isNotEmpty() == true) {
                             if (Messages.showOkCancelDialog(
                                     project,
-                                    "The destination folder is not empty.\nIts contents may be damaged.",
-                                    "Warning",
-                                    "Continue",
-                                    "Cancel",
+                                    "${MpyBundle.message("download.warning.destination.folder.not.empty.message.line.one")}\n${
+                                        MpyBundle.message(
+                                            "download.warning.destination.folder.not.empty.message.line.two"
+                                        )
+                                    }",
+                                    MpyBundle.message("download.warning.destination.folder.not.empty.title"),
+                                    MpyBundle.message("download.warning.destination.folder.not.empty.ok.text"),
+                                    MpyBundle.message("download.warning.destination.folder.not.empty.cancel.text"),
                                     Messages.getWarningIcon()
                                 ) != Messages.OK
                             ) {

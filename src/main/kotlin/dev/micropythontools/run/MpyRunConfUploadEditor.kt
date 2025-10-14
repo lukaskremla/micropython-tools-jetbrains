@@ -38,7 +38,7 @@ import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import com.jetbrains.python.PythonFileType
-import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.core.MpyProjectFileService
 import dev.micropythontools.core.MpyValidators
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
@@ -72,7 +72,7 @@ internal data class SourceItem(
         } ?: thisFile.name
     } ?: path
 
-    val isValid = virtualFile?.exists() == true && project.service<MpyTransferService>().collectMpySourceRoots()
+    val isValid = virtualFile?.exists() == true && project.service<MpyProjectFileService>().collectMpySourceRoots()
         .any { mpySource ->
             VfsUtil.isAncestor(mpySource, virtualFile, false)
         }
@@ -95,7 +95,7 @@ private data class ExcludedItem(val path: String) {
 internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) :
     SettingsEditor<MpyRunConfUpload>() {
 
-    private val transferService = runConfiguration.project.service<MpyTransferService>()
+    private val projectFileService = runConfiguration.project.service<MpyProjectFileService>()
 
     private val parameters = with(runConfiguration.options) {
         FlashParameters(
@@ -554,7 +554,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             availableSourcesTable.listTableModel.removeRow(0)
         }
 
-        transferService.collectMpySourceRoots().forEach { file ->
+        projectFileService.collectMpySourceRoots().forEach { file ->
             if (file.path in runConfiguration.options.selectedPaths) return@forEach
             availableSourcesTable.listTableModel.addRow(SourceItem(runConfiguration.project, file.path))
         }

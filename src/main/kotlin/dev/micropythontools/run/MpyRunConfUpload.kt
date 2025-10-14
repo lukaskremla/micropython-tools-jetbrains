@@ -27,7 +27,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
-import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.core.MpyProjectFileService
 import dev.micropythontools.core.MpyValidators
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpyConfigurable
@@ -45,7 +45,7 @@ internal class MpyRunConfUpload(
 ), LocatableConfiguration {
 
     private val settings = project.service<MpySettingsService>()
-    private val transferService = project.service<MpyTransferService>()
+    private val projectFileService = project.service<MpyProjectFileService>()
 
     /**
      * Method for determining the filename of an existing file from its path.
@@ -139,7 +139,7 @@ internal class MpyRunConfUpload(
     override fun checkConfiguration() {
         super<RunConfigurationBase>.checkConfiguration()
 
-        val mpySourceFolders = transferService.collectMpySourceRoots()
+        val mpySourceFolders = projectFileService.collectMpySourceRoots()
 
         if (!settings.state.isPluginEnabled) {
             throw RuntimeConfigurationError(
@@ -177,7 +177,7 @@ internal class MpyRunConfUpload(
                     MpyBundle.message("run.conf.upload.error.file.not.found", path ?: "\"\"")
                 )
             }
-            if (transferService.collectExcluded().contains(file)) {
+            if (projectFileService.collectExcluded().contains(file)) {
                 throw RuntimeConfigurationError(
                     MpyBundle.message("run.conf.upload.error.file.excluded", path)
                 )

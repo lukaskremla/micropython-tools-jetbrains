@@ -50,7 +50,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.tree.TreeUtil
 import dev.micropythontools.communication.MpyDeviceService
-import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.communication.MpyFileTransferService
 import dev.micropythontools.communication.PerformReplActionResult
 import dev.micropythontools.communication.State
 import dev.micropythontools.core.MpyScripts
@@ -85,7 +85,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
     private val settings = project.service<MpySettingsService>()
     private val deviceService = project.service<MpyDeviceService>()
-    private val transferService = project.service<MpyTransferService>()
+    private val transferService = project.service<MpyFileTransferService>()
 
     init {
         updateEmptyText()
@@ -281,7 +281,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                             return false
                         }
 
-                        val transferService = project.service<MpyTransferService>()
+                        val transferService = project.service<MpyFileTransferService>()
 
                         val sure = if (!settings.state.showUploadPreviewDialog) {
                             MessageDialogBuilder.yesNo(
@@ -542,7 +542,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
             val parentFolders = sanitizedFiles.map { it.parent }.toSet()
 
-            project.service<MpyTransferService>().performUpload(
+            project.service<MpyFileTransferService>().performUpload(
                 initialFilesToUpload = sanitizedFiles,
                 relativeToFolders = parentFolders,
                 targetDestination = target.fullName

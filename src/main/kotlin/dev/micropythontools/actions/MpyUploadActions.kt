@@ -23,7 +23,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtil
-import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.core.MpyProjectFileService
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpySettingsService
 
@@ -53,11 +53,11 @@ internal class MpyUploadActionGroup : ActionGroup(MpyBundle.message("action.uplo
 
     override fun update(e: AnActionEvent) {
         val project = e.project
-        val transferService = project?.service<MpyTransferService>()
+        val projectFileService = project?.service<MpyProjectFileService>()
         val projectDir = project?.guessProjectDir() ?: return
 
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
-        val excludedItems = transferService?.collectExcluded()
+        val excludedItems = projectFileService?.collectExcluded()
 
         // If the plugin is disabled
         // if files are empty or the selection contains excluded items
@@ -127,7 +127,7 @@ internal class MpyUploadRelativeToDeviceRootAction :
             .map { it.parent }
             .toSet()
 
-        transferService.performUpload(
+        fileTransferService.performUpload(
             initialFilesToUpload = sanitizedFiles,
             relativeToFolders = parentFolders,
             targetDestination = "/"
@@ -142,12 +142,12 @@ internal class MpyUploadRelativeToParentAction :
 
         if (files.isNullOrEmpty()) return
 
-        transferService.uploadItems(files.toSet())
+        fileTransferService.uploadItems(files.toSet())
     }
 
     @Suppress("DialogTitleCapitalization")
     override fun customUpdate(e: AnActionEvent) {
-        val sourcesRoots = transferService.collectMpySourceRoots()
+        val sourcesRoots = projectFileService.collectMpySourceRoots()
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
 
         if (files.isNullOrEmpty()) {
@@ -190,7 +190,7 @@ internal class MpyUploadProjectAction : MpyUploadActionBase(MpyBundle.message("a
     }
 
     override fun performAction(e: AnActionEvent) {
-        transferService.uploadProject()
+        fileTransferService.uploadProject()
     }
 
     override fun customUpdate(e: AnActionEvent) {

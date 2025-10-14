@@ -24,7 +24,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import dev.micropythontools.communication.MpyDeviceService
-import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.communication.MpyFileTransferService
 import dev.micropythontools.i18n.MpyBundle
 import persistence.MpyRunConfUploadOptions
 
@@ -34,7 +34,7 @@ internal class MpyRunConfUploadState(
 ) : RunProfileState {
 
     private val deviceService = project.service<MpyDeviceService>()
-    private val transferService = project.service<MpyTransferService>()
+    private val fileTransferService = project.service<MpyFileTransferService>()
 
     override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult? {
         val success: Boolean
@@ -42,7 +42,7 @@ internal class MpyRunConfUploadState(
         with(options) {
             when (options.uploadMode) {
                 0 -> {
-                    success = transferService.uploadProject(
+                    success = fileTransferService.uploadProject(
                         excludedPaths.toSet(),
                         synchronize,
                         excludePaths
@@ -54,7 +54,7 @@ internal class MpyRunConfUploadState(
                         StandardFileSystems.local().findFileByPath(path)
                     }.toSet()
 
-                    success = transferService.uploadItems(
+                    success = fileTransferService.uploadItems(
                         toUpload,
                         excludedPaths.toSet(),
                         synchronize,
@@ -82,7 +82,7 @@ internal class MpyRunConfUploadState(
                             acc
                         }?.toSet()
 
-                    success = transferService.performUpload(
+                    success = fileTransferService.performUpload(
                         initialFilesToUpload = toUpload,
                         relativeToFolders = setOf(relativeToFolder),
                         targetDestination = options.uploadToPath ?: "/",

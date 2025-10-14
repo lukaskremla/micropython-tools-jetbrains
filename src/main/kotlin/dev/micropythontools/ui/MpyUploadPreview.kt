@@ -40,7 +40,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import dev.micropythontools.communication.MpyDeviceService
-import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.core.MpyProjectFileService
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
 import java.awt.Color
@@ -65,14 +65,15 @@ internal class MpyUploadPreview(
 ) : DialogWrapper(true) {
 
     private val deviceService = project.service<MpyDeviceService>()
-    private val transferService = project.service<MpyTransferService>()
+    private val projectFileService = project.service<MpyProjectFileService>()
+
     private val projectDir = project.guessProjectDir()
         ?: throw IllegalStateException(MpyBundle.message("upload.preview.error.cannot.guess.project.dir"))
 
     private fun getFolderIcon(virtualFile: VirtualFile): Icon {
-        val excludedRoots = transferService.collectExcluded()
-        val sourceRoots = transferService.collectMpySourceRoots()
-        val testRoots = transferService.collectTestRoots()
+        val excludedRoots = projectFileService.collectExcluded()
+        val sourceRoots = projectFileService.collectMpySourceRoots()
+        val testRoots = projectFileService.collectTestRoots()
 
         return when {
             // Excluded roots icons apply to children in the project file tree as well

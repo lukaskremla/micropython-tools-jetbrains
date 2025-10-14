@@ -39,7 +39,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.PathUtilRt.Platform
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.communication.MpyDeviceService
-import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.communication.MpyFileTransferService
 import dev.micropythontools.communication.State
 import dev.micropythontools.editor.MPY_TOOLS_EDITABLE_FILE_SIGNATURE
 import dev.micropythontools.editor.MPY_TOOLS_EDITABLE_FILE_SIGNATURE_KEY
@@ -266,7 +266,7 @@ internal class MpyDownloadAction : MpyAction(
     }
 
     override fun performAction(e: AnActionEvent) {
-        e.project?.service<MpyTransferService>()?.downloadDeviceFiles()
+        e.project?.service<MpyFileTransferService>()?.downloadDeviceFiles()
     }
 }
 
