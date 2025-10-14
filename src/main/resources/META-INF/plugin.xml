@@ -65,16 +65,16 @@
         <!-- Inspections -->
         <!--suppress PluginXmlCapitalization -->
         <localInspection language="Python"
-                         key="inspection.name"
+                         key="inspection.stubs.name"
                          groupKey="inspection.group.name"
                          bundle="localization.MpyBundle"
                          enabledByDefault="true"
-                         implementationClass="dev.micropythontools.inspections.MpyStubPackageInspection"/>
+                         implementationClass="dev.micropythontools.inspections.MpyCrossInspection"/>
 
         <!-- Inspections -->
         <!--suppress PluginXmlCapitalization -->
         <localInspection language="Python"
-                         key="inspection.name"
+                         key="inspection.python.interpreter.name"
                          groupKey="inspection.group.name"
                          bundle="localization.MpyBundle"
                          enabledByDefault="true"
