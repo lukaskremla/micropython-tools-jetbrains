@@ -53,6 +53,7 @@ import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyFileTransferService
 import dev.micropythontools.communication.PerformReplActionResult
 import dev.micropythontools.communication.State
+import dev.micropythontools.core.MpyProjectFileService
 import dev.micropythontools.core.MpyScripts
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
@@ -85,7 +86,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
     private val settings = project.service<MpySettingsService>()
     private val deviceService = project.service<MpyDeviceService>()
-    private val transferService = project.service<MpyFileTransferService>()
+    private val projectFileService = project.service<MpyProjectFileService>()
 
     init {
         updateEmptyText()
@@ -232,7 +233,7 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                         ?.mapNotNull { StandardFileSystems.local().findFileByPath(it.path) }
                         ?.toSet() ?: emptySet()
 
-                    val excludedFolders = transferService.collectExcluded()
+                    val excludedFolders = projectFileService.collectExcluded()
 
                     return !files.all { file ->
                         excludedFolders.any { VfsUtil.isAncestor(it, file, false) }

@@ -23,8 +23,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.communication.MpyDeviceService
-import dev.micropythontools.communication.MpyTransferService
+import dev.micropythontools.communication.MpyFileTransferService
 import dev.micropythontools.communication.State
+import dev.micropythontools.core.MpyProjectFileService
 import dev.micropythontools.settings.MpySettingsService
 
 // ===== ENUMS AND BASE CLASSES =====
@@ -64,14 +65,16 @@ internal abstract class MpyActionBase(
     protected lateinit var project: Project
     protected lateinit var settings: MpySettingsService
     protected lateinit var deviceService: MpyDeviceService
-    protected lateinit var transferService: MpyTransferService
+    protected lateinit var projectFileService: MpyProjectFileService
+    protected lateinit var fileTransferService: MpyFileTransferService
 
     protected fun initialize(event: AnActionEvent): Boolean {
         val project = event.project ?: return false
         this.project = project
         this.settings = project.service<MpySettingsService>()
         this.deviceService = project.service<MpyDeviceService>()
-        this.transferService = project.service<MpyTransferService>()
+        this.projectFileService = project.service<MpyProjectFileService>()
+        this.fileTransferService = project.service<MpyFileTransferService>()
         return true
     }
 
