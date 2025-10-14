@@ -69,7 +69,7 @@
                          groupKey="inspection.group.name"
                          bundle="localization.MpyBundle"
                          enabledByDefault="true"
-                         implementationClass="dev.micropythontools.inspections.MpyCrossInspection"/>
+                         implementationClass="dev.micropythontools.inspections.MpyStubPackageInspection"/>
 
         <!-- Inspections -->
         <!--suppress PluginXmlCapitalization -->
