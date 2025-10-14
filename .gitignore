@@ -17,3 +17,7 @@ publish-token.txt
 # Allow the default project dictionary to be versioned
 !.idea/dictionaries/project.xml
 !.idea/inspectionProfiles/Project_Default.xml
+
+# Ignore macOS's .DS_Store files
+.DS_Store
+**/.DS_Store
