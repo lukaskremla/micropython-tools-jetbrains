@@ -251,7 +251,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             }
 
             val panel = JPanel(BorderLayout())
-            panel.add(JBLabel("${MpyBundle.message("run.conf.upload.editor.excluded.path.label")} "), BorderLayout.WEST)
+            panel.add(JBLabel(MpyBundle.message("run.conf.upload.editor.excluded.path.label")), BorderLayout.WEST)
             panel.add((textField), BorderLayout.CENTER)
             dialog.centerPanel(panel)
 
@@ -302,7 +302,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
 
                 val panel = JPanel(BorderLayout())
                 panel.add(
-                    JBLabel("${MpyBundle.message("run.conf.upload.editor.excluded.path.label")} "),
+                    JBLabel(MpyBundle.message("run.conf.upload.editor.excluded.path.label")),
                     BorderLayout.WEST
                 )
                 panel.add((textField), BorderLayout.CENTER)
@@ -345,7 +345,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
         configurationPanel = panel {
             buttonsGroup {
                 row {
-                    label("${MpyBundle.message("run.conf.upload.editor.type.selector.label")} ")
+                    label(MpyBundle.message("run.conf.upload.editor.type.selector.label"))
                     uploadProjectRadioButton =
                         radioButton(MpyBundle.message("run.conf.upload.editor.type.selector.button.project"))
                             .bindSelected({ parameters.uploadMode == 0 }, { if (it) parameters.uploadMode = 0 })
@@ -413,7 +413,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             }.visibleIf(useSelectedPathsRadioButton.selected)
 
             panel {
-                row("${MpyBundle.message("run.conf.upload.editor.custom.path.label")} ") {
+                row(MpyBundle.message("run.conf.upload.editor.custom.path.label")) {
                     textFieldWithBrowseButton(
                         FileChooserDescriptor(true, true, false, false, false, false)
                             .withTitle(MpyBundle.message("run.conf.upload.editor.custom.path.file.chooser.title"))
@@ -435,7 +435,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                     }.align(AlignX.FILL)
                 }
 
-                row("${MpyBundle.message("run.conf.upload.editor.upload.to.label")} ") {
+                row(MpyBundle.message("run.conf.upload.editor.upload.to.label")) {
                     uploadToTextField = textField()
                         .bindText(parameters::uploadToPath)
                         .columns(15)
@@ -460,7 +460,9 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                         }
                 }
 
-                targetPathRow = row("${MpyBundle.message("run.conf.upload.editor.target.path.label")} ") {
+                targetPathRow = row(
+                    MpyBundle.message("run.conf.upload.editor.target.path.label")
+                ) {
                     targetPathLabel = label("")
                 }
                 handlePathChange(parameters.uploadToPath, parameters.path)

@@ -164,7 +164,9 @@ internal class MpyConfigurable(private val project: Project) :
                 connectionGroup = group(MpyBundle.message("configurable.connection.group.title")) {
                     buttonsGroup {
                         row {
-                            label("${MpyBundle.message("configurable.connection.type.selector.label")} ")
+                            label(
+                                MpyBundle.message("configurable.connection.type.selector.label")
+                            )
                             serialRadioButton =
                                 radioButton(MpyBundle.message("configurable.connection.radio.button.serial"))
                                     .bindSelected(parameters::usingUart)
@@ -196,7 +198,7 @@ internal class MpyConfigurable(private val project: Project) :
                         }
                         row {
                             portSelectComboBox = comboBox(portSelectModel)
-                                .label("${MpyBundle.message("configurable.port.select.combobox.label")} ")
+                                .label(MpyBundle.message("configurable.port.select.combobox.label"))
                                 .columns(20)
                                 .bindItem(
                                     { parameters.portName },
@@ -243,7 +245,7 @@ internal class MpyConfigurable(private val project: Project) :
                     }.visibleIf(serialRadioButton.selected)
 
                     indent {
-                        row("${MpyBundle.message("configurable.webrepl.url.label")} ") {
+                        row(MpyBundle.message("configurable.webrepl.url.label")) {
                             cell().apply { }
                             @Suppress("DialogTitleCapitalization")
                             label("ws://").gap(RightGap.SMALL)
@@ -281,7 +283,7 @@ internal class MpyConfigurable(private val project: Project) :
                                 .columns(6)
                         }
 
-                        row("${MpyBundle.message("configurable.webrepl.password.textbox.label")} ") {
+                        row(MpyBundle.message("configurable.webrepl.password.textbox.label")) {
                             passwordField()
                                 .bindText(parameters::webReplPassword)
                                 .comment(MpyBundle.message("configurable.webrepl.password.textbox.comment"))
