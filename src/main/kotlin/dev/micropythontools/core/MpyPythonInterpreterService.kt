@@ -42,12 +42,27 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         val sdk = findPythonSdk() ?: return ""
         val command = listOf(sdk.homePath) + args
 
-        val process = CapturingProcessHandler(GeneralCommandLine(command))
+        val projectDir = project.basePath ?: "/"
+        val commandLine = GeneralCommandLine(command).withWorkDirectory(projectDir)
+
+        val process = CapturingProcessHandler(commandLine)
         val output = process.runProcess(10_000)
         return when {
             output.isCancelled -> throw ExecutionException(MpyBundle.message("python.service.code.execution.cancelled"))
             output.isTimeout -> throw ExecutionException(MpyBundle.message("python.service.code.execution.timed_out"))
-            output.exitCode != 0 -> throw ExecutionException(MpyBundle.message("python.service.code.execution.failed"))
+            output.exitCode != 0 -> {
+                val errorMsg = buildString {
+                    append(MpyBundle.message("python.service.code.execution.failed"))
+                    if (output.stderr.isNotBlank()) {
+                        append("\nError: ${output.stderr}")
+                    }
+                    if (output.stdout.isNotBlank()) {
+                        append("\nOutput: ${output.stdout}")
+                    }
+                }
+                throw ExecutionException(errorMsg)
+            }
+
             else -> {
                 output.toString()
             }

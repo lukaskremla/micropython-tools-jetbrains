@@ -93,9 +93,34 @@ internal class MpyFileTransferService(private val project: Project) {
         var startedUploading = false
         var uploadedSuccessfully = false
 
-        // Define the initially collected maps here to allow final verification in the clean-up action
-        var fileToTargetPath = mutableMapOf<VirtualFile, String>()
-        var folderToTargetPath = mutableMapOf<VirtualFile, String>()
+        val (filesToUpload, foldersToUpload) = projectFileService.collectFilesAndFolders(
+            initialFilesToUpload,
+            initialIsProjectUpload
+        )
+
+        val allItemsToUpload = filesToUpload.toSet() + foldersToUpload
+
+        val fileToTargetPath = projectFileService.createVirtualFileToTargetPathMap(
+            filesToUpload.toSet(),
+            targetDestination,
+            relativeToFolders
+        )
+
+        fileToTargetPath.forEach { (file, _) ->
+            file.putSnapshot(
+                CachedSnapshot(
+                    file.contentsToByteArray(),
+                    file.length,
+                    file.crc32
+                )
+            )
+        }
+
+        val folderToTargetPath = projectFileService.createVirtualFileToTargetPathMap(
+            foldersToUpload,
+            targetDestination,
+            relativeToFolders
+        )
 
         deviceService.performReplAction(
             project = project,
@@ -106,35 +131,6 @@ internal class MpyFileTransferService(private val project: Project) {
             cancelledMessage = MpyBundle.message("upload.operation.cancelled"),
             timedOutMessage = MpyBundle.message("upload.operation.timeout"),
             action = { reporter ->
-                val (filesToUpload, foldersToUpload) = projectFileService.collectFilesAndFolders(
-                    initialFilesToUpload,
-                    initialIsProjectUpload
-                )
-
-                val allItemsToUpload = filesToUpload.toSet() + foldersToUpload
-
-                fileToTargetPath = projectFileService.createVirtualFileToTargetPathMap(
-                    filesToUpload.toSet(),
-                    targetDestination,
-                    relativeToFolders
-                )
-
-                fileToTargetPath.forEach { (file, _) ->
-                    file.putSnapshot(
-                        CachedSnapshot(
-                            file.contentsToByteArray(),
-                            file.length,
-                            file.crc32
-                        )
-                    )
-                }
-
-                folderToTargetPath = projectFileService.createVirtualFileToTargetPathMap(
-                    foldersToUpload,
-                    targetDestination,
-                    relativeToFolders
-                )
-
                 reporter.text(MpyBundle.message("upload.progress.analyzing.and.preparing"))
                 val freeMemBytes = if (deviceService.deviceInformation.hasCRC32) {
                     deviceService.fileSystemWidget?.quietHashingRefresh(reporter)

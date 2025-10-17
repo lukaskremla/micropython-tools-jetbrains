@@ -17,7 +17,6 @@
 
 package dev.micropythontools.core
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -144,9 +143,7 @@ internal class MpyProjectFileService(private val project: Project) {
         initialFilesToCollect: Set<VirtualFile> = emptySet(),
         initialIsProjectCollection: Boolean = false,
     ): Pair<Set<VirtualFile>, Set<VirtualFile>> {
-        ApplicationManager.getApplication().runWriteAction {
-            FileDocumentManager.getInstance().saveAllDocuments()
-        }
+        FileDocumentManager.getInstance().saveAllDocuments()
 
         runWithModalProgressBlocking(project, MpyBundle.message("upload.progress.collecting.files")) {
             withContext(Dispatchers.EDT) {
