@@ -28,6 +28,13 @@ internal object MpyPaths {
         dir
     }
 
+    val mpyCrossBaseDir: Path by lazy {
+        val base = globalAppDataBase()
+        val dir = base.resolve("mpy-cross")
+        Files.createDirectories(dir)
+        dir
+    }
+
     const val STUB_PACKAGE_JSON_FILE_NAME = "micropython-stubs.json"
     const val STDLIB_STUB_PACKAGE_NAME = "micropython-stdlib-stubs"
 
