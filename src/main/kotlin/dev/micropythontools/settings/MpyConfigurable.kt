@@ -198,7 +198,6 @@ internal class MpyConfigurable(private val project: Project) :
                         }
                         row {
                             portSelectComboBox = comboBox(portSelectModel)
-                                .label(MpyBundle.message("configurable.port.select.combobox.label"))
                                 .columns(20)
                                 .bindItem(
                                     { parameters.portName },
