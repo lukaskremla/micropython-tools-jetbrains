@@ -32,7 +32,6 @@ import dev.micropythontools.core.MpyValidators
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
-import persistence.MpyRunConfUploadOptions
 
 internal class MpyRunConfUpload(
     project: Project,

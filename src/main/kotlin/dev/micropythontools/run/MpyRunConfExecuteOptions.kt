@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package persistence
+package dev.micropythontools.run
 
 import com.intellij.execution.configurations.RunConfigurationOptions
 
-internal class MpyRunConfUploadOptions : RunConfigurationOptions() {
-    var uploadMode by property(0)
-    var selectedPaths by list<String>()
+internal class MpyRunConfExecuteOptions : RunConfigurationOptions() {
     var path by string("")
-    var uploadToPath by string("/")
-    var switchToReplOnSuccess by property(false)
-    var resetOnSuccess by property(true)
-    var synchronize by property(false)
-    var excludePaths by property(false)
-    var excludedPaths by list<String>()
+    var switchToReplOnSuccess by property(true)
 }
