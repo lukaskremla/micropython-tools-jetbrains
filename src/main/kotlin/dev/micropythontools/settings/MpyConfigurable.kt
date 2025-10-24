@@ -196,7 +196,7 @@ internal class MpyConfigurable(private val project: Project) :
                                 checkBox(MpyBundle.message("configurable.filter.out.unknown.manufacturers.checkbox.text"))
                                     .bindSelected(parameters::filterManufacturers)
                         }
-                        row {
+                        row(MpyBundle.message("configurable.port.select.combobox.label")) {
                             portSelectComboBox = comboBox(portSelectModel)
                                 .columns(20)
                                 .bindItem(
