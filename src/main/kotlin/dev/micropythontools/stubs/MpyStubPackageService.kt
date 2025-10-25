@@ -27,6 +27,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -369,6 +370,11 @@ internal class MpyStubPackageService(private val project: Project) {
         checkUpToDate: Boolean = false
     ): StubPackage? {
         val stubPackage = MpyPaths.stubBaseDir.resolve("${packageName}_$mpyVersion")
+
+        // Ensure the stub package is valid by searching for machine.pyi in it
+        val machinePyi = stubPackage.resolve(MpyPaths.STUB_PACKAGE_MACHINE_NAME)
+        LocalFileSystem.getInstance().findFileByPath(machinePyi.pathString) ?: return null
+
         val jsonPath = stubPackage.resolve(MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
 
         val jsonFile = LocalFileSystem.getInstance().findFileByPath(jsonPath.pathString) ?: return null
@@ -460,7 +466,22 @@ internal class MpyStubPackageService(private val project: Project) {
             "" to ""
         }
 
+        val app = ApplicationManager.getApplication()
+
         val targetDir = MpyPaths.stubBaseDir.resolve("${stubPackage.name}_${stubPackage.mpyVersion}")
+
+        // Ensure target dir is clean
+        try {
+            app.invokeAndWait {
+                runWriteAction {
+                    LocalFileSystem.getInstance().findFileByPath(targetDir.pathString)?.delete(this)
+                }
+            }
+        } catch (e: ProcessCanceledException) {
+            throw e
+        } catch (_: Throwable) {
+            // pass
+        }
 
         ensureDirs(MpyPaths.stubBaseDir, targetDir)
 
@@ -477,6 +498,12 @@ internal class MpyStubPackageService(private val project: Project) {
         ).toMutableList()
 
         if (isAtLeast123(stubPackage.mpyVersion)) boardCommand.add("--no-deps")
+
+        val validationResult = pythonService.checkInterpreterValid()
+
+        if (validationResult != ValidationResult.OK) {
+            throw RuntimeException(validationResult.errorMessage)
+        }
 
         pythonService.runPythonCode(boardCommand)
 
@@ -510,7 +537,6 @@ internal class MpyStubPackageService(private val project: Project) {
 
         val text = json.encodeToString(payload)
 
-        val app = ApplicationManager.getApplication()
         app.invokeAndWait {
             runWriteAction {
                 val fileVf = dirVf.findChild(MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)

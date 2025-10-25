@@ -35,6 +35,7 @@ internal object MpyPaths {
         dir
     }
 
+    const val STUB_PACKAGE_MACHINE_NAME = "machine.pyi"
     const val STUB_PACKAGE_JSON_FILE_NAME = "micropython-stubs.json"
     const val STDLIB_STUB_PACKAGE_NAME = "micropython-stdlib-stubs"
 
