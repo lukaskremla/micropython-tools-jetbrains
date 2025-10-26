@@ -487,39 +487,24 @@ internal class MpyStubPackageService(private val project: Project) {
 
         val pythonService = project.service<MpyPythonInterpreterService>()
 
-        // board
-        val boardCommand = listOf(
-            "-m", "pip", "install",
-            "${stubPackage.name}~=$resolvedBoardVersion",
-            "--target", targetDir.absolutePathString(),
-            "--disable-pip-version-check",
-            "--quiet",
-            "--upgrade"
-        ).toMutableList()
+        val interpreterValidationResult = pythonService.checkInterpreterValid()
 
-        if (isAtLeast123(stubPackage.mpyVersion)) boardCommand.add("--no-deps")
-
-        val validationResult = pythonService.checkInterpreterValid()
-
-        if (validationResult != ValidationResult.OK) {
-            throw RuntimeException(validationResult.errorMessage)
+        if (interpreterValidationResult != ValidationResult.OK) {
+            throw RuntimeException(interpreterValidationResult.errorMessage)
         }
 
-        pythonService.runPythonCode(boardCommand)
+        pythonService.installPackage(
+            "${stubPackage.name}~=$resolvedBoardVersion",
+            targetDir.absolutePathString(),
+            !isAtLeast123(stubPackage.mpyVersion)
+        )
 
         if (isAtLeast123(stubPackage.mpyVersion)) {
-            // stdlib
-            val stdlibCommand = listOf(
-                "-m", "pip", "install",
+            pythonService.installPackage(
                 "${MpyPaths.STDLIB_STUB_PACKAGE_NAME}~=$resolvedStdlibVersion",
-                "--target", targetDir.absolutePathString(),
-                "--no-deps",
-                "--disable-pip-version-check",
-                "--quiet",
-                "--upgrade"
+                targetDir.absolutePathString(),
+                false
             )
-
-            pythonService.runPythonCode(stdlibCommand)
         }
 
         // metadata

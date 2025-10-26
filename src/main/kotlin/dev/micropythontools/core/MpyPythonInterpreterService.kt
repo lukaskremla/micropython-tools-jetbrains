@@ -32,15 +32,25 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.statistics.version
 import dev.micropythontools.i18n.MpyBundle
 import javax.swing.JComponent
 
 @Service(Service.Level.PROJECT)
 internal class MpyPythonInterpreterService(private val project: Project) {
+    private val isUv
+        get() = findPythonSdk()?.sdkAdditionalData
+            ?.let { it::class.java.name == "com.jetbrains.python.sdk.uv.UvSdkAdditionalData" }
+            ?: false
+
     fun runPythonCode(args: List<String>): String {
         val sdk = findPythonSdk() ?: return ""
-        val command = listOf(sdk.homePath) + args
+        val command = if (args.first().contains("uv")) {
+            args
+        } else {
+            listOf(sdk.homePath) + args
+        }
 
         val projectDir = project.basePath ?: "/"
         val commandLine = GeneralCommandLine(command).withWorkDirectory(projectDir)
@@ -70,9 +80,32 @@ internal class MpyPythonInterpreterService(private val project: Project) {
     }
 
     fun checkInterpreterValid(): ValidationResult {
-        findPythonSdk() ?: return ValidationResult(MpyBundle.message("python.service.validation.requires.valid.sdk"))
+        val sdk = findPythonSdk()
 
-        return ValidationResult.OK
+        return if (sdk == null || !sdk.sdkSeemsValid) {
+            ValidationResult(MpyBundle.message("python.service.validation.requires.valid.sdk"))
+        } else ValidationResult.OK
+    }
+
+    fun installPackage(toInstall: String, targetPath: String? = null, installDependencies: Boolean = true) {
+        val prefix = if (isUv) "uv" else "-m"
+
+        val command = mutableListOf(
+            prefix, "pip", "install",
+            toInstall,
+            "--disable-pip-version-check",
+            "--quiet",
+            "--upgrade"
+        )
+
+        if (!targetPath.isNullOrBlank()) {
+            command.add("--target")
+            command.add(targetPath)
+        }
+
+        if (!installDependencies) command.add("--no-deps")
+
+        runPythonCode(command)
     }
 
     fun checkPythonPackageValid(name: String, version: String): ValidationResult {
