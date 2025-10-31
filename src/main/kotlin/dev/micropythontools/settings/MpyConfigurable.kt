@@ -325,10 +325,8 @@ internal class MpyConfigurable(private val project: Project) :
                             .gap(RightGap.SMALL).enabled(proService.isActive)
                             .enabled(proService.isActive)
 
-                        cell(JBLabel(AllIcons.General.ContextHelp).apply {
-                            toolTipText =
-                                MpyBundle.message("configurable.communication.background.uploads.downloads.checkbox.tooltip")
-                        }).gap(RightGap.SMALL)
+                        contextHelp(MpyBundle.message("configurable.communication.background.uploads.downloads.checkbox.tooltip"))
+                            .gap(RightGap.SMALL)
 
                         val lockIcon = cell(JBLabel(proService.lockIconToShow).apply {
                             toolTipText = proService.lockIconToolTipText
@@ -364,10 +362,9 @@ internal class MpyConfigurable(private val project: Project) :
                             .gap(RightGap.SMALL)
                             .enabled(proService.isActive)
 
-                        cell(JBLabel(AllIcons.General.ContextHelp).apply {
-                            toolTipText =
-                                MpyBundle.message("configurable.communication.compress.uploads.checkbox.tooltip")
-                        }).gap(RightGap.SMALL)
+                        contextHelp(
+                            MpyBundle.message("configurable.communication.compress.uploads.checkbox.tooltip")
+                        ).gap(RightGap.SMALL)
 
                         val lockIcon = cell(JBLabel(proService.lockIconToShow).apply {
                             toolTipText = proService.lockIconToolTipText
@@ -402,10 +399,9 @@ internal class MpyConfigurable(private val project: Project) :
                             .bindSelected(parameters::legacyVolumeSupportEnabled)
                             .gap(RightGap.SMALL)
 
-                        cell(JBLabel(AllIcons.General.ContextHelp).apply {
-                            toolTipText =
-                                MpyBundle.message("configurable.communication.legacy.volume.support.checkbox.tooltip")
-                        })
+                        contextHelp(
+                            MpyBundle.message("configurable.communication.legacy.volume.support.checkbox.tooltip")
+                        )
                     }
 
                     row {

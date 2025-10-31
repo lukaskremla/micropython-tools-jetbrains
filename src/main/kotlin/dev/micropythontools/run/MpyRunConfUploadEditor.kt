@@ -483,9 +483,9 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                     .bindSelected(parameters::synchronize)
                     .gap(RightGap.SMALL)
 
-                cell(JBLabel(AllIcons.General.ContextHelp).apply {
-                    toolTipText = MpyBundle.message("run.conf.upload.editor.tooltip.synchronize")
-                })
+                contextHelp(
+                    MpyBundle.message("run.conf.upload.editor.tooltip.synchronize")
+                )
             }
 
             row {
