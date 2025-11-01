@@ -610,7 +610,26 @@ internal class MpyDeviceService(val project: Project) : Disposable {
         if (settings.state.autoClearRepl) {
             withContext(Dispatchers.EDT) {
                 val widget = UIUtil.findComponentOfType(terminalContent?.component, JediTermWidget::class.java)
-                widget?.terminalPanel?.clearBuffer()
+                widget?.let {
+                    try {
+                        it.terminalPanel?.clearBuffer()
+
+                        // CRITICAL FIX: Ensure cursor is at valid position after clear
+                        // JediTerm expects row >= 1, and this prevents resize crashes
+                        val terminal = it.terminal
+                        if (terminal != null) {
+                            val cursorY = terminal.cursorY
+                            if (cursorY < 1) {
+                                // Use cursorPosition method to reset cursor to valid position (1,1)
+                                terminal.cursorPosition(1, 1)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        // Log but don't crash if cursor reset fails
+                        com.intellij.openapi.diagnostic.Logger.getInstance("MpyDeviceService")
+                            .warn("Error during terminal clear/cursor reset", e)
+                    }
+                }
             }
         }
     }
