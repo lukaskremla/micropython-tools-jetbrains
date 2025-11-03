@@ -1,10 +1,22 @@
 The Changelog
 =============
 
-0.7.0 - 17.10.2025
+2025.2.2 - 3.11.2025
 ------------------
 
-*
+Free
+
+* Switched to release year based versioning
+* Improved stub package installation logic to show details about exceptions and to support UV interpreters
+
+Paid
+
+* Added mpy-cross run configuration with support for automatically detecting bytecode version/architecture for connected
+  board
+* Added upload compression which speeds up uploads and improves communication stability by reducing the amount of data
+  that must be transferred
+* Added background uploads/downloads progress reporting to reduce workflow disruptions during long-running data
+  transfers
 
 0.6.3 - 3.10.2025
 ------------------

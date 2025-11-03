@@ -16,9 +16,11 @@
 
 package dev.micropythontools.run
 
+import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -43,7 +45,7 @@ internal class MpyRunConfExecuteState(
         val path = options.path!!
         val switchToReplOnSuccess = options.switchToReplOnSuccess
 
-        try {
+        val success = try {
             FileDocumentManager.getInstance().saveAllDocuments()
             val file = StandardFileSystems.local().findFileByPath(path)!!
             val code = file.readText()
@@ -55,13 +57,12 @@ internal class MpyRunConfExecuteState(
                 description = MpyBundle.message("action.execute.file.text"),
                 cancelledMessage = MpyBundle.message("action.execute.cancelled"),
                 timedOutMessage = MpyBundle.message("action.execute.timeout"),
-                { _ ->
+                action = { _ ->
                     deviceService.instantRun(code)
                 })
 
             if (switchToReplOnSuccess) deviceService.activateRepl()
-
-            return null
+            true
         } catch (e: Throwable) {
             Notifications.Bus.notify(
                 Notification(
@@ -71,7 +72,16 @@ internal class MpyRunConfExecuteState(
                     NotificationType.ERROR
                 ), project
             )
-            return null
+            false
         }
+
+        // Return an execution result with no console (null console view, NopProcessHandler)
+        return if (success) {
+            val processHandler = NopProcessHandler().apply {
+                startNotify()
+                destroyProcess()
+            }
+            DefaultExecutionResult(null, processHandler)
+        } else null
     }
 }

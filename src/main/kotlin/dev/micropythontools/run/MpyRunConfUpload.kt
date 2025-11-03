@@ -104,6 +104,7 @@ internal class MpyRunConfUpload(
         resetOnSuccess: Boolean,
         switchToReplOnSuccess: Boolean,
         synchronize: Boolean,
+        forceBlocking: Boolean,
         excludePaths: Boolean,
         excludedPaths: MutableList<String>
     ) {
@@ -114,6 +115,7 @@ internal class MpyRunConfUpload(
         options.switchToReplOnSuccess = switchToReplOnSuccess
         options.resetOnSuccess = resetOnSuccess
         options.synchronize = synchronize
+        options.forceBlocking = forceBlocking
         options.excludePaths = excludePaths
         options.excludedPaths = excludedPaths
     }

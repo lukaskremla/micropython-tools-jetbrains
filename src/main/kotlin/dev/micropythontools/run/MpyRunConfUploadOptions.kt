@@ -26,6 +26,7 @@ internal class MpyRunConfUploadOptions : RunConfigurationOptions() {
     var switchToReplOnSuccess by property(false)
     var resetOnSuccess by property(true)
     var synchronize by property(false)
+    var forceBlocking by property(false)
     var excludePaths by property(false)
     var excludedPaths by list<String>()
 }

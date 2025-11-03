@@ -16,27 +16,28 @@
 
 package dev.micropythontools.run
 
+import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
-import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyFileTransferService
-import dev.micropythontools.i18n.MpyBundle
 
 internal class MpyRunConfUploadState(
-    private val project: Project,
+    project: Project,
     private val options: MpyRunConfUploadOptions
 ) : RunProfileState {
 
-    private val deviceService = project.service<MpyDeviceService>()
     private val fileTransferService = project.service<MpyFileTransferService>()
 
     override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult? {
         val success: Boolean
+
+        println(runner.javaClass)
 
         with(options) {
             when (options.uploadMode) {
@@ -44,7 +45,10 @@ internal class MpyRunConfUploadState(
                     success = fileTransferService.uploadProject(
                         excludedPaths.toSet(),
                         synchronize,
-                        excludePaths
+                        excludePaths,
+                        resetOnSuccess,
+                        switchToReplOnSuccess,
+                        forceBlocking
                     )
                 }
 
@@ -58,6 +62,9 @@ internal class MpyRunConfUploadState(
                         excludedPaths.toSet(),
                         synchronize,
                         excludePaths,
+                        resetOnSuccess,
+                        switchToReplOnSuccess,
+                        forceBlocking
                     )
                 }
 
@@ -88,26 +95,22 @@ internal class MpyRunConfUploadState(
                         excludedPaths = excludedPaths.toSet(),
                         shouldSynchronize = synchronize,
                         shouldExcludePaths = excludePaths,
-                        customPathFolders = customPathFolders ?: emptySet()
+                        customPathFolders = customPathFolders ?: emptySet(),
+                        resetOnSuccess = resetOnSuccess,
+                        switchToReplOnSuccess = switchToReplOnSuccess,
+                        forceBlocking = forceBlocking
                     )
                 }
             }
-            if (success) {
-                if (resetOnSuccess) {
-                    deviceService.performReplAction(
-                        project,
-                        connectionRequired = false,
-                        requiresRefreshAfter = false,
-                        canRunInBackground = false,
-                        description = MpyBundle.message("repl.reset.hotkey.description"),
-                        cancelledMessage = MpyBundle.message("repl.reset.hotkey.cancelled"),
-                        timedOutMessage = MpyBundle.message("repl.reset.hotkey.timeout"),
-                        { deviceService.reset() })
-                }
-                if (switchToReplOnSuccess) deviceService.activateRepl()
-            }
 
-            return null
+            // Return an execution result with no console (null console view, NopProcessHandler)
+            return if (success) {
+                val processHandler = NopProcessHandler().apply {
+                    startNotify()
+                    destroyProcess()
+                }
+                DefaultExecutionResult(null, processHandler)
+            } else null
         }
     }
 }

@@ -23,9 +23,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.ui.DialogBuilder
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.setEmptyState
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
@@ -40,11 +38,14 @@ import com.intellij.util.ui.ListTableModel
 import com.jetbrains.python.PythonFileType
 import dev.micropythontools.core.MpyProjectFileService
 import dev.micropythontools.core.MpyValidators
+import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
 import dev.micropythontools.settings.MpySettingsService
 import java.awt.BorderLayout
 import java.awt.Dimension
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.table.DefaultTableCellRenderer
 
@@ -56,6 +57,7 @@ private data class FlashParameters(
     var switchToReplOnSuccess: Boolean,
     var resetOnSuccess: Boolean,
     var synchronize: Boolean,
+    var forceBlocking: Boolean,
     var excludePaths: Boolean,
     var excludedPaths: MutableList<String>
 )
@@ -95,6 +97,7 @@ private data class ExcludedItem(val path: String) {
 internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUpload) :
     SettingsEditor<MpyRunConfUpload>() {
 
+    private val proService = runConfiguration.project.service<MpyProServiceInterface>()
     private val projectFileService = runConfiguration.project.service<MpyProjectFileService>()
 
     private val parameters = with(runConfiguration.options) {
@@ -106,6 +109,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             switchToReplOnSuccess = switchToReplOnSuccess,
             resetOnSuccess = resetOnSuccess,
             synchronize = synchronize,
+            forceBlocking = forceBlocking,
             excludePaths = excludePaths,
             excludedPaths = excludedPaths.toMutableList()
         )
@@ -489,6 +493,43 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             }
 
             row {
+                checkBox(MpyBundle.message("run.conf.upload.editor.checkbox.force.blocking"))
+                    .bindSelected(parameters::forceBlocking)
+                    .gap(RightGap.SMALL)
+
+                contextHelp(
+                    MpyBundle.message("run.conf.upload.editor.tooltip.force.blocking")
+                ).gap(RightGap.SMALL)
+
+                val lockIcon = cell(JBLabel(proService.lockIconToShow).apply {
+                    toolTipText = proService.lockIconToolTipText
+                }).gap(RightGap.SMALL)
+
+                if (!proService.isActive) {
+                    lockIcon.applyToComponent {
+                        addMouseListener(object : MouseAdapter() {
+                            override fun mouseClicked(e: MouseEvent?) {
+                                val sure = showYesNoDialog(
+                                    title = MpyBundle.message("pro.service.close.settings.for.license.dialog.title"),
+                                    message = MpyBundle.message("pro.service.close.settings.for.license.dialog.message"),
+                                    project = runConfiguration.project
+                                )
+
+                                if (!sure) return
+
+                                val dialog = DialogWrapper.findInstance(this@applyToComponent)
+                                dialog?.close(DialogWrapper.OK_EXIT_CODE)
+
+                                proService.requestLicense()
+                            }
+                        })
+                    }
+                }
+
+                cell(JBLabel(MpyIcons.proBadge))
+            }
+
+            row {
                 excludePathsCheckbox =
                     checkBox(MpyBundle.message("run.conf.upload.editor.checkbox.exclude.from.synchronization"))
                         .bindSelected(parameters::excludePaths)
@@ -544,6 +585,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
                 switchToReplOnSuccess = switchToReplOnSuccess,
                 resetOnSuccess = resetOnSuccess,
                 synchronize = synchronize,
+                forceBlocking = forceBlocking,
                 excludePaths = excludePaths,
                 excludedPaths = excludedPaths
             )

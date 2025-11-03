@@ -20,6 +20,7 @@ package dev.micropythontools.communication
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
@@ -50,7 +51,10 @@ internal class MpyFileTransferService(private val project: Project) {
     fun uploadProject(
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
-        shouldExcludePaths: Boolean = false
+        shouldExcludePaths: Boolean = false,
+        resetOnSuccess: Boolean = false,
+        switchToReplOnSuccess: Boolean = false,
+        forceBlocking: Boolean = false
     ): Boolean {
 
         return performUpload(
@@ -58,6 +62,9 @@ internal class MpyFileTransferService(private val project: Project) {
             excludedPaths = excludedPaths,
             shouldSynchronize = shouldSynchronize,
             shouldExcludePaths = shouldExcludePaths,
+            resetOnSuccess = resetOnSuccess,
+            switchToReplOnSuccess = switchToReplOnSuccess,
+            forceBlocking = forceBlocking
         )
     }
 
@@ -65,14 +72,20 @@ internal class MpyFileTransferService(private val project: Project) {
         filesToUpload: Set<VirtualFile>,
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
-        shouldExcludePaths: Boolean = false
+        shouldExcludePaths: Boolean = false,
+        resetOnSuccess: Boolean = false,
+        switchToReplOnSuccess: Boolean = false,
+        forceBlocking: Boolean = false
     ): Boolean {
 
         return performUpload(
             initialFilesToUpload = filesToUpload,
             excludedPaths = excludedPaths,
             shouldSynchronize = shouldSynchronize,
-            shouldExcludePaths = shouldExcludePaths
+            shouldExcludePaths = shouldExcludePaths,
+            resetOnSuccess = resetOnSuccess,
+            switchToReplOnSuccess = switchToReplOnSuccess,
+            forceBlocking = forceBlocking
         )
     }
 
@@ -84,7 +97,10 @@ internal class MpyFileTransferService(private val project: Project) {
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false,
-        customPathFolders: Set<String> = emptySet()
+        customPathFolders: Set<String> = emptySet(),
+        resetOnSuccess: Boolean = false,
+        switchToReplOnSuccess: Boolean = false,
+        forceBlocking: Boolean = false
     ): Boolean {
         val settings = project.service<MpySettingsService>()
 
@@ -126,7 +142,7 @@ internal class MpyFileTransferService(private val project: Project) {
             project = project,
             connectionRequired = true,
             requiresRefreshAfter = false,
-            canRunInBackground = true,
+            canRunInBackground = !forceBlocking,
             description = MpyBundle.message("upload.operation.description"),
             cancelledMessage = MpyBundle.message("upload.operation.cancelled"),
             timedOutMessage = MpyBundle.message("upload.operation.timeout"),
@@ -338,6 +354,17 @@ internal class MpyFileTransferService(private val project: Project) {
             },
             cleanUpAction = { reporter ->
                 if (startedUploading) deviceService.fileSystemWidget?.refresh(reporter)
+
+                if (uploadedSuccessfully) {
+                    if (resetOnSuccess) {
+                        deviceService.reset()
+                    }
+                    if (switchToReplOnSuccess) {
+                        ApplicationManager.getApplication().invokeLater {
+                            deviceService.activateRepl()
+                        }
+                    }
+                }
             },
             finalCheckAction = {
                 if (uploadedSuccessfully) {
@@ -371,6 +398,7 @@ internal class MpyFileTransferService(private val project: Project) {
                 }
             }
         )
+
         return uploadedSuccessfully
     }
 
