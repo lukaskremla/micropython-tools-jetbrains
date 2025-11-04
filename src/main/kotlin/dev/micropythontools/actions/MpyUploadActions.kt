@@ -142,7 +142,7 @@ internal class MpyUploadRelativeToParentAction :
 
         if (files.isNullOrEmpty()) return
 
-        fileTransferService.uploadItems(files.toSet())
+        fileTransferService.uploadItems(filesToUpload = files.toSet())
     }
 
     @Suppress("DialogTitleCapitalization")

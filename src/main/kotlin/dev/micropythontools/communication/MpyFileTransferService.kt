@@ -17,6 +17,8 @@
 
 package dev.micropythontools.communication
 
+import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -49,6 +51,7 @@ internal class MpyFileTransferService(private val project: Project) {
     private val deviceService = project.service<MpyDeviceService>()
 
     fun uploadProject(
+        consoleView: ConsoleView? = null,
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false,
@@ -58,6 +61,7 @@ internal class MpyFileTransferService(private val project: Project) {
     ): Boolean {
 
         return performUpload(
+            consoleView = consoleView,
             initialIsProjectUpload = true,
             excludedPaths = excludedPaths,
             shouldSynchronize = shouldSynchronize,
@@ -69,6 +73,7 @@ internal class MpyFileTransferService(private val project: Project) {
     }
 
     fun uploadItems(
+        consoleView: ConsoleView? = null,
         filesToUpload: Set<VirtualFile>,
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
@@ -79,6 +84,7 @@ internal class MpyFileTransferService(private val project: Project) {
     ): Boolean {
 
         return performUpload(
+            consoleView = consoleView,
             initialFilesToUpload = filesToUpload,
             excludedPaths = excludedPaths,
             shouldSynchronize = shouldSynchronize,
@@ -90,6 +96,7 @@ internal class MpyFileTransferService(private val project: Project) {
     }
 
     fun performUpload(
+        consoleView: ConsoleView? = null,
         initialFilesToUpload: Set<VirtualFile> = emptySet(),
         initialIsProjectUpload: Boolean = false,
         relativeToFolders: Set<VirtualFile> = emptySet(),
@@ -108,6 +115,11 @@ internal class MpyFileTransferService(private val project: Project) {
 
         var startedUploading = false
         var uploadedSuccessfully = false
+
+        consoleView?.print(
+            "${MpyBundle.message("upload.console.collecting.files")}\n",
+            ConsoleViewContentType.NORMAL_OUTPUT
+        )
 
         val (filesToUpload, foldersToUpload) = projectFileService.collectFilesAndFolders(
             initialFilesToUpload,
@@ -148,6 +160,12 @@ internal class MpyFileTransferService(private val project: Project) {
             timedOutMessage = MpyBundle.message("upload.operation.timeout"),
             action = { reporter ->
                 reporter.text(MpyBundle.message("upload.progress.analyzing.and.preparing"))
+
+                consoleView?.print(
+                    "${MpyBundle.message("upload.progress.analyzing.and.preparing")}\n",
+                    ConsoleViewContentType.NORMAL_OUTPUT
+                )
+
                 val freeMemBytes = if (deviceService.deviceInformation.hasCRC32) {
                     deviceService.fileSystemWidget?.quietHashingRefresh(reporter)
                 } else {
@@ -242,9 +260,14 @@ internal class MpyFileTransferService(private val project: Project) {
                     Notifications.Bus.notify(
                         Notification(
                             MpyBundle.message("notification.group.name"),
-                            MpyBundle.message("upload.notification.up.to.date"),
+                            "${MpyBundle.message("upload.notification.up.to.date")}\n",
                             NotificationType.INFORMATION
                         ), project
+                    )
+
+                    consoleView?.print(
+                        "${MpyBundle.message("upload.notification.up.to.date")}\n",
+                        ConsoleViewContentType.NORMAL_OUTPUT
                     )
 
                     uploadedSuccessfully = true
@@ -285,8 +308,41 @@ internal class MpyFileTransferService(private val project: Project) {
 
                     if (!shouldContinue) {
                         deviceService.state = State.CONNECTED
+
+                        consoleView?.print(
+                            "${MpyBundle.message("upload.operation.cancelled")}\n",
+                            ConsoleViewContentType.NORMAL_OUTPUT
+                        )
+
                         return@performReplAction PerformReplActionResult(null, false)
                     }
+                }
+
+                // Report compressed size progress.
+                if (compressedTotalSize != null && compressedTotalSize != 0.0 && nominalTotalSize - compressedTotalSize != 0.0) {
+                    val reducedKBToShow = deviceService.fileSystemWidget?.formatSize(compressedTotalSize, true)
+                    val nominalTotalKBToShow = deviceService.fileSystemWidget?.formatSize(nominalTotalSize, true)
+                    val savedKBToShow =
+                        deviceService.fileSystemWidget?.formatSize(nominalTotalSize - compressedTotalSize, true)
+
+                    savedKBToShow?.let {
+                        consoleView?.print(
+                            "${
+                                MpyBundle.message(
+                                    "upload.preview.compression.savings.tooltip",
+                                    savedKBToShow,
+                                    nominalTotalKBToShow!!,
+                                    reducedKBToShow!!
+                                )
+                            }\n",
+                            ConsoleViewContentType.NORMAL_OUTPUT
+                        )
+                    }
+                } else if (settings.state.compressUploads && proService.isActive) {
+                    consoleView?.print(
+                        "${MpyBundle.message("upload.console.skipping.compression")}\n",
+                        ConsoleViewContentType.NORMAL_OUTPUT
+                    )
                 }
 
                 // A file system refresh should happen on cancellation now
@@ -296,6 +352,11 @@ internal class MpyFileTransferService(private val project: Project) {
                 // Perform synchronization
                 if (shouldSynchronize && targetPathsToRemove.isNotEmpty()) {
                     reporter.text(MpyBundle.message("upload.progress.synchronizing"))
+
+                    consoleView?.print(
+                        "${MpyBundle.message("upload.progress.synchronizing")}\n",
+                        ConsoleViewContentType.NORMAL_OUTPUT
+                    )
 
                     // Delete remaining existing target paths that aren't a part of the upload
                     deviceService.recursivelySafeDeletePaths(targetPathsToRemove)
@@ -337,6 +398,18 @@ internal class MpyFileTransferService(private val project: Project) {
                         freeMemBytes
                     )
 
+                    consoleView?.print(
+                        "${
+                            MpyBundle.message(
+                                "upload.console.uploading.file",
+                                path,
+                                deviceService.fileSystemWidget?.formatSize(file.getSnapshot().content.size.toLong()) 
+                                    ?: MpyBundle.message("upload.console.error.formatting.file.size")
+                            )
+                        }\n",
+                        ConsoleViewContentType.NORMAL_OUTPUT
+                    )
+
                     uploadedFiles++
                     checkCanceled()
                 }
@@ -347,22 +420,40 @@ internal class MpyFileTransferService(private val project: Project) {
                 // however, this is necessary to ensure that empty folders get created too
                 if (folderToTargetPath.isNotEmpty()) {
                     reporter.text(MpyBundle.message("upload.progress.creating.directories"))
+
+                    consoleView?.print(
+                        "${MpyBundle.message("upload.progress.creating.directories")}\n",
+                        ConsoleViewContentType.NORMAL_OUTPUT
+                    )
+
                     deviceService.safeCreateDirectories(folderToTargetPath.values.toSet())
                 }
 
                 uploadedSuccessfully = true
+
+                consoleView?.print(
+                    "${MpyBundle.message("upload.console.all.files.uploaded")}\n",
+                    ConsoleViewContentType.NORMAL_OUTPUT
+                )
             },
             cleanUpAction = { reporter ->
-                if (startedUploading) deviceService.fileSystemWidget?.refresh(reporter)
+                if (startedUploading) {
+                    consoleView?.print(
+                        "${MpyBundle.message("file.system.refresh.progress")}\n",
+                        ConsoleViewContentType.NORMAL_OUTPUT
+                    )
+
+                    deviceService.fileSystemWidget?.refresh(reporter)
+                }
 
                 if (uploadedSuccessfully) {
                     if (resetOnSuccess) {
+                        consoleView?.print(
+                            "${MpyBundle.message("upload.console.soft.resetting.device")}\n",
+                            ConsoleViewContentType.NORMAL_OUTPUT
+                        )
+
                         deviceService.reset()
-                    }
-                    if (switchToReplOnSuccess) {
-                        ApplicationManager.getApplication().invokeLater {
-                            deviceService.activateRepl()
-                        }
                     }
                 }
             },
@@ -394,6 +485,17 @@ internal class MpyFileTransferService(private val project: Project) {
                                 NotificationType.WARNING
                             ), project
                         )
+
+                        consoleView?.print(
+                            "${MpyBundle.message("upload.notification.verification.failed")}\n",
+                            ConsoleViewContentType.ERROR_OUTPUT
+                        )
+                    }
+
+                    if (switchToReplOnSuccess) {
+                        ApplicationManager.getApplication().invokeLater {
+                            deviceService.activateRepl()
+                        }
                     }
                 }
             }

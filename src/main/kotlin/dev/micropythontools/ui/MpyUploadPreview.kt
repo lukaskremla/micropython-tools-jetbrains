@@ -476,7 +476,7 @@ internal class MpyUploadPreview(
                         )
                     ).gap(RightGap.SMALL)
 
-                    if (compressedTotalSize != null && compressedTotalSize != 0.0 && deviceService.fileSystemWidget != null) {
+                    if (compressedTotalSize != null && compressedTotalSize != 0.0 && deviceService.fileSystemWidget != null && nominalTotalSize - compressedTotalSize != 0.0) {
                         val percentage =
                             if (nominalTotalSize > 0) (1.0 - (compressedTotalSize / nominalTotalSize)) * 100.0 else 0.0
 

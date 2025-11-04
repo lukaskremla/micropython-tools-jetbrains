@@ -20,97 +20,122 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import dev.micropythontools.communication.MpyFileTransferService
+import dev.micropythontools.i18n.MpyBundle
+import dev.micropythontools.settings.MpySettingsService
+import io.ktor.utils.io.*
 
 internal class MpyRunConfUploadState(
-    project: Project,
+    private val project: Project,
     private val options: MpyRunConfUploadOptions
 ) : RunProfileState {
 
+    private val settings = project.service<MpySettingsService>()
     private val fileTransferService = project.service<MpyFileTransferService>()
 
     override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult? {
-        val success: Boolean
+        // Create console view
+        val consoleView = TextConsoleBuilderFactory.getInstance()
+            .createBuilder(project)
+            .console
 
-        println(runner.javaClass)
+        // Create and attach process handler
+        val processHandler = NopProcessHandler()
+        consoleView.attachToProcess(processHandler)
+        processHandler.startNotify()
 
-        with(options) {
-            when (options.uploadMode) {
-                0 -> {
-                    success = fileTransferService.uploadProject(
-                        excludedPaths.toSet(),
-                        synchronize,
-                        excludePaths,
-                        resetOnSuccess,
-                        switchToReplOnSuccess,
-                        forceBlocking
-                    )
-                }
+        var success = false
 
-                1 -> {
-                    val toUpload = selectedPaths.mapNotNull { path ->
-                        StandardFileSystems.local().findFileByPath(path)
-                    }.toSet()
+        try {
+            with(options) {
+                when (options.uploadMode) {
+                    0 -> {
+                        success = fileTransferService.uploadProject(
+                            consoleView,
+                            excludedPaths.toSet(),
+                            synchronize,
+                            excludePaths,
+                            resetOnSuccess,
+                            switchToReplOnSuccess,
+                            forceBlocking
+                        )
+                    }
 
-                    success = fileTransferService.uploadItems(
-                        toUpload,
-                        excludedPaths.toSet(),
-                        synchronize,
-                        excludePaths,
-                        resetOnSuccess,
-                        switchToReplOnSuccess,
-                        forceBlocking
-                    )
-                }
+                    1 -> {
+                        val toUpload = selectedPaths.mapNotNull { path ->
+                            StandardFileSystems.local().findFileByPath(path)
+                        }.toSet()
 
-                else -> {
-                    val file = StandardFileSystems.local().findFileByPath(options.path!!)!!
+                        success = fileTransferService.uploadItems(
+                            consoleView,
+                            toUpload,
+                            excludedPaths.toSet(),
+                            synchronize,
+                            excludePaths,
+                            resetOnSuccess,
+                            switchToReplOnSuccess,
+                            forceBlocking
+                        )
+                    }
 
-                    val toUpload = if (file.isDirectory) {
-                        file.children.toSet()
-                    } else setOf(file)
+                    else -> {
+                        val file = StandardFileSystems.local().findFileByPath(options.path!!)!!
 
-                    val relativeToFolder = if (file.isDirectory) {
-                        file
-                    } else file.parent
+                        val toUpload = if (file.isDirectory) {
+                            file.children.toSet()
+                        } else setOf(file)
 
-                    val customPathFolders = options.uploadToPath
-                        ?.split("/")
-                        ?.filter { it.isNotBlank() }
-                        ?.foldIndexed(mutableListOf<String>()) { index, acc, folder ->
-                            val path = if (index == 0) "/$folder" else "${acc[index - 1]}/$folder"
-                            acc.add(path)
-                            acc
-                        }?.toSet()
+                        val relativeToFolder = if (file.isDirectory) {
+                            file
+                        } else file.parent
 
-                    success = fileTransferService.performUpload(
-                        initialFilesToUpload = toUpload,
-                        relativeToFolders = setOf(relativeToFolder),
-                        targetDestination = options.uploadToPath ?: "/",
-                        excludedPaths = excludedPaths.toSet(),
-                        shouldSynchronize = synchronize,
-                        shouldExcludePaths = excludePaths,
-                        customPathFolders = customPathFolders ?: emptySet(),
-                        resetOnSuccess = resetOnSuccess,
-                        switchToReplOnSuccess = switchToReplOnSuccess,
-                        forceBlocking = forceBlocking
-                    )
+                        val customPathFolders = options.uploadToPath
+                            ?.split("/")
+                            ?.filter { it.isNotBlank() }
+                            ?.foldIndexed(mutableListOf<String>()) { index, acc, folder ->
+                                val path = if (index == 0) "/$folder" else "${acc[index - 1]}/$folder"
+                                acc.add(path)
+                                acc
+                            }?.toSet()
+
+                        success = fileTransferService.performUpload(
+                            consoleView = consoleView,
+                            initialFilesToUpload = toUpload,
+                            relativeToFolders = setOf(relativeToFolder),
+                            targetDestination = options.uploadToPath ?: "/",
+                            excludedPaths = excludedPaths.toSet(),
+                            shouldSynchronize = synchronize,
+                            shouldExcludePaths = excludePaths,
+                            customPathFolders = customPathFolders ?: emptySet(),
+                            resetOnSuccess = resetOnSuccess,
+                            switchToReplOnSuccess = switchToReplOnSuccess,
+                            forceBlocking = forceBlocking
+                        )
+                    }
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            consoleView.print(
+                "${MpyBundle.message("run.conf.upload.state.error.execution", e.message ?: "")}\n",
+                ConsoleViewContentType.ERROR_OUTPUT
+            )
+        } finally {
+            processHandler.destroyProcess()
+        }
 
-            // Return an execution result with no console (null console view, NopProcessHandler)
-            return if (success) {
-                val processHandler = NopProcessHandler().apply {
-                    startNotify()
-                    destroyProcess()
-                }
-                DefaultExecutionResult(null, processHandler)
-            } else null
+        return if ((!settings.state.backgroundUploadsDownloads || options.forceBlocking) && !success) {
+            null
+        } else {
+            DefaultExecutionResult(consoleView, processHandler)
         }
     }
 }

@@ -20,8 +20,10 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -39,16 +41,27 @@ internal class MpyRunConfExecuteState(
     private val fileName: String
 ) : RunProfileState {
 
-    override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult? {
+    override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult {
         val deviceService = project.service<MpyDeviceService>()
 
-        val path = options.path!!
-        val switchToReplOnSuccess = options.switchToReplOnSuccess
+        // Create console view
+        val consoleView = TextConsoleBuilderFactory.getInstance()
+            .createBuilder(project)
+            .console
 
-        val success = try {
+        // Create and attach process handler
+        val processHandler = NopProcessHandler()
+        consoleView.attachToProcess(processHandler)
+        processHandler.startNotify()
+
+        try {
+            val path = options.path!!
+            val switchToReplOnSuccess = options.switchToReplOnSuccess
+
             FileDocumentManager.getInstance().saveAllDocuments()
             val file = StandardFileSystems.local().findFileByPath(path)!!
             val code = file.readText()
+            
             deviceService.performReplAction(
                 project,
                 connectionRequired = true,
@@ -62,8 +75,11 @@ internal class MpyRunConfExecuteState(
                 })
 
             if (switchToReplOnSuccess) deviceService.activateRepl()
-            true
+            
+            consoleView.print("${MpyBundle.message("run.conf.execute.state.execution.completed")}\n", ConsoleViewContentType.NORMAL_OUTPUT)
         } catch (e: Throwable) {
+            consoleView.print("${MpyBundle.message("run.conf.execute.state.error.execution", e.message ?: e.javaClass.simpleName)}\n", ConsoleViewContentType.ERROR_OUTPUT)
+            
             Notifications.Bus.notify(
                 Notification(
                     MpyBundle.message("notification.group.name"),
@@ -72,16 +88,10 @@ internal class MpyRunConfExecuteState(
                     NotificationType.ERROR
                 ), project
             )
-            false
+        } finally {
+            processHandler.destroyProcess()
         }
 
-        // Return an execution result with no console (null console view, NopProcessHandler)
-        return if (success) {
-            val processHandler = NopProcessHandler().apply {
-                startNotify()
-                destroyProcess()
-            }
-            DefaultExecutionResult(null, processHandler)
-        } else null
+        return DefaultExecutionResult(consoleView, processHandler)
     }
 }
