@@ -495,6 +495,7 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             row {
                 checkBox(MpyBundle.message("run.conf.upload.editor.checkbox.force.blocking"))
                     .bindSelected(parameters::forceBlocking)
+                    .enabled(proService.isActive)
                     .gap(RightGap.SMALL)
 
                 contextHelp(
