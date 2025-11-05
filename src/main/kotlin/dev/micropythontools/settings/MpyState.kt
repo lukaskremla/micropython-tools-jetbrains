@@ -16,4 +16,5 @@ internal class MpyState : BaseState() {
     var legacyVolumeSupportEnabled by property(false)
     var showUploadPreviewDialog by property(true)
     var areStubsEnabled by property(true)
+    var lastShownVersion by string("")
 }
