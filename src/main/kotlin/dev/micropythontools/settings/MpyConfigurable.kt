@@ -322,7 +322,7 @@ internal class MpyConfigurable(private val project: Project) :
                     row {
                         checkBox(MpyBundle.message("configurable.communication.background.uploads.downloads.checkbox.text"))
                             .bindSelected(parameters::backgroundUploadsDownloads)
-                            .gap(RightGap.SMALL).enabled(proService.isActive)
+                            .gap(RightGap.SMALL)
                             .enabled(proService.isActive)
 
                         contextHelp(MpyBundle.message("configurable.communication.background.uploads.downloads.checkbox.tooltip"))
