@@ -21,21 +21,16 @@ package dev.micropythontools.core
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.facet.ui.ValidationResult
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.statistics.version
 import dev.micropythontools.i18n.MpyBundle
-import javax.swing.JComponent
 
 @Service(Service.Level.PROJECT)
 internal class MpyPythonInterpreterService(private val project: Project) {
@@ -108,7 +103,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         runPythonCode(command)
     }
 
-    fun checkPythonPackageValid(name: String, version: String): ValidationResult {
+    /*fun checkPythonPackageValid(name: String, version: String): ValidationResult {
         val pythonSdk = findPythonSdk() ?: return checkInterpreterValid()
         val packageManager = PyPackageManager.getInstance(pythonSdk)
 
@@ -160,7 +155,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         }
 
         return ValidationResult.OK
-    }
+    }*/
 
     private fun findPythonSdk(): Sdk? {
         return project
