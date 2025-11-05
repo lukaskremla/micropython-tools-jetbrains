@@ -31,7 +31,7 @@ import dev.micropythontools.settings.MpySettingsService
 
 internal class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
     companion object {
-        private const val CURRENT_VERSION = "2025.2.2"
+        private const val CURRENT_VERSION = "2025.3.1"
     }
 
     override suspend fun execute(project: Project) {

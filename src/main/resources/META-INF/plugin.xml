@@ -4,10 +4,10 @@
     <id>micropython-tools-jetbrains</id>
 
     <version>SNAPSHOT</version>
-    <product-descriptor code="PMPYTOOLS" release-date="20251105" release-version="20252" optional="true"/>
+    <product-descriptor code="PMPYTOOLS" release-date="20251105" release-version="20253" optional="true"/>
 
     <change-notes><![CDATA[
-        <h3>2025.2.2 - 5.11.2025</h3>
+        <h3>2025.3.1 - 5.11.2025</h3>
         <ul>
             <li>Switched to release year based versioning</li>
             <li>Improved stub package installation logic to show details about exceptions and to support UV interpreters</li>
