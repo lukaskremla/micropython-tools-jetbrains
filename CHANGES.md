@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+2025.3.2 - x.11.2025
+------------------
+
+* Switched to %-style formatting over sep= for compatibility with more constrained ports
+
 2025.3.1 - 5.11.2025
 ------------------
 
