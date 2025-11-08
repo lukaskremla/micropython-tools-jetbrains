@@ -25,7 +25,7 @@ l = False
 h = False
 
 
-def s():
+def r():
     try:
         import vfs
         mount_points = [mount_tuple[1] for mount_tuple in vfs.mount()]
@@ -49,7 +49,7 @@ def s():
         total_bytes = fs_stats[0] * fs_stats[2]
         free_bytes = fs_stats[0] * fs_stats[3]
 
-        print(mount_point, free_bytes, total_bytes, sep="&")
+        print("%s&%s&%s" % (mount_point, free_bytes, total_bytes))
 
     m("/")
 
@@ -72,15 +72,15 @@ def m(p):
 
                     crc32 = "%08x" % (crc32 & 0xffffffff)
 
-        print(file_path, file_type, result[3] if len(result) > 3 else -1, crc32, sep="&")
+        print("%s&%d&%d&%s" % (file_path, file_type, result[3] if len(result) > 3 else -1, crc32))
 
         if file_type:
             m(file_path)
 
 
-s()
+r()
 del ba
 del mv
-del s
+del r
 del m
 gc.collect()
