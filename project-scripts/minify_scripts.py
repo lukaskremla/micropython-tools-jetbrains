@@ -14,10 +14,11 @@
 * limitations under the License.
 """
 
+import shutil
+
 import os
 import python_minifier
 import re
-import shutil
 
 path = os.path.abspath(__file__)
 current_dir = os.path.dirname(path)
@@ -86,6 +87,14 @@ def do_minification(source_directory, target_directory):
                     found_def_patterns +
                     found_class_patterns
             )
+
+            for name in names_to_mangle:
+                if name in ["s", "d"]:
+                    raise RuntimeError(
+                        "Class, function and variable names can't be \"d\" or \"s\" as they're string format specifiers")
+                elif name in ["f"]:
+                    raise RuntimeError(
+                        "Class, function and variable names can't be \"f\" as it is a protected f string specifier")
 
             for name in names_to_mangle:
                 # Skip __init__ methods of classes
