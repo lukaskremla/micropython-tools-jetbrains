@@ -29,7 +29,7 @@ def m():
         except:
             has_crc32, can_encode_base64, can_decode_base64 = False
 
-        print(default_free_mem, has_crc32, can_encode_base64, can_decode_base64, can_deflate, sep="&")
+        print(default_free_mem, has_crc32, can_encode_base64, can_decode_base64, sep="&")
 
     except Exception as e:
         print(f"ERROR: {e}")
