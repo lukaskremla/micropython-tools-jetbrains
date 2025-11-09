@@ -1,10 +1,10 @@
 The Changelog
 =============
 
-2025.3.2 - x.11.2025
+2025.3.2 - 9.11.2025
 ------------------
 
-* Switched to %-style formatting over sep= for compatibility with more constrained ports
+* Fixed the "Unexpected keyword argument 'sep'" error on very constrained ports
 
 2025.3.1 - 5.11.2025
 ------------------
