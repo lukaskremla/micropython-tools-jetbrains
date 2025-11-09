@@ -45,6 +45,8 @@ def r():
             mount_points = ["/"]
 
     for mount_point in mount_points:
+        if "&" in mount_point:
+            raise ValueError("Mount point contains reserved character '&': %s" % mount_point)
         fs_stats = os.statvfs(mount_point)
         total_bytes = fs_stats[0] * fs_stats[2]
         free_bytes = fs_stats[0] * fs_stats[3]
@@ -57,6 +59,10 @@ def r():
 def m(p):
     for result in os.ilistdir(p):
         file_path = f"{p}/{result[0]}" if p != "/" else f"/{result[0]}"
+
+        if "&" in file_path:
+            raise ValueError("File path contains reserved character '&': %s" % file_path)
+
         # Utilize the fact that 0 evaluates to False and other integers to True
         file_type = 1 if result[1] & 0x4000 else 0
 
