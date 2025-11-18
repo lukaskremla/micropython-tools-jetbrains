@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Any
 
@@ -5,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 
 MCU_PARAM = "?mcu="
+PATH_TO_BOARDS_JSON = "../micropython_boards.json"
 
 supported_ports = ("esp32", "esp8266", "rp2", "samd", "stm32")
 
@@ -158,7 +160,30 @@ def main():
 
     # Save the timestamp at the end
     micropython_board_map["timestamp"] = datetime.now().isoformat()
-    print(micropython_board_map)
+
+    # Collect all IDs of the new boards
+    new_board_ids = [board["id"] for board in micropython_board_map["boards"]]
+
+    try:
+        with open(PATH_TO_BOARDS_JSON, "r") as f:
+            print("Testing for regression...")
+
+            old_json_map = json.loads(f.read())
+
+            for old_board in old_json_map["boards"]:
+                old_board_id = old_board["id"]
+
+                if old_board_id not in new_board_ids:
+                    raise RuntimeError(
+                        f"A previously scraped board is missing in the newly scraped map: \"{old_board_id}\"")
+
+            print("No regression found")
+    except FileNotFoundError:
+        pass
+
+    print("Saving the newly scraped data...")
+    with open(PATH_TO_BOARDS_JSON, "w") as f:
+        json.dump(micropython_board_map, f, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":
