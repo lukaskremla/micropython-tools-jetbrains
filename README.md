@@ -3,88 +3,199 @@
 [![JetBrains IntelliJ Downloads](https://img.shields.io/jetbrains/plugin/d/26227-micropython-tools?label=Downloads)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 [![JetBrains IntelliJ Rating](https://img.shields.io/jetbrains/plugin/r/rating/26227-micropython-tools?label=Rating)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 
-**Translations:** [English](README.md) | [Simplified Chinese (简体中文)](README_zh-CN.md)
-
-This plugin brings MicroPython support into JetBrains IDEs.
+This plugin brings MicroPython support into JetBrains IDEs in Free and Pro editions.
 It provides reliable device file system integration, REPL support, stub package management, and smooth workflows for
 developing both hobbyist and professional MicroPython projects.
+
+The Free edition covers all essential MicroPython development needs, while the Pro edition adds advanced tools like
+background transfers, compression, mpy-cross compilation, and bytecode analysis.
 
 Originally inspired by JetBrains’ MicroPython plugin, this project has since been fully reworked and expanded into a
 standalone tool. Credit to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for creating and maintaining the
 stubs used here, and to [Ilia Motornyi](https://github.com/elmot) and
 [Andrey Vlasovskikh](https://github.com/vlasovskikh) for their work on the original plugin.
 
-**Installation & Docs:** Usage tips and documentation are available [here](DOCUMENTATION.md).
+Usage tips, setup guide and documentation are available [here](DOCUMENTATION.md).
 
 ## Features
 
-### File System Widget
+### Free Features
 
-- Easily view and interact with the device's file system
+#### File System Widget
+
+- Easily view and interact with the device's file system in a dedicated tool window
 - Upload to or reorganize the file system via drag and drop
-- Supports mounted volumes (such as SD cards) and displays storage usage
-  ![File System Widget](media/file_system.png)
+- Supports mounted volumes (such as SD cards) and displays storage usage for each mount point
+- Create new files or directories directly on the device
+- Full copy/cut/paste support (project to device and device to device)
+- Download files from the device to your project
+- Open and edit on-device files with save-to-device functionality
 
-#### File System Actions
+<details>
+<summary>View File System Widget screenshot</summary>
 
-- Create new files or directories
-- Fully working copy/cut/paste actions (project to device and device to device only)
-- Download source code from the device
-- Open and edit on-device files
-  ![File System Widget Context Menu](media/file_system_context_menu.png)
-- Edit or refresh the currently open on-device file
-  ![File System Widget Edit File](media/file_system_edit_file.png)
+![File System Widget](media/file_system.png)
+</details>
 
-### REPL Widget
+<details>
+<summary>View File System Context Menu screenshot</summary>
 
-- Interact with the MicroPython REPL
-- All keyboard shortcuts are passed to the device as well (Raw REPL, Paste mode, etc.)
-  ![REPL Widget](media/repl.png)
+![File System Widget Context Menu](media/file_system_context_menu.png)
+</details>
 
-### Uploads
+<details>
+<summary>View File System Edit File screenshot</summary>
 
-- Items can be uploaded via context menu actions, drag and drop, or run configurations
-- Already uploaded files are automatically skipped using CRC32 calculations
-- Upload preview dialog that shows how the file system will look after the upload operation
-  ![Upload Preview](media/upload_preview.png)
+![File System Widget Edit File](media/file_system_edit_file.png)
+</details>
 
-### Run Configurations
+#### REPL Widget
 
-- #### Upload
-    - Comfortably select what gets uploaded
+- Full MicroPython REPL integration in a dedicated tool window
+- All keyboard shortcuts are passed through to the device (Raw REPL, Paste mode, soft reset, interrupt)
+- Toolbar actions for common operations (reset, interrupt, clear)
+- Optional auto-clear to prevent terminal clutter
+
+<details>
+<summary>View REPL Widget screenshot</summary>
+
+![REPL Widget](media/repl.png)
+</details>
+
+#### Uploads and Synchronization
+
+- Multiple upload methods: context menu actions, drag and drop, or run configurations
+- Smart upload: already uploaded files are automatically skipped using CRC32 calculations
+- Upload preview dialog shows exactly how the file system will look after the upload operation
+- Synchronization mode to mirror your project structure on the device (removes extra files)
+
+<details>
+<summary>View Upload Preview screenshot</summary>
+
+![Upload Preview](media/upload_preview.png)
+</details>
+
+#### Run Configurations
+
+Multiple run configuration types for different workflows:
+
+- **Upload**: Select what gets uploaded (entire project, specific MicroPython Sources Roots, or custom paths)
     - Synchronize device file system to only contain uploaded files and folders
-    - Exclude on-device paths from synchronization
-      ![Upload Run Configuration](media/run_configuration_upload.png)
-- #### Execute in REPL
-    - Execute a ".py", ".mpy" file or selected code selections in REPL without uploading anything to the device
-      ![Execute in REPL Run Configuration](media/run_configuration_execute.png)
-      ![Execute Code Fragment in REPL](media/execute_fragment.png)
+    - Exclude on-device paths from synchronization (e.g., logs, OTA directories, persistent config files)
+    - Reset device and switch to REPL tab on success
 
-### MicroPython Stubs
+<details>
+<summary>View Upload Run Configuration screenshot</summary>
 
-- Built-in stubs management Integrates all available MicroPython stubs packages
-  by [Jos Verlinde](https://github.com/Josverl/micropython-stubs)
+![Upload Run Configuration](media/run_configuration_upload.png)
+</details>
 
-### Settings
+- **Execute in REPL**: Run `.py` or `.mpy` files directly in REPL without uploading to the device
+    - Execute entire files or just selected code fragments
+    - Perfect for testing without modifying the device file system
 
-## MicroPython Stubs
+<details>
+<summary>View Execute in REPL Run Configuration screenshot</summary>
 
-- Install and apply MicroPython stubs by [Jos Verlinde](https://github.com/Josverl/micropython-stubs) on-demand
-- The plugin automatically tracks the stubs versions and prompts you when an update is available
+![Execute in REPL Run Configuration](media/run_configuration_execute.png)
+</details>
+
+<details>
+<summary>View Execute Code Fragment screenshot</summary>
+
+![Execute Code Fragment in REPL](media/execute_fragment.png)
+</details>
+
+#### MicroPython Stubs Package Manager
+
+- Built-in package manager for [Jos Verlinde's MicroPython stubs](https://github.com/Josverl/micropython-stubs)
+- Install and apply stubs on-demand for your specific board and MicroPython version
+- Automatic update notifications when newer stub versions are available
+- Visual table showing installed, available, and selected packages
+
+<details>
+<summary>View Settings screenshot</summary>
 
 ![Settings](media/settings.png)
+</details>
 
-### Context Menu Actions
+#### Context Menu Actions
 
-- Quickly upload or execute selected files
-  ![Context Menu File Actions](media/file_actions.png)
-- Custom "Mark as MicroPython Sources Root" action that allows compatibility with most JetBrains IDEs
-  ![Context Menu MicroPython Sources Actions](media/micropython_sources.png)
+- Quick upload actions: upload to device root, relative to project, or relative to MicroPython Sources Root
+- Execute file or code fragment in REPL directly from the editor
+- Custom "Mark as MicroPython Sources Root" action for better IDE compatibility across JetBrains products
+
+<details>
+<summary>View File Context Menu Actions screenshot</summary>
+
+![Context Menu File Actions](media/file_actions.png)
+</details>
+
+<details>
+<summary>View MicroPython Sources Root Action screenshot</summary>
+
+![Context Menu MicroPython Sources Actions](media/micropython_sources.png)
+</details>
+
+### Pro Features
+
+#### Background Uploads and Downloads
+
+- Upload and download operations run in the background without blocking the IDE
+- Continue coding while large file transfers are in progress
+- Progress reporting in the IDE's background tasks manager
+
+<details>
+<summary>View Background Progress screenshot</summary>
+
+![Background Progress](media/background_progress.png)
+</details>
+
+#### Automatic File Compression
+
+- Files are automatically compressed before upload to significantly speed up transfers
+- Improves communication stability by reducing the amount of data transmitted
+- Transparent compression/decompression on both sides
+
+<details>
+<summary>View Upload Preview with Compression screenshot</summary>
+
+![Upload Preview with Compression](media/upload_preview_compression.png)
+</details>
+
+#### mpy-cross Run Configuration
+
+- Compile Python files to MicroPython bytecode (`.mpy`) directly from the IDE
+- Automatic detection of bytecode version and architecture for the connected board
+- Supports custom compilation flags and options
+
+<details>
+<summary>View mpy-cross Run Configuration screenshot</summary>
+
+![mpy-cross Run Configuration](media/run_configuration_compile.png)
+</details>
+
+#### .mpy File Analyzer
+
+- View detailed information about compiled `.mpy` files
+- Inspect bytecode version, architecture, and other metadata
+- Helps troubleshoot compatibility issues
+
+<details>
+<summary>View .mpy File Analyzer screenshot</summary>
+
+![.mpy File Analyzer](media/mpy_file_analyzer.png)
+</details>
 
 ## Requirements
 
 * A valid Python interpreter 3.10+
 * Python Community plugin (For non-PyCharm IDEs)
-* A development board with MicroPython installed (version 1.20+)
+* A development board with MicroPython installed (version 1.20+ is recommended)
 
-This plugin is licensed under the terms of the Apache 2 license.
+## License
+
+The plugin distributed via the JetBrains Marketplace or this repository's Releases is licensed under
+the [End-User License Agreement (EULA)](EULA.txt).
+
+The open-source components of this plugin are licensed under the [Apache License 2.0](LICENSE.txt).

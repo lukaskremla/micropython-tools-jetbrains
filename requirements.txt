@@ -1,1 +1,0 @@
-python_minifier~=2.11.3

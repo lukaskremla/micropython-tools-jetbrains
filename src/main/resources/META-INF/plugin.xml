@@ -36,7 +36,7 @@
           <li>Mounted volume support (e.g. SD cards)</li>
         </ul>
         <br>
-        <p>Documentation, usage tips, and issue tracker are available on
+        <p>Documentation, setup guides, issue tracker, and detailed feature descriptions are available on
         <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">GitHub</a>.</p>
 ]]></description>
 
