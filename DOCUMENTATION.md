@@ -28,6 +28,11 @@
 - [Execute File in REPL](#execute-file-in-repl)
     - [Run Configuration](#run-configuration)
     - [Context menu Action](#context-menu-action)
+- [Pro Features](#pro-features)
+    - [Background Uploads and Downloads](#background-uploads-and-downloads)
+    - [Automatic File Compression](#automatic-file-compression)
+    - [mpy-cross Compilation](#mpy-cross-compilation)
+    - [.mpy File Analyzer](#mpy-file-analyzer)
 
 ## Getting Started
 
@@ -324,3 +329,66 @@ right-click them in the project tree, and it's also available for files open in 
 tab and when right-clicking anywhere in the open editor.
 
 While you're in the file's editor you can also select code and execute just the selected Fragment in REPL.
+
+## Pro Features
+
+The following features require an active Pro license.
+
+### Background Uploads and Downloads
+
+Upload and download operations run in the background without blocking the IDE. Progress is shown in the IDE's background tasks manager (bottom-right corner). You can continue coding while transfers are in progress.
+
+Enable in `Settings → Languages & Frameworks → MicroPython Tools` with the "Enable background uploads/downloads" checkbox.
+
+### Automatic File Compression
+
+Files are automatically compressed before upload and decompressed on the device. Compression is applied to files larger than 4KB that achieve at least 12% size reduction. Already-compressed files (images, archives, `.mpy`) are skipped. The upload preview dialog shows compression savings.
+
+Enable in `Settings → Languages & Frameworks → MicroPython Tools` with the "Enable upload compression" checkbox.
+
+### mpy-cross Compilation
+
+Compile Python files to MicroPython bytecode (`.mpy`) directly from the IDE. Bytecode files load faster and use less memory on the device.
+
+Create a new `MicroPython Tools → mpy-cross Compilation` run configuration. Select what to compile (Project, Selected Sources Roots, or Custom Path), choose output location, and configure compilation options.
+
+**Auto-Detection:** Click the Auto-Detect button to automatically detect your device's bytecode version and architecture.
+
+**Emitter options:**
+- Bytecode: Standard bytecode, compatible with all devices
+- Native/Viper: Faster machine code, architecture-specific
+
+**Optimization levels:** O0 (no optimization) through O3 (maximum optimization)
+
+**Embed modes:**
+- Filename only: Shortest, least informative stack traces
+- Relative to project root: Full paths in stack traces
+- Mapping file: Custom shortened paths
+
+**Special handling:**
+- `boot.py` and `main.py` are always copied as `.py` (not compiled)
+- Non-Python files can optionally be copied alongside `.mpy` files
+
+#### Mapping Files
+
+Mapping files customize the paths embedded in `.mpy` files. Format: one line per file with source path and embedded path separated by space.
+
+Example:
+```
+src/network/wifi.py wifi
+src/utils/helpers.py utils/hlp
+```
+
+Click the "Generate" link in the run configuration to auto-generate a mapping file.
+
+### .mpy File Analyzer
+
+When you open a `.mpy` file in the IDE, a metadata panel displays:
+- File size
+- Embedded path
+- Emitter type (Bytecode/Native/Viper)
+- Architecture
+- Bytecode version
+- Small int bits
+
+Useful for verifying compilation settings and checking bytecode version compatibility before uploading.
