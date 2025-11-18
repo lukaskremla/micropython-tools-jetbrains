@@ -1,6 +1,6 @@
 <idea-plugin url="https://github.com/lukaskremla/micropython-tools-jetbrains">
     <name>MicroPython Tools</name>
-    <vendor>Lukas Kremla</vendor>
+    <vendor email="contact@lukaskremla.com">Lukas Kremla</vendor>
     <id>micropython-tools-jetbrains</id>
 
     <version>SNAPSHOT</version>
