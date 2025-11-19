@@ -1,12 +1,12 @@
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict
 
 import requests
 from bs4 import BeautifulSoup
 
 MCU_PARAM = "?mcu="
-PATH_TO_BOARDS_JSON = "../micropython_boards.json"
+PATH_TO_BOARDS_JSON = "../data/micropython_boards.json"
 
 supported_ports = ("esp32", "esp8266", "rp2", "samd", "stm32")
 
@@ -16,15 +16,25 @@ session.headers.update({
 })
 
 
-def retrieve_page_links(url: str) -> list:
+def retrieve_page_links_from_url(url: str) -> list:
     # Get raw response
     response = session.get(url)
 
     # Parse into html
-    soup = BeautifulSoup(response.text, 'html.parser')
+    beautiful_soup = BeautifulSoup(response.text, 'html.parser')
 
     # Collect all "a" tags
-    a_tags = soup.find_all("a")
+    a_tags = beautiful_soup.find_all("a")
+
+    # Filter for href links only
+    links = [a_tag.get("href", "") for a_tag in a_tags]
+
+    return links
+
+
+def retrieve_page_links_from_beautiful_soup(beautiful_soup: BeautifulSoup) -> list:
+    # Collect all "a" tags
+    a_tags = beautiful_soup.find_all("a")
 
     # Filter for href links only
     links = [a_tag.get("href", "") for a_tag in a_tags]
@@ -37,10 +47,10 @@ def retrieve_page_headings(url: str) -> list:
     response = session.get(url)
 
     # Parse into html
-    soup = BeautifulSoup(response.text, 'html.parser')
+    beautiful_soup = BeautifulSoup(response.text, 'html.parser')
 
     # Collect all "h" tags
-    h_tags = soup.find_all('h2')
+    h_tags = beautiful_soup.find_all('h2')
 
     # Collect text of the "h" tags
     headings = [h_tag.text for h_tag in h_tags]
@@ -48,15 +58,9 @@ def retrieve_page_headings(url: str) -> list:
     return headings
 
 
-def retrieve_offset(url: str) -> str:
-    # Get raw response
-    response = session.get(url)
-
-    # Parse into html
-    soup = BeautifulSoup(response.text, 'html.parser')
-
+def retrieve_offset_from_beautiful_soup(beautiful_soup: BeautifulSoup) -> str:
     # Collect all "p" tags
-    p_tags = soup.find_all('p')
+    p_tags = beautiful_soup.find_all('p')
 
     # Collect text of the "p" tags
     texts = [p_tag.text for p_tag in p_tags]
@@ -96,7 +100,7 @@ def main():
     download_url = "https://micropython.org/download/"
 
     # Collect links of the downloads page
-    download_page_links = retrieve_page_links(download_url)
+    download_page_links = retrieve_page_links_from_url(download_url)
 
     for download_page_link in download_page_links:
         # Filter only for the links of mcu subgroups
@@ -113,7 +117,7 @@ def main():
                 mcu_page_url = download_url + download_page_link
 
                 # Grab the links of the mcu's page
-                mcu_page_links = retrieve_page_links(mcu_page_url)
+                mcu_page_links = retrieve_page_links_from_url(mcu_page_url)
 
                 for mcu_page_link in mcu_page_links:
                     # Filter these characters out, as the board page links don't contain them
@@ -121,42 +125,71 @@ def main():
                         # Build the url of the board's page
                         board_page_url = download_url + mcu_page_link
 
-                        # Collect all headings of the board's page
-                        headings = retrieve_page_headings(board_page_url)
+                        # Retrieve the html response of this page
+                        board_page_response = session.get(board_page_url)
 
-                        # Remove the "Installation Instructions" heading
-                        headings.pop(1)
+                        # Parse the board page HTML
+                        board_page_beautiful_soup = BeautifulSoup(board_page_response.text, 'html.parser')
 
-                        # Index 0 is the board name
-                        name = headings[0].strip()
+                        # List of firmware names (tags) to the links of all available binaries for it
+                        firmware_name_to_link: Dict[str, list] = {}
 
+                        # The board name heading text will be saved to it here
+                        board_name = None
+
+                        # Iterate over all html tags on the page
+                        for html_element in board_page_beautiful_soup.descendants:
+                            # Ensure a valid tag that can be parsed
+                            if hasattr(html_element, "name"):
+                                # Handle h2 tags
+                                if html_element.name == "h2":
+                                    # Get the text
+                                    tag_text = html_element.text
+
+                                    # If no board name was set, set it, the first heading is it
+                                    if not board_name:
+                                        board_name = tag_text.strip()
+                                    # If the heading contains "Firmware", the following link tags will contain the binary links
+                                    elif tag_text.startswith("Firmware"):
+                                        # Parse out the specific name of this heading
+                                        firmware_name = tag_text.removeprefix("Firmware (").removesuffix(")").strip()
+
+                                        if firmware_name == "Firmware":
+                                            firmware_name = "Standard"
+
+                                        # Prepare an empty list for the heading
+                                        firmware_name_to_link[firmware_name] = []
+                                # Handle a tags
+                                elif html_element.name == "a":
+                                    # Get only href a tags
+                                    # noinspection PyUnresolvedReferences
+                                    board_page_link = html_element.get("href", "")
+
+                                    # Ensure a valid firmware link
+                                    if "/resources/firmware/" in board_page_link:
+                                        if ((mcu_name.startswith(("esp32", "esp8266")) and ".bin" in board_page_link) or
+                                                (mcu_name.startswith(("rp2", "samd")) and ".uf2" in board_page_link) or
+                                                (mcu_name.startswith("stm32") and ".dfu" in board_page_link)):
+                                            # Find the latest firmware name (key) to append to
+                                            last_key = list(firmware_name_to_link.keys())[-1]
+
+                                            # Append the newly found link
+                                            firmware_name_to_link[last_key].append(board_page_link)
+
+                        # Format the board dictionary with its info
                         board = {
                             "id": mcu_page_link,
-                            "name": name,
+                            "name": board_name,
                             "port": port,
                             "mcu": mcu_name,
-                            "offset": retrieve_offset(board_page_url),
-                            "firmwareNames": headings[1:],  # 1+ on is only used for Firmware headings
-                            "firmware": []
+                            "offset": retrieve_offset_from_beautiful_soup(board_page_beautiful_soup),
+                            "firmwareNameToLink": firmware_name_to_link
                         }
-
-                        # Collect all links of the board's page
-                        board_page_links = retrieve_page_links(board_page_url)
-
-                        for board_page_link in board_page_links:
-                            # Only grab firmware links
-                            if "/resources/firmware/" in board_page_link:
-                                if mcu_name.startswith(("esp32", "esp8266")) and ".bin" in board_page_link:
-                                    board["firmware"].append(board_page_link)
-                                elif mcu_name.startswith(("rp2", "samd")) and ".uf2" in board_page_link:
-                                    board["firmware"].append(board_page_link)
-                                elif mcu_name.startswith("stm32") and ".dfu" in board_page_link:
-                                    board["firmware"].append(board_page_link)
 
                         # Save the scraped board
                         micropython_board_map["boards"].append(board)
 
-                        print(f"Scraped \"{name}\"")
+                        print(f"Scraped \"{board_name}\"")
 
     # Save the timestamp at the end
     micropython_board_map["timestamp"] = datetime.now().isoformat()
