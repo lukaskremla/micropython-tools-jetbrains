@@ -232,7 +232,14 @@ internal class MpyConfigurable(private val project: Project) :
 
                                             private fun updateModel() {
                                                 val text = editorComponent.text
-                                                if (text != parameters.portName) {
+
+                                                // This is a hack to make typing changes instantly recognized
+                                                // without having to change focus on a different element
+                                                // Must be editable and the text must be typed (not in the selector model)
+                                                // The last condition is to ensure that simple selector model changes
+                                                // Don't trigger the below code, which would cause them to not prompt the
+                                                // dialog for applying
+                                                if (isEditable && text != parameters.portName && text !in portSelectModel.items) {
                                                     parameters.portName = text
                                                     settingsPanel.validateAll()
                                                 }

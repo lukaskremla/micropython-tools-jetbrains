@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+2025.3.2 - x.11.2025
+------------------
+
+* Fixed a bug where port selector model in the settings wouldn't recognize changes
+
 2025.3.2 - 9.11.2025
 ------------------
 
