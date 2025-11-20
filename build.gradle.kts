@@ -138,6 +138,11 @@ tasks {
             include("**/*")
         }
 
+        from("data") {
+            into("data")
+            include("**/*")
+        }
+
         // Include EULA.txt in the archive
         from(".") {
             into("license")
