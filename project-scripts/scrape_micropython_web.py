@@ -91,6 +91,7 @@ def get_port_from_mcu(mcu_name: str) -> str | None:
 
 def main():
     micropython_board_map: dict[str, Any] = {
+        "version": "1.0.0",
         "timestamp": "",  # Filled out at the end
         "skimmed_ports": list(supported_ports),
         "boards": []
