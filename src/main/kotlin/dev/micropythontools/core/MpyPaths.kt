@@ -38,10 +38,11 @@ internal object MpyPaths {
     const val STUB_PACKAGE_MACHINE_NAME = "machine.pyi"
     const val STUB_PACKAGE_JSON_FILE_NAME = "micropython-stubs.json"
     const val STDLIB_STUB_PACKAGE_NAME = "micropython-stdlib-stubs"
+    const val MICROPYTHON_BOARD_JSON_FILE_NAME = "micropython_boards.json"
 
-    private fun globalAppDataBase(): Path {
+    fun globalAppDataBase(): Path {
         val os = System.getProperty("os.name").orEmpty().lowercase()
-        return when {
+        val appDataDir = when {
             os.contains("win") -> {
                 // Prefer LOCALAPPDATA (machine-local); fallback to APPDATA; last resort: user.home
                 val local = System.getenv("LOCALAPPDATA")
@@ -61,5 +62,9 @@ internal object MpyPaths {
                 base.resolve(MpyPluginInfo.PLUGIN_ID.lowercase())
             }
         }
+
+        Files.createDirectories(appDataDir)
+
+        return appDataDir
     }
 }
