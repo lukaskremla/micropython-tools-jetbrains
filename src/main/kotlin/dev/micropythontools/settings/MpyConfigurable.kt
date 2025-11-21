@@ -52,6 +52,7 @@ import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
 import dev.micropythontools.stubs.MpyStubPackageService
 import dev.micropythontools.stubs.StubPackage
+import dev.micropythontools.ui.MpyFlashFirmwareDialog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NotNull
@@ -297,6 +298,14 @@ internal class MpyConfigurable(private val project: Project) :
                                 }
                         }
                     }.visibleIf(webReplRadioButton.selected)
+
+                    indent {
+                        row {
+                            comment(MpyBundle.message("configurable.install.or.update.micropython.firmware"), action = {
+                                MpyFlashFirmwareDialog(project).show()
+                            })
+                        }
+                    }
                 }.bottomGap(BottomGap.NONE).enabled(!isConnected)
 
                 indent {

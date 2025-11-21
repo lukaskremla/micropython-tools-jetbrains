@@ -357,6 +357,16 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
                 )
             }
 
+            tree.emptyText.appendText(" ${MpyBundle.message("file.system.empty.text.or")} ")
+
+            @Suppress("DialogTitleCapitalization")
+            tree.emptyText.appendText(
+                MpyBundle.message("file.system.empty.text.install.micropython"),
+                SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
+            ) {
+                MpyFlashFirmwareDialog(project).show()
+            }
+
             tree.emptyText.appendLine("")
             tree.emptyText.appendLine("${MpyBundle.message("file.system.empty.text.find.usage.tips.on.our.github.label")} ")
             tree.emptyText.appendText("GitHub", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
