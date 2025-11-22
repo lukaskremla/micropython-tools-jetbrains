@@ -1,9 +1,8 @@
 import json
-from datetime import datetime
-from typing import Any, Dict
-
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
+from typing import Any, Dict
 
 MCU_PARAM = "?mcu="
 PATH_TO_BOARDS_JSON = "../data/micropython_boards.json"
@@ -133,7 +132,7 @@ def main():
                         board_page_beautiful_soup = BeautifulSoup(board_page_response.text, 'html.parser')
 
                         # List of firmware names (tags) to the links of all available binaries for it
-                        firmware_name_to_link: Dict[str, list] = {}
+                        firmware_name_to_link_parts: Dict[str, list] = {}
 
                         # The board name heading text will be saved to it here
                         board_name = None
@@ -159,23 +158,31 @@ def main():
                                             firmware_name = "Standard"
 
                                         # Prepare an empty list for the heading
-                                        firmware_name_to_link[firmware_name] = []
+                                        firmware_name_to_link_parts[firmware_name] = []
                                 # Handle a tags
                                 elif html_element.name == "a":
                                     # Get only href a tags
                                     # noinspection PyUnresolvedReferences
                                     board_page_link = html_element.get("href", "")
 
+                                    resources_path = "/resources/firmware/"
+
                                     # Ensure a valid firmware link
-                                    if "/resources/firmware/" in board_page_link:
+                                    if resources_path in board_page_link:
                                         if ((mcu_name.startswith(("esp32", "esp8266")) and ".bin" in board_page_link) or
                                                 (mcu_name.startswith(("rp2", "samd")) and ".uf2" in board_page_link) or
                                                 (mcu_name.startswith("stm32") and ".dfu" in board_page_link)):
                                             # Find the latest firmware name (key) to append to
-                                            last_key = list(firmware_name_to_link.keys())[-1]
+                                            last_key = list(firmware_name_to_link_parts.keys())[-1]
+
+                                            # Remove the remaining resources path
+                                            link_part = board_page_link.removeprefix(resources_path)
+
+                                            # Remove the board ID
+                                            link_part = link_part.removeprefix(mcu_page_link)
 
                                             # Append the newly found link
-                                            firmware_name_to_link[last_key].append(board_page_link)
+                                            firmware_name_to_link_parts[last_key].append(link_part)
 
                         # Format the board dictionary with its info
                         board = {
@@ -184,7 +191,7 @@ def main():
                             "port": port,
                             "mcu": mcu_name,
                             "offset": retrieve_offset_from_beautiful_soup(board_page_beautiful_soup),
-                            "firmwareNameToLink": firmware_name_to_link
+                            "firmwareNameToLinkParts": firmware_name_to_link_parts
                         }
 
                         # Save the scraped board
