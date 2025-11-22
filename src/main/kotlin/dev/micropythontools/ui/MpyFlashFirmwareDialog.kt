@@ -189,6 +189,8 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                         .component
                 }.layout(RowLayout.LABEL_ALIGNED)
 
+                // TODO: Add "show preview builds checkbox"
+                // TODO: Add either "show versions before 1.20.0" or "show more than last two versions" or some similar dialog, decide
                 row("Version:") {
                     versionComboBox = comboBox(versionModel)
                         .columns(20)
@@ -282,7 +284,9 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
         val model = versionComboBox.model as MutableCollectionComboBoxModel<String>
         model.removeAll()
-        versions.forEach { model.add(it) }
+
+        // TODO: Add logic for handling displayTex/versionString
+        versions.forEach { model.add(it.displayText) }
 
         if (versions.isNotEmpty()) {
             versionComboBox.selectedIndex = 0
