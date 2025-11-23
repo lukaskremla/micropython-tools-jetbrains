@@ -40,6 +40,7 @@ import kotlin.io.path.pathString
 internal data class Board(
     val id: String,
     val name: String,
+    val vendor: String,
     val port: String,
     val mcu: String,
     val offset: String,
@@ -53,11 +54,6 @@ private data class MpyBoardsJson(
     val timestamp: String,
     val skimmed_ports: List<String>,
     val boards: List<Board>
-)
-
-internal data class MpyFirmwareVersion(
-    val displayText: String,
-    val versionString: String
 )
 
 @Service(Service.Level.PROJECT)
@@ -125,7 +121,7 @@ internal class MpyFirmwareService(private val project: Project) {
      * @param variantName The firmware variant name
      * @return List of version strings extracted from firmware file names
      */
-    fun getFirmwareVersions(board: Board, variantName: String): List<MpyFirmwareVersion> {
+    fun getFirmwareVersions(board: Board, variantName: String): List<String> {
         val linkParts = board.firmwareNameToLinkParts[variantName] ?: return emptyList()
         return linkParts.map { linkPart ->
             // Remove leading "-"
@@ -142,11 +138,9 @@ internal class MpyFirmwareService(private val project: Project) {
             }
 
             // EXAMPLE: https://micropython.org/resources/firmware/ESP32_GENERIC-20250911-v1.26.1.bin
-            val downloadLink = "https://micropython.org/resources/firmware/${board.id}/$linkPart"
+            //val downloadLink = "https://micropython.org/resources/firmware/${board.id}/$linkPart"
 
-            println(downloadLink)
-            println(displayText)
-            MpyFirmwareVersion(displayText, downloadLink)
+            displayText
         }
     }
 

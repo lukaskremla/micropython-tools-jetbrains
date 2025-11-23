@@ -22,42 +22,55 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.MutableCollectionComboBoxModel
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.UIUtil
 import dev.micropythontools.firmware.Board
 import dev.micropythontools.firmware.MpyFirmwareService
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.EMPTY_PORT_NAME_TEXT
+import dev.micropythontools.settings.MpySettingsService
 import io.ktor.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.event.PopupMenuEvent
+import javax.swing.event.PopupMenuListener
 
-internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrapper(project, true) {
+internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project, true) {
+    private val settings = project.service<MpySettingsService>()
+    private val deviceService = project.service<dev.micropythontools.communication.MpyDeviceService>()
     private val firmwareService = project.service<MpyFirmwareService>()
 
     // Current board data
     private var currentBoards: List<Board> = emptyList()
 
     // UI components
-    private lateinit var serialPortSelector: ComboBox<String>
-    private lateinit var deviceTypeComboBox: ComboBox<String>
-    private lateinit var mcuComboBox: ComboBox<String>
-    private lateinit var boardVariantComboBox: ComboBox<String>
-    private lateinit var firmwareVariantComboBox: ComboBox<String>
-    private lateinit var versionComboBox: ComboBox<String>
+    private lateinit var enableManualEditingCheckbox: Cell<JBCheckBox>
+    private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
+    private lateinit var portSelectComboBox: Cell<ComboBox<String>>
+
+    private lateinit var deviceTypeComboBox: Cell<ComboBox<String>>
+    private lateinit var mcuComboBox: Cell<ComboBox<String>>
+    private lateinit var boardVariantComboBox: Cell<ComboBox<String>>
+    private lateinit var firmwareVariantComboBox: Cell<ComboBox<String>>
+
+    private lateinit var showOlderVersionsCheckBox: Cell<JBCheckBox>
+    private lateinit var showPreviewReleasesCheckBox: Cell<JBCheckBox>
+    private lateinit var versionComboBox: Cell<ComboBox<String>>
+
     private lateinit var statusLabel: JLabel
 
     // Selected board for tracking
     private var selectedBoard: Board? = null
+
+    // Initialize combo box models
+    private val portSelectModel = MutableCollectionComboBoxModel<String>()
 
     init {
         title = "Flash Firmware/MicroPython"
 
         // Load cached boards immediately (instant)
         currentBoards = firmwareService.getCachedBoards()
-
-        println("Got current boards size: \"${currentBoards.size}\"")
 
         init() // Required for DialogWrapper
 
@@ -67,8 +80,6 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
             firmwareService.updateCachedBoards()
             val newBoards = firmwareService.getCachedBoards()
-
-            println("Got updated boards size: \"${currentBoards.size}\"")
 
             ApplicationManager.getApplication().invokeLater {
                 if (newBoards != currentBoards && newBoards.isNotEmpty()) {
@@ -82,39 +93,17 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
     }
 
     override fun createCenterPanel(): JComponent {
-        val deviceService = project.service<dev.micropythontools.communication.MpyDeviceService>()
-
-        // Initialize combo box models
-        val portModel = MutableCollectionComboBoxModel<String>()
         val deviceTypeModel = MutableCollectionComboBoxModel<String>()
         val mcuModel = MutableCollectionComboBoxModel<String>()
         val boardVariantModel = MutableCollectionComboBoxModel<String>()
         val firmwareVariantModel = MutableCollectionComboBoxModel<String>()
         val versionModel = MutableCollectionComboBoxModel<String>()
 
-        // Helper to update port list
-        fun updatePortList() {
-            val ports = deviceService.listSerialPorts(true)
-            val currentSelection = portModel.selectedItem
-
-            portModel.items
-                .filterNot { it in ports || it == currentSelection }
-                .forEach { portModel.remove(it) }
-
-            val newPorts = ports.filterNot { portModel.contains(it) }
-            portModel.addAll(portModel.size, newPorts)
-        }
-
-        // Initial population
-        updatePortList()
-
-        // Set initial selection from settings
-        val settings = project.service<dev.micropythontools.settings.MpySettingsService>()
         val portName = settings.state.portName
         if (!portName.isNullOrBlank()) {
-            portModel.selectedItem = portName
-        } else if (portModel.isEmpty) {
-            portModel.selectedItem = EMPTY_PORT_NAME_TEXT
+            portSelectModel.selectedItem = portName
+        } else if (portSelectModel.isEmpty) {
+            portSelectModel.selectedItem = EMPTY_PORT_NAME_TEXT
         }
 
         return panel {
@@ -127,20 +116,39 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
             }
 
             group("Connection") {
+                row {
+                    enableManualEditingCheckbox =
+                        checkBox(MpyBundle.message("configurable.enable.manual.port.editing.checkbox.text"))
+                            .applyToComponent {
+                                addActionListener {
+                                    val comboBox = portSelectComboBox.component
+                                    comboBox.isEditable = isSelected
+                                    comboBox.revalidate()
+                                    comboBox.repaint()
+                                }
+                            }
+                }
+                row {
+                    filterManufacturersCheckBox =
+                        checkBox(MpyBundle.message("configurable.filter.out.unknown.manufacturers.checkbox.text"))
+                            .applyToComponent {
+                                isSelected = true
+                            }
+                }
+
                 row("Serial Port:") {
-                    serialPortSelector = comboBox(portModel)
+                    portSelectComboBox = comboBox(portSelectModel)
                         .columns(20)
                         .applyToComponent {
-                            addPopupMenuListener(object : javax.swing.event.PopupMenuListener {
-                                override fun popupMenuWillBecomeVisible(e: javax.swing.event.PopupMenuEvent?) {
+                            addPopupMenuListener(object : PopupMenuListener {
+                                override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
                                     updatePortList()
                                 }
 
-                                override fun popupMenuWillBecomeInvisible(e: javax.swing.event.PopupMenuEvent?) {}
-                                override fun popupMenuCanceled(e: javax.swing.event.PopupMenuEvent?) {}
+                                override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
+                                override fun popupMenuCanceled(e: PopupMenuEvent?) {}
                             })
                         }
-                        .component
                 }.layout(RowLayout.LABEL_ALIGNED)
             }
 
@@ -153,7 +161,6 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                 onDeviceTypeSelected()
                             }
                         }
-                        .component
                 }.layout(RowLayout.LABEL_ALIGNED)
 
                 row("MCU:") {
@@ -164,7 +171,6 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                 onMcuSelected()
                             }
                         }
-                        .component
                 }.layout(RowLayout.LABEL_ALIGNED)
 
                 row("Board Variant:") {
@@ -175,7 +181,6 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                 onBoardVariantSelected()
                             }
                         }
-                        .component
                 }.layout(RowLayout.LABEL_ALIGNED)
 
                 row("Firmware Variant:") {
@@ -186,15 +191,32 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                 onFirmwareVariantSelected()
                             }
                         }
-                        .component
                 }.layout(RowLayout.LABEL_ALIGNED)
 
-                // TODO: Add "show preview builds checkbox"
-                // TODO: Add either "show versions before 1.20.0" or "show more than last two versions" or some similar dialog, decide
+                row {
+                    showOlderVersionsCheckBox = checkBox("Show older versions")
+                        .applyToComponent {
+                            addActionListener {
+                                onFirmwareVariantSelected()
+                            }
+                        }
+                }
+
+                row {
+                    showPreviewReleasesCheckBox = checkBox("Show preview releases")
+                        .gap(RightGap.SMALL)
+                        .applyToComponent {
+                            addActionListener {
+                                onFirmwareVariantSelected()
+                            }
+                        }
+
+                    contextHelp("Shows/Hides preview releases. Selecting some newer boards might overrides this option as they are only supported in preview releases.")
+                }
+
                 row("Version:") {
                     versionComboBox = comboBox(versionModel)
                         .columns(20)
-                        .component
                 }.layout(RowLayout.LABEL_ALIGNED)
             }
         }.also {
@@ -209,52 +231,52 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
     private fun updateDeviceTypeComboBox() {
         val deviceTypes = firmwareService.getDeviceTypes()
-        val model = deviceTypeComboBox.model as MutableCollectionComboBoxModel<String>
+        val model = deviceTypeComboBox.component.model as MutableCollectionComboBoxModel<String>
 
         model.removeAll()
         deviceTypes.forEach { model.add(it.toUpperCasePreservingASCIIRules()) }
 
         if (deviceTypes.isNotEmpty()) {
-            deviceTypeComboBox.selectedIndex = 0
+            deviceTypeComboBox.component.selectedIndex = 0
             onDeviceTypeSelected()
         }
     }
 
     private fun onDeviceTypeSelected() {
-        val selectedDeviceType = deviceTypeComboBox.selectedItem as? String ?: return
+        val selectedDeviceType = deviceTypeComboBox.component.selectedItem as? String ?: return
         val mcus = firmwareService.getMcusForPort(selectedDeviceType)
 
-        val model = mcuComboBox.model as MutableCollectionComboBoxModel<String>
+        val model = mcuComboBox.component.model as MutableCollectionComboBoxModel<String>
         model.removeAll()
         mcus.forEach { model.add(it.toUpperCasePreservingASCIIRules()) }
 
         if (mcus.isNotEmpty()) {
-            mcuComboBox.selectedIndex = 0
+            mcuComboBox.component.selectedIndex = 0
             onMcuSelected()
         } else {
-            clearDownstreamComboBoxes(mcuComboBox)
+            clearDownstreamComboBoxes(mcuComboBox.component)
         }
     }
 
     private fun onMcuSelected() {
-        val selectedMcu = mcuComboBox.selectedItem as? String ?: return
+        val selectedMcu = mcuComboBox.component.selectedItem as? String ?: return
         val boards = firmwareService.getBoardsForMcu(selectedMcu)
 
-        val model = boardVariantComboBox.model as MutableCollectionComboBoxModel<String>
+        val model = boardVariantComboBox.component.model as MutableCollectionComboBoxModel<String>
         model.removeAll()
         boards.forEach { model.add(it.name) }
 
         if (boards.isNotEmpty()) {
-            boardVariantComboBox.selectedIndex = 0
+            boardVariantComboBox.component.selectedIndex = 0
             onBoardVariantSelected()
         } else {
-            clearDownstreamComboBoxes(boardVariantComboBox)
+            clearDownstreamComboBoxes(boardVariantComboBox.component)
         }
     }
 
     private fun onBoardVariantSelected() {
-        val selectedMcu = mcuComboBox.selectedItem as? String ?: return
-        val selectedBoardName = boardVariantComboBox.selectedItem as? String ?: return
+        val selectedMcu = mcuComboBox.component.selectedItem as? String ?: return
+        val selectedBoardName = boardVariantComboBox.component.selectedItem as? String ?: return
 
         // Find the selected board
         selectedBoard = firmwareService.getBoardsForMcu(selectedMcu)
@@ -263,66 +285,82 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
         selectedBoard?.let { board ->
             val variants = firmwareService.getFirmwareVariants(board)
 
-            val model = firmwareVariantComboBox.model as MutableCollectionComboBoxModel<String>
+            val model = firmwareVariantComboBox.component.model as MutableCollectionComboBoxModel<String>
             model.removeAll()
             variants.forEach { model.add(it) }
 
             if (variants.isNotEmpty()) {
-                firmwareVariantComboBox.selectedIndex = 0
+                firmwareVariantComboBox.component.selectedIndex = 0
                 onFirmwareVariantSelected()
             } else {
-                clearDownstreamComboBoxes(firmwareVariantComboBox)
+                clearDownstreamComboBoxes(firmwareVariantComboBox.component)
             }
         }
     }
 
     private fun onFirmwareVariantSelected() {
         val board = selectedBoard ?: return
-        val selectedVariant = firmwareVariantComboBox.selectedItem as? String ?: return
+        val selectedVariant = firmwareVariantComboBox.component.selectedItem as? String ?: return
 
-        val versions = firmwareService.getFirmwareVersions(board, selectedVariant)
+        val versions = firmwareService.getFirmwareVersions(board, selectedVariant).toMutableList()
 
-        val model = versionComboBox.model as MutableCollectionComboBoxModel<String>
+        val model = versionComboBox.component.model as MutableCollectionComboBoxModel<String>
         model.removeAll()
 
-        // TODO: Add logic for handling displayTex/versionString
-        versions.forEach { model.add(it.displayText) }
+        val onlySupportedInPreview =
+            versions
+                .filter { !it.contains("preview") }
+                .map { it }
+                .isEmpty()
+
+        if (!showPreviewReleasesCheckBox.component.isSelected && !onlySupportedInPreview) {
+            versions.removeIf { it.contains("preview") }
+        }
+
+        if (!showOlderVersionsCheckBox.component.isSelected) {
+            val latestRelease = versions.first()
+            val latestReleasePartToKeep = latestRelease.substringBeforeLast(".")
+
+            versions.removeIf { !it.contains(latestReleasePartToKeep) && !it.contains("preview") }
+        }
+
+        versions.forEach { model.add(it) }
 
         if (versions.isNotEmpty()) {
-            versionComboBox.selectedIndex = 0
+            versionComboBox.component.selectedIndex = 0
         }
     }
 
     private fun clearDownstreamComboBoxes(fromComboBox: ComboBox<String>) {
         when (fromComboBox) {
             deviceTypeComboBox -> {
-                (mcuComboBox.model as MutableCollectionComboBoxModel<String>).removeAll()
-                clearDownstreamComboBoxes(mcuComboBox)
+                (mcuComboBox.component.model as MutableCollectionComboBoxModel<String>).removeAll()
+                clearDownstreamComboBoxes(mcuComboBox.component)
             }
 
             mcuComboBox -> {
-                (boardVariantComboBox.model as MutableCollectionComboBoxModel<String>).removeAll()
-                clearDownstreamComboBoxes(boardVariantComboBox)
+                (boardVariantComboBox.component.model as MutableCollectionComboBoxModel<String>).removeAll()
+                clearDownstreamComboBoxes(boardVariantComboBox.component)
             }
 
             boardVariantComboBox -> {
-                (firmwareVariantComboBox.model as MutableCollectionComboBoxModel<String>).removeAll()
-                clearDownstreamComboBoxes(firmwareVariantComboBox)
+                (firmwareVariantComboBox.component.model as MutableCollectionComboBoxModel<String>).removeAll()
+                clearDownstreamComboBoxes(firmwareVariantComboBox.component)
             }
 
             firmwareVariantComboBox -> {
-                (versionComboBox.model as MutableCollectionComboBoxModel<String>).removeAll()
+                (versionComboBox.component.model as MutableCollectionComboBoxModel<String>).removeAll()
             }
         }
     }
 
     private fun updateBoardsInUI(newBoards: List<Board>) {
         // Save current selections
-        val savedDeviceType = deviceTypeComboBox.selectedItem as? String
-        val savedMcu = mcuComboBox.selectedItem as? String
-        val savedBoardVariant = boardVariantComboBox.selectedItem as? String
-        val savedFirmwareVariant = firmwareVariantComboBox.selectedItem as? String
-        val savedVersion = versionComboBox.selectedItem as? String
+        val savedDeviceType = deviceTypeComboBox.component.selectedItem as? String
+        val savedMcu = mcuComboBox.component.selectedItem as? String
+        val savedBoardVariant = boardVariantComboBox.component.selectedItem as? String
+        val savedFirmwareVariant = firmwareVariantComboBox.component.selectedItem as? String
+        val savedVersion = versionComboBox.component.selectedItem as? String
 
         // Update underlying data
         currentBoards = newBoards
@@ -332,19 +370,38 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
         // Try to restore selections
         if (savedDeviceType != null) {
-            deviceTypeComboBox.selectedItem = savedDeviceType
+            deviceTypeComboBox.component.selectedItem = savedDeviceType
             if (savedMcu != null) {
-                mcuComboBox.selectedItem = savedMcu
+                mcuComboBox.component.selectedItem = savedMcu
                 if (savedBoardVariant != null) {
-                    boardVariantComboBox.selectedItem = savedBoardVariant
+                    boardVariantComboBox.component.selectedItem = savedBoardVariant
                     if (savedFirmwareVariant != null) {
-                        firmwareVariantComboBox.selectedItem = savedFirmwareVariant
+                        firmwareVariantComboBox.component.selectedItem = savedFirmwareVariant
                         if (savedVersion != null) {
-                            versionComboBox.selectedItem = savedVersion
+                            versionComboBox.component.selectedItem = savedVersion
                         }
                     }
                 }
             }
+        }
+    }
+
+    private fun updatePortList() {
+        val filterManufacturers = filterManufacturersCheckBox.component.isSelected
+
+        val ports = deviceService.listSerialPorts(filterManufacturers)
+
+        portSelectModel.items
+            .filterNot { it in ports || it == portSelectModel.selectedItem }
+            .forEach { portSelectModel.remove(it) }
+
+        val newPorts = ports.filterNot { portSelectModel.contains(it) }
+        portSelectModel.addAll(portSelectModel.size, newPorts)
+
+        val selectedItem = portSelectModel.selectedItem
+
+        if (portSelectModel.isEmpty && (selectedItem == null || selectedItem.toString().isNotBlank())) {
+            portSelectModel.selectedItem = EMPTY_PORT_NAME_TEXT
         }
     }
 }
