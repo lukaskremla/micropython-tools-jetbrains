@@ -882,10 +882,10 @@ internal class MpyConfigurable(private val project: Project) :
         portSelectModel: MutableCollectionComboBoxModel<String>,
         isInitialUpdate: Boolean = false
     ) {
-        val lsPortsParam =
+        val filterManufacturers =
             if (isInitialUpdate) parameters.filterManufacturers else filterManufacturersCheckBox.component.isSelected
 
-        val ports = deviceService.listSerialPorts(lsPortsParam)
+        val ports = deviceService.listSerialPorts(filterManufacturers)
 
         portSelectModel.items
             .filterNot { it in ports || it == portSelectModel.selectedItem }
