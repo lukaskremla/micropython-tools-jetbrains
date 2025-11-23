@@ -168,7 +168,7 @@ internal class MpyFirmwareService(private val project: Project) {
 
     fun updateCachedBoards() {
         val url =
-            "https://github.com/lukaskremla/micropython-tools-jetbrains/blob/dev_test/firmware_retrieval/data/micropython_boards.json"
+            "https://raw.githubusercontent.com/lukaskremla/micropython-tools-jetbrains/dev_test/firmware_retrieval/data/micropython_boards.json"
         val request = HttpRequest.newBuilder().uri(URI.create(url)).build()
 
         val response = try {
