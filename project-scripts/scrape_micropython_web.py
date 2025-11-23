@@ -1,8 +1,9 @@
 import json
-import requests
-from bs4 import BeautifulSoup
 from datetime import datetime
 from typing import Any, Dict
+
+import requests
+from bs4 import BeautifulSoup
 
 MCU_PARAM = "?mcu="
 PATH_TO_BOARDS_JSON = "../data/micropython_boards.json"
@@ -134,8 +135,9 @@ def main():
                         # List of firmware names (tags) to the links of all available binaries for it
                         firmware_name_to_link_parts: Dict[str, list] = {}
 
-                        # The board name heading text will be saved to it here
+                        # The board name heading text and vendor will be saved here
                         board_name = None
+                        vendor = None
 
                         # Iterate over all html tags on the page
                         for html_element in board_page_beautiful_soup.descendants:
@@ -183,11 +185,15 @@ def main():
 
                                             # Append the newly found link
                                             firmware_name_to_link_parts[last_key].append(link_part)
+                                elif html_element.name == "strong":
+                                    if html_element.text == "Vendor:":
+                                        vendor = html_element.next_sibling.strip()
 
                         # Format the board dictionary with its info
                         board = {
                             "id": mcu_page_link,
                             "name": board_name,
+                            "vendor": vendor,
                             "port": port,
                             "mcu": mcu_name,
                             "offset": retrieve_offset_from_beautiful_soup(board_page_beautiful_soup),

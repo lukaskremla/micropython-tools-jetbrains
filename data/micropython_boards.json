@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2025-11-21T12:42:16.351363",
+  "timestamp": "2025-11-23T12:55:16.107091",
   "skimmed_ports": [
     "esp32",
     "esp8266",
@@ -12,6 +12,7 @@
     {
       "id": "ESP32_GENERIC",
       "name": "ESP32 / WROOM",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32",
       "offset": "0x1000",
@@ -36,10 +37,10 @@
           "-20210202-v1.14.bin",
           "-20200902-v1.13.bin",
           "-20191220-v1.12.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ],
         "Support for OTA": [
           "-OTA-20250911-v1.26.1.bin",
@@ -55,10 +56,10 @@
           "-OTA-20230426-v1.20.0.bin",
           "-OTA-20220618-v1.19.1.bin",
           "-OTA-20220117-v1.18.bin",
+          "-OTA-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-OTA-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-OTA-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-OTA-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-OTA-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-OTA-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ],
         "ESP32 Unicore": [
           "-UNICORE-20250911-v1.26.1.bin",
@@ -72,10 +73,10 @@
           "-UNICORE-20231227-v1.22.0.bin",
           "-UNICORE-20231005-v1.21.0.bin",
           "-UNICORE-20230426-v1.20.0.bin",
+          "-UNICORE-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-UNICORE-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-UNICORE-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-UNICORE-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-UNICORE-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-UNICORE-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ],
         "ESP32 D2WD": [
           "-D2WD-20250911-v1.26.1.bin",
@@ -91,10 +92,10 @@
           "-D2WD-20230426-v1.20.0.bin",
           "-D2WD-20220618-v1.19.1.bin",
           "-D2WD-20220117-v1.18.bin",
+          "-D2WD-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-D2WD-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-D2WD-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-D2WD-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-D2WD-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-D2WD-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ],
         "Support for SPIRAM / WROVER": [
           "-SPIRAM-20250911-v1.26.1.bin",
@@ -116,16 +117,17 @@
           "-SPIRAM-20210202-v1.14.bin",
           "-SPIRAM-20200902-v1.13.bin",
           "-SPIRAM-20191220-v1.12.bin",
+          "-SPIRAM-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-SPIRAM-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-SPIRAM-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-SPIRAM-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-SPIRAM-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-SPIRAM-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "LILYGO_TTGO_LORA32",
       "name": "TTGO LoRa32",
+      "vendor": "LILYGO",
       "port": "esp32",
       "mcu": "esp32",
       "offset": "0x1000",
@@ -143,16 +145,17 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "M5STACK_ATOM",
       "name": "Atom",
+      "vendor": "M5Stack",
       "port": "esp32",
       "mcu": "esp32",
       "offset": "0x1000",
@@ -171,16 +174,17 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "OLIMEX_ESP32_EVB",
       "name": "ESP32 EVB",
+      "vendor": "Olimex",
       "port": "esp32",
       "mcu": "esp32",
       "offset": "0x1000",
@@ -191,16 +195,17 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "OLIMEX_ESP32_POE",
       "name": "ESP32 POE",
+      "vendor": "Olimex",
       "port": "esp32",
       "mcu": "esp32",
       "offset": "0x1000",
@@ -217,16 +222,17 @@
           "-20231227-v1.22.0.bin",
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "SIL_WESP32",
       "name": "wESP32",
+      "vendor": "Silicognition",
       "port": "esp32",
       "mcu": "esp32",
       "offset": "0x1000",
@@ -246,31 +252,33 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "SIL_MANT1S",
       "name": "ManT1S",
+      "vendor": "Silicognition LLC",
       "port": "esp32",
       "mcu": "esp32",
       "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "SPARKFUN_IOT_REDBOARD_ESP32",
       "name": "ESP32 / WROOM",
+      "vendor": "SparkFun",
       "port": "esp32",
       "mcu": "esp32",
       "offset": "0x1000",
@@ -278,16 +286,17 @@
         "Standard": [
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_TINYPICO",
       "name": "TinyPICO",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32",
       "offset": "0x1000",
@@ -312,16 +321,17 @@
           "-idf4-20210202-v1.14.bin",
           "-idf4-20200902-v1.13.bin",
           "-idf4-20200316-v1.12.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "ESP32_GENERIC_C2",
       "name": "ESP32-C2",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c2",
       "offset": "0",
@@ -329,22 +339,23 @@
         "Standard": [
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ],
         "2MiB flash": [
+          "-FLASH_2M-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-FLASH_2M-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-FLASH_2M-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-FLASH_2M-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-FLASH_2M-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-FLASH_2M-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "ESP32_GENERIC_C3",
       "name": "ESP32-C3",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c3",
       "offset": "0",
@@ -364,16 +375,17 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "GARATRONIC_PYBSTICK26_ESP32C3",
       "name": "PYBSTICK26_ESP32C3",
+      "vendor": "McHobby",
       "port": "esp32",
       "mcu": "esp32c3",
       "offset": "0",
@@ -381,16 +393,17 @@
         "Standard": [
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "LOLIN_C3_MINI",
       "name": "C3 mini",
+      "vendor": "Wemos",
       "port": "esp32",
       "mcu": "esp32c3",
       "offset": "0",
@@ -408,31 +421,33 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "ESP32_GENERIC_C5",
       "name": "ESP32-C5",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c5",
       "offset": "0x2000",
       "firmwareNameToLinkParts": {
         "Standard": [
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "ESP32_GENERIC_C6",
       "name": "ESP32-C6",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c6",
       "offset": "0",
@@ -443,16 +458,17 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "M5STACK_NANOC6",
       "name": "NanoC6",
+      "vendor": "M5Stack",
       "port": "esp32",
       "mcu": "esp32c6",
       "offset": "0",
@@ -463,16 +479,17 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_TINYC6",
       "name": "TinyC6",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32c6",
       "offset": "0",
@@ -483,16 +500,17 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "ESP32_GENERIC_S2",
       "name": "ESP32-S2",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32s2",
       "offset": "0x1000",
@@ -511,16 +529,17 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_FEATHERS2",
       "name": "FeatherS2",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s2",
       "offset": "0x1000",
@@ -540,16 +559,17 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_FEATHERS2NEO",
       "name": "FeatherS2 Neo",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s2",
       "offset": "0x1000",
@@ -568,16 +588,17 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_TINYS2",
       "name": "TinyS2",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s2",
       "offset": "0x1000",
@@ -597,16 +618,17 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "LOLIN_S2_MINI",
       "name": "S2 mini",
+      "vendor": "Wemos",
       "port": "esp32",
       "mcu": "esp32s2",
       "offset": "0x1000",
@@ -625,16 +647,17 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "LOLIN_S2_PICO",
       "name": "S2 pico",
+      "vendor": "Wemos",
       "port": "esp32",
       "mcu": "esp32s2",
       "offset": "0x1000",
@@ -653,16 +676,17 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "ARDUINO_NANO_ESP32",
       "name": "Nano ESP32",
+      "vendor": "Arduino",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "",
@@ -678,16 +702,17 @@
           "-20240105-v1.22.1.bin",
           "-20231227-v1.22.0.bin",
           "-20231005-v1.21.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "ESP32_GENERIC_S3",
       "name": "ESP32-S3",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "0",
@@ -706,10 +731,10 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ],
         "Support for Octal-SPIRAM": [
           "-SPIRAM_OCT-20250911-v1.26.1.bin",
@@ -723,16 +748,17 @@
           "-SPIRAM_OCT-20231227-v1.22.0.bin",
           "-SPIRAM_OCT-20231005-v1.21.0.bin",
           "-SPIRAM_OCT-20230426-v1.20.0.bin",
+          "-SPIRAM_OCT-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-SPIRAM_OCT-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-SPIRAM_OCT-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-SPIRAM_OCT-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-SPIRAM_OCT-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-SPIRAM_OCT-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "M5STACK_ATOMS3_LITE",
       "name": "AtomS3 Lite",
+      "vendor": "M5Stack",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "0",
@@ -743,16 +769,17 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_FEATHERS3",
       "name": "FeatherS3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "0",
@@ -770,16 +797,17 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_FEATHERS3NEO",
       "name": "FeatherS3 Neo",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "0",
@@ -790,16 +818,17 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_NANOS3",
       "name": "NanoS3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "0",
@@ -815,16 +844,17 @@
           "-20240105-v1.22.1.bin",
           "-20231227-v1.22.0.bin",
           "-20231005-v1.21.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_OMGS3",
       "name": "OMGS3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "0",
@@ -835,16 +865,17 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_PROS3",
       "name": "ProS3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "0",
@@ -862,16 +893,17 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_RGBTOUCH_MINI",
       "name": "RGB Touch Mini",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "0",
@@ -882,16 +914,17 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_TINYS3",
       "name": "TinyS3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "0",
@@ -909,16 +942,17 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "UM_TINYWATCHS3",
       "name": "TinyWATCH S3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
       "offset": "0",
@@ -933,16 +967,17 @@
           "-20240222-v1.22.2.bin",
           "-20240105-v1.22.1.bin",
           "-20231227-v1.22.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "ESP8266_GENERIC",
       "name": "ESP8266",
+      "vendor": "Espressif",
       "port": "esp8266",
       "mcu": "esp8266",
       "offset": "",
@@ -975,10 +1010,10 @@
           "-20170612-v1.9.1.bin",
           "-20170526-v1.9.bin",
           "-20170108-v1.8.7.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ],
         "512kiB flash": [
           "-FLASH_512K-20250911-v1.26.1.bin",
@@ -1008,10 +1043,10 @@
           "-FLASH_512K-20170611-v1.9.1.bin",
           "-FLASH_512K-20170526-v1.9.bin",
           "-FLASH_512K-20170108-v1.8.7.bin",
+          "-FLASH_512K-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-FLASH_512K-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-FLASH_512K-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-FLASH_512K-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-FLASH_512K-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-FLASH_512K-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ],
         "OTA compatible": [
           "-OTA-20250911-v1.26.1.bin",
@@ -1036,10 +1071,10 @@
           "-OTA-20170823-v1.9.2.bin",
           "-OTA-20170611-v1.9.1.bin",
           "-OTA-20170526-v1.9.bin",
+          "-OTA-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-OTA-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-OTA-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-OTA-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-OTA-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-OTA-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ],
         "1MiB flash": [
           "-FLASH_1M-20250911-v1.26.1.bin",
@@ -1060,25 +1095,26 @@
           "-FLASH_1M-20210418-v1.15.bin",
           "-FLASH_1M-20210202-v1.14.bin",
           "-FLASH_1M-20200902-v1.13.bin",
+          "-FLASH_1M-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-FLASH_1M-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-FLASH_1M-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-FLASH_1M-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-FLASH_1M-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-FLASH_1M-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ],
         "2MiB flash with ROMFS": [
           "-FLASH_2M_ROMFS-20250911-v1.26.1.bin",
           "-FLASH_2M_ROMFS-20250809-v1.26.0.bin",
           "-FLASH_2M_ROMFS-20250415-v1.25.0.bin",
+          "-FLASH_2M_ROMFS-20251121-v1.27.0-preview.440.ga6864109db.bin",
           "-FLASH_2M_ROMFS-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-FLASH_2M_ROMFS-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-FLASH_2M_ROMFS-20251119-v1.27.0-preview.395.g4766f5680e.bin",
-          "-FLASH_2M_ROMFS-20251117-v1.27.0-preview.393.g4441fd655c.bin"
+          "-FLASH_2M_ROMFS-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
     {
       "id": "ADAFRUIT_FEATHER_RP2040",
       "name": "Feather RP2040",
+      "vendor": "Adafruit",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1097,16 +1133,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ADAFRUIT_ITSYBITSY_RP2040",
       "name": "ItsyBitsy RP2040",
+      "vendor": "Adafruit",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1125,16 +1162,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ADAFRUIT_QTPY_RP2040",
       "name": "QT Py RP2040",
+      "vendor": "Adafruit",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1153,16 +1191,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ARDUINO_NANO_RP2040_CONNECT",
       "name": "Nano RP2040 Connect",
+      "vendor": "Arduino",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1181,16 +1220,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "MACHDYNE_WERKZEUG",
       "name": "Werkzeug",
+      "vendor": "Machdyne",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1199,16 +1239,17 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "GARATRONIC_PYBSTICK26_RP2040",
       "name": "RP2040 PYBStick",
+      "vendor": "McHobby",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1227,16 +1268,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "PIMORONI_PICOLIPO",
       "name": "Pico LiPo",
+      "vendor": "Pimoroni",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1247,10 +1289,10 @@
           "-20250415-v1.25.0.uf2",
           "-20241129-v1.24.1.uf2",
           "-20241025-v1.24.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "16 MiB Flash": [
           "-FLASH_16M-20250911-v1.26.1.uf2",
@@ -1258,16 +1300,17 @@
           "-FLASH_16M-20250415-v1.25.0.uf2",
           "-FLASH_16M-20241129-v1.24.1.uf2",
           "-FLASH_16M-20241025-v1.24.0.uf2",
+          "-FLASH_16M-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-FLASH_16M-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-FLASH_16M-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-FLASH_16M-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-FLASH_16M-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-FLASH_16M-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "PIMORONI_TINY2040",
       "name": "Tiny2040",
+      "vendor": "Pimoroni",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1286,10 +1329,10 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "8 MiB Flash": [
           "-FLASH_8M-20250911-v1.26.1.uf2",
@@ -1297,16 +1340,17 @@
           "-FLASH_8M-20250415-v1.25.0.uf2",
           "-FLASH_8M-20241129-v1.24.1.uf2",
           "-FLASH_8M-20241025-v1.24.0.uf2",
+          "-FLASH_8M-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-FLASH_8M-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-FLASH_8M-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-FLASH_8M-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-FLASH_8M-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-FLASH_8M-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "POLOLU_3PI_2040_ROBOT",
       "name": "3pi+ 2040 Robot",
+      "vendor": "Pololu",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1321,16 +1365,17 @@
           "-20240222-v1.22.2.uf2",
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "POLOLU_ZUMO_2040_ROBOT",
       "name": "Zumo 2040 Robot",
+      "vendor": "Pololu",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1345,16 +1390,17 @@
           "-20240222-v1.22.2.uf2",
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "RPI_PICO",
       "name": "Pico",
+      "vendor": "Raspberry Pi",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1377,16 +1423,17 @@
           "-20210618-v1.16.uf2",
           "-20210418-v1.15.uf2",
           "-20210202-v1.14.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "RPI_PICO_W",
       "name": "Pico W",
+      "vendor": "Raspberry Pi",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1403,16 +1450,17 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SIL_RP2040_SHIM",
       "name": "RP2040-Shim",
+      "vendor": "Silicognition LLC",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1427,16 +1475,17 @@
           "-20240222-v1.22.2.uf2",
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_PROMICRO",
       "name": "Pro Micro - RP2040",
+      "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1455,16 +1504,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_THINGPLUS",
       "name": "Thing Plus - RP2040",
+      "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1483,16 +1533,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_XRP_CONTROLLER_BETA",
       "name": "XRP Controller (Beta)",
+      "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1501,16 +1552,17 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "W5100S_EVB_PICO",
       "name": "W5100S-EVB-Pico",
+      "vendor": "WIZnet",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1528,16 +1580,17 @@
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "W5500_EVB_PICO",
       "name": "W5500-EVB-Pico",
+      "vendor": "WIZnet",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1554,16 +1607,17 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "WEACTSTUDIO",
       "name": "Studio RP2040",
+      "vendor": "WeAct",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1580,10 +1634,10 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "8 MiB Flash": [
           "-FLASH_8M-20250911-v1.26.1.uf2",
@@ -1591,10 +1645,10 @@
           "-FLASH_8M-20250415-v1.25.0.uf2",
           "-FLASH_8M-20241129-v1.24.1.uf2",
           "-FLASH_8M-20241025-v1.24.0.uf2",
+          "-FLASH_8M-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-FLASH_8M-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-FLASH_8M-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-FLASH_8M-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-FLASH_8M-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-FLASH_8M-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "2 MiB Flash": [
           "-FLASH_2M-20250911-v1.26.1.uf2",
@@ -1602,10 +1656,10 @@
           "-FLASH_2M-20250415-v1.25.0.uf2",
           "-FLASH_2M-20241129-v1.24.1.uf2",
           "-FLASH_2M-20241025-v1.24.0.uf2",
+          "-FLASH_2M-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-FLASH_2M-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-FLASH_2M-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-FLASH_2M-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-FLASH_2M-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-FLASH_2M-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "4 MiB Flash": [
           "-FLASH_4M-20250911-v1.26.1.uf2",
@@ -1613,16 +1667,17 @@
           "-FLASH_4M-20250415-v1.25.0.uf2",
           "-FLASH_4M-20241129-v1.24.1.uf2",
           "-FLASH_4M-20241025-v1.24.0.uf2",
+          "-FLASH_4M-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-FLASH_4M-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-FLASH_4M-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-FLASH_4M-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-FLASH_4M-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-FLASH_4M-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "NULLBITS_BIT_C_PRO",
       "name": "Bit-C PRO",
+      "vendor": "nullbits",
       "port": "rp2",
       "mcu": "rp2040",
       "offset": "",
@@ -1639,16 +1694,17 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "RPI_PICO2",
       "name": "Pico 2",
+      "vendor": "Raspberry Pi",
       "port": "rp2",
       "mcu": "rp2350",
       "offset": "",
@@ -1659,10 +1715,10 @@
           "-20250415-v1.25.0.uf2",
           "-20241129-v1.24.1.uf2",
           "-20241025-v1.24.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "RISC-V CPU mode": [
           "-RISCV-20250911-v1.26.1.uf2",
@@ -1670,16 +1726,17 @@
           "-RISCV-20250415-v1.25.0.uf2",
           "-RISCV-20241129-v1.24.1.uf2",
           "-RISCV-20241025-v1.24.0.uf2",
+          "-RISCV-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-RISCV-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-RISCV-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-RISCV-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "RPI_PICO2_W",
       "name": "Pico 2 W",
+      "vendor": "Raspberry Pi",
       "port": "rp2",
       "mcu": "rp2350",
       "offset": "",
@@ -1688,22 +1745,23 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-RISCV-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-RISCV-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-RISCV-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SEEED_XIAO_RP2350",
       "name": "XIAO RP2350",
+      "vendor": "Seeed Studio",
       "port": "rp2",
       "mcu": "rp2350",
       "offset": "",
@@ -1712,25 +1770,26 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "RISC-V CPU mode": [
           "-RISCV-20250911-v1.26.1.uf2",
           "-RISCV-20250809-v1.26.0.uf2",
           "-RISCV-20250415-v1.25.0.uf2",
+          "-RISCV-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-RISCV-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-RISCV-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-RISCV-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_IOTNODE_LORAWAN_RP2350",
       "name": "IoT Node LoRaWAN RP2350",
+      "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2350",
       "offset": "",
@@ -1739,22 +1798,23 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-RISCV-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-RISCV-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-RISCV-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_PROMICRO_RP2350",
       "name": "Pro Micro RP2350",
+      "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2350",
       "offset": "",
@@ -1763,22 +1823,23 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-RISCV-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-RISCV-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-RISCV-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_IOTREDBOARD_RP2350",
       "name": "SparkFun IoT RedBoard RP2350",
+      "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2350",
       "offset": "",
@@ -1787,22 +1848,23 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-RISCV-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-RISCV-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-RISCV-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_THINGPLUS_RP2350",
       "name": "Thing Plus RP2350",
+      "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2350",
       "offset": "",
@@ -1811,22 +1873,23 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-RISCV-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-RISCV-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-RISCV-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_XRP_CONTROLLER",
       "name": "XRP Controller",
+      "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2350",
       "offset": "",
@@ -1835,22 +1898,23 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-RISCV-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-RISCV-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-RISCV-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "WEACTSTUDIO_RP2350B_CORE",
       "name": "RP2350B Core",
+      "vendor": "WeAct Studio",
       "port": "rp2",
       "mcu": "rp2350",
       "offset": "",
@@ -1859,25 +1923,26 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "RISC V": [
           "-RISCV-20250911-v1.26.1.uf2",
           "-RISCV-20250809-v1.26.0.uf2",
           "-RISCV-20250415-v1.25.0.uf2",
+          "-RISCV-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-RISCV-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-RISCV-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-RISCV-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-RISCV-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ADAFRUIT_FEATHER_M0_EXPRESS",
       "name": "Feather M0 Express",
+      "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd21",
       "offset": "",
@@ -1896,16 +1961,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ADAFRUIT_ITSYBITSY_M0_EXPRESS",
       "name": "ItsyBitsy M0 Express",
+      "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd21",
       "offset": "",
@@ -1922,16 +1988,17 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ADAFRUIT_NEOKEY_TRINKEY",
       "name": "NeoKey Trinkey",
+      "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd21",
       "offset": "",
@@ -1940,16 +2007,17 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ADAFRUIT_QTPY_SAMD21",
       "name": "QT Py - SAMD21",
+      "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd21",
       "offset": "",
@@ -1958,25 +2026,26 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ],
         "Support for an external Flash chip": [
           "-SPIFLASH-20250911-v1.26.1.uf2",
           "-SPIFLASH-20250809-v1.26.0.uf2",
           "-SPIFLASH-20250415-v1.25.0.uf2",
+          "-SPIFLASH-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-SPIFLASH-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-SPIFLASH-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-SPIFLASH-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-SPIFLASH-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-SPIFLASH-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ADAFRUIT_TRINKET_M0",
       "name": "Trinket M0",
+      "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd21",
       "offset": "",
@@ -1995,16 +2064,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SAMD_GENERIC_D21X18",
       "name": "Generic SAMD21J18",
+      "vendor": "Microchip",
       "port": "samd",
       "mcu": "samd21",
       "offset": "",
@@ -2013,16 +2083,17 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SAMD21_XPLAINED_PRO",
       "name": "SAMD21 Xplained Pro",
+      "vendor": "Microchip",
       "port": "samd",
       "mcu": "samd21",
       "offset": "",
@@ -2041,16 +2112,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SEEED_XIAO_SAMD21",
       "name": "XIAO SAMD21",
+      "vendor": "Seeed Studio",
       "port": "samd",
       "mcu": "samd21",
       "offset": "",
@@ -2067,16 +2139,17 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_REDBOARD_TURBO",
       "name": "SparkFun RedBoard Turbo",
+      "vendor": "SparkFun",
       "port": "samd",
       "mcu": "samd21",
       "offset": "",
@@ -2084,16 +2157,17 @@
         "Standard": [
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_SAMD21_DEV_BREAKOUT",
       "name": "SparkFun SAMD21 Dev Breakout",
+      "vendor": "SparkFun",
       "port": "samd",
       "mcu": "samd21",
       "offset": "",
@@ -2101,16 +2175,17 @@
         "Standard": [
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ADAFRUIT_FEATHER_M4_EXPRESS",
       "name": "Feather M4 Express",
+      "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd51",
       "offset": "",
@@ -2127,16 +2202,17 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ADAFRUIT_ITSYBITSY_M4_EXPRESS",
       "name": "ItsyBitsy M4 Express",
+      "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd51",
       "offset": "",
@@ -2155,16 +2231,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "ADAFRUIT_METRO_M4_EXPRESS",
       "name": "Metro M4 Express Airlift",
+      "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd51",
       "offset": "",
@@ -2180,16 +2257,17 @@
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SAMD_GENERIC_D51X19",
       "name": "Generic SAMD51P19",
+      "vendor": "Microchip",
       "port": "samd",
       "mcu": "samd51",
       "offset": "",
@@ -2198,16 +2276,17 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SAMD_GENERIC_D51X20",
       "name": "Generic SAMD51P20",
+      "vendor": "Microchip",
       "port": "samd",
       "mcu": "samd51",
       "offset": "",
@@ -2216,16 +2295,17 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "MINISAM_M4",
       "name": "Mini SAM M4",
+      "vendor": "MiniFig Boards",
       "port": "samd",
       "mcu": "samd51",
       "offset": "",
@@ -2244,16 +2324,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SEEED_WIO_TERMINAL",
       "name": "Wio Terminal D51R",
+      "vendor": "Seeed Studio",
       "port": "samd",
       "mcu": "samd51",
       "offset": "",
@@ -2272,16 +2353,17 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "SPARKFUN_SAMD51_THING_PLUS",
       "name": "SAMD51 Thing Plus",
+      "vendor": "SparkFun",
       "port": "samd",
       "mcu": "samd51",
       "offset": "",
@@ -2298,16 +2380,17 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251121-v1.27.0-preview.440.ga6864109db.uf2",
           "-20251121-v1.27.0-preview.431.g40df95357c.uf2",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.uf2",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.uf2"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.uf2"
         ]
       }
     },
     {
       "id": "NUCLEO_F091RC",
       "name": "Nucleo F091RC",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f0",
       "offset": "",
@@ -2331,16 +2414,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "PYBLITEV10",
       "name": "Pyboard Lite v1.0",
+      "vendor": "George Robotics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -2373,10 +2457,10 @@
           "-20170611-v1.9.1.dfu",
           "-20170526-v1.9.dfu",
           "-20170108-v1.8.7.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Double-precision float": [
           "-DP-20250911-v1.26.1.dfu",
@@ -2403,10 +2487,10 @@
           "-DP-20180511-v1.9.4.dfu",
           "-DP-20171101-v1.9.3.dfu",
           "-DP-20170823-v1.9.2.dfu",
+          "-DP-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-DP-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-DP-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-DP-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-DP-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-DP-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Wiznet 5200 Driver": [
           "-NETWORK-20250911-v1.26.1.dfu",
@@ -2436,10 +2520,10 @@
           "-NETWORK-20170611-v1.9.1.dfu",
           "-NETWORK-20170526-v1.9.dfu",
           "-NETWORK-20170108-v1.8.7.dfu",
+          "-NETWORK-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-NETWORK-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-NETWORK-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-NETWORK-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-NETWORK-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-NETWORK-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Double precision float + Threads": [
           "-DP_THREAD-20250911-v1.26.1.dfu",
@@ -2466,10 +2550,10 @@
           "-DP_THREAD-20180511-v1.9.4.dfu",
           "-DP_THREAD-20171101-v1.9.3.dfu",
           "-DP_THREAD-20170823-v1.9.2.dfu",
+          "-DP_THREAD-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-DP_THREAD-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-DP_THREAD-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-DP_THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-DP_THREAD-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-DP_THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Threading": [
           "-THREAD-20250911-v1.26.1.dfu",
@@ -2496,16 +2580,17 @@
           "-THREAD-20180511-v1.9.4.dfu",
           "-THREAD-20171101-v1.9.3.dfu",
           "-THREAD-20170823-v1.9.2.dfu",
+          "-THREAD-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-THREAD-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-THREAD-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-THREAD-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "PYBV10",
       "name": "Pyboard v1.0",
+      "vendor": "George Robotics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -2538,10 +2623,10 @@
           "-20170611-v1.9.1.dfu",
           "-20170526-v1.9.dfu",
           "-20170108-v1.8.7.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Double-precision float": [
           "-DP-20250911-v1.26.1.dfu",
@@ -2568,10 +2653,10 @@
           "-DP-20180511-v1.9.4.dfu",
           "-DP-20171101-v1.9.3.dfu",
           "-DP-20170823-v1.9.2.dfu",
+          "-DP-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-DP-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-DP-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-DP-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-DP-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-DP-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Wiznet 5200 Driver": [
           "-NETWORK-20250911-v1.26.1.dfu",
@@ -2601,10 +2686,10 @@
           "-NETWORK-20170611-v1.9.1.dfu",
           "-NETWORK-20170526-v1.9.dfu",
           "-NETWORK-20170108-v1.8.7.dfu",
+          "-NETWORK-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-NETWORK-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-NETWORK-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-NETWORK-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-NETWORK-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-NETWORK-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Double precision float + Threads": [
           "-DP_THREAD-20250911-v1.26.1.dfu",
@@ -2631,10 +2716,10 @@
           "-DP_THREAD-20180511-v1.9.4.dfu",
           "-DP_THREAD-20171101-v1.9.3.dfu",
           "-DP_THREAD-20170823-v1.9.2.dfu",
+          "-DP_THREAD-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-DP_THREAD-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-DP_THREAD-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-DP_THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-DP_THREAD-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-DP_THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Threading": [
           "-THREAD-20250911-v1.26.1.dfu",
@@ -2661,16 +2746,17 @@
           "-THREAD-20180511-v1.9.4.dfu",
           "-THREAD-20171101-v1.9.3.dfu",
           "-THREAD-20170823-v1.9.2.dfu",
+          "-THREAD-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-THREAD-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-THREAD-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-THREAD-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "PYBV11",
       "name": "Pyboard v1.1",
+      "vendor": "George Robotics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -2703,10 +2789,10 @@
           "-20170611-v1.9.1.dfu",
           "-20170526-v1.9.dfu",
           "-20170108-v1.8.7.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Double-precision float": [
           "-DP-20250911-v1.26.1.dfu",
@@ -2733,10 +2819,10 @@
           "-DP-20180511-v1.9.4.dfu",
           "-DP-20171101-v1.9.3.dfu",
           "-DP-20170823-v1.9.2.dfu",
+          "-DP-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-DP-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-DP-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-DP-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-DP-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-DP-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Wiznet 5200 Driver": [
           "-NETWORK-20250911-v1.26.1.dfu",
@@ -2766,10 +2852,10 @@
           "-NETWORK-20170611-v1.9.1.dfu",
           "-NETWORK-20170526-v1.9.dfu",
           "-NETWORK-20170108-v1.8.7.dfu",
+          "-NETWORK-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-NETWORK-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-NETWORK-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-NETWORK-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-NETWORK-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-NETWORK-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Double precision float + Threads": [
           "-DP_THREAD-20250911-v1.26.1.dfu",
@@ -2796,10 +2882,10 @@
           "-DP_THREAD-20180511-v1.9.4.dfu",
           "-DP_THREAD-20171101-v1.9.3.dfu",
           "-DP_THREAD-20170823-v1.9.2.dfu",
+          "-DP_THREAD-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-DP_THREAD-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-DP_THREAD-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-DP_THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-DP_THREAD-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-DP_THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "Threading": [
           "-THREAD-20250911-v1.26.1.dfu",
@@ -2826,16 +2912,17 @@
           "-THREAD-20180511-v1.9.4.dfu",
           "-THREAD-20171101-v1.9.3.dfu",
           "-THREAD-20170823-v1.9.2.dfu",
+          "-THREAD-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-THREAD-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-THREAD-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-THREAD-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-THREAD-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "ADAFRUIT_F405_EXPRESS",
       "name": "F405 Express",
+      "vendor": "Adafruit",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -2854,16 +2941,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "ESPRUINO_PICO",
       "name": "Pico",
+      "vendor": "Espruino",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -2889,16 +2977,17 @@
           "-20200902-v1.13.dfu",
           "-20191220-v1.12.dfu",
           "-20190529-v1.11.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "CERB40",
       "name": "Cerb40",
+      "vendor": "Fez",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -2917,16 +3006,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "HYDRABUS",
       "name": "HydraBus v1.0",
+      "vendor": "HydraBus",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -2945,16 +3035,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "LEGO_HUB_NO6",
       "name": "Hub No.6",
+      "vendor": "LEGO",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -2973,16 +3064,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "LEGO_HUB_NO7",
       "name": "Hub No.7",
+      "vendor": "LEGO",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -2999,16 +3091,17 @@
           "-20231227-v1.22.0.dfu",
           "-20231005-v1.21.0.dfu",
           "-20230426-v1.20.0.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "GARATRONIC_NADHAT_F405",
       "name": "GARATRONIC_NADHAT_F405",
+      "vendor": "McHobby",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3027,16 +3120,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "GARATRONIC_PYBSTICK26_F411",
       "name": "GARATRONIC_PYBSTICK26_F411",
+      "vendor": "McHobby",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3055,16 +3149,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "MIKROE_CLICKER2_STM32",
       "name": "MikroE Clicker 2 for STM32",
+      "vendor": "MikroElektronika",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3083,16 +3178,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "MIKROE_QUAIL",
       "name": "MikroE Quail",
+      "vendor": "MikroElektronika",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3111,16 +3207,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NETDUINO_PLUS_2",
       "name": "Netduino Plus 2",
+      "vendor": "Netduino",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3139,16 +3236,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "OLIMEX_E407",
       "name": "STM32-E407",
+      "vendor": "Olimex",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3167,16 +3265,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "OLIMEX_H407",
       "name": "STM32-H407",
+      "vendor": "Olimex",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3195,16 +3294,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "STM32F4DISC",
       "name": "Discovery F4",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3230,16 +3330,17 @@
           "-20200902-v1.13.dfu",
           "-20191220-v1.12.dfu",
           "-20190529-v1.11.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "STM32F411DISC",
       "name": "Discovery F411",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3263,16 +3364,17 @@
           "-20210418-v1.15.dfu",
           "-20210222-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "STM32F429DISC",
       "name": "Discovery F429",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3296,16 +3398,17 @@
           "-20210418-v1.15.dfu",
           "-20210222-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F401RE",
       "name": "Nucleo F401RE",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3331,16 +3434,17 @@
           "-20200902-v1.13.dfu",
           "-20191220-v1.12.dfu",
           "-20190529-v1.11.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F411RE",
       "name": "Nucleo F411RE",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3366,16 +3470,17 @@
           "-20200902-v1.13.dfu",
           "-20191220-v1.12.dfu",
           "-20190529-v1.11.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F412ZG",
       "name": "Nucleo F412ZG",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3399,16 +3504,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F413ZH",
       "name": "Nucleo F413ZH",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3432,16 +3538,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F429ZI",
       "name": "Nucleo F429ZI",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3465,16 +3572,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F439ZI",
       "name": "Nucleo F439ZI",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3494,16 +3602,17 @@
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
           "-20210902-v1.17.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F446RE",
       "name": "Nucleo F446RE",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3527,16 +3636,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "STM32F439",
       "name": "STM32F439",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3555,16 +3665,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "SPARKFUN_MICROMOD_STM32",
       "name": "MicroMod STM32",
+      "vendor": "SparkFun",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3583,16 +3694,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "VCC_GND_F407VE",
       "name": "F407VE",
+      "vendor": "VCC-GND Studio",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3611,16 +3723,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "VCC_GND_F407ZG",
       "name": "F407ZG",
+      "vendor": "VCC-GND Studio",
       "port": "stm32",
       "mcu": "stm32f4",
       "offset": "",
@@ -3639,16 +3752,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "WEACT_F411_BLACKPILL",
       "name": "WeAct F411 'blackpill'. Default variant is v3.1 with no SPI Flash.",
+      "vendor": "WeAct Studio",
       "port": "stm32",
       "mcu": "stm32f411",
       "offset": "",
@@ -3657,61 +3771,62 @@
           "-20250911-v1.26.1.dfu",
           "-20250809-v1.26.0.dfu",
           "-20250415-v1.25.0.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "v1.3 board with 4MB SPI Flash": [
           "-V13_FLASH_4M-20250911-v1.26.1.dfu",
           "-V13_FLASH_4M-20250809-v1.26.0.dfu",
           "-V13_FLASH_4M-20250415-v1.25.0.dfu",
+          "-V13_FLASH_4M-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-V13_FLASH_4M-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-V13_FLASH_4M-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-V13_FLASH_4M-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-V13_FLASH_4M-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-V13_FLASH_4M-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "v2.0 board with 4MB SPI Flash": [
           "-V20_FLASH_4M-20250911-v1.26.1.dfu",
           "-V20_FLASH_4M-20250809-v1.26.0.dfu",
           "-V20_FLASH_4M-20250415-v1.25.0.dfu",
+          "-V20_FLASH_4M-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-V20_FLASH_4M-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-V20_FLASH_4M-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-V20_FLASH_4M-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-V20_FLASH_4M-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-V20_FLASH_4M-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "v1.3 board with no SPI Flash": [
           "-V13-20250911-v1.26.1.dfu",
           "-V13-20250809-v1.26.0.dfu",
           "-V13-20250415-v1.25.0.dfu",
+          "-V13-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-V13-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-V13-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-V13-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-V13-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-V13-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "v3.1 board with 8MB SPI Flash": [
           "-V31_FLASH_8M-20250911-v1.26.1.dfu",
           "-V31_FLASH_8M-20250809-v1.26.0.dfu",
           "-V31_FLASH_8M-20250415-v1.25.0.dfu",
+          "-V31_FLASH_8M-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-V31_FLASH_8M-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-V31_FLASH_8M-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-V31_FLASH_8M-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-V31_FLASH_8M-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-V31_FLASH_8M-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ],
         "v3.1 board with 8MHz crystal": [
           "-V31_XTAL_8M-20250911-v1.26.1.dfu",
           "-V31_XTAL_8M-20250809-v1.26.0.dfu",
           "-V31_XTAL_8M-20250415-v1.25.0.dfu",
+          "-V31_XTAL_8M-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-V31_XTAL_8M-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-V31_XTAL_8M-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-V31_XTAL_8M-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-V31_XTAL_8M-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-V31_XTAL_8M-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "PYBD_SF2",
       "name": "Pyboard D-series SF2",
+      "vendor": "George Robotics",
       "port": "stm32",
       "mcu": "stm32f7",
       "offset": "",
@@ -3736,16 +3851,17 @@
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
           "-20191220-v1.12.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "PYBD_SF3",
       "name": "Pyboard D-series SF3",
+      "vendor": "George Robotics",
       "port": "stm32",
       "mcu": "stm32f7",
       "offset": "",
@@ -3770,16 +3886,17 @@
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
           "-20191220-v1.12.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "PYBD_SF6",
       "name": "Pyboard D-series SF6",
+      "vendor": "George Robotics",
       "port": "stm32",
       "mcu": "stm32f7",
       "offset": "",
@@ -3804,16 +3921,17 @@
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
           "-20191220-v1.12.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "STM32F7DISC",
       "name": "Discovery F7",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f7",
       "offset": "",
@@ -3837,16 +3955,17 @@
           "-20210418-v1.15.dfu",
           "-20210222-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "STM32F769DISC",
       "name": "Discovery F769",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f7",
       "offset": "",
@@ -3870,16 +3989,17 @@
           "-20210418-v1.15.dfu",
           "-20210222-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F722ZE",
       "name": "Nucleo F722ZE",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f7",
       "offset": "",
@@ -3903,16 +4023,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F746ZG",
       "name": "Nucleo F746ZG",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f7",
       "offset": "",
@@ -3936,16 +4057,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F756ZG",
       "name": "Nucleo F756ZG",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f7",
       "offset": "",
@@ -3962,16 +4084,17 @@
           "-20231227-v1.22.0.dfu",
           "-20231005-v1.21.0.dfu",
           "-20230426-v1.20.0.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_F767ZI",
       "name": "Nucleo F767ZI",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32f7",
       "offset": "",
@@ -3997,16 +4120,17 @@
           "-20200902-v1.13.dfu",
           "-20191220-v1.12.dfu",
           "-20190529-v1.11.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_G0B1RE",
       "name": "Nucleo G0B1RE",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32g0",
       "offset": "",
@@ -4024,16 +4148,17 @@
           "-20231005-v1.21.0.dfu",
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_G474RE",
       "name": "Nucleo G474RE",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32g4",
       "offset": "",
@@ -4051,16 +4176,17 @@
           "-20231005-v1.21.0.dfu",
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_H563ZI",
       "name": "Nucleo H563ZI",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32h5",
       "offset": "",
@@ -4075,16 +4201,17 @@
           "-20240222-v1.22.2.dfu",
           "-20240105-v1.22.1.dfu",
           "-20231227-v1.22.0.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "ARDUINO_GIGA",
       "name": "Giga",
+      "vendor": "Arduino",
       "port": "stm32",
       "mcu": "stm32h7",
       "offset": "",
@@ -4101,16 +4228,17 @@
           "-20231227-v1.22.0.dfu",
           "-20231005-v1.21.0.dfu",
           "-20230426-v1.20.0.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "ARDUINO_NICLA_VISION",
       "name": "Nicla Vision",
+      "vendor": "Arduino",
       "port": "stm32",
       "mcu": "stm32h7",
       "offset": "",
@@ -4127,16 +4255,17 @@
           "-20231227-v1.22.0.dfu",
           "-20231005-v1.21.0.dfu",
           "-20230426-v1.20.0.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "ARDUINO_OPTA",
       "name": "Opta WiFi",
+      "vendor": "Arduino",
       "port": "stm32",
       "mcu": "stm32h7",
       "offset": "",
@@ -4147,16 +4276,17 @@
           "-20250415-v1.25.0.dfu",
           "-20241129-v1.24.1.dfu",
           "-20241025-v1.24.0.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "ARDUINO_PORTENTA_H7",
       "name": "Portenta H7",
+      "vendor": "Arduino",
       "port": "stm32",
       "mcu": "stm32h7",
       "offset": "",
@@ -4174,16 +4304,17 @@
           "-20231005-v1.21.0.dfu",
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "STM32H7B3I_DK",
       "name": "Discovery Kit H7",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32h7",
       "offset": "",
@@ -4202,16 +4333,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_H723ZG",
       "name": "Nucleo H723ZG",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32h7",
       "offset": "",
@@ -4228,16 +4360,17 @@
           "-20231227-v1.22.0.dfu",
           "-20231005-v1.21.0.dfu",
           "-20230426-v1.20.0.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_H743ZI",
       "name": "Nucleo H743ZI",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32h7",
       "offset": "",
@@ -4261,16 +4394,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_H743ZI2",
       "name": "Nucleo H743ZI2",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32h7",
       "offset": "",
@@ -4290,31 +4424,33 @@
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
           "-20210902-v1.17.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_H7A3ZI_Q",
       "name": "Nucleo H7A3ZI-Q",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32h7",
       "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "VCC_GND_H743VI",
       "name": "H743VI",
+      "vendor": "VCC-GND Studio",
       "port": "stm32",
       "mcu": "stm32h7",
       "offset": "",
@@ -4333,16 +4469,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "B_L072Z_LRWAN1",
       "name": "B_L072Z_LRWAN1",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32l0",
       "offset": "",
@@ -4366,16 +4503,17 @@
           "-20210418-v1.15.dfu",
           "-20210222-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_L073RZ",
       "name": "Nucleo L073RZ",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32l0",
       "offset": "",
@@ -4399,16 +4537,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_L152RE",
       "name": "Nucleo L152RE",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32l1",
       "offset": "",
@@ -4425,16 +4564,17 @@
           "-20231227-v1.22.0.dfu",
           "-20231005-v1.21.0.dfu",
           "-20230426-v1.20.0.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "LIMIFROG",
       "name": "LimiFrog",
+      "vendor": "LimiFrog",
       "port": "stm32",
       "mcu": "stm32l4",
       "offset": "",
@@ -4453,16 +4593,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "B_L475E_IOT01A",
       "name": "B_L475E_IOT01A",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32l4",
       "offset": "",
@@ -4486,16 +4627,17 @@
           "-20210418-v1.15.dfu",
           "-20210222-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "STM32L476DISC",
       "name": "Discovery L476",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32l4",
       "offset": "",
@@ -4514,16 +4656,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "STM32L496GDISC",
       "name": "Discovery L496G",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32l4",
       "offset": "",
@@ -4542,16 +4685,17 @@
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
           "-20220117-v1.18.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_L432KC",
       "name": "Nucleo L432KC",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32l4",
       "offset": "",
@@ -4575,16 +4719,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_L452RE",
       "name": "Nucleo L452RE",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32l4",
       "offset": "",
@@ -4608,16 +4753,17 @@
           "-20210418-v1.15.dfu",
           "-20210202-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_L476RG",
       "name": "Nucleo L476RG",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32l4",
       "offset": "",
@@ -4643,16 +4789,17 @@
           "-20200902-v1.13.dfu",
           "-20191220-v1.12.dfu",
           "-20190529-v1.11.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_L4A6ZG",
       "name": "Nucleo L4A6ZG",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32l4",
       "offset": "",
@@ -4668,31 +4815,33 @@
           "-20240105-v1.22.1.dfu",
           "-20231227-v1.22.0.dfu",
           "-20231005-v1.21.0.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_U5A5ZJ_Q",
       "name": "Nucleo U5A5ZJ_Q",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32u5",
       "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_WB55",
       "name": "Nucleo WB55",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32wb",
       "offset": "",
@@ -4716,16 +4865,17 @@
           "-20210418-v1.15.dfu",
           "-20210222-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "USBDONGLE_WB55",
       "name": "USBDONGLE_WB55",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32wb",
       "offset": "",
@@ -4749,16 +4899,17 @@
           "-20210418-v1.15.dfu",
           "-20210222-v1.14.dfu",
           "-20200902-v1.13.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     },
     {
       "id": "NUCLEO_WL55",
       "name": "Nucleo WL55",
+      "vendor": "ST Microelectronics",
       "port": "stm32",
       "mcu": "stm32wl",
       "offset": "",
@@ -4776,10 +4927,10 @@
           "-20231005-v1.21.0.dfu",
           "-20230426-v1.20.0.dfu",
           "-20220618-v1.19.1.dfu",
+          "-20251121-v1.27.0-preview.440.ga6864109db.dfu",
           "-20251121-v1.27.0-preview.431.g40df95357c.dfu",
           "-20251120-v1.27.0-preview.426.gc07fda73f7.dfu",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu",
-          "-20251117-v1.27.0-preview.393.g4441fd655c.dfu"
+          "-20251119-v1.27.0-preview.395.g4766f5680e.dfu"
         ]
       }
     }
