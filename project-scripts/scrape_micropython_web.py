@@ -189,6 +189,18 @@ def main():
                                     if html_element.text == "Vendor:":
                                         vendor = html_element.next_sibling.strip()
 
+                        # Normal sort priority
+                        sort_priority = 2
+
+                        # Add (Generic) to Espressif boards
+                        if vendor == "Espressif" and port == "esp32":
+                            board_name = board_name + " (Generic)"
+                            # Espressif boards get higher sort priority to appear first
+                            sort_priority = 1
+                        # SparkFun has a board with a name duplicit to the Espressif "ESP32 / WROOM" board
+                        elif board_name == "ESP32 / WROOM" and vendor == "SparkFun":
+                            board_name = board_name + " (SparkFun)"
+
                         # Format the board dictionary with its info
                         board = {
                             "id": mcu_page_link,
@@ -197,13 +209,21 @@ def main():
                             "port": port,
                             "mcu": mcu_name,
                             "offset": retrieve_offset_from_beautiful_soup(board_page_beautiful_soup),
-                            "firmwareNameToLinkParts": firmware_name_to_link_parts
+                            "firmwareNameToLinkParts": firmware_name_to_link_parts,
+                            "sortPriority": sort_priority
                         }
 
                         # Save the scraped board
                         micropython_board_map["boards"].append(board)
 
                         print(f"Scraped \"{board_name}\"")
+
+    # Sort the boards to ensure generic ESP32 boards come first
+    micropython_board_map["boards"].sort(key=lambda b: (b["mcu"], b["sortPriority"]))
+
+    # Remove the "sortPriority" param to avoid cluttering the final json
+    for board in micropython_board_map["boards"]:
+        board.pop("sortPriority", None)
 
     # Save the timestamp at the end
     micropython_board_map["timestamp"] = datetime.now().isoformat()

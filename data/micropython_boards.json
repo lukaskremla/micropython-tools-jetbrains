@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2025-11-23T12:55:16.107091",
+  "timestamp": "2025-11-23T16:00:45.658468",
   "skimmed_ports": [
     "esp32",
     "esp8266",
@@ -11,7 +11,7 @@
   "boards": [
     {
       "id": "ESP32_GENERIC",
-      "name": "ESP32 / WROOM",
+      "name": "ESP32 / WROOM (Generic)",
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32",
@@ -277,7 +277,7 @@
     },
     {
       "id": "SPARKFUN_IOT_REDBOARD_ESP32",
-      "name": "ESP32 / WROOM",
+      "name": "ESP32 / WROOM (SparkFun)",
       "vendor": "SparkFun",
       "port": "esp32",
       "mcu": "esp32",
@@ -330,7 +330,7 @@
     },
     {
       "id": "ESP32_GENERIC_C2",
-      "name": "ESP32-C2",
+      "name": "ESP32-C2 (Generic)",
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c2",
@@ -354,7 +354,7 @@
     },
     {
       "id": "ESP32_GENERIC_C3",
-      "name": "ESP32-C3",
+      "name": "ESP32-C3 (Generic)",
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c3",
@@ -430,7 +430,7 @@
     },
     {
       "id": "ESP32_GENERIC_C5",
-      "name": "ESP32-C5",
+      "name": "ESP32-C5 (Generic)",
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c5",
@@ -446,7 +446,7 @@
     },
     {
       "id": "ESP32_GENERIC_C6",
-      "name": "ESP32-C6",
+      "name": "ESP32-C6 (Generic)",
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c6",
@@ -509,7 +509,7 @@
     },
     {
       "id": "ESP32_GENERIC_S2",
-      "name": "ESP32-S2",
+      "name": "ESP32-S2 (Generic)",
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32s2",
@@ -684,34 +684,8 @@
       }
     },
     {
-      "id": "ARDUINO_NANO_ESP32",
-      "name": "Nano ESP32",
-      "vendor": "Arduino",
-      "port": "esp32",
-      "mcu": "esp32s3",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.bin",
-          "-20250809-v1.26.0.bin",
-          "-20250415-v1.25.0.bin",
-          "-20241129-v1.24.1.bin",
-          "-20241025-v1.24.0.bin",
-          "-20240602-v1.23.0.bin",
-          "-20240222-v1.22.2.bin",
-          "-20240105-v1.22.1.bin",
-          "-20231227-v1.22.0.bin",
-          "-20231005-v1.21.0.bin",
-          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
-          "-20251121-v1.27.0-preview.431.g40df95357c.bin",
-          "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
-          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
-        ]
-      }
-    },
-    {
       "id": "ESP32_GENERIC_S3",
-      "name": "ESP32-S3",
+      "name": "ESP32-S3 (Generic)",
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32s3",
@@ -752,6 +726,32 @@
           "-SPIRAM_OCT-20251121-v1.27.0-preview.431.g40df95357c.bin",
           "-SPIRAM_OCT-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
           "-SPIRAM_OCT-20251119-v1.27.0-preview.395.g4766f5680e.bin"
+        ]
+      }
+    },
+    {
+      "id": "ARDUINO_NANO_ESP32",
+      "name": "Nano ESP32",
+      "vendor": "Arduino",
+      "port": "esp32",
+      "mcu": "esp32s3",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20251121-v1.27.0-preview.440.ga6864109db.bin",
+          "-20251121-v1.27.0-preview.431.g40df95357c.bin",
+          "-20251120-v1.27.0-preview.426.gc07fda73f7.bin",
+          "-20251119-v1.27.0-preview.395.g4766f5680e.bin"
         ]
       }
     },
