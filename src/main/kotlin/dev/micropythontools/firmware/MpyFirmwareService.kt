@@ -51,12 +51,12 @@ internal data class Board(
     val firmwareNameToLinkParts: Map<String, List<String>>
 )
 
-@Suppress("PropertyName")
 @Serializable
 internal data class MpyBoardsJson(
     val version: String,
     val timestamp: String,
-    val skimmed_ports: List<String>,
+    val skimmedPorts: List<String>,
+    val portToExtension: Map<String, String>,
     val boards: List<Board>
 )
 

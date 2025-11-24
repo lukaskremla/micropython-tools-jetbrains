@@ -1,13 +1,20 @@
 {
   "version": "1.0.0",
-  "timestamp": "2025-11-24T12:08:07.441492",
-  "skimmed_ports": [
+  "timestamp": "2025-11-24T12:16:58.276277",
+  "skimmedPorts": [
     "esp32",
     "esp8266",
     "rp2",
     "samd",
     "stm32"
   ],
+  "portToExtension": {
+    "esp32": ".bin",
+    "esp8266": ".bin",
+    "rp2": ".uf2",
+    "samd": "uf2",
+    "stm32": ".dfu"
+  },
   "boards": [
     {
       "id": "ESP32_GENERIC",
