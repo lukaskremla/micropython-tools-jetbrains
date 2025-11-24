@@ -493,6 +493,13 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
             }
 
             row {
+                excludePathsCheckbox =
+                    checkBox(MpyBundle.message("run.conf.upload.editor.checkbox.exclude.from.synchronization"))
+                        .bindSelected(parameters::excludePaths)
+                        .gap(RightGap.SMALL)
+            }.visibleIf(synchronizeCheckbox.selected)
+
+            row {
                 checkBox(MpyBundle.message("run.conf.upload.editor.checkbox.force.blocking"))
                     .bindSelected(parameters::forceBlocking)
                     .enabled(proService.isActive)
@@ -529,13 +536,6 @@ internal class MpyRunConfUploadEditor(private val runConfiguration: MpyRunConfUp
 
                 cell(JBLabel(MpyIcons.proBadge))
             }
-
-            row {
-                excludePathsCheckbox =
-                    checkBox(MpyBundle.message("run.conf.upload.editor.checkbox.exclude.from.synchronization"))
-                        .bindSelected(parameters::excludePaths)
-                        .gap(RightGap.SMALL)
-            }.visibleIf(synchronizeCheckbox.selected)
 
             collapsibleGroup(MpyBundle.message("run.conf.upload.editor.collapsible.group.excluded.paths.title")) {
                 row {

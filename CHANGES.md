@@ -5,6 +5,8 @@ The Changelog
 ------------------
 
 * Fixed a bug where port selector model in the settings wouldn't recognize changes
+* Moved upload run configuration "Force blocking upload" checkbox behind "Exclude paths from synchronization" to avoid
+  interrupting the checkbox relation
 
 2025.3.2 - 9.11.2025
 ------------------
