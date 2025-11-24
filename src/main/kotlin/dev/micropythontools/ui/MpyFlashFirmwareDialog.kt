@@ -77,9 +77,6 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
 
         init() // Required for DialogWrapper
 
-        // Set status to checking
-        setStatusChecking()
-
         try {
             // Update the cached boards json
             firmwareService.updateCachedBoards()
@@ -228,10 +225,6 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
             // Initialize cascading dropdowns with current board data
             updateDeviceTypeComboBox()
         }
-    }
-
-    private fun setStatusChecking() {
-        statusComment.component.text = "Checking for firmware updates..."
     }
 
     private fun setStatusFailed(cachedTimestamp: String) {
