@@ -76,6 +76,9 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
     private lateinit var localFileTextFieldWithBrowseButton: Cell<TextFieldWithBrowseButton>
 
+    private lateinit var eraseFlashCheckBox: Cell<JBCheckBox>
+    private lateinit var eraseFileSystemAfter: Cell<JBCheckBox>
+
     // Selected board for tracking
     private var selectedBoard: Board? = null
 
@@ -281,6 +284,16 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                             }
                     }
                 }.visibleIf(localFileRadioButton.selected)
+            }
+
+            group("Flashing Options") {
+                row {
+                    eraseFlashCheckBox = checkBox("Erase flash first")
+                }
+
+                row {
+                    eraseFileSystemAfter = checkBox("Erase MicroPython filesystem after flashing")
+                }
             }
         }.also {
             // Initialize cascading dropdowns with current board data
