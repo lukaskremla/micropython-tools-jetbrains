@@ -79,6 +79,21 @@ internal class MpyFirmwareService(private val project: Project) {
     }
 
     /**
+     * Gets the firmware file extension for a specific device type/port.
+     *
+     * @param port The device type/port to get the extension for
+     * @return The file extension (e.g., ".bin", ".uf2") or null if not found
+     */
+    fun getExtensionForPort(port: String): String {
+        val mpyBoardsJson = getCachedBoardsJson()
+
+        val extension = mpyBoardsJson.portToExtension[port.toLowerCasePreservingASCIIRules()]
+            ?: throw RuntimeException("Port \"${port}\" has no mapped extension")
+
+        return extension
+    }
+
+    /**
      * Gets all unique device types (ports) from cached boards.
      *
      * @return Sorted list of device type names (e.g., "esp32", "esp8266", "rp2")

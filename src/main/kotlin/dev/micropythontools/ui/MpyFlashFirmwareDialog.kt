@@ -17,11 +17,16 @@
 package dev.micropythontools.ui
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
 import dev.micropythontools.firmware.Board
 import dev.micropythontools.firmware.IncompatibleBoardsJsonVersionException
@@ -41,7 +46,7 @@ import javax.swing.JEditorPane
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 
-internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project, true) {
+internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrapper(project, true) {
     private val settings = project.service<MpySettingsService>()
     private val deviceService = project.service<dev.micropythontools.communication.MpyDeviceService>()
     private val firmwareService = project.service<MpyFirmwareService>()
@@ -58,12 +63,23 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
 
     private lateinit var deviceTypeComboBox: Cell<ComboBox<String>>
     private lateinit var mcuComboBox: Cell<ComboBox<String>>
+
+    private lateinit var microPythonOrgRadioButton: Cell<JBRadioButton>
+    private lateinit var localFileRadioButton: Cell<JBRadioButton>
+
     private lateinit var boardVariantComboBox: Cell<ComboBox<String>>
     private lateinit var firmwareVariantComboBox: Cell<ComboBox<String>>
 
     private lateinit var showOlderVersionsCheckBox: Cell<JBCheckBox>
     private lateinit var showPreviewReleasesCheckBox: Cell<JBCheckBox>
     private lateinit var versionComboBox: Cell<ComboBox<String>>
+
+    private val localFileChooserDescriptor = FileChooserDescriptor(true, false, false, false, false, false)
+        .withTitle("Select Firmware File")
+        .withRoots(project.guessProjectDir())
+        .withExtensionFilter("Compatible firmware extensions", "bin", "uf2", "dfu")
+
+    private lateinit var localFileTextFieldWithBrowseButton: Cell<TextFieldWithBrowseButton>
 
     // Selected board for tracking
     private var selectedBoard: Board? = null
@@ -146,7 +162,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
                             }
                 }
 
-                row("Serial Port:") {
+                row("Serial port:") {
                     portSelectComboBox = comboBox(portSelectModel)
                         .columns(20)
                         .applyToComponent {
@@ -163,7 +179,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
             }
 
             group("Firmware Selection") {
-                row("Device Type:") {
+                row("Device type:") {
                     deviceTypeComboBox = comboBox(deviceTypeModel)
                         .columns(10)
                         .applyToComponent {
@@ -183,51 +199,90 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
                         }
                 }.layout(RowLayout.LABEL_ALIGNED)
 
-                row("Board Variant:") {
-                    boardVariantComboBox = comboBox(boardVariantModel)
-                        .columns(25)
-                        .applyToComponent {
-                            addActionListener {
-                                onBoardVariantSelected()
+                buttonsGroup {
+                    row("Firmware source:") {
+                        microPythonOrgRadioButton = radioButton("MicroPython.org")
+                            .applyToComponent {
+                                isSelected = true // This is the default option
                             }
-                        }
-                }.layout(RowLayout.LABEL_ALIGNED)
 
-                row("Firmware Variant:") {
-                    firmwareVariantComboBox = comboBox(firmwareVariantModel)
-                        .columns(25)
-                        .applyToComponent {
-                            addActionListener {
-                                onFirmwareVariantSelected()
-                            }
-                        }
-                }.layout(RowLayout.LABEL_ALIGNED)
-
-                row {
-                    showOlderVersionsCheckBox = checkBox("Show older versions")
-                        .applyToComponent {
-                            addActionListener {
-                                onFirmwareVariantSelected()
-                            }
-                        }
+                        localFileRadioButton = radioButton("Local file")
+                    }
                 }
 
-                row {
-                    showPreviewReleasesCheckBox = checkBox("Show preview releases")
-                        .gap(RightGap.SMALL)
-                        .applyToComponent {
-                            addActionListener {
-                                onFirmwareVariantSelected()
+                indent {
+                    row("Board variant:") {
+                        boardVariantComboBox = comboBox(boardVariantModel)
+                            .columns(25)
+                            .applyToComponent {
+                                addActionListener {
+                                    onBoardVariantSelected()
+                                }
                             }
-                        }
+                    }.layout(RowLayout.LABEL_ALIGNED)
 
-                    contextHelp("Shows/Hides preview releases. Selecting some newer boards might override this option as they are only supported in preview releases.")
-                }
+                    row("Firmware variant:") {
+                        firmwareVariantComboBox = comboBox(firmwareVariantModel)
+                            .columns(25)
+                            .applyToComponent {
+                                addActionListener {
+                                    onFirmwareVariantSelected()
+                                }
+                            }
+                    }.layout(RowLayout.LABEL_ALIGNED)
 
-                row("Version:") {
-                    versionComboBox = comboBox(versionModel)
-                        .columns(25)
-                }.layout(RowLayout.LABEL_ALIGNED)
+                    row {
+                        showOlderVersionsCheckBox = checkBox("Show older versions")
+                            .applyToComponent {
+                                addActionListener {
+                                    onFirmwareVariantSelected()
+                                }
+                            }
+                    }
+
+                    row {
+                        showPreviewReleasesCheckBox = checkBox("Show preview releases")
+                            .gap(RightGap.SMALL)
+                            .applyToComponent {
+                                addActionListener {
+                                    onFirmwareVariantSelected()
+                                }
+                            }
+
+                        contextHelp("Shows/Hides preview releases. Selecting some newer boards might override this option as they are only supported in preview releases.")
+                    }
+
+                    row("Version:") {
+                        versionComboBox = comboBox(versionModel)
+                            .columns(25)
+                    }.layout(RowLayout.LABEL_ALIGNED)
+                }.visibleIf(microPythonOrgRadioButton.selected)
+
+                indent {
+                    row("Local file:") {
+                        localFileTextFieldWithBrowseButton = textFieldWithBrowseButton(
+                            localFileChooserDescriptor,
+                            project
+                        ).columns(25)
+                            .validationOnApply {
+                                val localFilePath = it.text
+                                val localFile = LocalFileSystem.getInstance().findFileByPath(localFilePath)
+
+                                val selectedDeviceType = deviceTypeComboBox.component.selectedItem as? String
+                                    ?: return@validationOnApply error("Please select a device type first")
+
+                                val expectedExtension =
+                                    firmwareService.getExtensionForPort(selectedDeviceType).removePrefix(".")
+
+                                when {
+                                    localFilePath.isBlank() -> error("Please select a firmware file")
+                                    localFile == null -> error("Invalid file path")
+                                    localFile.extension != expectedExtension -> error("Invalid extension \".${localFile.extension}\", expected \".$expectedExtension\" for the \"${deviceTypeComboBox.component.selectedItem}\" device type")
+                                    else -> null
+                                }
+                            }
+                    }
+                }.visibleIf(localFileRadioButton.selected)
             }
         }.also {
             // Initialize cascading dropdowns with current board data
