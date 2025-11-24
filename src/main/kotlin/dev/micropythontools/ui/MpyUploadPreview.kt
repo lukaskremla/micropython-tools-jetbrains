@@ -349,6 +349,7 @@ internal class MpyUploadPreview(
     init {
         title = MpyBundle.message("upload.preview.title")
         deviceTree.isRootVisible = false
+        setOKButtonText(MpyBundle.message("upload.preview.ok.button.text"))
 
         projectTree.setCellRenderer(object : ColoredTreeCellRenderer() {
             override fun customizeCellRenderer(
