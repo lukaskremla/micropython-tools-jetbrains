@@ -421,7 +421,7 @@ internal class MpyConfigurable(private val project: Project) :
                         checkBox(MpyBundle.message("configurable.communication.show.upload.preview.checkbox.title"))
                             .bindSelected(parameters::showUploadPreviewDialog)
                     }
-                }.bottomGap(BottomGap.NONE).topGap(TopGap.SMALL)
+                }
 
                 group(MpyBundle.message("configurable.stubs.group.title")) {
                     row {
@@ -828,7 +828,7 @@ internal class MpyConfigurable(private val project: Project) :
                                 )
                             )
                     }.enabledIf(stubsEnabledCheckBox.selected)
-                }.topGap(TopGap.SMALL)
+                }
             }.enabledIf(pluginEnabledCheckBox.selected)
         }.apply {
             validateAll()

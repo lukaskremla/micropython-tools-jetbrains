@@ -115,7 +115,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
         return panel {
             row {
                 statusComment = comment("Checking for firmware updates...")
-            }.bottomGap(BottomGap.NONE)
+            }
 
             group("Connection") {
                 row {
@@ -152,7 +152,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
                             })
                         }
                 }.layout(RowLayout.LABEL_ALIGNED)
-            }.topGap(TopGap.SMALL)
+            }
 
             group("Firmware Selection") {
                 row("Device Type:") {

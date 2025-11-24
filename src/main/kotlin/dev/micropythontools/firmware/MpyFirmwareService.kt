@@ -206,9 +206,7 @@ internal class MpyFirmwareService(private val project: Project) {
             throw RuntimeException("Warning: Newest board json's structure is incompatible with this plugin version. Consider updating to get latest board support")
         }
 
-        println("Before writing")
         writeCachedBoardsJson(remoteBoardsJsonContent!!)
-        println("After writing")
     }
 
     private fun parseMpyBoardJson(jsonString: String): MpyBoardsJson {
