@@ -155,7 +155,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
             group("Firmware Selection") {
                 row("Device Type:") {
                     deviceTypeComboBox = comboBox(deviceTypeModel)
-                        .columns(20)
+                        .columns(10)
                         .applyToComponent {
                             addActionListener {
                                 onDeviceTypeSelected()
@@ -165,7 +165,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
 
                 row("MCU:") {
                     mcuComboBox = comboBox(mcuModel)
-                        .columns(20)
+                        .columns(10)
                         .applyToComponent {
                             addActionListener {
                                 onMcuSelected()
@@ -175,7 +175,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
 
                 row("Board Variant:") {
                     boardVariantComboBox = comboBox(boardVariantModel)
-                        .columns(20)
+                        .columns(25)
                         .applyToComponent {
                             addActionListener {
                                 onBoardVariantSelected()
@@ -185,7 +185,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
 
                 row("Firmware Variant:") {
                     firmwareVariantComboBox = comboBox(firmwareVariantModel)
-                        .columns(20)
+                        .columns(25)
                         .applyToComponent {
                             addActionListener {
                                 onFirmwareVariantSelected()
@@ -211,12 +211,12 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
                             }
                         }
 
-                    contextHelp("Shows/Hides preview releases. Selecting some newer boards might overrides this option as they are only supported in preview releases.")
+                    contextHelp("Shows/Hides preview releases. Selecting some newer boards might override this option as they are only supported in preview releases.")
                 }
 
                 row("Version:") {
                     versionComboBox = comboBox(versionModel)
-                        .columns(20)
+                        .columns(25)
                 }.layout(RowLayout.LABEL_ALIGNED)
             }
         }.also {
