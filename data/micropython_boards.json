@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2025-11-23T16:00:45.658468",
+  "timestamp": "2025-11-24T09:10:36.946046",
   "skimmed_ports": [
     "esp32",
     "esp8266",
@@ -976,7 +976,7 @@
     },
     {
       "id": "ESP8266_GENERIC",
-      "name": "ESP8266",
+      "name": "ESP8266 (Generic)",
       "vendor": "Espressif",
       "port": "esp8266",
       "mcu": "esp8266",

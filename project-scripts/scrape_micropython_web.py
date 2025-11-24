@@ -193,7 +193,7 @@ def main():
                         sort_priority = 2
 
                         # Add (Generic) to Espressif boards
-                        if vendor == "Espressif" and port == "esp32":
+                        if vendor == "Espressif" and port.startswith("esp"):
                             board_name = board_name + " (Generic)"
                             # Espressif boards get higher sort priority to appear first
                             sort_priority = 1
