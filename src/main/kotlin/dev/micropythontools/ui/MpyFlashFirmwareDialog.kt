@@ -74,11 +74,6 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
     private lateinit var showPreviewReleasesCheckBox: Cell<JBCheckBox>
     private lateinit var versionComboBox: Cell<ComboBox<String>>
 
-    private val localFileChooserDescriptor = FileChooserDescriptor(true, false, false, false, false, false)
-        .withTitle("Select Firmware File")
-        .withRoots(project.guessProjectDir())
-        .withExtensionFilter("Compatible firmware extensions", "bin", "uf2", "dfu")
-
     private lateinit var localFileTextFieldWithBrowseButton: Cell<TextFieldWithBrowseButton>
 
     // Selected board for tracking
@@ -261,7 +256,10 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                 indent {
                     row("Local file:") {
                         localFileTextFieldWithBrowseButton = textFieldWithBrowseButton(
-                            localFileChooserDescriptor,
+                            FileChooserDescriptor(true, false, false, false, false, false)
+                                .withTitle("Select Firmware File")
+                                .withRoots(project.guessProjectDir())
+                                .withExtensionFilter("Compatible firmware extensions", "bin", "uf2", "dfu"),
                             project
                         ).columns(25)
                             .validationOnApply {
