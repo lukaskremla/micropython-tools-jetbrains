@@ -16,6 +16,7 @@
 
 package dev.micropythontools.firmware
 
+import com.amazon.ion.NullValueException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
@@ -154,13 +155,21 @@ internal class MpyFirmwareService(private val project: Project) {
         // Try to find the existing cached board list
         var cachedBoardsJsonFile = LocalFileSystem.getInstance().findFileByPath(cachedBoardsJsonFilePath)
 
-        // Use the bundled json if none is cached
-        cachedBoardsJsonFile = cachedBoardsJsonFile ?: writeBundledBoardJson()
+        try {
+            // Use the bundled json if none is cached
+            cachedBoardsJsonFile = cachedBoardsJsonFile ?: throw NullValueException("No boards cached, falling back")
 
-        // Extract the file's content
-        val cachedBoardsJsonContent = cachedBoardsJsonFile.readText()
+            // Extract the file's content
+            val cachedBoardsJsonContent = cachedBoardsJsonFile.readText()
 
-        return parseMpyBoardJson(cachedBoardsJsonContent)
+            return parseMpyBoardJson(cachedBoardsJsonContent)
+        } catch (_: Throwable) {
+            val writtenBundledBoardsJson = writeBundledBoardsJson()
+
+            val writtenBundledBoardsJsonContent = writtenBundledBoardsJson.readText()
+
+            return parseMpyBoardJson(writtenBundledBoardsJsonContent)
+        }
     }
 
     fun getCachedBoardsTimestamp(): String {
@@ -233,7 +242,7 @@ internal class MpyFirmwareService(private val project: Project) {
         return stream.bufferedReader(Charsets.UTF_8).use { it.readText() }
     }
 
-    private fun writeBundledBoardJson(): VirtualFile {
+    private fun writeBundledBoardsJson(): VirtualFile {
         val bundledBoardsJsonContent = extractBundledBoardsJsonContent()
 
         return writeCachedBoardsJson(bundledBoardsJsonContent)
