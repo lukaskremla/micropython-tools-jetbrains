@@ -10,6 +10,14 @@ PATH_TO_BOARDS_JSON = "../data/micropython_boards.json"
 
 supported_ports = ("esp32", "esp8266", "rp2", "samd", "stm32")
 
+port_to_extension = {
+    "esp32": ".bin",
+    "esp8266": ".bin",
+    "rp2": ".uf2",
+    "samd": "uf2",
+    "stm32": ".dfu"
+}
+
 session = requests.Session()
 session.headers.update({
     'User-Agent': 'MicroPython-Tools-Plugin-Firmware-Index-Scraper/1.0 (jetbrains-ide-plugin)'
@@ -93,7 +101,8 @@ def main():
     micropython_board_map: dict[str, Any] = {
         "version": "1.0.0",
         "timestamp": "",  # Filled out at the end
-        "skimmed_ports": list(supported_ports),
+        "skimmedPorts": list(supported_ports),
+        "portToExtension": port_to_extension,
         "boards": []
     }
 
@@ -171,9 +180,9 @@ def main():
 
                                     # Ensure a valid firmware link
                                     if resources_path in board_page_link:
-                                        if ((mcu_name.startswith(("esp32", "esp8266")) and ".bin" in board_page_link) or
-                                                (mcu_name.startswith(("rp2", "samd")) and ".uf2" in board_page_link) or
-                                                (mcu_name.startswith("stm32") and ".dfu" in board_page_link)):
+                                        required_extension = port_to_extension[port]
+
+                                        if required_extension in board_page_link:
                                             # Find the latest firmware name (key) to append to
                                             last_key = list(firmware_name_to_link_parts.keys())[-1]
 
