@@ -36,6 +36,10 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import kotlin.io.path.pathString
 
+internal const val PREVIEW_FIRMWARE_STRING = "preview"
+
+internal class IncompatibleBoardsJsonVersionException(message: String) : Exception(message)
+
 @Serializable
 internal data class Board(
     val id: String,
@@ -70,7 +74,7 @@ internal class MpyFirmwareService(private val project: Project) {
 
         // Set the supported major version string, throw exception if it fails
         maxSupportedBoardsJsonMajorVersion = mpyBoardsJson.version.split(".").firstOrNull()?.toIntOrNull()
-            ?: throw RuntimeException("Failed to identify version on startup")
+            ?: throw RuntimeException("Failed to identify max supported micropython_boards.json version on startup")
     }
 
     /**
@@ -131,7 +135,7 @@ internal class MpyFirmwareService(private val project: Project) {
             trimmedLinkPart = trimmedLinkPart.substringBeforeLast(".")
 
             // Preview boards are shown more verbosely
-            val displayText = if (trimmedLinkPart.contains("preview")) {
+            val displayText = if (trimmedLinkPart.contains(PREVIEW_FIRMWARE_STRING)) {
                 trimmedLinkPart
             } else {
                 trimmedLinkPart.substringAfterLast("-")
@@ -188,22 +192,22 @@ internal class MpyFirmwareService(private val project: Project) {
             }
         }
 
-        remoteBoardsJsonContent ?: throw RuntimeException("Failed to fetch latest json data")
+        remoteBoardsJsonContent ?: throw RuntimeException("Failed to fetch latest JSON data")
 
         // Verify and validate the new JSON
         val mpyBoardsJson = parseMpyBoardJson(remoteBoardsJsonContent!!)
 
         // Save the highest supported major version to a local variable and ensure it's initialized
         val maxSupportedMajorVersion = maxSupportedBoardsJsonMajorVersion
-            ?: throw RuntimeException("Supported version info failed to be initialized")
+            ?: throw RuntimeException("Max supported boards json major version wasn't initialized")
 
         // Retrieve the major version of the remote json
         val newMajorVersion = mpyBoardsJson.version.split(".").firstOrNull()?.toIntOrNull()
-            ?: throw RuntimeException("Failed to identify version of new board json")
+            ?: throw RuntimeException("Failed to identify version of new boards JSON")
 
         // Ensure the remote json's version is supported
         if (newMajorVersion > maxSupportedMajorVersion) {
-            throw RuntimeException("Warning: Newest board json's structure is incompatible with this plugin version. Consider updating to get latest board support")
+            throw IncompatibleBoardsJsonVersionException("Newest board JSON's structure is incompatible with this plugin version. Consider updating to get latest board support")
         }
 
         writeCachedBoardsJson(remoteBoardsJsonContent!!)
@@ -223,7 +227,7 @@ internal class MpyFirmwareService(private val project: Project) {
 
         // Extract the stream
         val stream = MpyScripts::class.java.getResourceAsStream(resourcePath)
-            ?: throw RuntimeException("Bundled board json file not found: $resourcePath")
+            ?: throw RuntimeException("Bundled boards JSON file not found: $resourcePath")
 
         // Read and return the file's text
         return stream.bufferedReader(Charsets.UTF_8).use { it.readText() }
@@ -260,7 +264,7 @@ internal class MpyFirmwareService(private val project: Project) {
         }
 
         // Ensure the file was created
-        if (boardJsonFile == null) throw RuntimeException("Failed to write cached board JSON")
+        if (boardJsonFile == null) throw RuntimeException("Failed to write cached boards JSON")
 
         return boardJsonFile
     }

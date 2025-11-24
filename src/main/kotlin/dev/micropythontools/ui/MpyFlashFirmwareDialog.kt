@@ -24,7 +24,9 @@ import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import dev.micropythontools.firmware.Board
+import dev.micropythontools.firmware.IncompatibleBoardsJsonVersionException
 import dev.micropythontools.firmware.MpyFirmwareService
+import dev.micropythontools.firmware.PREVIEW_FIRMWARE_STRING
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.EMPTY_PORT_NAME_TEXT
 import dev.micropythontools.settings.MpySettingsService
@@ -71,6 +73,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
 
     init {
         title = "Flash Firmware/MicroPython"
+        setOKButtonText("Flash")
 
         // Load cached boards immediately (instant)
         currentBoards = firmwareService.getCachedBoards()
@@ -91,6 +94,10 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
             }
 
             setStatusUpToDate(timeStamp)
+        } catch (_: IncompatibleBoardsJsonVersionException) {
+            val timeStamp = firmwareService.getCachedBoardsTimestamp()
+
+            setStatusIncompatible(timeStamp)
         } catch (_: Throwable) {
             val timeStamp = firmwareService.getCachedBoardsTimestamp()
 
@@ -228,14 +235,20 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
         }
     }
 
-    private fun setStatusFailed(cachedTimestamp: String) {
-        val formattedDate = formatReadableDateTime(cachedTimestamp)
-        statusComment.component.text = "Update check failed. Using cached data created on: $formattedDate"
-    }
-
     private fun setStatusUpToDate(cachedTimestamp: String) {
         val formattedDate = formatReadableDateTime(cachedTimestamp)
-        statusComment.component.text = "Firmware index up-to date. Created on: $formattedDate"
+        statusComment.component.text = "Firmware index up-to date, created on: $formattedDate"
+    }
+
+    private fun setStatusIncompatible(cachedTimestamp: String) {
+        val formattedDate = formatReadableDateTime(cachedTimestamp)
+        statusComment.component.text =
+            "Remote index is incompatible, consider updating the plugin.<br>Using cached data from: $formattedDate"
+    }
+
+    private fun setStatusFailed(cachedTimestamp: String) {
+        val formattedDate = formatReadableDateTime(cachedTimestamp)
+        statusComment.component.text = "Up-to date check failed.<br>Using cached data from: $formattedDate"
     }
 
     private fun updateDeviceTypeComboBox() {
@@ -318,19 +331,19 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
 
         val onlySupportedInPreview =
             versions
-                .filter { !it.contains("preview") }
+                .filter { !it.contains(PREVIEW_FIRMWARE_STRING) }
                 .map { it }
                 .isEmpty()
 
         if (!showPreviewReleasesCheckBox.component.isSelected && !onlySupportedInPreview) {
-            versions.removeIf { it.contains("preview") }
+            versions.removeIf { it.contains(PREVIEW_FIRMWARE_STRING) }
         }
 
         if (!showOlderVersionsCheckBox.component.isSelected) {
             val latestRelease = versions.first()
             val latestReleasePartToKeep = latestRelease.substringBeforeLast(".")
 
-            versions.removeIf { !it.contains(latestReleasePartToKeep) && !it.contains("preview") }
+            versions.removeIf { !it.contains(latestReleasePartToKeep) && !it.contains(PREVIEW_FIRMWARE_STRING) }
         }
 
         versions.forEach { model.add(it) }
@@ -426,5 +439,9 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
         val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a")
             .withZone(ZoneId.systemDefault())
         return formatter.format(updateTime)
+    }
+
+    override fun doOKAction() {
+        super.doOKAction()
     }
 }
