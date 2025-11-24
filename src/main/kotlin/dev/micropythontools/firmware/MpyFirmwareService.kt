@@ -49,7 +49,7 @@ internal data class Board(
 
 @Suppress("PropertyName")
 @Serializable
-private data class MpyBoardsJson(
+internal data class MpyBoardsJson(
     val version: String,
     val timestamp: String,
     val skimmed_ports: List<String>,
@@ -144,7 +144,7 @@ internal class MpyFirmwareService(private val project: Project) {
         }
     }
 
-    fun getCachedBoards(): List<Board> {
+    private fun getCachedBoardsJson(): MpyBoardsJson {
         val cachedBoardsJsonFilePath = "${MpyPaths.globalAppDataBase()}/${MpyPaths.MICROPYTHON_BOARD_JSON_FILE_NAME}"
 
         // Try to find the existing cached board list
@@ -156,8 +156,21 @@ internal class MpyFirmwareService(private val project: Project) {
         // Extract the file's content
         val cachedBoardsJsonContent = cachedBoardsJsonFile.readText()
 
+        return parseMpyBoardJson(cachedBoardsJsonContent)
+    }
+
+    fun getCachedBoardsTimestamp(): String {
+        val cachedBoardsJson = getCachedBoardsJson()
+
+        // Return just the timestamp
+        return cachedBoardsJson.timestamp
+    }
+
+    fun getCachedBoards(): List<Board> {
+        val cachedBoardsJson = getCachedBoardsJson()
+
         // Return just the boards
-        return parseMpyBoardJson(cachedBoardsJsonContent).boards
+        return cachedBoardsJson.boards
     }
 
     fun updateCachedBoards() {
@@ -165,16 +178,20 @@ internal class MpyFirmwareService(private val project: Project) {
             "https://raw.githubusercontent.com/lukaskremla/micropython-tools-jetbrains/dev_test/firmware_retrieval/data/micropython_boards.json"
         val request = HttpRequest.newBuilder().uri(URI.create(url)).build()
 
-        val response = try {
-            client.send(request, HttpResponse.BodyHandlers.ofString())
-        } catch (_: Throwable) {
-            return
+        var remoteBoardsJsonContent: String? = null
+        ApplicationManager.getApplication().invokeAndWait {
+            remoteBoardsJsonContent = try {
+                val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+                response.body()
+            } catch (_: Throwable) {
+                null
+            }
         }
 
-        val remoteBoardsJsonContent = response.body()
+        remoteBoardsJsonContent ?: throw RuntimeException("Failed to fetch latest json data")
 
         // Verify and validate the new JSON
-        val mpyBoardsJson = parseMpyBoardJson(remoteBoardsJsonContent)
+        val mpyBoardsJson = parseMpyBoardJson(remoteBoardsJsonContent!!)
 
         // Save the highest supported major version to a local variable and ensure it's initialized
         val maxSupportedMajorVersion = maxSupportedBoardsJsonMajorVersion
@@ -189,7 +206,9 @@ internal class MpyFirmwareService(private val project: Project) {
             throw RuntimeException("Warning: Newest board json's structure is incompatible with this plugin version. Consider updating to get latest board support")
         }
 
-        writeCachedBoardsJson(remoteBoardsJsonContent)
+        println("Before writing")
+        writeCachedBoardsJson(remoteBoardsJsonContent!!)
+        println("After writing")
     }
 
     private fun parseMpyBoardJson(jsonString: String): MpyBoardsJson {

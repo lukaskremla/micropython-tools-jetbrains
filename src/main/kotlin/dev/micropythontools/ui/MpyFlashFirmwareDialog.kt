@@ -16,7 +16,6 @@
 
 package dev.micropythontools.ui
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -24,15 +23,19 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.ui.UIUtil
 import dev.micropythontools.firmware.Board
 import dev.micropythontools.firmware.MpyFirmwareService
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.EMPTY_PORT_NAME_TEXT
 import dev.micropythontools.settings.MpySettingsService
 import io.ktor.util.*
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.JEditorPane
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 
@@ -45,6 +48,8 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
     private var currentBoards: List<Board> = emptyList()
 
     // UI components
+    private lateinit var statusComment: Cell<JEditorPane>
+
     private lateinit var enableManualEditingCheckbox: Cell<JBCheckBox>
     private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
@@ -57,8 +62,6 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
     private lateinit var showOlderVersionsCheckBox: Cell<JBCheckBox>
     private lateinit var showPreviewReleasesCheckBox: Cell<JBCheckBox>
     private lateinit var versionComboBox: Cell<ComboBox<String>>
-
-    private lateinit var statusLabel: JLabel
 
     // Selected board for tracking
     private var selectedBoard: Board? = null
@@ -74,21 +77,27 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
 
         init() // Required for DialogWrapper
 
-        // Start background update
-        ApplicationManager.getApplication().executeOnPooledThread {
-            updateStatus("Checking for firmware updates...")
+        // Set status to checking
+        setStatusChecking()
 
+        try {
+            // Update the cached boards json
             firmwareService.updateCachedBoards()
+
+            // Retrieve cached boards
             val newBoards = firmwareService.getCachedBoards()
 
-            ApplicationManager.getApplication().invokeLater {
-                if (newBoards != currentBoards && newBoards.isNotEmpty()) {
-                    updateBoardsInUI(newBoards)
-                    updateStatus("Firmware list updated")
-                } else {
-                    updateStatus("")
-                }
+            val timeStamp = firmwareService.getCachedBoardsTimestamp()
+
+            if (newBoards != currentBoards && newBoards.isNotEmpty()) {
+                updateBoardsInUI(newBoards)
             }
+
+            setStatusUpToDate(timeStamp)
+        } catch (_: Throwable) {
+            val timeStamp = firmwareService.getCachedBoardsTimestamp()
+
+            setStatusFailed(timeStamp)
         }
     }
 
@@ -108,12 +117,8 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
 
         return panel {
             row {
-                statusLabel = label("")
-                    .applyToComponent {
-                        foreground = UIUtil.getContextHelpForeground()
-                    }
-                    .component
-            }
+                statusComment = comment("Checking for firmware updates...")
+            }.bottomGap(BottomGap.NONE)
 
             group("Connection") {
                 row {
@@ -150,7 +155,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
                             })
                         }
                 }.layout(RowLayout.LABEL_ALIGNED)
-            }
+            }.topGap(TopGap.SMALL)
 
             group("Firmware Selection") {
                 row("Device Type:") {
@@ -225,8 +230,18 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
         }
     }
 
-    private fun updateStatus(message: String) {
-        statusLabel.text = message
+    private fun setStatusChecking() {
+        statusComment.component.text = "Checking for firmware updates..."
+    }
+
+    private fun setStatusFailed(cachedTimestamp: String) {
+        val formattedDate = formatReadableDateTime(cachedTimestamp)
+        statusComment.component.text = "Update check failed. Using cached data created on: $formattedDate"
+    }
+
+    private fun setStatusUpToDate(cachedTimestamp: String) {
+        val formattedDate = formatReadableDateTime(cachedTimestamp)
+        statusComment.component.text = "Firmware index up-to date. Created on: $formattedDate"
     }
 
     private fun updateDeviceTypeComboBox() {
@@ -403,5 +418,19 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
         if (portSelectModel.isEmpty && (selectedItem == null || selectedItem.toString().isNotBlank())) {
             portSelectModel.selectedItem = EMPTY_PORT_NAME_TEXT
         }
+    }
+
+    private fun formatReadableDateTime(isoTimestamp: String): String {
+        val updateTime = if (isoTimestamp.endsWith("Z") || isoTimestamp.contains("+")) {
+            // Has timezone info, parse directly
+            Instant.parse(isoTimestamp)
+        } else {
+            // No timezone, assume UTC
+            LocalDateTime.parse(isoTimestamp).toInstant(ZoneOffset.UTC)
+        }
+
+        val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a")
+            .withZone(ZoneId.systemDefault())
+        return formatter.format(updateTime)
     }
 }
