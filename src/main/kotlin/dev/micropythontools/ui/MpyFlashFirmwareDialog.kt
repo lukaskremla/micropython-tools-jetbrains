@@ -122,6 +122,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
                     enableManualEditingCheckbox =
                         checkBox(MpyBundle.message("configurable.enable.manual.port.editing.checkbox.text"))
                             .applyToComponent {
+                                isSelected = settings.state.enableManualEditing
                                 addActionListener {
                                     val comboBox = portSelectComboBox.component
                                     comboBox.isEditable = isSelected
@@ -134,7 +135,7 @@ internal class MpyFlashFirmwareDialog(project: Project) : DialogWrapper(project,
                     filterManufacturersCheckBox =
                         checkBox(MpyBundle.message("configurable.filter.out.unknown.manufacturers.checkbox.text"))
                             .applyToComponent {
-                                isSelected = true
+                                isSelected = settings.state.filterManufacturers
                             }
                 }
 
