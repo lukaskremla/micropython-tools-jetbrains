@@ -25,6 +25,8 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
@@ -282,6 +284,11 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                             project
                         ).columns(25)
                             .validationOnApply {
+                                // Only validate if local file option is selected
+                                if (!localFileRadioButton.component.isSelected) {
+                                    return@validationOnApply null
+                                }
+
                                 val localFilePath = it.text
                                 val localFile = LocalFileSystem.getInstance().findFileByPath(localFilePath)
 
@@ -525,6 +532,45 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
     }
 
     override fun doOKAction() {
+        var result = false
+
+        runWithModalProgressBlocking(project, "Flashing Firmware...") {
+            reportRawProgress { reporter ->
+                val board = firmwareService.getCachedBoards().find {
+                    it.name == boardVariantComboBox.component.selectedItem
+                } ?: throw RuntimeException("Failed to find selected board")
+
+                val firmwarePath = if (microPythonOrgRadioButton.component.isSelected) {
+                    reporter.text("Downloading MicroPython firmware...")
+                    firmwareService.downloadFirmwareToTemp(
+                        board,
+                        (firmwareVariantComboBox.component.selectedItem
+                            ?: throw RuntimeException("Failed to find selected firmware variant")).toString(),
+                        (versionComboBox.component.selectedItem
+                            ?: throw RuntimeException("Failed to find selected version")).toString()
+                    )
+                } else {
+                    localFileTextFieldWithBrowseButton.component.text
+                }
+
+                val firmwareFile =
+                    LocalFileSystem.getInstance().findFileByPath(firmwarePath)
+                        ?: throw RuntimeException("Firmware file doesn't exist")
+
+                firmwareService.flashFirmware(
+                    reporter,
+                    (portSelectComboBox.component.selectedItem
+                        ?: throw RuntimeException("Failed to get selected port ")).toString(),
+                    firmwareFile.path,
+                    (mcuComboBox.component.selectedItem
+                        ?: throw RuntimeException("Failed to get selected MCU")).toString(),
+                    board.offset,
+                    eraseFlashCheckBox.component.isSelected,
+                    eraseFileSystemAfter.component.isSelected
+                )
+            }
+        }
+
         super.doOKAction()
     }
 }

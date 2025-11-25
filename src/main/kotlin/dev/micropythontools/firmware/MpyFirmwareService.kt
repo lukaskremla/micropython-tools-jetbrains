@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
+import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.core.MpyPaths
 import dev.micropythontools.core.MpyScripts
 import io.ktor.util.*
@@ -76,6 +77,93 @@ internal class MpyFirmwareService(private val project: Project) {
         // Set the supported major version string, throw exception if it fails
         maxSupportedBoardsJsonMajorVersion = mpyBoardsJson.version.split(".").firstOrNull()?.toIntOrNull()
             ?: throw RuntimeException("Failed to identify max supported micropython_boards.json version on startup")
+    }
+
+    /**
+     * Downloads firmware to a temporary file.
+     *
+     * @param board The board to download firmware for
+     * @param variantName The firmware variant (e.g., "Standard", "SPIRAM")
+     * @param versionIndex The index of the version in the firmware list
+     * @return Path to the downloaded firmware file
+     */
+    fun downloadFirmwareToTemp(board: Board, variantName: String, version: String): String {
+        // Get the link part for this variant and version
+        val linkParts = board.firmwareNameToLinkParts[variantName]
+            ?: throw IllegalArgumentException("Firmware variant '$variantName' not found for board '${board.name}'")
+
+        val linkPart = linkParts.find { it.contains(version) }
+
+        val downloadLinkPart = board.id + linkPart
+
+        // Construct the full download URL
+        // Example: https://micropython.org/resources/firmware/ESP32_GENERIC-20250911-v1.26.1.bin
+        val downloadUrl = "https://micropython.org/resources/firmware/$downloadLinkPart"
+
+        // Download the firmware
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(downloadUrl))
+            .build()
+
+        val response = try {
+            client.send(request, HttpResponse.BodyHandlers.ofByteArray())
+        } catch (e: Exception) {
+            throw RuntimeException("Failed to download firmware from $downloadUrl", e)
+        }
+
+        if (response.statusCode() != 200) {
+            throw RuntimeException("Failed to download firmware: HTTP ${response.statusCode()}")
+        }
+
+        // Create a temp file with the correct extension
+        val extension = getExtensionForPort(board.port)
+        val tempFile = kotlin.io.path.createTempFile(
+            prefix = downloadLinkPart,
+            suffix = extension
+        )
+
+        // Write the firmware data to the temp file
+        tempFile.toFile().writeBytes(response.body())
+
+        return tempFile.pathString
+    }
+
+    suspend fun flashFirmware(
+        reporter: RawProgressReporter,
+        port: String,
+        pathToFirmware: String,
+        mcu: String,
+        offset: String,
+        eraseFlash: Boolean,
+        eraseFileSystem: Boolean
+    ) {
+        val flasherToUse = when {
+            mcu.startsWith("esp") -> MpyEspFlasher()
+
+            mcu.startsWith("stm") -> MpyStmFlasher()
+
+            mcu.startsWith("samd") -> MpySamdFlasher()
+
+            mcu.startsWith("rp2") -> MpyRp2Flasher()
+
+            else -> throw RuntimeException("MCU \"${mcu}\" not supported by flasher")
+        }
+
+        flasherToUse.flash(
+            reporter,
+            port,
+            pathToFirmware,
+            mcu,
+            offset,
+            eraseFlash,
+            eraseFileSystem
+        )
+
+        val file = LocalFileSystem.getInstance().findFileByPath(pathToFirmware)
+
+        file?.let {
+            file.delete(this)
+        }
     }
 
     /**
