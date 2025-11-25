@@ -16,6 +16,7 @@
 
 package dev.micropythontools.ui
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
@@ -183,6 +184,15 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                         .applyToComponent {
                             addActionListener {
                                 onDeviceTypeSelected()
+
+                                selectedItem?.let {
+                                    val selectedDeviceType = it.toString().toLowerCasePreservingASCIIRules()
+
+                                    val supportsEraseFlash =
+                                        selectedDeviceType.contains("esp") || selectedDeviceType.contains("stm")
+
+                                    eraseFlashCheckBox.enabled(supportsEraseFlash)
+                                }
                             }
                         }
                 }.layout(RowLayout.LABEL_ALIGNED)
@@ -217,6 +227,12 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                     onBoardVariantSelected()
                                 }
                             }
+                            .comment("<a>View on MicroPython.org</a>", action = {
+                                val boardId = firmwareService.getCachedBoards()
+                                    .find { it.name == boardVariantComboBox.component.selectedItem }?.id ?: "UNKNOWN"
+
+                                BrowserUtil.open("https://micropython.org/download/$boardId")
+                            })
                     }.layout(RowLayout.LABEL_ALIGNED)
 
                     row("Firmware variant:") {
@@ -289,6 +305,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
             group("Flashing Options") {
                 row {
                     eraseFlashCheckBox = checkBox("Erase flash first")
+                        .comment("Only ESP32, ESP8266 and STM32 devices support flash erase")
                 }
 
                 row {
