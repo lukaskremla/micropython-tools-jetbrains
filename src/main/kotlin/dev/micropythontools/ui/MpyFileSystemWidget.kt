@@ -706,11 +706,11 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
 
     private fun newTreeModel() = DefaultTreeModel(InvisibleRootNode(), true)
 
-    fun formatSize(bytes: Long, showMoreKB: Boolean = false): String {
+    fun formatSize(bytes: Long): String {
         return when {
             bytes >= 1_000_000_000_000 -> "%.2f TB".format(bytes / 1_000_000_000_000.0)
             bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
-            bytes >= 1_000_000 && !showMoreKB && bytes <= 10_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
+            bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
             bytes >= 1_000 -> "%.1f KB".format(bytes / 1_000.0)
             else -> "$bytes bytes"
         }
