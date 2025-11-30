@@ -548,6 +548,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
     }
 
     override fun doOKAction() {
+        // Validate interpreter
         val interpreterResult = interpreterService.checkInterpreterValid()
         if (!interpreterResult.isOk) {
             Messages.showErrorDialog(
@@ -555,71 +556,80 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                 interpreterResult.errorMessage,
                 "Python Interpreter Required"
             )
-            return
+            return // Return to the original dialog without closing it abruptly
         }
 
+        // Validate dependencies
         val dependenciesResult = interpreterService.checkDependenciesValid()
         if (!dependenciesResult.isOk) {
-            val quickFix = dependenciesResult.quickFix
+            // Dependencies quick fix is never null
+            val quickFix = dependenciesResult.quickFix!!
 
-            if (quickFix != null) {
-                val result = Messages.showDialog(
-                    project,
-                    dependenciesResult.errorMessage,
-                    "Dependencies Required",
-                    arrayOf(quickFix.fixButtonText, "Cancel"),
-                    0, // Default button index (Install)
-                    Messages.getErrorIcon()
-                )
+            val result = Messages.showDialog(
+                project,
+                dependenciesResult.errorMessage,
+                "Dependencies Required",
+                arrayOf(quickFix.fixButtonText, "Cancel"),
+                0, // Default button index (Install)
+                Messages.getErrorIcon()
+            )
 
-                if (result == 0) { // Install button clicked
-                    quickFix.run(null)
-                    return
-                } else {
-                    return
-                }
+            // Exit back to the parent dialog in both cases without abruptly closing it
+            if (result == 0) { // Install button clicked
+                quickFix.run(null)
+                return
+            } else {
+                return
             }
         }
-
-        var result = false
 
         runWithModalProgressBlocking(project, "Flashing Firmware...") {
             reportRawProgress { reporter ->
-                val board = firmwareService.getCachedBoards().find {
-                    it.name == boardVariantComboBox.component.selectedItem
-                } ?: throw RuntimeException("Failed to find selected board")
+                try {
+                    val board = firmwareService.getCachedBoards().find {
+                        it.name == boardVariantComboBox.component.selectedItem
+                    } ?: throw RuntimeException("Failed to find selected board")
 
-                val firmwarePath = if (microPythonOrgRadioButton.component.isSelected) {
-                    reporter.text("Downloading MicroPython firmware...")
-                    firmwareService.downloadFirmwareToTemp(
-                        board,
-                        (firmwareVariantComboBox.component.selectedItem
-                            ?: throw RuntimeException("Failed to find selected firmware variant")).toString(),
-                        (versionComboBox.component.selectedItem
-                            ?: throw RuntimeException("Failed to find selected version")).toString()
-                    )
-                } else {
-                    localFileTextFieldWithBrowseButton.component.text
-                }
+                    // If using micropython.org
+                    val firmwarePath = if (microPythonOrgRadioButton.component.isSelected) {
+                        firmwareService.downloadFirmwareToTemp(
+                            reporter,
+                            board,
+                            (firmwareVariantComboBox.component.selectedItem
+                                ?: throw RuntimeException("Failed to find selected firmware variant")).toString(),
+                            (versionComboBox.component.selectedItem
+                                ?: throw RuntimeException("Failed to find selected version")).toString()
+                        )
+                    } else { // If using the custom path
+                        localFileTextFieldWithBrowseButton.component.text
+                    }
 
-                val firmwareFile =
-                    LocalFileSystem.getInstance().findFileByPath(firmwarePath)
+                    // Ensure the file exists now
+                    val firmwareFile = LocalFileSystem.getInstance().findFileByPath(firmwarePath)
                         ?: throw RuntimeException("Firmware file doesn't exist")
 
-                firmwareService.flashFirmware(
-                    reporter,
-                    (portSelectComboBox.component.selectedItem
-                        ?: throw RuntimeException("Failed to get selected port ")).toString(),
-                    firmwareFile.path,
-                    (mcuComboBox.component.selectedItem
-                        ?: throw RuntimeException("Failed to get selected MCU")).toString(),
-                    board.offset,
-                    eraseFlashCheckBox.component.isSelected,
-                    eraseFileSystemAfter.component.isSelected
-                )
+                    // Hand off to the firmware flashing service
+                    firmwareService.flashFirmware(
+                        reporter,
+                        (portSelectComboBox.component.selectedItem
+                            ?: throw RuntimeException("Failed to get selected port ")).toString(),
+                        firmwareFile.path,
+                        (mcuComboBox.component.selectedItem
+                            ?: throw RuntimeException("Failed to get selected MCU")).toString(),
+                        board.offset,
+                        eraseFlashCheckBox.component.isSelected,
+                        eraseFileSystemAfter.component.isSelected
+                    )
+
+                    // If flashing succeeded show confirmation dialog and close the firmware flashing dialog
+                    // TODO: Show a simple "OK" installation success confirmation dialog
+
+                    // Close the Flash Firmware dialog
+                    super.doOKAction()
+                } catch (e: Throwable) {
+                    //TODO: Show the exception dialog for this throwable
+                }
             }
         }
-
-        super.doOKAction()
     }
 }

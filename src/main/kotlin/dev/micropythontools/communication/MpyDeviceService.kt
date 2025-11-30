@@ -47,8 +47,8 @@ import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
-import dev.micropythontools.ui.FileSystemWidget
 import dev.micropythontools.ui.MpyComponentRegistryService
+import dev.micropythontools.ui.MpyFileSystemWidget
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.util.concurrent.Executors
@@ -104,7 +104,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
     val ttyConnector: TtyConnector
         get() = comm.ttyConnector
 
-    val fileSystemWidget: FileSystemWidget?
+    val fileSystemWidget: MpyFileSystemWidget?
         get() = componentRegistryService.getFileSystemWidget()
 
     val stateListeners = mutableListOf<StateListener>()

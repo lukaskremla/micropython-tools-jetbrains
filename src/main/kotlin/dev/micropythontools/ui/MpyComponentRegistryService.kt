@@ -22,11 +22,11 @@ import com.intellij.ui.content.Content
 
 @Service(Service.Level.PROJECT)
 internal class MpyComponentRegistryService {
-    private var fileSystemWidget: FileSystemWidget? = null
+    private var fileSystemWidget: MpyFileSystemWidget? = null
     private var terminalContent: Content? = null
     private var terminal: JBTerminalWidget? = null
 
-    fun registerFileSystem(fileSystemWidget: FileSystemWidget) {
+    fun registerFileSystem(fileSystemWidget: MpyFileSystemWidget) {
         this.fileSystemWidget = fileSystemWidget
     }
 

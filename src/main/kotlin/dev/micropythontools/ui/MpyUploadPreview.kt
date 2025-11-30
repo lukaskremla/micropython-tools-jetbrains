@@ -43,6 +43,7 @@ import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.core.MpyProjectFileService
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.icons.MpyIcons
+import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 import java.awt.Color
 import java.awt.Dimension
 import java.util.*
@@ -482,25 +483,24 @@ internal class MpyUploadPreview(
                             if (nominalTotalSize > 0) (1.0 - (compressedTotalSize / nominalTotalSize)) * 100.0 else 0.0
 
                         val percentageToShow = "%.1f".format(percentage)
-                        val reducedKBToShow = deviceService.fileSystemWidget?.formatSize(compressedTotalSize, true)
-                        val nominalTotalKBToShow = deviceService.fileSystemWidget?.formatSize(nominalTotalSize, true)
-                        val savedKBToShow =
-                            deviceService.fileSystemWidget?.formatSize(nominalTotalSize - compressedTotalSize, true)
+                        val reducedKBToShow = formatSize(compressedTotalSize, true)
+                        val nominalTotalKBToShow = formatSize(nominalTotalSize, true)
+                        val savedKBToShow = formatSize(nominalTotalSize - compressedTotalSize, true)
 
                         val txt =
                             "${
                                 MpyBundle.message(
                                     "upload.preview.compression.savings.text",
                                     percentageToShow,
-                                    savedKBToShow!!
+                                    savedKBToShow
                                 )
                             } · $nominalTotalKBToShow → $reducedKBToShow"
 
                         val toolTipTxt = MpyBundle.message(
                             "upload.preview.compression.savings.tooltip",
                             savedKBToShow,
-                            nominalTotalKBToShow!!,
-                            reducedKBToShow!!
+                            nominalTotalKBToShow,
+                            reducedKBToShow
                         )
 
                         cell(JLabel(txt).apply {

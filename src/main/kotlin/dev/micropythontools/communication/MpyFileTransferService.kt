@@ -41,6 +41,7 @@ import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.*
+import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -320,24 +321,21 @@ internal class MpyFileTransferService(private val project: Project) {
 
                 // Report compressed size progress.
                 if (compressedTotalSize != null && compressedTotalSize != 0.0 && nominalTotalSize - compressedTotalSize != 0.0) {
-                    val reducedKBToShow = deviceService.fileSystemWidget?.formatSize(compressedTotalSize, true)
-                    val nominalTotalKBToShow = deviceService.fileSystemWidget?.formatSize(nominalTotalSize, true)
-                    val savedKBToShow =
-                        deviceService.fileSystemWidget?.formatSize(nominalTotalSize - compressedTotalSize, true)
+                    val reducedKBToShow = formatSize(compressedTotalSize, true)
+                    val nominalTotalKBToShow = formatSize(nominalTotalSize, true)
+                    val savedKBToShow = formatSize(nominalTotalSize - compressedTotalSize, true)
 
-                    savedKBToShow?.let {
-                        consoleView?.print(
-                            "${
-                                MpyBundle.message(
-                                    "upload.preview.compression.savings.tooltip",
-                                    savedKBToShow,
-                                    nominalTotalKBToShow!!,
-                                    reducedKBToShow!!
-                                )
-                            }\n",
-                            ConsoleViewContentType.NORMAL_OUTPUT
-                        )
-                    }
+                    consoleView?.print(
+                        "${
+                            MpyBundle.message(
+                                "upload.preview.compression.savings.tooltip",
+                                savedKBToShow,
+                                nominalTotalKBToShow,
+                                reducedKBToShow
+                            )
+                        }\n",
+                        ConsoleViewContentType.NORMAL_OUTPUT
+                    )
                 } else if (settings.state.compressUploads && proService.isActive) {
                     consoleView?.print(
                         "${MpyBundle.message("upload.console.skipping.compression")}\n",
@@ -403,8 +401,7 @@ internal class MpyFileTransferService(private val project: Project) {
                             MpyBundle.message(
                                 "upload.console.uploading.file",
                                 path,
-                                deviceService.fileSystemWidget?.formatSize(file.getSnapshot().content.size.toLong()) 
-                                    ?: MpyBundle.message("upload.console.error.formatting.file.size")
+                                formatSize(file.getSnapshot().content.size.toLong())
                             )
                         }\n",
                         ConsoleViewContentType.NORMAL_OUTPUT

@@ -20,6 +20,7 @@ import com.amazon.ion.NullValueException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -27,15 +28,20 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.core.MpyPaths
+import dev.micropythontools.core.MpyPythonInterpreterService
 import dev.micropythontools.core.MpyScripts
+import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 import io.ktor.util.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createTempFile
 import kotlin.io.path.pathString
 
 internal const val PREVIEW_FIRMWARE_STRING = "preview"
@@ -64,6 +70,8 @@ internal data class MpyBoardsJson(
 
 @Service(Service.Level.PROJECT)
 internal class MpyFirmwareService(private val project: Project) {
+    private val interpreterService = project.service<MpyPythonInterpreterService>()
+
     private val client: HttpClient = HttpClient.newHttpClient()
     private var maxSupportedBoardsJsonMajorVersion: Int? = null
     private val json = Json { ignoreUnknownKeys = true }
@@ -79,56 +87,110 @@ internal class MpyFirmwareService(private val project: Project) {
             ?: throw RuntimeException("Failed to identify max supported micropython_boards.json version on startup")
     }
 
-    /**
-     * Downloads firmware to a temporary file.
-     *
-     * @param board The board to download firmware for
-     * @param variantName The firmware variant (e.g., "Standard", "SPIRAM")
-     * @param versionIndex The index of the version in the firmware list
-     * @return Path to the downloaded firmware file
-     */
-    fun downloadFirmwareToTemp(board: Board, variantName: String, version: String): String {
+    fun downloadFirmwareToTemp(
+        reporter: RawProgressReporter,
+        board: Board,
+        variantName: String,
+        version: String
+    ): String {
+        reporter.text("Downloading MicroPython firmware...")
+
         // Get the link part for this variant and version
         val linkParts = board.firmwareNameToLinkParts[variantName]
             ?: throw IllegalArgumentException("Firmware variant '$variantName' not found for board '${board.name}'")
 
         val linkPart = linkParts.find { it.contains(version) }
+            ?: throw IllegalArgumentException("Version '$version' not found for variant '$variantName'")
 
         val downloadLinkPart = board.id + linkPart
 
         // Construct the full download URL
-        // Example: https://micropython.org/resources/firmware/ESP32_GENERIC-20250911-v1.26.1.bin
         val downloadUrl = "https://micropython.org/resources/firmware/$downloadLinkPart"
 
-        // Download the firmware
+        reporter.details("Connecting to micropython.org...")
+
+        // First, get the content length with a HEAD request
+        val headRequest = HttpRequest.newBuilder()
+            .uri(URI.create(downloadUrl))
+            .method("HEAD", HttpRequest.BodyPublishers.noBody())
+            .build()
+
+        val contentLength = try {
+            val headResponse = client.send(headRequest, HttpResponse.BodyHandlers.discarding())
+            headResponse.headers().firstValueAsLong("Content-Length")
+                .orElse(-1L)
+                .takeIf { it > 0 }
+        } catch (_: Throwable) {
+            null
+        }
+
+        // Download with streaming to track progress
         val request = HttpRequest.newBuilder()
             .uri(URI.create(downloadUrl))
             .build()
 
         val response = try {
-            client.send(request, HttpResponse.BodyHandlers.ofByteArray())
+            if (contentLength != null) {
+                // Known size - track progress
+                client.send(request, HttpResponse.BodyHandlers.ofInputStream()).let { response ->
+                    if (response.statusCode() != 200) {
+                        throw RuntimeException("Failed to download firmware: HTTP ${response.statusCode()}")
+                    }
+
+                    val inputStream = response.body()
+                    val outputStream = ByteArrayOutputStream()
+                    val buffer = ByteArray(8192)
+                    var bytesRead: Int
+                    var totalBytesRead = 0L
+
+                    reporter.details("Starting download... (${formatSize(contentLength)})")
+
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                        totalBytesRead += bytesRead
+
+                        // Update progress
+                        val percentage = (totalBytesRead * 100 / contentLength).toInt()
+                        reporter.details(
+                            "Downloaded ${formatSize(totalBytesRead)} of ${formatSize(contentLength)} ($percentage%)"
+                        )
+                        reporter.fraction(totalBytesRead.toDouble() / contentLength)
+                    }
+
+                    outputStream.toByteArray()
+                }
+            } else {
+                // Unknown size - just download without progress
+                reporter.details("Downloading firmware...")
+                client.send(request, HttpResponse.BodyHandlers.ofByteArray()).let { response ->
+                    if (response.statusCode() != 200) {
+                        throw RuntimeException("Failed to download firmware: HTTP ${response.statusCode()}")
+                    }
+                    response.body()
+                }
+            }
         } catch (e: Exception) {
             throw RuntimeException("Failed to download firmware from $downloadUrl", e)
         }
 
-        if (response.statusCode() != 200) {
-            throw RuntimeException("Failed to download firmware: HTTP ${response.statusCode()}")
-        }
+        reporter.details("Download complete. Saving to temporary file...")
 
         // Create a temp file with the correct extension
         val extension = getExtensionForPort(board.port)
-        val tempFile = kotlin.io.path.createTempFile(
+        val tempFile = createTempFile(
             prefix = downloadLinkPart,
             suffix = extension
         )
 
         // Write the firmware data to the temp file
-        tempFile.toFile().writeBytes(response.body())
+        tempFile.toFile().writeBytes(response)
 
-        return tempFile.pathString
+        reporter.details("Saved to: ${tempFile.fileName}")
+
+        return tempFile.absolutePathString()
     }
 
-    suspend fun flashFirmware(
+    fun flashFirmware(
         reporter: RawProgressReporter,
         port: String,
         pathToFirmware: String,

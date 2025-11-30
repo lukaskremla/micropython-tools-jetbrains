@@ -46,7 +46,7 @@ internal class MpyToolWindow() : ToolWindowFactory, DumbAware {
 
         val newDisposable = Disposer.newDisposable(toolWindow.disposable, "MpyToolWindowDisposable")
 
-        val fileSystemWidget = FileSystemWidget(project)
+        val fileSystemWidget = MpyFileSystemWidget(project)
         val fileSystemContent = ContentFactory.getInstance()
             .createContent(fileSystemWidget, MpyBundle.message("toolwindow.file.system.tab.title"), true)
         fileSystemContent.setDisposer(newDisposable)

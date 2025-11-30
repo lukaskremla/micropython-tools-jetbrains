@@ -81,7 +81,29 @@ private data class FsClipboard(val op: ClipOp, val paths: List<String>) : java.i
 
 private val FS_CLIP_FLAVOR = DataFlavor(FsClipboard::class.java, MpyBundle.message("file.system.clipboard.flavour"))
 
-internal class FileSystemWidget(private val project: Project) : JBPanel<FileSystemWidget>(BorderLayout()) {
+internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFileSystemWidget>(BorderLayout()) {
+    companion object {
+        fun formatSize(bytes: Long): String {
+            return when {
+                bytes >= 1_000_000_000_000 -> "%.2f TB".format(bytes / 1_000_000_000_000.0)
+                bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
+                bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
+                bytes >= 1_000 -> "%.1f KB".format(bytes / 1_000.0)
+                else -> "$bytes bytes"
+            }
+        }
+
+        fun formatSize(bytes: Double, showMoreKB: Boolean = false): String {
+            return when {
+                bytes >= 1_000_000_000_000 -> "%.2f TB".format(bytes / 1_000_000_000_000.0)
+                bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
+                bytes >= 1_000_000 && !showMoreKB && bytes <= 10_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
+                bytes >= 1_000 -> "%.2f KB".format(bytes / 1_000.0)
+                else -> "$bytes bytes"
+            }
+        }
+    }
+
     val tree: Tree = Tree(newTreeModel())
 
     private val settings = project.service<MpySettingsService>()
@@ -705,26 +727,6 @@ internal class FileSystemWidget(private val project: Project) : JBPanel<FileSyst
         doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = true, useReporter = true)
 
     private fun newTreeModel() = DefaultTreeModel(InvisibleRootNode(), true)
-
-    fun formatSize(bytes: Long): String {
-        return when {
-            bytes >= 1_000_000_000_000 -> "%.2f TB".format(bytes / 1_000_000_000_000.0)
-            bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
-            bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
-            bytes >= 1_000 -> "%.1f KB".format(bytes / 1_000.0)
-            else -> "$bytes bytes"
-        }
-    }
-
-    fun formatSize(bytes: Double, showMoreKB: Boolean = false): String {
-        return when {
-            bytes >= 1_000_000_000_000 -> "%.2f TB".format(bytes / 1_000_000_000_000.0)
-            bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
-            bytes >= 1_000_000 && !showMoreKB && bytes <= 10_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
-            bytes >= 1_000 -> "%.2f KB".format(bytes / 1_000.0)
-            else -> "$bytes bytes"
-        }
-    }
 
     private suspend fun doRefresh(
         reporter: RawProgressReporter,
