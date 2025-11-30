@@ -16,7 +16,6 @@
 
 package dev.micropythontools.freemium
 
-import com.intellij.facet.ui.ValidationResult
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -25,6 +24,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.SequentialProgressReporter
 import dev.micropythontools.communication.DeviceInformation
 import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.core.MpyScripts
@@ -135,7 +135,7 @@ internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
         ) -> String
     ) = fail()
 
-    override fun checkProDependenciesValid(project: Project): ValidationResult = ValidationResult.OK
+    override fun checkNumberOfMissingProDependencies(project: Project): Int = 0
 
-    override fun ensureProDependenciesInstalled(project: Project) = Unit
+    override fun ensureProDependenciesInstalled(project: Project, reporter: SequentialProgressReporter) = Unit
 }

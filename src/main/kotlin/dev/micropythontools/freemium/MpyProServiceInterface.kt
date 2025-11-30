@@ -16,11 +16,11 @@
 
 package dev.micropythontools.freemium
 
-import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.SequentialProgressReporter
 import javax.swing.Icon
 
 internal class ProFeatureUnavailable(message: String) : IllegalStateException(message)
@@ -81,7 +81,7 @@ internal interface MpyProServiceInterface {
         ) -> String
     )
 
-    fun checkProDependenciesValid(project: Project): ValidationResult
+    fun checkNumberOfMissingProDependencies(project: Project): Int
 
-    fun ensureProDependenciesInstalled(project: Project)
+    fun ensureProDependenciesInstalled(project: Project, reporter: SequentialProgressReporter)
 }

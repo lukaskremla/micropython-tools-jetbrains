@@ -494,6 +494,7 @@ internal class MpyStubPackageService(private val project: Project) {
         }
 
         pythonService.installPackage(
+            null,
             "${stubPackage.name}~=$resolvedBoardVersion",
             targetDir.absolutePathString(),
             !isAtLeast123(stubPackage.mpyVersion)
@@ -501,6 +502,7 @@ internal class MpyStubPackageService(private val project: Project) {
 
         if (isAtLeast123(stubPackage.mpyVersion)) {
             pythonService.installPackage(
+                null,
                 "${MpyPaths.STDLIB_STUB_PACKAGE_NAME}~=$resolvedStdlibVersion",
                 targetDir.absolutePathString(),
                 false

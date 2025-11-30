@@ -31,6 +31,8 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.SequentialProgressReporter
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.sdkSeemsValid
@@ -62,20 +64,26 @@ internal class MpyPythonInterpreterService(private val project: Project) {
 
     fun checkDependenciesValid(): ValidationResult {
         // Validate pro dependencies
-        val proDependenciesValidationResult = proService.checkProDependenciesValid(project)
+        val numberOfMissingProDependencies = proService.checkNumberOfMissingProDependencies(project)
 
-        return if (!proDependenciesValidationResult.isOk || checkMissingPythonPackages().isNotEmpty()) {
+        val missingPythonPackages = checkMissingPythonPackages()
+
+        return if (numberOfMissingProDependencies != 0 || missingPythonPackages.isNotEmpty()) {
             ValidationResult(
                 "Some of the plugin's dependencies are missing or require updates",
                 object :
-                    FacetConfigurationQuickFix(MpyBundle.message("python.service.validation.package.not.installed.install.button")) {
+                    FacetConfigurationQuickFix("Install/Update Dependencies") {
                     override fun run(place: JComponent?) {
                         ApplicationManager.getApplication().invokeLater {
                             runWithModalProgressBlocking(
                                 project,
                                 "Installing/Updating MicroPython Tools dependencies..."
                             ) {
-                                ensureDependenciesInstalled()
+                                reportSequentialProgress(
+                                    numberOfMissingProDependencies + missingPythonPackages.size
+                                ) { reporter ->
+                                    ensureDependenciesInstalled(reporter)
+                                }
                             }
                         }
                     }
@@ -84,17 +92,21 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         } else ValidationResult.OK
     }
 
-    fun ensureDependenciesInstalled() {
+    fun ensureDependenciesInstalled(reporter: SequentialProgressReporter) {
         val missingPythonPackages = checkMissingPythonPackages()
 
         missingPythonPackages.forEach { (name, version) ->
             val targetPath = getPackagePythonPath(name, version)
 
-            installPackage("$name==$version", targetPath)
+            installPackage(
+                reporter,
+                "$name==$version",
+                targetPath
+            )
         }
 
         // Ensure pro dependencies are installed
-        proService.ensureProDependenciesInstalled(project)
+        proService.ensureProDependenciesInstalled(project, reporter)
     }
 
     private fun checkMissingPythonPackages(): List<Pair<String, String>> {
@@ -119,7 +131,14 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         return packagesToInstall
     }
 
-    fun installPackage(toInstall: String, targetPath: String, installDependencies: Boolean = true) {
+    fun installPackage(
+        reporter: SequentialProgressReporter? = null,
+        toInstall: String,
+        targetPath: String,
+        installDependencies: Boolean = true
+    ) {
+        reporter?.itemStep("Installing \"$toInstall\"")
+
         // Ensure the directory is clean first
         val targetDir = File(targetPath)
         if (targetDir.exists()) {
@@ -143,12 +162,15 @@ internal class MpyPythonInterpreterService(private val project: Project) {
 
         // Replace version specifiers internally to allow requiring simpler parameters
         val distInfoPart = toInstall
+            .replace("-", "_") // for mpy-cross (uses - in install command, but _ in dist info)
             .replace("==", "-")
             .replace("~=", "-")
 
-        val distInfoDir = targetDir.resolve("$distInfoPart.dist-info")
+        val distInfoDir = targetDir.listFiles().find {
+            it.name.startsWith(distInfoPart) && it.name.endsWith(".dist-info")
+        }
 
-        if (!distInfoDir.exists()) {
+        if (distInfoDir?.exists() != true) {
             throw RuntimeException("Error installing package \"$toInstall\": Failed to verify installation succeeded")
         }
     }
