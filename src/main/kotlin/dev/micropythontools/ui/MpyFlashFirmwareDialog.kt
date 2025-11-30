@@ -24,6 +24,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.reportRawProgress
@@ -39,6 +40,8 @@ import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.EMPTY_PORT_NAME_TEXT
 import dev.micropythontools.settings.MpySettingsService
 import io.ktor.util.*
+import jssc.SerialPort
+import jssc.SerialPortException
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -175,6 +178,17 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                 override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
                                 override fun popupMenuCanceled(e: PopupMenuEvent?) {}
                             })
+                        }
+                        .validationOnApply {
+                            try {
+                                val portToConnectTo = (portSelectComboBox.component.selectedItem ?: "").toString()
+                                val port = SerialPort(portToConnectTo)
+                                port.openPort()
+                                port.closePort()
+                                return@validationOnApply null
+                            } catch (e: SerialPortException) {
+                                return@validationOnApply ValidationInfo(e.exceptionType)
+                            }
                         }
                 }.layout(RowLayout.LABEL_ALIGNED)
             }
