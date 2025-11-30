@@ -1,6 +1,13 @@
 The Changelog
 =============
 
+2025.3.3 - 12.2025
+------------------
+
+* Improved upload run configuration "Force blocking upload" checkbox ordering
+* Adjusted File System volume size formatting
+* Centralized python dependency handling and inspections
+
 2025.3.2 - x.11.2025
 ------------------
 

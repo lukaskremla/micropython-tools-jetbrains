@@ -16,6 +16,7 @@
 
 package dev.micropythontools.freemium
 
+import com.intellij.facet.ui.ValidationResult
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -133,4 +134,8 @@ internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
             shouldStayDetached: Boolean
         ) -> String
     ) = fail()
+
+    override fun checkProDependenciesValid(project: Project): ValidationResult = ValidationResult.OK
+
+    override fun ensureProDependenciesInstalled(project: Project) = Unit
 }

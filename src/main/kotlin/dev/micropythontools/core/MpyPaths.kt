@@ -35,10 +35,19 @@ internal object MpyPaths {
         dir
     }
 
+    val packagesBaseDir: Path by lazy {
+        val base = globalAppDataBase()
+        val dir = base.resolve("packages")
+        Files.createDirectories(dir)
+        dir
+    }
+
     const val STUB_PACKAGE_MACHINE_NAME = "machine.pyi"
     const val STUB_PACKAGE_JSON_FILE_NAME = "micropython-stubs.json"
     const val STDLIB_STUB_PACKAGE_NAME = "micropython-stdlib-stubs"
     const val MICROPYTHON_BOARD_JSON_FILE_NAME = "micropython_boards.json"
+    const val ESPTOOL_PACKAGE_NAME = "esptool"
+    const val ESPTOOL_VERSION = "5.1.0"
 
     fun globalAppDataBase(): Path {
         val os = System.getProperty("os.name").orEmpty().lowercase()

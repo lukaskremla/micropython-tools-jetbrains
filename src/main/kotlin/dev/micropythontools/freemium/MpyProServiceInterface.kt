@@ -16,6 +16,7 @@
 
 package dev.micropythontools.freemium
 
+import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
@@ -79,4 +80,8 @@ internal interface MpyProServiceInterface {
             shouldStayDetached: Boolean
         ) -> String
     )
+
+    fun checkProDependenciesValid(project: Project): ValidationResult
+
+    fun ensureProDependenciesInstalled(project: Project)
 }

@@ -13,10 +13,18 @@
         </ul>
         <br>
         <h3>2025.3.1 - 5.11.2025</h3>
+        <p>Free:</p>
         <ul>
             <li>Switched to release year based versioning</li>
             <li>Improved stub package installation logic to show details about exceptions and to support UV interpreters</li>
             <li>Reworked run configurations to show console views and be compatible with before launch tasks</li>
+        </ul>
+        <p>Paid:</p>
+        <ul>
+            <li>Added mpy-cross run configuration with support for automatically detecting bytecode version/architecture for connected board</li>
+            <li>Added upload compression which speeds up uploads and improves communication stability by reducing the amount of data that must be transferred</li>
+            <li>Added background uploads/downloads progress reporting to reduce workflow disruptions during long-running data transfers</li>
+            <li>Added .mpy file analyzer</li>
         </ul>
         <br>
         <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
@@ -25,7 +33,7 @@
     <description><![CDATA[
         <p>Adds MicroPython support to JetBrains IDEs.</p>
         <br>
-        <p>Main features:</p>
+        <p>Free features:</p>
         <ul>
           <li>Upload and synchronize files with MicroPython devices (Serial and WebREPL supported)</li>
           <li>File System view with drag and drop, create/rename/delete, copy/cut/paste, and download</li>
@@ -34,6 +42,14 @@
           <li>REPL integration with reset, interrupt, and clear actions</li>
           <li>Run configurations for Project, Selected Sources Roots, and Custom Paths</li>
           <li>Mounted volume support (e.g. SD cards)</li>
+        </ul>
+        <br>
+        <p>Pro features:</p>
+        <ul>
+          <li>Background uploads and downloads that won't block the IDE</li>
+          <li>Automatic file compression to significantly speed up uploads</li>
+          <li>mpy-cross run configuration with auto-detection of bytecode version and architecture</li>
+          <li>.mpy file analyzer</li>
         </ul>
         <br>
         <p>Documentation, usage tips, and issue tracker are available on
@@ -74,11 +90,11 @@
         <!-- Inspections -->
         <!--suppress PluginXmlCapitalization -->
         <localInspection language="Python"
-                         key="inspection.python.interpreter.name"
+                         key="inspection.dependency.name"
                          groupKey="inspection.group.name"
                          bundle="localization.MpyBundle"
                          enabledByDefault="true"
-                         implementationClass="dev.micropythontools.inspections.MpyPythonInspection"/>
+                         implementationClass="dev.micropythontools.inspections.MpyDependencyInspection"/>
 
         <!-- Notifications -->
         <!--suppress PluginXmlCapitalization -->
