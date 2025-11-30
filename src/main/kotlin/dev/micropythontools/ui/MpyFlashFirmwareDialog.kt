@@ -23,8 +23,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.reportRawProgress
@@ -32,6 +32,7 @@ import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
+import dev.micropythontools.core.MpyPythonInterpreterService
 import dev.micropythontools.firmware.Board
 import dev.micropythontools.firmware.IncompatibleBoardsJsonVersionException
 import dev.micropythontools.firmware.MpyFirmwareService
@@ -56,6 +57,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
     private val settings = project.service<MpySettingsService>()
     private val deviceService = project.service<dev.micropythontools.communication.MpyDeviceService>()
     private val firmwareService = project.service<MpyFirmwareService>()
+    private val interpreterService = project.service<MpyPythonInterpreterService>()
 
     // Current board data
     private var currentBoards: List<Board> = emptyList()
@@ -187,7 +189,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                 port.closePort()
                                 return@validationOnApply null
                             } catch (e: SerialPortException) {
-                                return@validationOnApply ValidationInfo(e.exceptionType)
+                                return@validationOnApply error(e.exceptionType)
                             }
                         }
                 }.layout(RowLayout.LABEL_ALIGNED)
@@ -546,6 +548,39 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
     }
 
     override fun doOKAction() {
+        val interpreterResult = interpreterService.checkInterpreterValid()
+        if (!interpreterResult.isOk) {
+            Messages.showErrorDialog(
+                project,
+                interpreterResult.errorMessage,
+                "Python Interpreter Required"
+            )
+            return
+        }
+
+        val dependenciesResult = interpreterService.checkDependenciesValid()
+        if (!dependenciesResult.isOk) {
+            val quickFix = dependenciesResult.quickFix
+
+            if (quickFix != null) {
+                val result = Messages.showDialog(
+                    project,
+                    dependenciesResult.errorMessage,
+                    "Dependencies Required",
+                    arrayOf(quickFix.fixButtonText, "Cancel"),
+                    0, // Default button index (Install)
+                    Messages.getErrorIcon()
+                )
+
+                if (result == 0) { // Install button clicked
+                    quickFix.run(null)
+                    return
+                } else {
+                    return
+                }
+            }
+        }
+
         var result = false
 
         runWithModalProgressBlocking(project, "Flashing Firmware...") {
