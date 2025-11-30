@@ -526,7 +526,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
         val selectedItem = portSelectModel.selectedItem
 
-        if (portSelectModel.isEmpty && (selectedItem == null || selectedItem.toString().isNotBlank())) {
+        if (portSelectModel.isEmpty && (selectedItem == null || selectedItem.toString().isBlank())) {
             portSelectModel.selectedItem = EMPTY_PORT_NAME_TEXT
         }
     }
