@@ -397,9 +397,14 @@ This plugin solves this issue by internally using the latest available mpy-cross
 
 NOTE: This should not affect backwards compatibility (bytecode from mpy-cross 1.26.1 should be perfectly compatible with MPY version 1.23.0), if you suspect you've ran into some compatibility issue caused by this plugin's mpy-cross version selection behavior, pleae open an issue.
 
-The mapping of BytecodeVersions to used mpy-cross binaries differes on Windows/macOS due to the availability of pre-compiled binaries. To see what MicroPython version range a given MicroPython Bytecode version corresponds to, visit the official [micropython.org website](https://docs.micropython.org/en/latest/reference/mpyfiles.html). Below is the mapping of Bytecode version to used mpy-cross binary of this plugin:
+The mapping of BytecodeVersions to used mpy-cross binaries differes on Windows/macOS due to the availability of pre-compiled binaries. To see what MicroPython version range a given MicroPython Bytecode version corresponds to, visit the official [micropython.org website](https://docs.micropython.org/en/latest/reference/mpyfiles.html). Below is the mapping of Bytecode version to used mpy-cross binary of this plugin for specific os Versions:
 
-
+| Bytecode Version | Windows/Linux/macOS x64 | macOS ARM         |
+|------------------|-------------------------|-------------------|
+| 6.3 (≥ 1.26)     | mpy-cross 1.26.1        | mpy-cross 1.26.1  |
+| 6.2 (≥ 1.22)     | mpy-cross 1.22.2        | mpy-cross 1.22.0  |
+| 6.1 (≥ 1.20)     | mpy-cross 1.21.0        | mpy-cross 1.20.0  |
+| 6.0 (≥ 1.19)     | mpy-cross 1.19.1        | mpy-cross 1.19.1  |
 
 ### .mpy File Analyzer
 
