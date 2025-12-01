@@ -352,22 +352,26 @@ Compile Python files to MicroPython bytecode (`.mpy`) directly from the IDE. Byt
 
 Create a new `MicroPython Tools → mpy-cross Compilation` run configuration. Select what to compile (Project, Selected Sources Roots, or Custom Path), choose output location, and configure compilation options.
 
+The Project/Selected/Custom path source selecting logic is the same for this run configuration is it is for the [upload run configuration](#run-configurations).
+
 **Auto-Detection:** Click the Auto-Detect button to automatically detect your device's bytecode version and architecture.
 
 **Emitter options:**
-- Bytecode: Standard bytecode, compatible with all devices
-- Native/Viper: Faster machine code, architecture-specific
+- Bytecode: Standard bytecode, compatible with all devices (Choose this unless you know the implications of Native/Viper and how to use them)
+- Native/Viper: Faster machine code, architecture-specific (Strict requirements, Viper requires strict typing of variables, Native doesn't work well with exception handlers)
 
 **Optimization levels:** O0 (no optimization) through O3 (maximum optimization)
 
 **Embed modes:**
-- Filename only: Shortest, least informative stack traces
-- Relative to project root: Full paths in stack traces
-- Mapping file: Custom shortened paths
+- Filename only: Shortest (Slight obfuscation)
+- Relative to project root: Full paths in stack traces (best for debugging
+- Mapping file: Custom shortened paths (Allows manually setting up obfuscation of source files for stack traces
 
 **Special handling:**
 - `boot.py` and `main.py` are always copied as `.py` (not compiled)
 - Non-Python files can optionally be copied alongside `.mpy` files
+
+More information on mpy-cross compilation can be found on the [official micropython.org website](https://docs.micropython.org/en/latest/reference/mpyfiles.html).
 
 #### Mapping Files
 
