@@ -381,6 +381,22 @@ src/utils/helpers.py utils/hlp
 
 Click the "Generate" link in the run configuration to auto-generate a mapping file.
 
+#### Bytecode version to used mpy-cross binary mapping
+
+The plugin's selection of mpy-cross binaries deviates from what the mpy-cross python wrapper does. The official mpy-cross python library's compat parameter uses the earliest available mpy-cross binary of a give Bytecode/MicroPython version. 
+
+This means that if you use --compat 1.26.1, it won't use the mpy-cross version 1.26.1, but the earliest available mpy-cross version compatible with the 1.26.1 MicroPython bytecode is mpy-cross of version 1.23.0.
+
+This means you'll be missing out on several improvements and optimizations. For example multi line f strings (which mpy-cross 1.26.1 can handle) might not compile at all with mpy-cross 1.23.0.
+
+This plugin solves this issue by internally using the latest available mpy-cross binary for a given version. So if you select -compat 1.23.0, 1.24.0 etc. it will default to the latest available mpy-cross binary for this version (at the time of writing this documentation it is 1.26.1) meaning you get the latest available mpy-cross optimizations and bug fixes.
+
+NOTE: This should not affect backwards compatibility (bytecode from mpy-cross 1.26.1 should be perfectly compatible with MPY version 1.23.0), if you suspect you've ran into some compatibility issue caused by this plugin's mpy-cross version selection behavior, pleae open an issue.
+
+The mapping of BytecodeVersions to used mpy-cross binaries differes on Windows/macOS due to the availability of pre-compiled binaries. To see what MicroPython version range a given MicroPython Bytecode version corresponds to, visit the official [micropython.org website](https://docs.micropython.org/en/latest/reference/mpyfiles.html). Below is the mapping of Bytecode version to used mpy-cross binary of this plugin:
+
+
+
 ### .mpy File Analyzer
 
 When you open a `.mpy` file in the IDE, a metadata panel displays:
