@@ -9,6 +9,7 @@ The Changelog
   MicroPython isn't installed
 * Made settings "device already connected" dialog only update after a successful disconnection (not just
   upon the link press)
+* Adjusted stub package dialog text terminology to a mix of type hints/stubs to make it more obvious what stubs do
 * Improved upload run configuration "Force blocking upload" checkbox ordering
 * Adjusted File System volume size formatting
 * Centralized python dependency handling and inspections
