@@ -4,6 +4,9 @@ The Changelog
 2025.3.3 - 12.2025
 ------------------
 
+* Added functionality for flashing MicroPython on ESP32 and ESP8266 devices
+* Added a check to ensure MicroPython is installed when connecting, this prevents undescriptive timeout exceptions when
+  MicroPython isn't installed
 * Improved upload run configuration "Force blocking upload" checkbox ordering
 * Adjusted File System volume size formatting
 * Centralized python dependency handling and inspections
