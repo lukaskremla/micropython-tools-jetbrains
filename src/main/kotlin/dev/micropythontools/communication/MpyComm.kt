@@ -62,6 +62,32 @@ internal open class MpyComm(
     val project: Project,
     private val deviceService: MpyDeviceService
 ) : Disposable, Closeable {
+    companion object {
+        suspend fun retry(attempts: Int, delayList: List<Long>, codeToRetry: suspend () -> Unit) {
+            var exception: Throwable? = null
+
+            var i = 0
+            do {
+                try {
+                    val delayToUse = delayList[minOf(i, delayList.size - 1)]
+                    delay(delayToUse)
+                    codeToRetry()
+                    return
+                } catch (e: TimeoutCancellationException) {
+                    if (exception == null) exception = e
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Throwable) {
+                    if (exception == null) exception = e
+                }
+                i++
+            } while (i < attempts)
+
+            // If the code gets here retry attempts ran out
+            throw exception
+        }
+    }
+
     val ttyConnector: TtyConnector = MpyTtyConnector()
 
     val isConnected
@@ -911,30 +937,6 @@ internal open class MpyComm(
         }
 
         return readBytes
-    }
-
-    private suspend fun retry(attempts: Int, delayList: List<Long>, codeToRetry: suspend () -> Unit) {
-        var exception: Throwable? = null
-
-        var i = 0
-        do {
-            try {
-                val delayToUse = delayList[minOf(i, delayList.size - 1)]
-                delay(delayToUse)
-                codeToRetry()
-                return
-            } catch (e: TimeoutCancellationException) {
-                if (exception == null) exception = e
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Throwable) {
-                if (exception == null) exception = e
-            }
-            i++
-        } while (i < attempts)
-
-        // If the code gets here retry attempts ran out
-        throw exception
     }
 
     private inner class MpyTtyConnector : TtyConnector {

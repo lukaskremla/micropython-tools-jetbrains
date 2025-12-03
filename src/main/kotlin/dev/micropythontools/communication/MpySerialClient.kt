@@ -18,6 +18,7 @@ package dev.micropythontools.communication
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.checkCanceled
+import dev.micropythontools.communication.MpyComm.Companion.retry
 import dev.micropythontools.i18n.MpyBundle
 import jssc.SerialPort
 import jssc.SerialPort.FLOWCONTROL_NONE
@@ -65,32 +66,44 @@ internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
                 SerialPort.PARITY_NONE
             )
             port.flowControlMode = FLOWCONTROL_NONE
-            
-            // Interrupt all running code by sending Ctrl-C, (send 3 as defensive programming)
-            send("\u0003")
-            send("\u0003")
-            send("\u0003")
 
-            // Send MicroPython installation verification probe and send it
-            send("print(\"$SERIAL_PROBE_STRING\")\r\n")
-
-            // Check to see if MicroPython is installed and responsive
             try {
-                // If the probe string isn't printed, it means there is no MicroPython REPL on this serial connection
-                // Checks for both the echoed print command and the print output (two occurrences)
-                withTimeout(SHORT_TIMEOUT) {
-                    while (comm.offTtyByteBuffer
-                            .toUtf8String()
-                            .countOccurrencesOf(SERIAL_PROBE_STRING) < 2
-                    ) {
-                        checkCanceled()
+                retry(3, listOf(0L, 1000L, 3000L)) {
+                    // Ensure we start off with a clean state
+                    comm.offTtyByteBuffer.reset()
+
+                    // Interrupt all running code by sending Ctrl-C, (send 3 as defensive programming)
+                    send("\u0003")
+                    send("\u0003")
+                    send("\u0003")
+
+                    // Send MicroPython installation verification probe
+                    send("print(\"$SERIAL_PROBE_STRING\")\r\n")
+
+                    // Check to see if MicroPython is installed and responsive
+                    try {
+                        // If the probe string isn't printed, it means there is no MicroPython REPL on this serial connection
+                        // Checks for both the echoed print command and the print output (two occurrences)
+                        withTimeout(SHORT_TIMEOUT) {
+                            while (comm.offTtyByteBuffer
+                                    .toUtf8String()
+                                    .countOccurrencesOf(SERIAL_PROBE_STRING) < 2
+                            ) {
+                                checkCanceled()
+                            }
+                        }
+
+                        // Reset the buffer back to a clean state
+                        comm.offTtyByteBuffer.reset()
+                    } catch (_: TimeoutCancellationException) {
+                        println("\"${comm.offTtyByteBuffer.toUtf8String()}\"")
+                        throw IOException(MpyBundle.message("comm.error.micropython.not.installed"))
                     }
                 }
-
-                // Reset the buffer back to a clean state
-                comm.offTtyByteBuffer.reset()
-            } catch (_: TimeoutCancellationException) {
-                throw IOException(MpyBundle.message("comm.error.micropython.not.installed"))
+            } catch (e: Throwable) {
+                // Ensure the port is closed if connection fails
+                port.closePort()
+                throw e
             }
 
             comm.state = State.CONNECTED
