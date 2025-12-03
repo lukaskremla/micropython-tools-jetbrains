@@ -192,30 +192,20 @@ internal class MpyFirmwareService(private val project: Project) {
         pathToFirmware: String,
         mcu: String,
         offset: String,
-        eraseFlash: Boolean,
-        eraseFileSystem: Boolean
+        eraseFlash: Boolean
     ) {
-        val flasherToUse = when {
-            mcu.startsWith("esp", ignoreCase = true) -> MpyEspFlasher(project)
-            mcu.startsWith("stm", ignoreCase = true) -> MpyStmFlasher()
-            mcu.startsWith("samd", ignoreCase = true) -> MpySamdFlasher()
-            mcu.startsWith("rp2", ignoreCase = true) -> MpyRp2Flasher()
-            else -> throw RuntimeException("MCU \"${mcu}\" not supported by flasher")
-        }
+        val mcuLower = mcu.lowercase()
 
-        flasherToUse.flash(
-            reporter,
-            port,
-            pathToFirmware,
-            mcu,
-            offset,
-            eraseFlash,
-            eraseFileSystem
-        )
+        when {
+            mcuLower.startsWith("esp") -> MpyEspFlasher(project)
+            mcuLower.startsWith("stm") -> MpyStmFlasher()
+            mcuLower.startsWith("samd") -> MpySamdFlasher()
+            mcuLower.startsWith("rp2") -> MpyRp2Flasher()
+            else -> throw RuntimeException("MCU \"$mcu\" not supported by flasher")
+        }.flash(reporter, port, pathToFirmware, mcu, offset, eraseFlash)
 
-
-        // TODO: Implement eraseFileSystem functionality if needed
-        // Note: The eraseFileSystem parameter is currently not implemented
+        // Ensure details are cleaned and don't linger for the following operations
+        reporter.details(null)
     }
 
     /**

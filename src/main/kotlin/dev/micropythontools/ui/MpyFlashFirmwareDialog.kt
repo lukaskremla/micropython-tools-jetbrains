@@ -93,7 +93,12 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
     private lateinit var localFileTextFieldWithBrowseButton: Cell<TextFieldWithBrowseButton>
 
+    private lateinit var eraseFlashRow: Row
+    private lateinit var connectAfterRow: Row
+    private lateinit var eraseFileSystemAfterRow: Row
+
     private lateinit var eraseFlashCheckBox: Cell<JBCheckBox>
+    private lateinit var connectAfterCheckBox: Cell<JBCheckBox>
     private lateinit var eraseFileSystemAfter: Cell<JBCheckBox>
 
     // Selected board for tracking
@@ -241,7 +246,9 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                     val supportsEraseFlash =
                                         selectedDeviceType.contains("esp") || selectedDeviceType.contains("stm")
 
-                                    eraseFlashCheckBox.enabled(supportsEraseFlash)
+                                    // Erase file system is a fallback if flash erase isn't supported
+                                    eraseFlashRow.visible(supportsEraseFlash)
+                                    eraseFileSystemAfterRow.visible(!supportsEraseFlash)
                                 }
                             }
                         }
@@ -358,13 +365,29 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
             }
 
             group("Flashing Options") {
-                row {
+                eraseFlashRow = row {
                     eraseFlashCheckBox = checkBox("Erase flash first")
-                        .comment("Only ESP32, ESP8266 and STM32 devices support flash erase")
+                        .gap(RightGap.SMALL)
+
+                    contextHelp("Only ESP32, ESP8266 and STM32 devices support flash erase")
                 }
 
-                row {
+                connectAfterRow = row {
+                    connectAfterCheckBox = checkBox("Connect to the device after flashing")
+                        .applyToComponent {
+                            isSelected = true
+                        }
+                }
+
+                eraseFileSystemAfterRow = row {
                     eraseFileSystemAfter = checkBox("Erase MicroPython filesystem after flashing")
+                        .enabledIf(connectAfterCheckBox.selected)
+                        .gap(RightGap.SMALL)
+                        .applyToComponent {
+                            toolTipText = "Requires an active connection to the device after flashing"
+                        }
+
+                    contextHelp("RP2 and SAMD devices don't support flash erase. The file system may survive a firmware flash, this option makes sure it is erased.")
                 }
             }
         }.also {
@@ -651,9 +674,24 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                         (mcuComboBox.component.selectedItem
                             ?: throw RuntimeException("Failed to get selected MCU")).toString(),
                         board.offset,
-                        eraseFlashCheckBox.component.isSelected,
-                        eraseFileSystemAfter.component.isSelected
+                        eraseFlashCheckBox.component.isSelected
                     )
+
+                    if (connectAfterCheckBox.component.isSelected) {
+                        deviceService.doConnect(reporter, forceLegacyVolumeSupport = true)
+
+                        if (eraseFlashCheckBox.component.isSelected) {
+                            val flashFilesToDelete = deviceService.fileSystemWidget
+                                ?.allNodes()
+                                ?.filter { it is VolumeRootNode && it.isFileSystemRoot }
+                                ?.map { it.fullName }
+                                ?.toSet()
+
+                            flashFilesToDelete?.let {
+                                deviceService.recursivelySafeDeletePaths(it)
+                            }
+                        }
+                    }
 
                     // If flashing succeeded show confirmation dialog and close the firmware flashing dialog
                     withContext(Dispatchers.EDT) {

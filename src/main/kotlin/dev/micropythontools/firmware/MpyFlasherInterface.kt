@@ -25,7 +25,6 @@ internal interface MpyFlasherInterface {
         pathToFirmware: String,
         mcu: String,
         offset: String,
-        eraseFlash: Boolean,
-        eraseFileSystem: Boolean
+        eraseFlash: Boolean
     )
 }

@@ -32,8 +32,7 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
         pathToFirmware: String,
         mcu: String,
         offset: String,
-        eraseFlash: Boolean,
-        eraseFileSystem: Boolean
+        eraseFlash: Boolean
     ) {
         // Set up environment to find esptool in isolated package directory
         val esptoolPath = interpreterService.getPackagePythonPath(

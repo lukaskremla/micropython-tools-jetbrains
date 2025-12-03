@@ -25,8 +25,7 @@ class MpyRp2Flasher : MpyFlasherInterface {
         pathToFirmware: String,
         mcu: String,
         offset: String,
-        eraseFlash: Boolean,
-        eraseFileSystem: Boolean
+        eraseFlash: Boolean
     ) {
         TODO("Not yet implemented")
     }
