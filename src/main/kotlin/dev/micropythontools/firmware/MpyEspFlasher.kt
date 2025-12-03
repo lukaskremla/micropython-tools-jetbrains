@@ -26,7 +26,7 @@ import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 class MpyEspFlasher(project: Project) : MpyFlasherInterface {
     private val interpreterService = project.service<MpyPythonInterpreterService>()
 
-    override fun flash(
+    override suspend fun flash(
         reporter: RawProgressReporter,
         port: String,
         pathToFirmware: String,

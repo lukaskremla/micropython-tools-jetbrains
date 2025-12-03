@@ -19,7 +19,7 @@ package dev.micropythontools.firmware
 import com.intellij.platform.util.progress.RawProgressReporter
 
 class MpyStmFlasher : MpyFlasherInterface {
-    override fun flash(
+    override suspend fun flash(
         reporter: RawProgressReporter,
         port: String,
         pathToFirmware: String,

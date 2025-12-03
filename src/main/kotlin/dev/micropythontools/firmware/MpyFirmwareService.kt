@@ -186,7 +186,7 @@ internal class MpyFirmwareService(private val project: Project) {
         return tempFile.absolutePathString()
     }
 
-    fun flashFirmware(
+    suspend fun flashFirmware(
         reporter: RawProgressReporter,
         port: String,
         pathToFirmware: String,

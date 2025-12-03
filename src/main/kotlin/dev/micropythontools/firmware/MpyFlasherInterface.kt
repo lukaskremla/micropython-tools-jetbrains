@@ -19,7 +19,7 @@ package dev.micropythontools.firmware
 import com.intellij.platform.util.progress.RawProgressReporter
 
 internal interface MpyFlasherInterface {
-    fun flash(
+    suspend fun flash(
         reporter: RawProgressReporter,
         port: String,
         pathToFirmware: String,

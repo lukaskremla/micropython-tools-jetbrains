@@ -26,6 +26,7 @@ import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
@@ -41,6 +42,8 @@ import dev.micropythontools.core.MpyPaths.ESPTOOL_PACKAGE_NAME
 import dev.micropythontools.core.MpyPaths.ESPTOOL_VERSION
 import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import java.io.File
 import javax.swing.JComponent
 import kotlin.io.path.absolutePathString
@@ -181,14 +184,16 @@ internal class MpyPythonInterpreterService(private val project: Project) {
 
     /**
      * Runs Python code with real-time line-by-line output callback.
+     * Supports cancellation - the process will be killed if the coroutine is cancelled.
      *
      * @param args Command line arguments
      * @param env Environment variables
      * @param onOutput Callback invoked for each line of output (both stdout and stderr)
-     * @return The OSProcessHandler for the running process (can be used for cancellation)
+     * @return The OSProcessHandler for the running process
      * @throws ExecutionException if the process fails or exits with non-zero code
+     * @throws CancellationException if the operation is cancelled (process will be killed)
      */
-    fun runPythonCodeWithCallback(
+    suspend fun runPythonCodeWithCallback(
         args: List<String>,
         env: Map<String, String> = emptyMap(),
         onOutput: (String) -> Unit
@@ -235,7 +240,18 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         })
 
         processHandler.startNotify()
-        processHandler.waitFor()
+
+        // Poll for completion while respecting cancellation
+        try {
+            while (!processHandler.isProcessTerminated) {
+                checkCanceled()
+                delay(50) // Small delay to avoid busy-waiting
+            }
+        } catch (e: CancellationException) {
+            // Kill the process on cancellation
+            processHandler.destroyProcess()
+            throw e
+        }
 
         if (hasError) {
             val errorMsg = buildString {
