@@ -17,14 +17,23 @@
 package dev.micropythontools.communication
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.checkCanceled
+import dev.micropythontools.i18n.MpyBundle
 import jssc.SerialPort
 import jssc.SerialPort.FLOWCONTROL_NONE
 import jssc.SerialPortEventListener
 import jssc.SerialPortException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 
+private const val SERIAL_PROBE_STRING = "__MPY_TOOLS_SERIAL_PROBE_9x7k13A1ds56Sd__"
+
 internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
+    // Subtract the part between delimiters
+    private fun String.countOccurrencesOf(sub: String) = split(sub).size - 1
+
     val port = SerialPort(comm.connectionParameters.portName)
 
     override val isConnected: Boolean
@@ -56,6 +65,34 @@ internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
                 SerialPort.PARITY_NONE
             )
             port.flowControlMode = FLOWCONTROL_NONE
+            
+            // Interrupt all running code by sending Ctrl-C, (send 3 as defensive programming)
+            send("\u0003")
+            send("\u0003")
+            send("\u0003")
+
+            // Send MicroPython installation verification probe and send it
+            send("print(\"$SERIAL_PROBE_STRING\")\r\n")
+
+            // Check to see if MicroPython is installed and responsive
+            try {
+                // If the probe string isn't printed, it means there is no MicroPython REPL on this serial connection
+                // Checks for both the echoed print command and the print output (two occurrences)
+                withTimeout(SHORT_TIMEOUT) {
+                    while (comm.offTtyByteBuffer
+                            .toUtf8String()
+                            .countOccurrencesOf(SERIAL_PROBE_STRING) < 2
+                    ) {
+                        checkCanceled()
+                    }
+                }
+
+                // Reset the buffer back to a clean state
+                comm.offTtyByteBuffer.reset()
+            } catch (_: TimeoutCancellationException) {
+                throw IOException(MpyBundle.message("comm.error.micropython.not.installed"))
+            }
+
             comm.state = State.CONNECTED
             return this
         } catch (e: SerialPortException) {
@@ -64,12 +101,10 @@ internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
     }
 
     override fun send(string: String) {
-        this@MpySerialClient.thisLogger().debug("< $string")
         port.writeString(string)
     }
 
     override fun send(bytes: ByteArray) {
-        this@MpySerialClient.thisLogger().debug("< $bytes")
         port.writeBytes(bytes)
     }
 
