@@ -202,7 +202,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                             }
                         }
                 }.layout(RowLayout.LABEL_ALIGNED)
-            }
+            }.bottomGap(BottomGap.NONE).enabled(!deviceService.isConnected)
 
             indent {
                 row {
