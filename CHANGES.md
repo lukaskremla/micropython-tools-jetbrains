@@ -7,6 +7,8 @@ The Changelog
 * Added functionality for flashing MicroPython on ESP32 and ESP8266 devices
 * Added a check to ensure MicroPython is installed when connecting, this prevents undescriptive timeout exceptions when
   MicroPython isn't installed
+* Made settings "device already connected" dialog only update after a successful disconnection (not just
+  upon the link press)
 * Improved upload run configuration "Force blocking upload" checkbox ordering
 * Adjusted File System volume size formatting
 * Centralized python dependency handling and inspections

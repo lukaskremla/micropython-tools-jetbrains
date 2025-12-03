@@ -45,7 +45,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.UIUtil
 import dev.micropythontools.communication.MpyDeviceService
-import dev.micropythontools.communication.State
 import dev.micropythontools.core.MpyValidators
 import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
@@ -94,11 +93,6 @@ internal class MpyConfigurable(private val project: Project) :
     private val proService = project.service<MpyProServiceInterface>()
     private val deviceService = project.service<MpyDeviceService>()
     private val stubPackageService = project.service<MpyStubPackageService>()
-
-    private val isConnected
-        get() = (deviceService.state == State.CONNECTED ||
-                deviceService.state == State.CONNECTING ||
-                deviceService.state == State.TTY_DETACHED)
 
     private val stubsAndPluginEnabled
         get() = pluginEnabledCheckBox.component.isSelected && stubsEnabledCheckBox.component.isSelected
@@ -306,7 +300,7 @@ internal class MpyConfigurable(private val project: Project) :
                             })
                         }
                     }
-                }.bottomGap(BottomGap.NONE).enabled(!isConnected)
+                }.bottomGap(BottomGap.NONE).enabled(!deviceService.isConnected)
 
                 indent {
                     indent {
@@ -320,16 +314,18 @@ internal class MpyConfigurable(private val project: Project) :
                                     description = MpyBundle.message("action.disconnect.text"),
                                     cancelledMessage = MpyBundle.message("action.disconnect.cancelled"),
                                     timedOutMessage = MpyBundle.message("action.disconnect.timeout"),
-                                    { reporter -> deviceService.disconnect(reporter) }
+                                    { reporter ->
+                                        deviceService.disconnect(reporter)
+
+                                        connectionGroup.enabled(true)
+
+                                        this.visible(false)
+                                    }
                                 )
-
-                                connectionGroup.enabled(true)
-
-                                this.visible(false)
                             })
                         }
                     }
-                }.visible(isConnected)
+                }.visible(deviceService.isConnected)
 
                 group(MpyBundle.message("configurable.communication.group.title")) {
                     row {
@@ -849,7 +845,7 @@ internal class MpyConfigurable(private val project: Project) :
         super.apply()
 
         with(parameters) {
-            if (isConnected && !isPluginEnabled) {
+            if (deviceService.isConnected && !isPluginEnabled) {
                 runBlocking { deviceService.disconnect(null) }
             }
 

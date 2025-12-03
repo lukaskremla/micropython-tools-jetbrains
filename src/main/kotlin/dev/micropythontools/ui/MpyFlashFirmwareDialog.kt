@@ -73,6 +73,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
     // UI components
     private lateinit var statusComment: Cell<JEditorPane>
 
+    private lateinit var connectionGroup: Row
     private lateinit var enableManualEditingCheckbox: Cell<JBCheckBox>
     private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
@@ -154,7 +155,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                 statusComment = comment("Checking for firmware updates...")
             }
 
-            group("Connection") {
+            connectionGroup = group("Connection") {
                 row {
                     enableManualEditingCheckbox =
                         checkBox(MpyBundle.message("configurable.enable.manual.port.editing.checkbox.text"))
@@ -202,6 +203,29 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                         }
                 }.layout(RowLayout.LABEL_ALIGNED)
             }
+
+            indent {
+                row {
+                    comment(MpyBundle.message("configurable.board.currently.connected.comment"), action = {
+                        deviceService.performReplAction(
+                            project,
+                            connectionRequired = false,
+                            requiresRefreshAfter = false,
+                            canRunInBackground = false,
+                            description = MpyBundle.message("action.disconnect.text"),
+                            cancelledMessage = MpyBundle.message("action.disconnect.cancelled"),
+                            timedOutMessage = MpyBundle.message("action.disconnect.timeout"),
+                            { reporter ->
+                                deviceService.disconnect(reporter)
+
+                                connectionGroup.enabled(true)
+
+                                this.visible(false)
+                            }
+                        )
+                    })
+                }
+            }.visible(deviceService.isConnected)
 
             group("Firmware Selection") {
                 row("Device type:") {
