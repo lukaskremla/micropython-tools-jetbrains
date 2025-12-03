@@ -20,7 +20,6 @@ import com.amazon.ion.NullValueException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -28,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.core.MpyPaths
-import dev.micropythontools.core.MpyPythonInterpreterService
 import dev.micropythontools.core.MpyScripts
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 import io.ktor.util.*
@@ -70,8 +68,6 @@ internal data class MpyBoardsJson(
 
 @Service(Service.Level.PROJECT)
 internal class MpyFirmwareService(private val project: Project) {
-    private val interpreterService = project.service<MpyPythonInterpreterService>()
-
     private val client: HttpClient = HttpClient.newHttpClient()
     private var maxSupportedBoardsJsonMajorVersion: Int? = null
     private val json = Json { ignoreUnknownKeys = true }
