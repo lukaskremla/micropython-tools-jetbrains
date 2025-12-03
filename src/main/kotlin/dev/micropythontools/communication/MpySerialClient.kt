@@ -96,7 +96,6 @@ internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
                         // Reset the buffer back to a clean state
                         comm.offTtyByteBuffer.reset()
                     } catch (_: TimeoutCancellationException) {
-                        println("\"${comm.offTtyByteBuffer.toUtf8String()}\"")
                         throw IOException(MpyBundle.message("comm.error.micropython.not.installed"))
                     }
                 }
