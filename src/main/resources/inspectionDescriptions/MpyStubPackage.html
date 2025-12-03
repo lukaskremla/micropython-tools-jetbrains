@@ -1,9 +1,9 @@
 <html lang="en">
 <body>
-<p>Detects when no MicroPython stub package is selected while stubs are enabled.</p>
+<p>Detects when no stub package is selected while type hints are enabled.</p>
 
 <p>
-    This inspection helps identify projects where stub support is enabled but no valid stub package has been configured.
+    This inspection helps identify projects where type hints are enabled but no valid stub package has been configured.
     Without a selected stub package, essential IDE features such as autocompletion, type checking, and documentation
     lookup will not function for MicroPython-specific APIs.
 </p>
@@ -13,7 +13,7 @@
     and select or install a stub package that matches your board and MicroPython version.
 </p>
 
-<pre><code>// Stub support is enabled, but no package is selected:
+<pre><code>// Type hints are enabled, but no stub package is selected:
 </code></pre>
 <!-- tooltip end -->
 <p>This issue is commonly encountered after project import or first-time plugin setup.</p>
