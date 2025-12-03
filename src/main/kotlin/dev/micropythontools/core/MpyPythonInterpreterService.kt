@@ -54,7 +54,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
 
     private val isUv
         get() = findPythonSdk()?.sdkAdditionalData
-            ?.let { it::class.java.name == "com.jetbrains.python.sdk.uv.UvSdkAdditionalData" }
+            ?.let { "uv" in it::class.java.name.lowercase() }
             ?: false
 
     fun checkInterpreterValid(): ValidationResult {
