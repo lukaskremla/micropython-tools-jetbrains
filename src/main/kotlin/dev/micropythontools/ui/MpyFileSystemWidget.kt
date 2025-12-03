@@ -714,17 +714,17 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
         return result != false
     }
 
-    suspend fun refresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = false, disconnectOnCancel = true, isInitialRefresh = false, useReporter = true)
+    suspend fun refresh(reporter: RawProgressReporter, forceLegacyVolumeSupport: Boolean = false) =
+        doRefresh(reporter, hash = false, disconnectOnCancel = true, isInitialRefresh = false, useReporter = true, forceLegacyVolumeSupport = forceLegacyVolumeSupport)
 
-    suspend fun quietRefresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = false, useReporter = false)
+    suspend fun quietRefresh(reporter: RawProgressReporter, forceLegacyVolumeSupport: Boolean = false) =
+        doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = false, useReporter = false, forceLegacyVolumeSupport = forceLegacyVolumeSupport)
 
-    suspend fun quietHashingRefresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = true, disconnectOnCancel = false, isInitialRefresh = false, useReporter = false)
+    suspend fun quietHashingRefresh(reporter: RawProgressReporter, forceLegacyVolumeSupport: Boolean = false) =
+        doRefresh(reporter, hash = true, disconnectOnCancel = false, isInitialRefresh = false, useReporter = false, forceLegacyVolumeSupport = forceLegacyVolumeSupport)
 
-    suspend fun initialRefresh(reporter: RawProgressReporter) =
-        doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = true, useReporter = true)
+    suspend fun initialRefresh(reporter: RawProgressReporter, forceLegacyVolumeSupport: Boolean = false) =
+        doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = true, useReporter = true, forceLegacyVolumeSupport = forceLegacyVolumeSupport)
 
     private fun newTreeModel() = DefaultTreeModel(InvisibleRootNode(), true)
 
@@ -733,7 +733,8 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
         hash: Boolean,
         disconnectOnCancel: Boolean,
         isInitialRefresh: Boolean,
-        useReporter: Boolean
+        useReporter: Boolean,
+        forceLegacyVolumeSupport: Boolean = false
     ): Int? {
         if (useReporter) {
             reporter.text(MpyBundle.message("file.system.refresh.progress"))
@@ -744,10 +745,12 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
         val newModel = newTreeModel()
         val executionResult: String
 
+        val useLegacyVolumeSupport = forceLegacyVolumeSupport || settings.state.legacyVolumeSupportEnabled
+
         val fileSystemScanScript = MpyScripts.retrieveMpyScriptAsString("scan_file_system.py")
             .replace(
                 "___l=False",
-                "___l=${if (settings.state.legacyVolumeSupportEnabled) "True" else "False"}"
+                "___l=${if (useLegacyVolumeSupport) "True" else "False"}"
             )
             .replace(
                 "___h=False",

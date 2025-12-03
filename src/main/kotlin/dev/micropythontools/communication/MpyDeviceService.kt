@@ -349,8 +349,10 @@ internal class MpyDeviceService(val project: Project) : Disposable {
      * @param reporter RawProgressReporter to use
      * @param isConnectAction An optional parameter to be used by MpyConnectAction and FileSystemWidget empty text,
      * prevents duplicate cancellation notifications, since these actions handle their own cancellation notifications
+     * @param forceLegacyVolumeSupport Forces legacy volume support for the initial refresh, useful when connecting
+     * after flashing firmware versions below 1.25.0
      */
-    suspend fun doConnect(reporter: RawProgressReporter, isConnectAction: Boolean = false) {
+    suspend fun doConnect(reporter: RawProgressReporter, isConnectAction: Boolean = false, forceLegacyVolumeSupport: Boolean = false) {
         try {
             if (state == State.CONNECTED) return
 
@@ -420,7 +422,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                     try {
                         if (state == State.CONNECTED) {
                             initializeDevice()
-                            fileSystemWidget?.initialRefresh(reporter)
+                            fileSystemWidget?.initialRefresh(reporter, forceLegacyVolumeSupport)
                         }
                     } finally {
                         ActivityTracker.getInstance().inc()
