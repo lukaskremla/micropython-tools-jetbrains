@@ -54,7 +54,7 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
             interpreterService.runPythonCodeWithCallback(eraseArgs, env) { outputLine ->
                 reporter.text("Erasing flash...")
 
-                // esptool erase flash sometimes prints a single dot, this is a hack to avoid displaying it
+                // esptool sometimes prints a single dot, this is a hack to avoid displaying it
                 if (outputLine != ".") {
                     reporter.details(outputLine)
                 }
@@ -74,6 +74,9 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
         // Perform flash while collecting output
         interpreterService.runPythonCodeWithCallback(flashArgs, env) { outputLine ->
             when {
+                // esptool sometimes prints a single dot, this is a hack to avoid displaying it
+                outputLine == "." -> Unit
+
                 outputLine.startsWith("Writing at") -> {
                     val progressString = outputLine
                         .substringAfterLast("]")
