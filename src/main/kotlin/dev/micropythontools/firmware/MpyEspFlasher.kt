@@ -53,7 +53,11 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
 
             interpreterService.runPythonCodeWithCallback(eraseArgs, env) { outputLine ->
                 reporter.text("Erasing flash...")
-                reporter.details(outputLine)
+
+                // esptool erase flash sometimes prints a single dot, this is a hack to avoid displaying it
+                if (outputLine != ".") {
+                    reporter.details(outputLine)
+                }
             }
         }
 
