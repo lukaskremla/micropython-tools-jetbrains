@@ -17,6 +17,8 @@
 package dev.micropythontools.ui
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
@@ -26,11 +28,14 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
 import dev.micropythontools.core.MpyPythonInterpreterService
 import dev.micropythontools.firmware.Board
@@ -43,6 +48,9 @@ import dev.micropythontools.settings.MpySettingsService
 import io.ktor.util.*
 import jssc.SerialPort
 import jssc.SerialPortException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.awt.Dimension
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -585,6 +593,8 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
         runWithModalProgressBlocking(project, "Flashing Firmware...") {
             reportRawProgress { reporter ->
+                var firmwareFile: VirtualFile? = null
+
                 try {
                     val board = firmwareService.getCachedBoards().find {
                         it.name == boardVariantComboBox.component.selectedItem
@@ -605,7 +615,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                     }
 
                     // Ensure the file exists now
-                    val firmwareFile = LocalFileSystem.getInstance().findFileByPath(firmwarePath)
+                    firmwareFile = LocalFileSystem.getInstance().findFileByPath(firmwarePath)
                         ?: throw RuntimeException("Firmware file doesn't exist")
 
                     // Hand off to the firmware flashing service
@@ -622,14 +632,48 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                     )
 
                     // If flashing succeeded show confirmation dialog and close the firmware flashing dialog
-                    // TODO: Show a simple "OK" installation success confirmation dialog
+                    withContext(Dispatchers.EDT) {
+                        Messages.showInfoMessage(
+                            project,
+                            MpyBundle.message("flash.success.message"),
+                            MpyBundle.message("flash.success.title")
+                        )
 
-                    // Close the Flash Firmware dialog
-                    super.doOKAction()
+                        // Close the parent flashing dialog
+                        super.doOKAction()
+                    }
                 } catch (e: Throwable) {
-                    //TODO: Show the exception dialog for this throwable
+                    withContext(Dispatchers.EDT) {
+                        showFlashingErrorDialog(project, e.localizedMessage)
+                    }
+                } finally {
+                    // Make sure to delete the temporary firmware file after flashing
+                    backgroundWriteAction {
+                        firmwareFile?.delete(this)
+                    }
                 }
             }
         }
+    }
+
+    private fun showFlashingErrorDialog(project: Project, errorMessage: String) {
+        object : DialogWrapper(project, true) {
+            init {
+                title = MpyBundle.message("flash.error.title")
+                init()
+            }
+
+            override fun createCenterPanel(): JComponent {
+                val textArea = JBTextArea(errorMessage)
+                textArea.isEditable = false
+                textArea.lineWrap = false
+                textArea.caretColor = textArea.background
+
+                val scrollPane = JBScrollPane(textArea)
+                scrollPane.preferredSize = Dimension(600, 400)
+
+                return scrollPane
+            }
+        }.show()
     }
 }
