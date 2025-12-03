@@ -109,6 +109,11 @@ internal class MpyDeviceService(val project: Project) : Disposable {
 
     val stateListeners = mutableListOf<StateListener>()
 
+    val isConnected
+        get() = (state == State.CONNECTED ||
+                state == State.CONNECTING ||
+                state == State.TTY_DETACHED)
+
     // Also allow setting the value from outside MpyComm for complex scenarios (like with uploads),
     // if the initial quiet (stays in tty detached) refresh finds all files are up to date, the state needs to be reset
     // manually
