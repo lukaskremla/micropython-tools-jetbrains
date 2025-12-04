@@ -16,22 +16,13 @@
 
 package dev.micropythontools.firmware
 
-import com.amazon.ion.NullValueException
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.readText
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.core.MpyPaths
-import dev.micropythontools.core.MpyScripts
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 import io.ktor.util.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
 import java.net.URI
@@ -40,7 +31,6 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempFile
-import kotlin.io.path.pathString
 
 internal const val PREVIEW_FIRMWARE_STRING = "preview"
 
@@ -64,23 +54,38 @@ internal data class MpyBoardsJson(
     val skimmedPorts: List<String>,
     val portToExtension: Map<String, String>,
     val boards: List<Board>
-)
+) {
+    companion object {
+        private val json = Json { ignoreUnknownKeys = true }
+
+        fun fromJson(jsonString: String): MpyBoardsJson {
+            return json.decodeFromString<MpyBoardsJson>(jsonString)
+        }
+    }
+}
 
 @Service(Service.Level.PROJECT)
 internal class MpyFirmwareService(private val project: Project) {
     private val client: HttpClient = HttpClient.newHttpClient()
+    
     private var maxSupportedBoardsJsonMajorVersion: Int? = null
-    private val json = Json { ignoreUnknownKeys = true }
+
+    private var cachedBoards: List<Board> = emptyList()
+    private var cachedTimestamp: String = ""
+    private var cachedPortToExtension: Map<String, String> = emptyMap()
 
     init {
-        // Extract the bundled board json content as a string
+        // Dynamically loads the max supported boards json version, not requiring hard-coding
         val extractedJsonString = extractBundledBoardsJsonContent()
 
-        val mpyBoardsJson = parseMpyBoardJson(extractedJsonString)
+        val mpyBoardsJson = MpyBoardsJson.fromJson(extractedJsonString)
 
         // Set the supported major version string, throw exception if it fails
         maxSupportedBoardsJsonMajorVersion = mpyBoardsJson.version.split(".").firstOrNull()?.toIntOrNull()
             ?: throw RuntimeException("Failed to identify max supported micropython_boards.json version on startup")
+
+        // Load the initial cached data state
+        loadFromDisk()
     }
 
     fun downloadFirmwareToTemp(
@@ -208,20 +213,17 @@ internal class MpyFirmwareService(private val project: Project) {
         reporter.details(null)
     }
 
+    fun getCachedBoards(): List<Board> = cachedBoards
+    fun getCachedBoardsTimestamp(): String = cachedTimestamp
+
     /**
      * Gets the firmware file extension for a specific device type/port.
      *
      * @param port The device type/port to get the extension for
      * @return The file extension (e.g., ".bin", ".uf2") or null if not found
      */
-    fun getExtensionForPort(port: String): String {
-        val mpyBoardsJson = getCachedBoardsJson()
-
-        val extension = mpyBoardsJson.portToExtension[port.toLowerCasePreservingASCIIRules()]
-            ?: throw RuntimeException("Port \"${port}\" has no mapped extension")
-
-        return extension
-    }
+    fun getExtensionForPort(port: String): String = cachedPortToExtension[port.toLowerCasePreservingASCIIRules()]
+        ?: throw RuntimeException("Port \"${port}\" has no mapped extension")
 
     /**
      * Gets all unique device types (ports) from cached boards.
@@ -297,62 +299,22 @@ internal class MpyFirmwareService(private val project: Project) {
         }
     }
 
-    private fun getCachedBoardsJson(): MpyBoardsJson {
-        val cachedBoardsJsonFilePath = "${MpyPaths.globalAppDataBase()}/${MpyPaths.MICROPYTHON_BOARD_JSON_FILE_NAME}"
-
-        // Try to find the existing cached board list
-        var cachedBoardsJsonFile = LocalFileSystem.getInstance().findFileByPath(cachedBoardsJsonFilePath)
-
-        try {
-            // Use the bundled json if none is cached
-            cachedBoardsJsonFile = cachedBoardsJsonFile ?: throw NullValueException("No boards cached, falling back")
-
-            // Extract the file's content
-            val cachedBoardsJsonContent = cachedBoardsJsonFile.readText()
-
-            return parseMpyBoardJson(cachedBoardsJsonContent)
-        } catch (_: Throwable) {
-            val writtenBundledBoardsJson = writeBundledBoardsJson()
-
-            val writtenBundledBoardsJsonContent = writtenBundledBoardsJson.readText()
-
-            return parseMpyBoardJson(writtenBundledBoardsJsonContent)
-        }
-    }
-
-    fun getCachedBoardsTimestamp(): String {
-        val cachedBoardsJson = getCachedBoardsJson()
-
-        // Return just the timestamp
-        return cachedBoardsJson.timestamp
-    }
-
-    fun getCachedBoards(): List<Board> {
-        val cachedBoardsJson = getCachedBoardsJson()
-
-        // Return just the boards
-        return cachedBoardsJson.boards
-    }
-
     fun updateCachedBoards() {
         val url =
             "https://raw.githubusercontent.com/lukaskremla/micropython-tools-jetbrains/dev_test/firmware_retrieval/data/micropython_boards.json"
         val request = HttpRequest.newBuilder().uri(URI.create(url)).build()
 
-        var remoteBoardsJsonContent: String? = null
-        ApplicationManager.getApplication().invokeAndWait {
-            remoteBoardsJsonContent = try {
-                val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-                response.body()
-            } catch (_: Throwable) {
-                null
-            }
+        val remoteBoardsJsonContent = try {
+            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+            response.body()
+        } catch (_: Throwable) {
+            null
         }
 
         remoteBoardsJsonContent ?: throw RuntimeException("Failed to fetch latest JSON data")
 
         // Verify and validate the new JSON
-        val mpyBoardsJson = parseMpyBoardJson(remoteBoardsJsonContent!!)
+        val mpyBoardsJson = MpyBoardsJson.fromJson(remoteBoardsJsonContent)
 
         // Save the highest supported major version to a local variable and ensure it's initialized
         val maxSupportedMajorVersion = maxSupportedBoardsJsonMajorVersion
@@ -367,62 +329,41 @@ internal class MpyFirmwareService(private val project: Project) {
             throw IncompatibleBoardsJsonVersionException("Newest board JSON's structure is incompatible with this plugin version. Consider updating to get latest board support")
         }
 
-        writeCachedBoardsJson(remoteBoardsJsonContent!!)
+        // Cache the newly retrieved values
+        cachedBoards = mpyBoardsJson.boards
+        cachedTimestamp = mpyBoardsJson.timestamp
+        cachedPortToExtension = mpyBoardsJson.portToExtension
+
+        // Get the cache file to write to
+        val cacheFile = MpyPaths.globalAppDataBase()
+            .resolve(MpyPaths.MICROPYTHON_BOARD_JSON_FILE_NAME)
+            .toFile()
+
+        // Ensure parent directories exists
+        cacheFile.parentFile.mkdirs()
+
+        // Cache the data
+        cacheFile.writeText(remoteBoardsJsonContent)
     }
 
-    private fun parseMpyBoardJson(jsonString: String): MpyBoardsJson {
-        return try {
-            json.decodeFromString<MpyBoardsJson>(jsonString)
-        } catch (e: SerializationException) {
-            throw RuntimeException("Failed to parse boards from JSON", e)
-        }
-    }
-
-    private fun extractBundledBoardsJsonContent(): String {
-        // Path to the bundled json file
-        val resourcePath = "/data/${MpyPaths.MICROPYTHON_BOARD_JSON_FILE_NAME}"
-
-        // Extract the stream
-        val stream = MpyScripts::class.java.getResourceAsStream(resourcePath)
-            ?: throw RuntimeException("Bundled boards JSON file not found: $resourcePath")
-
-        // Read and return the file's text
-        return stream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-    }
-
-    private fun writeBundledBoardsJson(): VirtualFile {
-        val bundledBoardsJsonContent = extractBundledBoardsJsonContent()
-
-        return writeCachedBoardsJson(bundledBoardsJsonContent)
-    }
-
-    private fun writeCachedBoardsJson(text: String): VirtualFile {
-        var boardJsonFile: VirtualFile? = null
-
-        // Retrieve the app data dir
-        val appDataDir = LocalFileSystem
-            .getInstance()
-            .refreshAndFindFileByPath(MpyPaths.globalAppDataBase().pathString)
-            ?: throw RuntimeException("Failed to find the plugin's data directory")
-
-        // Ensure synchronization on EDT
-        ApplicationManager.getApplication().invokeAndWait {
-            runWriteAction {
-                // Find the existing file or create it
-                boardJsonFile = appDataDir.findChild(MpyPaths.MICROPYTHON_BOARD_JSON_FILE_NAME)
-                    ?: appDataDir.createChildData(this, MpyPaths.MICROPYTHON_BOARD_JSON_FILE_NAME)
-
-                // Write the new content, flushing the old one
-                VfsUtil.saveText(boardJsonFile, text)
-
-                // Refresh the file in VFS
-                boardJsonFile.refresh(false, false)
-            }
+    private fun loadFromDisk() {
+        val jsonContent = try {
+            // Try to access a newer cached board json
+            val cacheFile = MpyPaths.globalAppDataBase().resolve(MpyPaths.MICROPYTHON_BOARD_JSON_FILE_NAME).toFile()
+            if (cacheFile.exists()) cacheFile.readText() else throw Exception("No cache")
+        } catch (_: Throwable) {
+            // Fall back to bundled resource
+            extractBundledBoardsJsonContent()
         }
 
-        // Ensure the file was created
-        if (boardJsonFile == null) throw RuntimeException("Failed to write cached boards JSON")
-
-        return boardJsonFile
+        val parsedMpyBoardJson = MpyBoardsJson.fromJson(jsonContent)
+        cachedBoards = parsedMpyBoardJson.boards
+        cachedTimestamp = parsedMpyBoardJson.timestamp
+        cachedPortToExtension = parsedMpyBoardJson.portToExtension
     }
+
+    private fun extractBundledBoardsJsonContent(): String =
+        javaClass.getResourceAsStream("/data/${MpyPaths.MICROPYTHON_BOARD_JSON_FILE_NAME}")!!
+            .bufferedReader()
+            .readText()
 }

@@ -17,8 +17,7 @@
 package dev.micropythontools.ui
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
@@ -114,30 +113,35 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
         // Load cached boards immediately (instant)
         currentBoards = firmwareService.getCachedBoards()
 
-        init() // Required for DialogWrapper
+        init() // Make the dialog appear
 
-        try {
-            // Update the cached boards json
-            firmwareService.updateCachedBoards()
+        // Capture dialog's modality AFTER init()
+        val dialogModality = ModalityState.stateForComponent(rootPane)
 
-            // Retrieve cached boards
-            val newBoards = firmwareService.getCachedBoards()
+        ApplicationManager.getApplication().executeOnPooledThread {
+            try {
+                // Update the caches
+                firmwareService.updateCachedBoards()
 
-            val timeStamp = firmwareService.getCachedBoardsTimestamp()
+                invokeLater(dialogModality) {
+                    // Retrieve cached boards
+                    val newBoards = firmwareService.getCachedBoards()
 
-            if (newBoards != currentBoards && newBoards.isNotEmpty()) {
-                updateBoardsInUI(newBoards)
+                    if (newBoards != currentBoards && newBoards.isNotEmpty()) {
+                        updateBoardsInUI(newBoards)
+                    }
+
+                    setStatus("flash.status.up.to.date")
+                }
+            } catch (_: IncompatibleBoardsJsonVersionException) {
+                invokeLater(dialogModality) {
+                    setStatus("flash.status.incompatible")
+                }
+            } catch (_: Throwable) {
+                invokeLater(dialogModality) {
+                    setStatus("flash.status.failed")
+                }
             }
-
-            setStatusUpToDate(timeStamp)
-        } catch (_: IncompatibleBoardsJsonVersionException) {
-            val timeStamp = firmwareService.getCachedBoardsTimestamp()
-
-            setStatusIncompatible(timeStamp)
-        } catch (_: Throwable) {
-            val timeStamp = firmwareService.getCachedBoardsTimestamp()
-
-            setStatusFailed(timeStamp)
         }
     }
 
@@ -397,20 +401,9 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
         }
     }
 
-    private fun setStatusUpToDate(cachedTimestamp: String) {
-        val formattedDate = formatReadableDateTime(cachedTimestamp)
-        statusComment.component.text = "Firmware index up-to date, created on: $formattedDate"
-    }
-
-    private fun setStatusIncompatible(cachedTimestamp: String) {
-        val formattedDate = formatReadableDateTime(cachedTimestamp)
-        statusComment.component.text =
-            "Remote index is incompatible, consider updating the plugin.<br>Using cached data from: $formattedDate"
-    }
-
-    private fun setStatusFailed(cachedTimestamp: String) {
-        val formattedDate = formatReadableDateTime(cachedTimestamp)
-        statusComment.component.text = "Up-to date check failed.<br>Using cached data from: $formattedDate"
+    private fun setStatus(messageKey: String) {
+        val formattedDate = formatReadableDateTime(firmwareService.getCachedBoardsTimestamp())
+        statusComment.component.text = MpyBundle.message(messageKey, formattedDate)
     }
 
     private fun updateDeviceTypeComboBox() {
@@ -681,7 +674,15 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                     if (connectAfterCheckBox.component.isSelected) {
                         deviceService.doConnect(reporter, forceLegacyVolumeSupport = true)
 
-                        if (eraseFlashCheckBox.component.isSelected) {
+                        val selectedDeviceType = deviceTypeComboBox.component.selectedItem
+                            ?.toString()
+                            ?.toLowerCasePreservingASCIIRules()
+                            ?: ""
+
+                        val supportsEraseFlash =
+                            selectedDeviceType.contains("esp") || selectedDeviceType.contains("stm")
+
+                        if (eraseFileSystemAfter.component.isSelected && !supportsEraseFlash) {
                             val flashFilesToDelete = deviceService.fileSystemWidget
                                 ?.allNodes()
                                 ?.filter { it is VolumeRootNode && it.isFileSystemRoot }
