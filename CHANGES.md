@@ -1,25 +1,18 @@
 The Changelog
 =============
 
-2025.3.3 - 12.2025
+2025.3.3 - 4.12.2025
 ------------------
 
-* Added functionality for flashing MicroPython on ESP32 and ESP8266 devices
-* Added a check to ensure MicroPython is installed when connecting, this prevents undescriptive timeout exceptions when
-  MicroPython isn't installed
-* Made settings "device already connected" dialog only update after a successful disconnection (not just
-  upon the link press)
-* Adjusted stub package dialog text terminology to a mix of type hints/stubs to make it more obvious what stubs do
-* Improved upload run configuration "Force blocking upload" checkbox ordering
+* **New: Firmware Flashing for ESP32/ESP8266** - Flash MicroPython firmware directly from the IDE with real-time 
+  progress output, automatic esptool management, and support for erase flash option
+* Added MicroPython detection when connecting to prevent confusing timeout errors on boards without MicroPython installed
+* Centralized Python dependency handling with automatic esptool/mpy-cross installation and unified inspections
+* Updated type hints terminology in stub package dialogs to clarify what stubs provide
+* Improved settings "device already connected" dialog to only update after successful disconnection
+* Improved upload run configuration layout - moved "Force blocking upload" checkbox after "Exclude paths" for better UX
 * Adjusted File System volume size formatting
-* Centralized python dependency handling and inspections
-
-2025.3.2 - x.11.2025
-------------------
-
-* Fixed a bug where port selector model in the settings wouldn't recognize changes
-* Moved upload run configuration "Force blocking upload" checkbox behind "Exclude paths from synchronization" to avoid
-  interrupting the checkbox relation
+* Fixed port selector model not recognizing changes in settings
 
 2025.3.2 - 9.11.2025
 ------------------
