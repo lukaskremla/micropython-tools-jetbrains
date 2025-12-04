@@ -252,6 +252,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                 }
                             }
                         }
+                        .comment("STM32, RP2 and SAMD coming soon!")
                 }.layout(RowLayout.LABEL_ALIGNED)
 
                 row("MCU:") {

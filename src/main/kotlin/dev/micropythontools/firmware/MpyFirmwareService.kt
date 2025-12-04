@@ -199,8 +199,8 @@ internal class MpyFirmwareService(private val project: Project) {
         when {
             mcuLower.startsWith("esp") -> MpyEspFlasher(project)
             mcuLower.startsWith("stm") -> MpyStmFlasher()
-            mcuLower.startsWith("samd") -> MpySamdFlasher()
-            mcuLower.startsWith("rp2") -> MpyRp2Flasher()
+            mcuLower.startsWith("samd") -> MpySamdFlasher(project)
+            mcuLower.startsWith("rp2") -> MpyRp2Flasher(project)
             else -> throw RuntimeException("MCU \"$mcu\" not supported by flasher")
         }.flash(reporter, port, pathToFirmware, mcu, offset, eraseFlash)
 
@@ -230,6 +230,9 @@ internal class MpyFirmwareService(private val project: Project) {
      */
     fun getDeviceTypes(): List<String> = getCachedBoards()
         .map { it.port }
+        .filter {
+            it.toLowerCasePreservingASCIIRules().startsWith("esp")
+        } //TODO: Remove once more devices are implemented
         .distinct()
 
     /**

@@ -16,17 +16,12 @@
 
 package dev.micropythontools.firmware
 
-import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.openapi.project.Project
 
-class MpyRp2Flasher : MpyFlasherInterface {
-    override suspend fun flash(
-        reporter: RawProgressReporter,
-        port: String,
-        pathToFirmware: String,
-        mcu: String,
-        offset: String,
-        eraseFlash: Boolean
-    ) {
-        TODO("Not yet implemented")
-    }
+/**
+ * Flasher for RP2040/RP2350 boards using UF2 bootloader.
+ * Matches boards with Board-ID containing "RP2" (e.g., "RPI-RP2", "RP2040", "RP2350").
+ */
+internal class MpyRp2Flasher(project: Project) : MpyUf2Flasher(project) {
+    override val boardIdPrefix = "RP2"
 }

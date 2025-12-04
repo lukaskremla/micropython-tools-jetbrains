@@ -16,17 +16,12 @@
 
 package dev.micropythontools.firmware
 
-import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.openapi.project.Project
 
-class MpySamdFlasher : MpyFlasherInterface {
-    override suspend fun flash(
-        reporter: RawProgressReporter,
-        port: String,
-        pathToFirmware: String,
-        mcu: String,
-        offset: String,
-        eraseFlash: Boolean
-    ) {
-        TODO("Not yet implemented")
-    }
+/**
+ * Flasher for SAMD21/SAMD51 boards using UF2 bootloader.
+ * Matches boards with Board-ID containing "SAMD" (e.g., "SAMD21", "SAMD51").
+ */
+internal class MpySamdFlasher(project: Project) : MpyUf2Flasher(project) {
+    override val boardIdPrefix = "SAMD"
 }
