@@ -14,7 +14,7 @@ The Changelog
 * Adjusted File System volume size formatting
 * Fixed port selector model not recognizing changes in settings
 
-2025.3.2 - 9.11.2025
+2025.3.2 - 18.11.2025
 ------------------
 
 * Fixed the "Unexpected keyword argument 'sep'" error on very constrained ports
