@@ -16,6 +16,7 @@
 
 package dev.micropythontools.firmware
 
+import com.intellij.execution.ExecutionException
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -50,12 +51,24 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
                 "erase-flash"
             )
 
-            interpreterService.runPythonCodeWithCallback(eraseArgs, env) { outputLine ->
-                reporter.text("Erasing flash...")
+            try {
+                interpreterService.runPythonCodeWithCallback(eraseArgs, env) { outputLine ->
+                    reporter.text("Erasing flash...")
 
-                // esptool sometimes prints a single dot, this is a hack to avoid displaying it
-                if (outputLine != ".") {
-                    reporter.details(outputLine)
+                    // esptool sometimes prints a single dot, this is a hack to avoid displaying it
+                    if (outputLine != ".") {
+                        reporter.details(outputLine)
+                    }
+                }
+            } catch (e: Throwable) {
+                if (e.localizedMessage.contains("(6, 'Device not configured')")) {
+                    throw ExecutionException(
+                        e.localizedMessage + "\n\n" +
+                                "Please manually enter bootloader mode first by holding down the boot button while plugging the device in." +
+                                "Your device doesn't support RTS and DTR pins which esptool uses for automatic bootloader setup." +
+                                "You will need to manually re-plug the device after flashing completes to exit the bootloader mode." +
+                                "Otherwise the plugin will throw error messages about MicroPython not being on the device when trying to connect"
+                    )
                 }
             }
         }
@@ -70,49 +83,61 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
             pathToFirmware
         )
 
-        // Perform flash while collecting output
-        interpreterService.runPythonCodeWithCallback(flashArgs, env) { outputLine ->
-            when {
-                // esptool sometimes prints a single dot, this is a hack to avoid displaying it
-                outputLine == "." -> Unit
+        try {
+            // Perform flash while collecting output
+            interpreterService.runPythonCodeWithCallback(flashArgs, env) { outputLine ->
+                when {
+                    // esptool sometimes prints a single dot, this is a hack to avoid displaying it
+                    outputLine == "." -> Unit
 
-                outputLine.startsWith("Writing at") -> {
-                    val progressString = outputLine
-                        .substringAfterLast("]")
-                        .trim()
+                    outputLine.startsWith("Writing at") -> {
+                        val progressString = outputLine
+                            .substringAfterLast("]")
+                            .trim()
 
-                    val percentage = progressString
-                        .substringBeforeLast("%")
-                        .trim()
-                        .toDouble()
+                        val percentage = progressString
+                            .substringBeforeLast("%")
+                            .trim()
+                            .toDouble()
 
-                    val byteStringParts = progressString
-                        .substringAfterLast("%")
-                        .substringBeforeLast("bytes...")
-                        .trim()
-                        .split("/")
+                        val byteStringParts = progressString
+                            .substringAfterLast("%")
+                            .substringBeforeLast("bytes...")
+                            .trim()
+                            .split("/")
 
-                    val bytesWritten = byteStringParts[0].toLong()
-                    val totalBytesToWrite = byteStringParts[1].toLong()
+                        val bytesWritten = byteStringParts[0].toLong()
+                        val totalBytesToWrite = byteStringParts[1].toLong()
 
-                    val progressText = if (percentage < 100) "Flashing firmware..." else "Flashing complete..."
-                    reporter.text(progressText)
-                    reporter.details("Flashed ${formatSize(bytesWritten)} of ${formatSize(totalBytesToWrite)} ($percentage%)")
-                    reporter.fraction(percentage / 100.0)
-                }
+                        val progressText = if (percentage < 100) "Flashing firmware..." else "Flashing complete..."
+                        reporter.text(progressText)
+                        reporter.details("Flashed ${formatSize(bytesWritten)} of ${formatSize(totalBytesToWrite)} ($percentage%)")
+                        reporter.fraction(percentage / 100.0)
+                    }
 
-                outputLine.startsWith("Hard resetting") -> {
-                    reporter.text("Hard resetting...")
-                    reporter.details(outputLine)
-                    reporter.fraction(1.0)
-                }
-
-                else -> {
-                    // Show other output lines in details for additional context
-                    if (outputLine.isNotBlank()) {
+                    outputLine.startsWith("Hard resetting") -> {
+                        reporter.text("Hard resetting...")
                         reporter.details(outputLine)
+                        reporter.fraction(1.0)
+                    }
+
+                    else -> {
+                        // Show other output lines in details for additional context
+                        if (outputLine.isNotBlank()) {
+                            reporter.details(outputLine)
+                        }
                     }
                 }
+            }
+        } catch (e: Throwable) {
+            if (e.localizedMessage.contains("(6, 'Device not configured')")) {
+                throw ExecutionException(
+                    e.localizedMessage + "\n\n" +
+                            "Please manually enter bootloader mode first by holding down the boot button while plugging the device in." +
+                            "Your device doesn't support RTS and DTR pins which esptool uses for automatic bootloader setup." +
+                            "You will need to manually re-plug the device after flashing completes to exit the bootloader mode." +
+                            "Otherwise the plugin will throw error messages about MicroPython not being on the device when trying to connect"
+                )
             }
         }
     }
