@@ -67,7 +67,7 @@ internal data class MpyBoardsJson(
 @Service(Service.Level.PROJECT)
 internal class MpyFirmwareService(private val project: Project) {
     private val client: HttpClient = HttpClient.newHttpClient()
-    
+
     private var maxSupportedBoardsJsonMajorVersion: Int? = null
 
     private var cachedBoards: List<Board> = emptyList()
@@ -301,7 +301,7 @@ internal class MpyFirmwareService(private val project: Project) {
 
     fun updateCachedBoards() {
         val url =
-            "https://raw.githubusercontent.com/lukaskremla/micropython-tools-jetbrains/dev_test/firmware_retrieval/data/micropython_boards.json"
+            "https://raw.githubusercontent.com/lukaskremla/micropython-tools-jetbrains/main/data/micropython_boards.json"
         val request = HttpRequest.newBuilder().uri(URI.create(url)).build()
 
         val remoteBoardsJsonContent = try {
