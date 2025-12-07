@@ -17,7 +17,10 @@
 package dev.micropythontools.ui
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
@@ -50,6 +53,7 @@ import jssc.SerialPortException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Dimension
+import java.io.File
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -711,9 +715,9 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                         showFlashingErrorDialog(project, e.localizedMessage)
                     }
                 } finally {
-                    // Make sure to delete the temporary firmware file after flashing
-                    backgroundWriteAction {
-                        firmwareFile?.delete(this)
+                    // Make sure to delete if a temporary file was used
+                    if (microPythonOrgRadioButton.component.isSelected && firmwareFile != null) {
+                        File(firmwareFile.path).delete()
                     }
                 }
             }
