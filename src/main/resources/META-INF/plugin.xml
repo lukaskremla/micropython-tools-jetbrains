@@ -7,23 +7,16 @@
     <product-descriptor code="PMPYTOOLS" release-date="20251105" release-version="20253" optional="true"/>
 
     <change-notes><![CDATA[
-        <h3>2025.3.2 - 18.11.2025</h3>
+        <h3>2025.3.3 - 8.12.2025</h3>
         <ul>
-            <li>Fixed the "Unexpected keyword argument 'sep'" error on very constrained ports</li>
-        </ul>
-        <h3>2025.3.1 - 5.11.2025</h3>
-        <p>Free:</p>
-        <ul>
-            <li>Switched to release year based versioning</li>
-            <li>Improved stub package installation logic to show details about exceptions and to support UV interpreters</li>
-            <li>Reworked run configurations to show console views and be compatible with before launch tasks</li>
-        </ul>
-        <p>Paid:</p>
-        <ul>
-            <li>Added mpy-cross run configuration with support for automatically detecting bytecode version/architecture for connected board</li>
-            <li>Added upload compression which speeds up uploads and improves communication stability by reducing the amount of data that must be transferred</li>
-            <li>Added background uploads/downloads progress reporting to reduce workflow disruptions during long-running data transfers</li>
-            <li>Added .mpy file analyzer</li>
+            <li>Added an option to Flash MicroPython firmware directly from the IDE with real-time progress output, automatic esptool management, and support for erase flash option. This option currently only supports ESP devices, but support for RP2, SAMD and STM32 devices is planned in future updates</li>
+            <li>Added MicroPython detection when connecting to prevent confusing timeout errors on boards without MicroPython installed</li>
+            <li>Centralized Python dependency handling with automatic esptool/mpy-cross installation and unified inspections</li>
+            <li>Updated type hints terminology in stub package dialogs to clarify what stubs provide</li>
+            <li>Improved settings "device already connected" dialog to only update after successful disconnection</li>
+            <li>Improved upload run configuration layout - moved "Force blocking upload" checkbox after "Exclude paths" for better UX</li>
+            <li>Adjusted File System volume size formatting</li>
+            <li>Fixed port selector model not recognizing changes in settings</li>
         </ul>
         <br>
         <p>Previous versions can be found in <a href="https://github.com/lukaskremla/micropython-tools-jetbrains/blob/main/CHANGES.md">CHANGES.md</a> on GitHub</p>
@@ -32,18 +25,19 @@
     <description><![CDATA[
         <p>Adds MicroPython support to JetBrains IDEs.</p>
         <br>
-        <p>Free features:</p>
+        <p>Forever Free features:</p>
         <ul>
           <li>Upload and synchronize files with MicroPython devices (Serial and WebREPL supported)</li>
           <li>File System view with drag and drop, create/rename/delete, copy/cut/paste, and download</li>
-          <li>Stub package manager for <a href="https://github.com/Josverl/micropython-stubs">MicroPython stubs</a></li>
-          <li>On-device file editing (read-only by default, editable with save-to-device option)</li>
+          <li>Type Hint/Stub package manager for <a href="https://github.com/Josverl/micropython-stubs">MicroPython stubs</a></li>
+          <li>On-device file editing</li>
           <li>REPL integration with reset, interrupt, and clear actions</li>
+          <li>Firmware flashing, automatically download MicroPython and flash ESP devices</li>
           <li>Run configurations for Project, Selected Sources Roots, and Custom Paths</li>
           <li>Mounted volume support (e.g. SD cards)</li>
         </ul>
         <br>
-        <p>Pro features:</p>
+        <p>Pro (Paid) features:</p>
         <ul>
           <li>Background uploads and downloads that won't block the IDE</li>
           <li>Automatic file compression to significantly speed up uploads</li>

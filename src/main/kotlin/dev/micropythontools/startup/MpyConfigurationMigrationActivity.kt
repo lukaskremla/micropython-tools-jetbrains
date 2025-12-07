@@ -31,7 +31,7 @@ import dev.micropythontools.settings.MpySettingsService
 
 internal class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
     companion object {
-        private const val CURRENT_VERSION = "2025.3.1"
+        private const val CURRENT_NOTIFICATION_VERSION = "2025.3.3"
     }
 
     override suspend fun execute(project: Project) {
@@ -43,45 +43,49 @@ internal class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
         val lastShown = settings.state.lastShownVersion
 
         // Show update notification if version changed
-        if (lastShown != CURRENT_VERSION) {
+        if (lastShown != CURRENT_NOTIFICATION_VERSION) {
             showUpdateNotification(project)
-            settings.state.lastShownVersion = CURRENT_VERSION
+            settings.state.lastShownVersion = CURRENT_NOTIFICATION_VERSION
         }
     }
 
     private fun showUpdateNotification(project: Project) {
         val notification = Notification(
             MpyBundle.message("notification.group.name"),
-            "MicroPython Tools - Version $CURRENT_VERSION",
+            "MicroPython Tools - Version $CURRENT_NOTIFICATION_VERSION",
             """
-            <html>
-            <b>Important: Freemium Model Introduction</b><br><br>
-            
-            MicroPython Tools now offers Free and Pro editions. <b>Don't worry</b> - all features you've been 
-            using remain completely free! Your workflow won't change. We've simply added new Pro features 
-            that require a license, but everything you currently use stays accessible at no cost.<br><br>
-            
-            <b>New in this version:</b><br><br>
-            
-            <b>Free features:</b><br>
-            • Switched to release year based versioning<br>
-            • Improved stub package installation (UV support)<br>
-            • Better run configuration console views<br><br>
-            
-            <b>Pro features (new, require license):</b><br>
-            • mpy-cross compiler with auto-detection<br>
-            • Upload compression<br>
-            • Background uploads/downloads<br>
-            • .mpy file analyzer<br><br>
-            
-            You can start a 30 day free trial to evaluate the pro features before committing to a subscription.
-            </html>
-            """.trimIndent(),
+        <html>
+        <b>NEW: One-Click ESP Firmware Flashing</b><br><br>
+        
+        Flash MicroPython firmware directly from the IDE! Select your board, download firmware from micropython.org
+        automatically, and flash with real-time progress reporting.<br><br>
+        
+        The dialog is accessible when not connected to any devices through the 
+        File System widget empty text or the plugin settings and available <b>for FREE to everyone</b>.<br><br>
+        
+        Currently supports <b>ESP devices</b>. Support for <b>RP2, STM32, and SAMD</b> coming soon!<br><br>
+        
+        <b>Pro features</b><br><br>
+        
+        Get the most out of your IDE with Pro features:
+        
+        <ul>
+            <li>Background uploads that don't block your IDE</li>
+            <li>Automatic upload compression for significantly faster and more stable uploads</li>
+            <li>One-click mpy-cross run configuration, with parameter auto-detection and friendly UI</li>
+            <li>An .mpy file analyzer for viewing MPY bytecode information</li>
+        </ul>
+
+        <i>Coming to Pro soon:</i> firmware flashing via run configurations.<br><br>
+        
+        Start a <b>30-day free trial</b> to try Pro features or purchase a license below.
+        </html>
+        """.trimIndent(),
             NotificationType.INFORMATION
         )
 
         notification.addAction(NotificationAction.createSimple(MpyBundle.message("migration.notification.action.view.release.notes")) {
-            BrowserUtil.browse("https://github.com/lukaskremla/micropython-tools-jetbrains/releases/tag/$CURRENT_VERSION")
+            BrowserUtil.browse("https://github.com/lukaskremla/micropython-tools-jetbrains/releases/tag/$CURRENT_NOTIFICATION_VERSION")
         })
 
         notification.addAction(NotificationAction.createSimple(MpyBundle.message("migration.notification.action.get.pro.license")) {
