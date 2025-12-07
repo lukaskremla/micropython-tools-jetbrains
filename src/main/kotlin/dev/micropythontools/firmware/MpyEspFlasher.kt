@@ -61,15 +61,12 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
                     }
                 }
             } catch (e: Throwable) {
-                if (e.localizedMessage.contains("(6, 'Device not configured')")) {
-                    throw ExecutionException(
-                        e.localizedMessage + "\n\n" +
-                                "Please manually enter bootloader mode first by holding down the boot button while plugging the device in." +
-                                "Your device doesn't support RTS and DTR pins which esptool uses for automatic bootloader setup." +
-                                "You will need to manually re-plug the device after flashing completes to exit the bootloader mode." +
-                                "Otherwise the plugin will throw error messages about MicroPython not being on the device when trying to connect"
-                    )
-                }
+                throw ExecutionException(
+                    e.localizedMessage + "\n\n" +
+                            "You might have to manually enter bootloader mode first if the above issue persists.\n" +
+                            "You can do so by holding down the boot button while plugging the device in.\n" +
+                            "You might also need to manually re-plug the device after flashing completes.\n"
+                )
             }
         }
 
@@ -131,15 +128,12 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
                 }
             }
         } catch (e: Throwable) {
-            if (e.localizedMessage.contains("(6, 'Device not configured')")) {
-                throw ExecutionException(
-                    e.localizedMessage + "\n\n" +
-                            "Please manually enter bootloader mode first by holding down the boot button while plugging the device in." +
-                            "Your device doesn't support RTS and DTR pins which esptool uses for automatic bootloader setup." +
-                            "You will need to manually re-plug the device after flashing completes to exit the bootloader mode." +
-                            "Otherwise the plugin will throw error messages about MicroPython not being on the device when trying to connect"
-                )
-            }
+            throw ExecutionException(
+                e.localizedMessage + "\n\n" +
+                        "You might have to manually enter bootloader mode first if the above issue persists.\n" +
+                        "You can do so by holding down the boot button while plugging the device in.\n" +
+                        "You might also need to manually re-plug the device after flashing completes.\n"
+            )
         }
     }
 }
