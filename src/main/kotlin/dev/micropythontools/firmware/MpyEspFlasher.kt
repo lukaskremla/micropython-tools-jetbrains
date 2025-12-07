@@ -122,6 +122,7 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
                     }
 
                     else -> {
+                        reporter.text("Flashing firmware...")
                         // Show other output lines in details for additional context
                         if (outputLine.isNotBlank()) {
                             reporter.details(outputLine)
