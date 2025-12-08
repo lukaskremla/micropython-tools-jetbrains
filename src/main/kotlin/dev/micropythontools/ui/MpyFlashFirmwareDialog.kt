@@ -728,7 +728,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                     )
 
                     // Handle after tasks
-                    if (connectAfter) {
+                    if (isEsp && connectAfter) {
                         deviceService.doConnect(reporter, forceLegacyVolumeSupport = true)
 
                         /*if (eraseFileSystemAfter.component.isSelected && !supportsEraseFlash) {
@@ -757,7 +757,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                     }
                 } catch (e: Throwable) {
                     withContext(Dispatchers.EDT) {
-                        showFlashingErrorDialog(project, e.localizedMessage)
+                        showFlashingErrorDialog(project, "${e.javaClass.name}\n${e.localizedMessage}")
                     }
                 }
             }
