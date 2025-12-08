@@ -199,3 +199,11 @@ The plugin distributed via the JetBrains Marketplace or this repository's Releas
 the [End-User License Agreement (EULA)](EULA.txt).
 
 The open-source components of this plugin are licensed under the [Apache License 2.0](LICENSE.txt).
+
+## Third-Party Notices
+
+This plugin includes the following third-party components:
+
+- **Pico Universal Flash Nuke** - Copyright 2024 Phil Howard, BSD 3-Clause License  
+  https://github.com/Gadgetoid/pico-universal-flash-nuke  
+  See [licenses/rp2UniversalFlashNuke](licenses/rp2UniversalFlashNuke) for the full license.
