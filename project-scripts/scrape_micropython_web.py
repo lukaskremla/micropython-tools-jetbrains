@@ -1,21 +1,19 @@
 import json
-from datetime import datetime
-from typing import Any, Dict
-
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
+from typing import Any, Dict
 
 MCU_PARAM = "?mcu="
 PATH_TO_BOARDS_JSON = "../data/micropython_boards.json"
 
-supported_ports = ("esp32", "esp8266", "rp2", "samd", "stm32")
+supported_ports = ("esp32", "esp8266", "rp2", "samd")
 
 port_to_extension = {
     "esp32": ".bin",
     "esp8266": ".bin",
     "rp2": ".uf2",
-    "samd": "uf2",
-    "stm32": ".dfu"
+    "samd": "uf2"
 }
 
 session = requests.Session()
