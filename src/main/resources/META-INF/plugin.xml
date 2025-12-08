@@ -9,7 +9,7 @@
     <change-notes><![CDATA[
         <h3>2025.3.3 - 8.12.2025</h3>
         <ul>
-            <li>Added an option to Flash MicroPython firmware directly from the IDE with real-time progress output, automatic esptool management, and support for erase flash option. Supports ESP, RP2 and SAMD devices.</li>
+            <li>Added an option to Flash MicroPython firmware directly from the IDE with real-time progress output. Supports ESP, RP2 and SAMD devices</li>
             <li>Added MicroPython detection when connecting to prevent confusing timeout errors on boards without MicroPython installed</li>
             <li>Centralized Python dependency handling with automatic esptool/mpy-cross installation and unified inspections</li>
             <li>Updated type hints terminology in stub package dialogs to clarify what stubs provide</li>
