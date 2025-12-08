@@ -28,8 +28,10 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 
 enum class Uf2BoardFamily(val boardIdPrefix: String) {
@@ -81,7 +83,7 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
         var copiedBytes = 0L
 
         reporter.text("Copying firmware file...")
-        
+
         // Timeout on opening the channels, sometimes the volume might present itself but not be writable
         val (input, output) = try {
             withTimeout(TIMEOUT) {
@@ -94,6 +96,15 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
             }
         } catch (_: TimeoutCancellationException) {
             throw RuntimeException("The volume isn't writable, please reconnect it and start over.")
+        } catch (e: NoSuchFileException) {
+            // Only handle the output directory missing error explicitly, the dest missing error might be encountered commonly
+            // and doesn't signify a bug in the plugin.
+            // Missing source file suggests a bug in the plugin and doesn't need a separate message
+            if (e.message == dest.absolutePathString()) {
+                throw RuntimeException("Failed to find selected volume, please re-enter bootloader mode and try again.")
+            } else {
+                throw e
+            }
         }
 
         input.use { inputChannel ->
