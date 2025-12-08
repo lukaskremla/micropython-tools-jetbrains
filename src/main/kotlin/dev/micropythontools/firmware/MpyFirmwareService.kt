@@ -31,6 +31,7 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.time.LocalDateTime
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempFile
 
@@ -377,13 +378,22 @@ internal class MpyFirmwareService(private val project: Project) {
     }
 
     private fun loadFromDisk() {
+        val bundledBoardJsonContent = extractBundledBoardsJsonContent()
+
         val jsonContent = try {
             // Try to access a newer cached board json
             val cacheFile = MpyPaths.globalAppDataBase().resolve(MpyPaths.MICROPYTHON_BOARD_JSON_FILE_NAME).toFile()
-            if (cacheFile.exists()) cacheFile.readText() else throw Exception("No cache")
+            val cachedJsonContent = if (cacheFile.exists()) cacheFile.readText() else throw Exception("No cache")
+
+            val cachedTimestamp = LocalDateTime.parse(MpyBoardsJson.fromJson(cachedJsonContent).timestamp)
+            val bundledTimestamp = LocalDateTime.parse(MpyBoardsJson.fromJson(bundledBoardJsonContent).timestamp)
+
+            if (cachedTimestamp.isBefore(bundledTimestamp)) throw Exception("Bundled is fresher")
+
+            cachedJsonContent
         } catch (_: Throwable) {
             // Fall back to bundled resource
-            extractBundledBoardsJsonContent()
+            bundledBoardJsonContent
         }
 
         val parsedMpyBoardJson = MpyBoardsJson.fromJson(jsonContent)
