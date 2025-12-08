@@ -352,7 +352,11 @@ internal class MpyDeviceService(val project: Project) : Disposable {
      * @param forceLegacyVolumeSupport Forces legacy volume support for the initial refresh, useful when connecting
      * after flashing firmware versions below 1.25.0
      */
-    suspend fun doConnect(reporter: RawProgressReporter, isConnectAction: Boolean = false, forceLegacyVolumeSupport: Boolean = false) {
+    suspend fun doConnect(
+        reporter: RawProgressReporter,
+        isConnectAction: Boolean = false,
+        forceLegacyVolumeSupport: Boolean = false
+    ) {
         try {
             if (state == State.CONNECTED) return
 
