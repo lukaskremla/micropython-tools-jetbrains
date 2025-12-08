@@ -350,14 +350,12 @@ internal open class MpyComm(
                                 { reporter ->
                                     reporter.text(MpyBundle.message("execute.cleanup.progress"))
 
-                                    withTimeout(SHORT_TIMEOUT) {
-                                        state = State.TTY_DETACHED
-                                        // Interrupt running code
-                                        mpyClient?.send("\u0003")
-                                        mpyClient?.send("\u0002")
-                                        if (state == State.TTY_DETACHED) {
-                                            state = State.CONNECTED
-                                        }
+                                    state = State.TTY_DETACHED
+                                    // Interrupt running code
+                                    mpyClient?.send("\u0003")
+                                    mpyClient?.send("\u0002")
+                                    if (state == State.TTY_DETACHED) {
+                                        state = State.CONNECTED
                                     }
                                 }
                             )
@@ -404,23 +402,21 @@ internal open class MpyComm(
             }
 
             try {
-                withTimeout(SHORT_TIMEOUT) {
-                    // Interrupt running code
-                    mpyClient?.send("\u0003")
+                // Interrupt running code
+                mpyClient?.send("\u0003")
 
-                    if (shouldExitRawRepl) {
-                        state = State.TTY_DETACHED
-                        mpyClient?.send("\u0002")
-                        if (state == State.TTY_DETACHED && mpyClient !is MpyWebSocketClient) {
-                            state = State.CONNECTED
-                        }
-                        shouldExitRawRepl = false
-                        foundEotCharacters = 0
+                if (shouldExitRawRepl) {
+                    state = State.TTY_DETACHED
+                    mpyClient?.send("\u0002")
+                    if (state == State.TTY_DETACHED && mpyClient !is MpyWebSocketClient) {
+                        state = State.CONNECTED
                     }
-
-                    // Soft reset
-                    mpyClient?.send("\u0004")
+                    shouldExitRawRepl = false
+                    foundEotCharacters = 0
                 }
+
+                // Soft reset
+                mpyClient?.send("\u0004")
             } catch (e: TimeoutCancellationException) {
                 throw IOException(MpyBundle.message("repl.reset.error.timeout"), e)
             }
@@ -462,20 +458,18 @@ internal open class MpyComm(
         checkConnected()
         commMutex.withLock {
             try {
-                withTimeout(SHORT_TIMEOUT) {
-                    // Interrupt running code
-                    mpyClient?.send("\u0003")
+                // Interrupt running code
+                mpyClient?.send("\u0003")
 
-                    if (shouldExitRawRepl) {
-                        state = State.TTY_DETACHED
-                        mpyClient?.send("\u0002")
-                        if (state == State.TTY_DETACHED) {
-                            state = State.CONNECTED
-                        }
-
-                        shouldExitRawRepl = false
-                        foundEotCharacters = 0
+                if (shouldExitRawRepl) {
+                    state = State.TTY_DETACHED
+                    mpyClient?.send("\u0002")
+                    if (state == State.TTY_DETACHED) {
+                        state = State.CONNECTED
                     }
+
+                    shouldExitRawRepl = false
+                    foundEotCharacters = 0
                 }
             } catch (e: TimeoutCancellationException) {
                 throw IOException(MpyBundle.message("repl.interrupt.error.timeout"), e)
@@ -824,9 +818,7 @@ internal open class MpyComm(
                 val chunk = commandBytes.copyOfRange(index, endIndex)
 
                 // Send chunk
-                withTimeout(TIMEOUT) {
-                    mpyClient?.send(chunk)
-                }
+                mpyClient?.send(chunk)
 
                 // Report progress if applicable
                 if (progressCallback != null && singleByteProgress != null) {
@@ -843,9 +835,7 @@ internal open class MpyComm(
             }
 
             // Indicate the end of transmission (Ctrl-D)
-            withTimeout(TIMEOUT) {
-                mpyClient?.send("\u0004")
-            }
+            mpyClient?.send("\u0004")
 
             // No output should be collected, return early
             if (redirectToRepl) {
