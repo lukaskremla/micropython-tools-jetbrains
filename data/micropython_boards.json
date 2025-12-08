@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2025-12-08T09:02:11.564637",
+  "timestamp": "2025-12-08T17:18:38.669947",
   "skimmedPorts": [
     "esp32",
     "esp8266",
@@ -42,10 +42,10 @@
           "-20210202-v1.14.bin",
           "-20200902-v1.13.bin",
           "-20191220-v1.12.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "Support for OTA": [
           "-OTA-20250911-v1.26.1.bin",
@@ -61,10 +61,10 @@
           "-OTA-20230426-v1.20.0.bin",
           "-OTA-20220618-v1.19.1.bin",
           "-OTA-20220117-v1.18.bin",
+          "-OTA-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-OTA-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-OTA-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-OTA-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-OTA-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-OTA-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "ESP32 Unicore": [
           "-UNICORE-20250911-v1.26.1.bin",
@@ -78,10 +78,10 @@
           "-UNICORE-20231227-v1.22.0.bin",
           "-UNICORE-20231005-v1.21.0.bin",
           "-UNICORE-20230426-v1.20.0.bin",
+          "-UNICORE-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-UNICORE-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-UNICORE-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-UNICORE-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-UNICORE-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-UNICORE-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "ESP32 D2WD": [
           "-D2WD-20250911-v1.26.1.bin",
@@ -97,10 +97,10 @@
           "-D2WD-20230426-v1.20.0.bin",
           "-D2WD-20220618-v1.19.1.bin",
           "-D2WD-20220117-v1.18.bin",
+          "-D2WD-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-D2WD-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-D2WD-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-D2WD-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-D2WD-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-D2WD-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "Support for SPIRAM / WROVER": [
           "-SPIRAM-20250911-v1.26.1.bin",
@@ -122,10 +122,10 @@
           "-SPIRAM-20210202-v1.14.bin",
           "-SPIRAM-20200902-v1.13.bin",
           "-SPIRAM-20191220-v1.12.bin",
+          "-SPIRAM-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-SPIRAM-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-SPIRAM-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-SPIRAM-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-SPIRAM-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-SPIRAM-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -150,10 +150,10 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -179,10 +179,10 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -200,10 +200,10 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -227,10 +227,10 @@
           "-20231227-v1.22.0.bin",
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -257,10 +257,10 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -273,10 +273,10 @@
       "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -291,10 +291,10 @@
         "Standard": [
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -326,10 +326,10 @@
           "-idf4-20210202-v1.14.bin",
           "-idf4-20200902-v1.13.bin",
           "-idf4-20200316-v1.12.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -344,16 +344,16 @@
         "Standard": [
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "2MiB flash": [
+          "-FLASH_2M-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-FLASH_2M-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-FLASH_2M-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-FLASH_2M-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-FLASH_2M-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-FLASH_2M-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -380,10 +380,10 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -398,10 +398,10 @@
         "Standard": [
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -426,10 +426,10 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -442,10 +442,10 @@
       "offset": "0x2000",
       "firmwareNameToLinkParts": {
         "Standard": [
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -463,10 +463,10 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -484,10 +484,10 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -500,10 +500,10 @@
       "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -521,10 +521,10 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -537,16 +537,18 @@
       "offset": "0x2000",
       "firmwareNameToLinkParts": {
         "Standard": [
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "Support for external C5 WiFi/BLE": [
+          "-C5_WIFI-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-C5_WIFI-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-C5_WIFI-20251203-v1.27.0-preview.490.g0b1a6bebae.bin"
         ],
         "Support for external C6 WiFi/BLE": [
+          "-C6_WIFI-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-C6_WIFI-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-C6_WIFI-20251203-v1.27.0-preview.490.g0b1a6bebae.bin"
         ]
@@ -574,10 +576,10 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -604,10 +606,10 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -633,10 +635,10 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -663,10 +665,10 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -692,10 +694,10 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -721,10 +723,10 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -750,10 +752,10 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "Support for Octal-SPIRAM": [
           "-SPIRAM_OCT-20250911-v1.26.1.bin",
@@ -767,10 +769,10 @@
           "-SPIRAM_OCT-20231227-v1.22.0.bin",
           "-SPIRAM_OCT-20231005-v1.21.0.bin",
           "-SPIRAM_OCT-20230426-v1.20.0.bin",
+          "-SPIRAM_OCT-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-SPIRAM_OCT-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-SPIRAM_OCT-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-SPIRAM_OCT-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-SPIRAM_OCT-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-SPIRAM_OCT-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -793,10 +795,10 @@
           "-20240105-v1.22.1.bin",
           "-20231227-v1.22.0.bin",
           "-20231005-v1.21.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -814,10 +816,10 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -842,10 +844,10 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -863,10 +865,10 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -889,10 +891,10 @@
           "-20240105-v1.22.1.bin",
           "-20231227-v1.22.0.bin",
           "-20231005-v1.21.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -910,10 +912,10 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -938,10 +940,10 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -959,10 +961,10 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -987,10 +989,10 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -1012,10 +1014,10 @@
           "-20240222-v1.22.2.bin",
           "-20240105-v1.22.1.bin",
           "-20231227-v1.22.0.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -1055,10 +1057,10 @@
           "-20170612-v1.9.1.bin",
           "-20170526-v1.9.bin",
           "-20170108-v1.8.7.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "512kiB flash": [
           "-FLASH_512K-20250911-v1.26.1.bin",
@@ -1088,10 +1090,10 @@
           "-FLASH_512K-20170611-v1.9.1.bin",
           "-FLASH_512K-20170526-v1.9.bin",
           "-FLASH_512K-20170108-v1.8.7.bin",
+          "-FLASH_512K-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-FLASH_512K-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-FLASH_512K-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-FLASH_512K-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-FLASH_512K-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-FLASH_512K-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "OTA compatible": [
           "-OTA-20250911-v1.26.1.bin",
@@ -1116,10 +1118,10 @@
           "-OTA-20170823-v1.9.2.bin",
           "-OTA-20170611-v1.9.1.bin",
           "-OTA-20170526-v1.9.bin",
+          "-OTA-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-OTA-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-OTA-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-OTA-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-OTA-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-OTA-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "1MiB flash": [
           "-FLASH_1M-20250911-v1.26.1.bin",
@@ -1140,305 +1142,19 @@
           "-FLASH_1M-20210418-v1.15.bin",
           "-FLASH_1M-20210202-v1.14.bin",
           "-FLASH_1M-20200902-v1.13.bin",
+          "-FLASH_1M-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-FLASH_1M-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-FLASH_1M-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-FLASH_1M-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-FLASH_1M-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
+          "-FLASH_1M-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
         "2MiB flash with ROMFS": [
           "-FLASH_2M_ROMFS-20250911-v1.26.1.bin",
           "-FLASH_2M_ROMFS-20250809-v1.26.0.bin",
           "-FLASH_2M_ROMFS-20250415-v1.25.0.bin",
+          "-FLASH_2M_ROMFS-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-FLASH_2M_ROMFS-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-FLASH_2M_ROMFS-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-FLASH_2M_ROMFS-20251201-v1.27.0-preview.486.ge6a7dc1114.bin",
-          "-FLASH_2M_ROMFS-20251201-v1.27.0-preview.482.g8dc05cdba3.bin"
-        ]
-      }
-    },
-    {
-      "id": "ADAFRUIT_FEATHER_RP2040",
-      "name": "Feather RP2040",
-      "vendor": "Adafruit",
-      "port": "rp2",
-      "mcu": "rp2040",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20241129-v1.24.1.uf2",
-          "-20241025-v1.24.0.uf2",
-          "-20240602-v1.23.0.uf2",
-          "-20240222-v1.22.2.uf2",
-          "-20240105-v1.22.1.uf2",
-          "-20231227-v1.22.0.uf2",
-          "-20231005-v1.21.0.uf2",
-          "-20230426-v1.20.0.uf2",
-          "-20220618-v1.19.1.uf2",
-          "-20220117-v1.18.uf2",
-          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ]
-      }
-    },
-    {
-      "id": "ADAFRUIT_ITSYBITSY_RP2040",
-      "name": "ItsyBitsy RP2040",
-      "vendor": "Adafruit",
-      "port": "rp2",
-      "mcu": "rp2040",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20241129-v1.24.1.uf2",
-          "-20241025-v1.24.0.uf2",
-          "-20240602-v1.23.0.uf2",
-          "-20240222-v1.22.2.uf2",
-          "-20240105-v1.22.1.uf2",
-          "-20231227-v1.22.0.uf2",
-          "-20231005-v1.21.0.uf2",
-          "-20230426-v1.20.0.uf2",
-          "-20220618-v1.19.1.uf2",
-          "-20220117-v1.18.uf2",
-          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ]
-      }
-    },
-    {
-      "id": "ADAFRUIT_QTPY_RP2040",
-      "name": "QT Py RP2040",
-      "vendor": "Adafruit",
-      "port": "rp2",
-      "mcu": "rp2040",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20241129-v1.24.1.uf2",
-          "-20241025-v1.24.0.uf2",
-          "-20240602-v1.23.0.uf2",
-          "-20240222-v1.22.2.uf2",
-          "-20240105-v1.22.1.uf2",
-          "-20231227-v1.22.0.uf2",
-          "-20231005-v1.21.0.uf2",
-          "-20230426-v1.20.0.uf2",
-          "-20220618-v1.19.1.uf2",
-          "-20220117-v1.18.uf2",
-          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ]
-      }
-    },
-    {
-      "id": "ARDUINO_NANO_RP2040_CONNECT",
-      "name": "Nano RP2040 Connect",
-      "vendor": "Arduino",
-      "port": "rp2",
-      "mcu": "rp2040",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20241129-v1.24.1.uf2",
-          "-20241025-v1.24.0.uf2",
-          "-20240602-v1.23.0.uf2",
-          "-20240222-v1.22.2.uf2",
-          "-20240105-v1.22.1.uf2",
-          "-20231227-v1.22.0.uf2",
-          "-20231005-v1.21.0.uf2",
-          "-20230426-v1.20.0.uf2",
-          "-20220618-v1.19.1.uf2",
-          "-20220117-v1.18.uf2",
-          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ]
-      }
-    },
-    {
-      "id": "MACHDYNE_WERKZEUG",
-      "name": "Werkzeug",
-      "vendor": "Machdyne",
-      "port": "rp2",
-      "mcu": "rp2040",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ]
-      }
-    },
-    {
-      "id": "GARATRONIC_PYBSTICK26_RP2040",
-      "name": "RP2040 PYBStick",
-      "vendor": "McHobby",
-      "port": "rp2",
-      "mcu": "rp2040",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20241129-v1.24.1.uf2",
-          "-20241025-v1.24.0.uf2",
-          "-20240602-v1.23.0.uf2",
-          "-20240222-v1.22.2.uf2",
-          "-20240105-v1.22.1.uf2",
-          "-20231227-v1.22.0.uf2",
-          "-20231005-v1.21.0.uf2",
-          "-20230426-v1.20.0.uf2",
-          "-20220618-v1.19.1.uf2",
-          "-20220117-v1.18.uf2",
-          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ]
-      }
-    },
-    {
-      "id": "PIMORONI_PICOLIPO",
-      "name": "Pico LiPo",
-      "vendor": "Pimoroni",
-      "port": "rp2",
-      "mcu": "rp2040",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20241129-v1.24.1.uf2",
-          "-20241025-v1.24.0.uf2",
-          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ],
-        "16 MiB Flash": [
-          "-FLASH_16M-20250911-v1.26.1.uf2",
-          "-FLASH_16M-20250809-v1.26.0.uf2",
-          "-FLASH_16M-20250415-v1.25.0.uf2",
-          "-FLASH_16M-20241129-v1.24.1.uf2",
-          "-FLASH_16M-20241025-v1.24.0.uf2",
-          "-FLASH_16M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-FLASH_16M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-FLASH_16M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-FLASH_16M-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ]
-      }
-    },
-    {
-      "id": "PIMORONI_TINY2040",
-      "name": "Tiny2040",
-      "vendor": "Pimoroni",
-      "port": "rp2",
-      "mcu": "rp2040",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20241129-v1.24.1.uf2",
-          "-20241025-v1.24.0.uf2",
-          "-20240602-v1.23.0.uf2",
-          "-20240222-v1.22.2.uf2",
-          "-20240105-v1.22.1.uf2",
-          "-20231227-v1.22.0.uf2",
-          "-20231005-v1.21.0.uf2",
-          "-20230426-v1.20.0.uf2",
-          "-20220618-v1.19.1.uf2",
-          "-20220117-v1.18.uf2",
-          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ],
-        "8 MiB Flash": [
-          "-FLASH_8M-20250911-v1.26.1.uf2",
-          "-FLASH_8M-20250809-v1.26.0.uf2",
-          "-FLASH_8M-20250415-v1.25.0.uf2",
-          "-FLASH_8M-20241129-v1.24.1.uf2",
-          "-FLASH_8M-20241025-v1.24.0.uf2",
-          "-FLASH_8M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-FLASH_8M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-FLASH_8M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-FLASH_8M-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ]
-      }
-    },
-    {
-      "id": "POLOLU_3PI_2040_ROBOT",
-      "name": "3pi+ 2040 Robot",
-      "vendor": "Pololu",
-      "port": "rp2",
-      "mcu": "rp2040",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20241129-v1.24.1.uf2",
-          "-20241025-v1.24.0.uf2",
-          "-20240602-v1.23.0.uf2",
-          "-20240222-v1.22.2.uf2",
-          "-20240105-v1.22.1.uf2",
-          "-20231227-v1.22.0.uf2",
-          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
-        ]
-      }
-    },
-    {
-      "id": "POLOLU_ZUMO_2040_ROBOT",
-      "name": "Zumo 2040 Robot",
-      "vendor": "Pololu",
-      "port": "rp2",
-      "mcu": "rp2040",
-      "offset": "",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20241129-v1.24.1.uf2",
-          "-20241025-v1.24.0.uf2",
-          "-20240602-v1.23.0.uf2",
-          "-20240222-v1.22.2.uf2",
-          "-20240105-v1.22.1.uf2",
-          "-20231227-v1.22.0.uf2",
-          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-FLASH_2M_ROMFS-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -1468,10 +1184,10 @@
           "-20210618-v1.16.uf2",
           "-20210418-v1.15.uf2",
           "-20210202-v1.14.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1495,10 +1211,296 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ]
+      }
+    },
+    {
+      "id": "ADAFRUIT_FEATHER_RP2040",
+      "name": "Feather RP2040",
+      "vendor": "Adafruit",
+      "port": "rp2",
+      "mcu": "rp2040",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20241129-v1.24.1.uf2",
+          "-20241025-v1.24.0.uf2",
+          "-20240602-v1.23.0.uf2",
+          "-20240222-v1.22.2.uf2",
+          "-20240105-v1.22.1.uf2",
+          "-20231227-v1.22.0.uf2",
+          "-20231005-v1.21.0.uf2",
+          "-20230426-v1.20.0.uf2",
+          "-20220618-v1.19.1.uf2",
+          "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ]
+      }
+    },
+    {
+      "id": "ADAFRUIT_ITSYBITSY_RP2040",
+      "name": "ItsyBitsy RP2040",
+      "vendor": "Adafruit",
+      "port": "rp2",
+      "mcu": "rp2040",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20241129-v1.24.1.uf2",
+          "-20241025-v1.24.0.uf2",
+          "-20240602-v1.23.0.uf2",
+          "-20240222-v1.22.2.uf2",
+          "-20240105-v1.22.1.uf2",
+          "-20231227-v1.22.0.uf2",
+          "-20231005-v1.21.0.uf2",
+          "-20230426-v1.20.0.uf2",
+          "-20220618-v1.19.1.uf2",
+          "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ]
+      }
+    },
+    {
+      "id": "ADAFRUIT_QTPY_RP2040",
+      "name": "QT Py RP2040",
+      "vendor": "Adafruit",
+      "port": "rp2",
+      "mcu": "rp2040",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20241129-v1.24.1.uf2",
+          "-20241025-v1.24.0.uf2",
+          "-20240602-v1.23.0.uf2",
+          "-20240222-v1.22.2.uf2",
+          "-20240105-v1.22.1.uf2",
+          "-20231227-v1.22.0.uf2",
+          "-20231005-v1.21.0.uf2",
+          "-20230426-v1.20.0.uf2",
+          "-20220618-v1.19.1.uf2",
+          "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ]
+      }
+    },
+    {
+      "id": "ARDUINO_NANO_RP2040_CONNECT",
+      "name": "Nano RP2040 Connect",
+      "vendor": "Arduino",
+      "port": "rp2",
+      "mcu": "rp2040",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20241129-v1.24.1.uf2",
+          "-20241025-v1.24.0.uf2",
+          "-20240602-v1.23.0.uf2",
+          "-20240222-v1.22.2.uf2",
+          "-20240105-v1.22.1.uf2",
+          "-20231227-v1.22.0.uf2",
+          "-20231005-v1.21.0.uf2",
+          "-20230426-v1.20.0.uf2",
+          "-20220618-v1.19.1.uf2",
+          "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ]
+      }
+    },
+    {
+      "id": "MACHDYNE_WERKZEUG",
+      "name": "Werkzeug",
+      "vendor": "Machdyne",
+      "port": "rp2",
+      "mcu": "rp2040",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ]
+      }
+    },
+    {
+      "id": "GARATRONIC_PYBSTICK26_RP2040",
+      "name": "RP2040 PYBStick",
+      "vendor": "McHobby",
+      "port": "rp2",
+      "mcu": "rp2040",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20241129-v1.24.1.uf2",
+          "-20241025-v1.24.0.uf2",
+          "-20240602-v1.23.0.uf2",
+          "-20240222-v1.22.2.uf2",
+          "-20240105-v1.22.1.uf2",
+          "-20231227-v1.22.0.uf2",
+          "-20231005-v1.21.0.uf2",
+          "-20230426-v1.20.0.uf2",
+          "-20220618-v1.19.1.uf2",
+          "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ]
+      }
+    },
+    {
+      "id": "PIMORONI_PICOLIPO",
+      "name": "Pico LiPo",
+      "vendor": "Pimoroni",
+      "port": "rp2",
+      "mcu": "rp2040",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20241129-v1.24.1.uf2",
+          "-20241025-v1.24.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ],
+        "16 MiB Flash": [
+          "-FLASH_16M-20250911-v1.26.1.uf2",
+          "-FLASH_16M-20250809-v1.26.0.uf2",
+          "-FLASH_16M-20250415-v1.25.0.uf2",
+          "-FLASH_16M-20241129-v1.24.1.uf2",
+          "-FLASH_16M-20241025-v1.24.0.uf2",
+          "-FLASH_16M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-FLASH_16M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-FLASH_16M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-FLASH_16M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ]
+      }
+    },
+    {
+      "id": "PIMORONI_TINY2040",
+      "name": "Tiny2040",
+      "vendor": "Pimoroni",
+      "port": "rp2",
+      "mcu": "rp2040",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20241129-v1.24.1.uf2",
+          "-20241025-v1.24.0.uf2",
+          "-20240602-v1.23.0.uf2",
+          "-20240222-v1.22.2.uf2",
+          "-20240105-v1.22.1.uf2",
+          "-20231227-v1.22.0.uf2",
+          "-20231005-v1.21.0.uf2",
+          "-20230426-v1.20.0.uf2",
+          "-20220618-v1.19.1.uf2",
+          "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ],
+        "8 MiB Flash": [
+          "-FLASH_8M-20250911-v1.26.1.uf2",
+          "-FLASH_8M-20250809-v1.26.0.uf2",
+          "-FLASH_8M-20250415-v1.25.0.uf2",
+          "-FLASH_8M-20241129-v1.24.1.uf2",
+          "-FLASH_8M-20241025-v1.24.0.uf2",
+          "-FLASH_8M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-FLASH_8M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-FLASH_8M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-FLASH_8M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ]
+      }
+    },
+    {
+      "id": "POLOLU_3PI_2040_ROBOT",
+      "name": "3pi+ 2040 Robot",
+      "vendor": "Pololu",
+      "port": "rp2",
+      "mcu": "rp2040",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20241129-v1.24.1.uf2",
+          "-20241025-v1.24.0.uf2",
+          "-20240602-v1.23.0.uf2",
+          "-20240222-v1.22.2.uf2",
+          "-20240105-v1.22.1.uf2",
+          "-20231227-v1.22.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        ]
+      }
+    },
+    {
+      "id": "POLOLU_ZUMO_2040_ROBOT",
+      "name": "Zumo 2040 Robot",
+      "vendor": "Pololu",
+      "port": "rp2",
+      "mcu": "rp2040",
+      "offset": "",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20241129-v1.24.1.uf2",
+          "-20241025-v1.24.0.uf2",
+          "-20240602-v1.23.0.uf2",
+          "-20240222-v1.22.2.uf2",
+          "-20240105-v1.22.1.uf2",
+          "-20231227-v1.22.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1520,10 +1522,10 @@
           "-20240222-v1.22.2.uf2",
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1549,10 +1551,10 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1578,10 +1580,10 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1597,10 +1599,10 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1625,10 +1627,10 @@
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1652,10 +1654,10 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1679,10 +1681,10 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "8 MiB Flash": [
           "-FLASH_8M-20250911-v1.26.1.uf2",
@@ -1690,10 +1692,10 @@
           "-FLASH_8M-20250415-v1.25.0.uf2",
           "-FLASH_8M-20241129-v1.24.1.uf2",
           "-FLASH_8M-20241025-v1.24.0.uf2",
+          "-FLASH_8M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-FLASH_8M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-FLASH_8M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-FLASH_8M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-FLASH_8M-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-FLASH_8M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "2 MiB Flash": [
           "-FLASH_2M-20250911-v1.26.1.uf2",
@@ -1701,10 +1703,10 @@
           "-FLASH_2M-20250415-v1.25.0.uf2",
           "-FLASH_2M-20241129-v1.24.1.uf2",
           "-FLASH_2M-20241025-v1.24.0.uf2",
+          "-FLASH_2M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-FLASH_2M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-FLASH_2M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-FLASH_2M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-FLASH_2M-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-FLASH_2M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "4 MiB Flash": [
           "-FLASH_4M-20250911-v1.26.1.uf2",
@@ -1712,10 +1714,10 @@
           "-FLASH_4M-20250415-v1.25.0.uf2",
           "-FLASH_4M-20241129-v1.24.1.uf2",
           "-FLASH_4M-20241025-v1.24.0.uf2",
+          "-FLASH_4M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-FLASH_4M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-FLASH_4M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-FLASH_4M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-FLASH_4M-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-FLASH_4M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1739,10 +1741,10 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1760,10 +1762,10 @@
           "-20250415-v1.25.0.uf2",
           "-20241129-v1.24.1.uf2",
           "-20241025-v1.24.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "RISC-V CPU mode": [
           "-RISCV-20250911-v1.26.1.uf2",
@@ -1771,10 +1773,10 @@
           "-RISCV-20250415-v1.25.0.uf2",
           "-RISCV-20241129-v1.24.1.uf2",
           "-RISCV-20241025-v1.24.0.uf2",
+          "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-RISCV-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1790,16 +1792,16 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-RISCV-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1815,19 +1817,19 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "RISC-V CPU mode": [
           "-RISCV-20250911-v1.26.1.uf2",
           "-RISCV-20250809-v1.26.0.uf2",
           "-RISCV-20250415-v1.25.0.uf2",
+          "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-RISCV-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1843,16 +1845,16 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-RISCV-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1868,16 +1870,16 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-RISCV-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1893,16 +1895,16 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-RISCV-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1918,16 +1920,16 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-RISCV-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1943,16 +1945,16 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "RISC-V CPU mode": [
+          "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-RISCV-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1968,19 +1970,19 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "RISC V": [
           "-RISCV-20250911-v1.26.1.uf2",
           "-RISCV-20250809-v1.26.0.uf2",
           "-RISCV-20250415-v1.25.0.uf2",
+          "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-RISCV-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-RISCV-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2006,10 +2008,10 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2033,10 +2035,10 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2052,10 +2054,10 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2071,19 +2073,19 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "Support for an external Flash chip": [
           "-SPIFLASH-20250911-v1.26.1.uf2",
           "-SPIFLASH-20250809-v1.26.0.uf2",
           "-SPIFLASH-20250415-v1.25.0.uf2",
+          "-SPIFLASH-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-SPIFLASH-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-SPIFLASH-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-SPIFLASH-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-SPIFLASH-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-SPIFLASH-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2109,10 +2111,10 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2128,10 +2130,10 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2157,10 +2159,10 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2184,10 +2186,10 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2202,10 +2204,10 @@
         "Standard": [
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2220,10 +2222,10 @@
         "Standard": [
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2247,10 +2249,10 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2276,10 +2278,10 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2302,10 +2304,10 @@
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2321,10 +2323,10 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2340,10 +2342,10 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2369,10 +2371,10 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2398,10 +2400,10 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -2425,10 +2427,10 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2",
-          "-20251201-v1.27.0-preview.482.g8dc05cdba3.uf2"
+          "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     }

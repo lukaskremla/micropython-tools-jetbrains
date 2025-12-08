@@ -1,8 +1,9 @@
 import json
-import requests
-from bs4 import BeautifulSoup
 from datetime import datetime
 from typing import Any, Dict
+
+import requests
+from bs4 import BeautifulSoup
 
 MCU_PARAM = "?mcu="
 PATH_TO_BOARDS_JSON = "../data/micropython_boards.json"
@@ -207,6 +208,9 @@ def main():
                         # SparkFun has a board with a name duplicit to the Espressif "ESP32 / WROOM" board
                         elif board_name == "ESP32 / WROOM" and vendor == "SparkFun":
                             board_name = board_name + " (SparkFun)"
+                        # Pico boards are used most commonly, sort them first for convenience
+                        elif board_name in ("Pico", "Pico W", "Pico 2", "Pico 2 W"):
+                            sort_priority = 1
 
                         # Format the board dictionary with its info
                         board = {
