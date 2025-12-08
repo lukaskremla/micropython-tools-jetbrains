@@ -34,6 +34,8 @@ internal const val DEFAULT_WEBREPL_URL = "ws://192.168.4.1:8266"
 internal const val DEFAULT_WEBREPL_IP = "192.168.4.1"
 internal const val DEFAULT_WEBREPL_PORT = 8266
 
+internal const val EMPTY_VOLUME_TEXT = "No Volume Selected"
+
 @Service(Service.Level.PROJECT)
 @State(
     name = "MicroPythonTools",

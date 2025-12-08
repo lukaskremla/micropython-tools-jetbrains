@@ -190,18 +190,18 @@ internal class MpyFirmwareService(private val project: Project) {
         // Write the firmware data to the temp file
         tempFile.toFile().writeBytes(response)
 
-        reporter.details("Saved to: ${tempFile.fileName}")
+        reporter.details(null)
 
         return tempFile.absolutePathString()
     }
 
-    fun getMpyFlasherFromMcu(mcu: String): MpyFlasherInterface {
-        return with(mcu.toLowerCasePreservingASCIIRules()) {
+    fun getMpyFlasherFromDeviceType(deviceType: String): MpyFlasherInterface {
+        return with(deviceType.toLowerCasePreservingASCIIRules()) {
             when {
                 startsWith("esp") -> MpyEspFlasher(project)
                 startsWith("samd") -> MpyUf2Flasher(Uf2BoardFamily.SAMD)
                 startsWith("rp2") -> MpyUf2Flasher(Uf2BoardFamily.RP2)
-                else -> throw RuntimeException("MCU \"${mcu}\" not supported by flasher")
+                else -> throw RuntimeException("MCU \"${deviceType}\" not supported by flasher")
             }
         }
     }
@@ -215,12 +215,16 @@ internal class MpyFirmwareService(private val project: Project) {
         eraseFlash: Boolean,
         localFirmwarePath: String? = null  // If provided, download is skipped
     ) {
-        val flasher = getMpyFlasherFromMcu(board.mcu)
+        val flasher = getMpyFlasherFromDeviceType(board.port)
 
         var pathToFirmware: String? = null
 
         try {
-            pathToFirmware = localFirmwarePath ?: downloadFirmwareToTemp(reporter, board, firmwareVariant, version)
+            pathToFirmware = if (localFirmwarePath.isNullOrBlank()) {
+                downloadFirmwareToTemp(reporter, board, firmwareVariant, version)
+            } else {
+                localFirmwarePath
+            }
 
             flasher.flash(
                 reporter,
@@ -261,9 +265,6 @@ internal class MpyFirmwareService(private val project: Project) {
      */
     fun getDeviceTypes(): List<String> = getCachedBoards()
         .map { it.port }
-        .filter {
-            it.toLowerCasePreservingASCIIRules().startsWith("esp")
-        }
         .distinct()
 
     /**

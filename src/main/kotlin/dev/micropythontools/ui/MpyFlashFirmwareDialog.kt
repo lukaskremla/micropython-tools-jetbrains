@@ -39,12 +39,10 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
 import dev.micropythontools.core.MpyPythonInterpreterService
-import dev.micropythontools.firmware.Board
-import dev.micropythontools.firmware.IncompatibleBoardsJsonVersionException
-import dev.micropythontools.firmware.MpyFirmwareService
-import dev.micropythontools.firmware.PREVIEW_FIRMWARE_STRING
+import dev.micropythontools.firmware.*
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.EMPTY_PORT_NAME_TEXT
+import dev.micropythontools.settings.EMPTY_VOLUME_TEXT
 import dev.micropythontools.settings.MpySettingsService
 import io.ktor.util.*
 import kotlinx.coroutines.Dispatchers
@@ -59,6 +57,7 @@ import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
+import kotlin.io.path.absolutePathString
 
 internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrapper(project, true) {
     private val settings = project.service<MpySettingsService>()
@@ -71,20 +70,31 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
             ?: throw RuntimeException("Failed to retrieve the value of \"$nameToShow\" combobox")
     }
 
+    private val isEsp
+        get() = deviceTypeComboBox
+            .getSafely("Device type")
+            .startsWith("esp", ignoreCase = true)
+
     // Current board data
     private var currentBoards: List<Board> = emptyList()
 
     // UI components
     private lateinit var statusComment: Cell<JEditorPane>
 
-    private lateinit var connectionGroup: Row
+    private lateinit var deviceGroup: Row
+
+    private lateinit var deviceTypeComboBox: Cell<ComboBox<String>>
+
+    private lateinit var serialPortPanel: Panel
     private lateinit var enableManualEditingCheckbox: Cell<JBCheckBox>
     private lateinit var filterManufacturersCheckBox: Cell<JBCheckBox>
     private lateinit var portSelectComboBox: Cell<ComboBox<String>>
 
-    private lateinit var deviceTypeComboBox: Cell<ComboBox<String>>
-    private lateinit var mcuComboBox: Cell<ComboBox<String>>
+    private lateinit var volumeSelectComboBoxRow: Row
+    private lateinit var volumeSelectComboBox: Cell<ComboBox<String>>
 
+    private lateinit var mcuComboBoxRow: Row
+    private lateinit var mcuComboBox: Cell<ComboBox<String>>
     private lateinit var microPythonOrgRadioButton: Cell<JBRadioButton>
     private lateinit var localFileRadioButton: Cell<JBRadioButton>
 
@@ -97,6 +107,8 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
     private lateinit var localFileTextFieldWithBrowseButton: Cell<TextFieldWithBrowseButton>
 
+    private lateinit var flashingOptionsGroup: Row
+
     private lateinit var eraseFlashCheckBox: Cell<JBCheckBox>
     private lateinit var connectAfterCheckBox: Cell<JBCheckBox>
     //private lateinit var eraseFileSystemAfter: Cell<JBCheckBox>
@@ -106,6 +118,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
     // Initialize combo box models
     private val portSelectModel = MutableCollectionComboBoxModel<String>()
+    private val volumeSelectModel = MutableCollectionComboBoxModel<String>()
 
     init {
         title = "Flash Firmware/MicroPython"
@@ -160,49 +173,85 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
             portSelectModel.selectedItem = EMPTY_PORT_NAME_TEXT
         }
 
+        volumeSelectModel.selectedItem = EMPTY_VOLUME_TEXT
+
         return panel {
             row {
                 statusComment = comment("Checking for firmware updates...")
             }
 
-            connectionGroup = group("Connection") {
-                row {
-                    enableManualEditingCheckbox =
-                        checkBox(MpyBundle.message("configurable.enable.manual.port.editing.checkbox.text"))
-                            .applyToComponent {
-                                isSelected = settings.state.enableManualEditing
-                                addActionListener {
-                                    val comboBox = portSelectComboBox.component
-                                    comboBox.isEditable = isSelected
-                                    comboBox.revalidate()
-                                    comboBox.repaint()
+            deviceGroup = group("Device") {
+                row("Device type:") {
+                    deviceTypeComboBox = comboBox(deviceTypeModel)
+                        .columns(10)
+                        .applyToComponent {
+                            addActionListener {
+                                onDeviceTypeSelected()
+
+                                serialPortPanel.visible(isEsp)
+                                volumeSelectComboBoxRow.visible(!isEsp)
+
+                                mcuComboBoxRow.visible(isEsp || microPythonOrgRadioButton.component.isSelected)
+
+                                flashingOptionsGroup.visible(isEsp)
+                            }
+                        }
+                }.layout(RowLayout.LABEL_ALIGNED)
+
+                serialPortPanel = panel {
+                    row {
+                        enableManualEditingCheckbox =
+                            checkBox(MpyBundle.message("configurable.enable.manual.port.editing.checkbox.text"))
+                                .applyToComponent {
+                                    isSelected = settings.state.enableManualEditing
+                                    addActionListener {
+                                        val comboBox = portSelectComboBox.component
+                                        comboBox.isEditable = isSelected
+                                        comboBox.revalidate()
+                                        comboBox.repaint()
+                                    }
                                 }
-                            }
-                }
-                row {
-                    filterManufacturersCheckBox =
-                        checkBox(MpyBundle.message("configurable.filter.out.unknown.manufacturers.checkbox.text"))
+                    }
+                    row {
+                        filterManufacturersCheckBox =
+                            checkBox(MpyBundle.message("configurable.filter.out.unknown.manufacturers.checkbox.text"))
+                                .applyToComponent {
+                                    isSelected = settings.state.filterManufacturers
+                                }
+                    }
+
+                    row("Serial port:") {
+                        portSelectComboBox = comboBox(portSelectModel)
+                            .columns(20)
                             .applyToComponent {
-                                isSelected = settings.state.filterManufacturers
+                                isEditable = enableManualEditingCheckbox.component.isSelected
+
+                                addPopupMenuListener(object : PopupMenuListener {
+                                    override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
+                                        updatePortList()
+                                    }
+
+                                    override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
+                                    override fun popupMenuCanceled(e: PopupMenuEvent?) {}
+                                })
                             }
+                    }.layout(RowLayout.LABEL_ALIGNED)
                 }
 
-                row("Serial port:") {
-                    portSelectComboBox = comboBox(portSelectModel)
+                volumeSelectComboBoxRow = row("Target volume") {
+                    volumeSelectComboBox = comboBox(volumeSelectModel)
                         .columns(20)
                         .applyToComponent {
-                            isEditable = enableManualEditingCheckbox.component.isSelected
-
                             addPopupMenuListener(object : PopupMenuListener {
                                 override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
-                                    updatePortList()
+                                    updateVolumeList()
                                 }
 
                                 override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
                                 override fun popupMenuCanceled(e: PopupMenuEvent?) {}
                             })
                         }
-                }.layout(RowLayout.LABEL_ALIGNED)
+                }
             }.bottomGap(BottomGap.NONE).enabled(!deviceService.isConnected)
 
             indent {
@@ -219,7 +268,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                             { reporter ->
                                 deviceService.disconnect(reporter)
 
-                                connectionGroup.enabled(true)
+                                deviceGroup.enabled(true)
 
                                 this.visible(false)
                             }
@@ -229,12 +278,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
             }.visible(deviceService.isConnected)
 
             group("Firmware Selection") {
-                row("Device type:") {
-                    deviceTypeComboBox = comboBox(deviceTypeModel)
-                        .columns(10)
-                }.layout(RowLayout.LABEL_ALIGNED)
-
-                row("MCU:") {
+                mcuComboBoxRow = row("MCU:") {
                     mcuComboBox = comboBox(mcuModel)
                         .columns(10)
                         .applyToComponent {
@@ -249,9 +293,14 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                         microPythonOrgRadioButton = radioButton("MicroPython.org")
                             .applyToComponent {
                                 isSelected = true // This is the default option
+
+                                addActionListener { mcuComboBoxRow.visible(true) }
                             }
 
                         localFileRadioButton = radioButton("Local file")
+                            .applyToComponent {
+                                addActionListener { mcuComboBoxRow.visible(isEsp) }
+                            }
                     }
                 }
 
@@ -344,7 +393,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                 }.visibleIf(localFileRadioButton.selected)
             }
 
-            group("Flashing Options") {
+            flashingOptionsGroup = group("Flashing Options") {
                 row {
                     eraseFlashCheckBox = checkBox("Erase flash first")
                         .gap(RightGap.SMALL)
@@ -557,6 +606,27 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
         }
     }
 
+    private fun updateVolumeList() {
+        val flasher = firmwareService.getMpyFlasherFromDeviceType(deviceTypeComboBox.getSafely("Device type"))
+
+        val newVolumes = (flasher as? MpyUf2Flasher)?.findCompatibleUf2Volumes() ?: emptyList()
+
+        val newVolumesList = newVolumes.map { it.absolutePathString() }
+
+        val selectedItem = volumeSelectModel.selectedItem
+
+        volumeSelectModel.items
+            .filterNot { it in newVolumesList || it == volumeSelectModel.selectedItem }
+            .forEach { volumeSelectModel.remove(it) }
+
+        val filteredNewVolumesList = newVolumesList.filterNot { volumeSelectModel.contains(it) }
+        volumeSelectModel.addAll(volumeSelectModel.size, filteredNewVolumesList)
+
+        if (volumeSelectModel.isEmpty && (selectedItem == null || selectedItem.toString().isBlank())) {
+            volumeSelectModel.selectedItem = EMPTY_VOLUME_TEXT
+        }
+    }
+
     private fun formatReadableDateTime(isoTimestamp: String): String {
         val updateTime = if (isoTimestamp.endsWith("Z") || isoTimestamp.contains("+")) {
             // Has timezone info, parse directly
@@ -614,11 +684,15 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                         it.name == boardVariantComboBox.component.selectedItem
                     } ?: throw RuntimeException("Failed to find selected board")
 
-                    val flasherForBoard = firmwareService.getMpyFlasherFromMcu(board.mcu)
+                    val flasherForBoard = firmwareService.getMpyFlasherFromDeviceType(board.port)
 
                     val firmwareVariant = firmwareVariantComboBox.getSafely("Firmware variant")
                     val version = versionComboBox.getSafely("Version")
-                    val target = portSelectComboBox.getSafely("Port")
+                    val target = if (isEsp) {
+                        portSelectComboBox.getSafely("Port")
+                    } else {
+                        volumeSelectComboBox.getSafely("Volume")
+                    }
                     val eraseFlash = eraseFlashCheckBox.component.isSelected
                     val connectAfter = connectAfterCheckBox.component.isSelected
 

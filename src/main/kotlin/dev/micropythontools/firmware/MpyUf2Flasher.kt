@@ -21,23 +21,20 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.communication.SHORT_DELAY
 import dev.micropythontools.communication.TIMEOUT
+import dev.micropythontools.settings.EMPTY_VOLUME_TEXT
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import java.io.File
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import kotlin.io.path.exists
 
 enum class Uf2BoardFamily(val boardIdPrefix: String) {
     RP2("RP2"),
     SAMD("SAMD");
-
-    companion object {
-        fun fromIdPrefix(boardIdPrefix: String): Uf2BoardFamily? =
-            entries.find { it.boardIdPrefix.equals(boardIdPrefix, ignoreCase = true) }
-    }
 }
 
 /**
@@ -61,10 +58,11 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
             // Re-validate right before flashing just in case
             validate(target)
 
-            val firmwareFile = Path.of(target)
-            val destinationVolume = firmwareFile.resolve(firmwareFile.fileName.toString())
+            val firmwareFile = Path.of(pathToFirmware)
+            val destinationVolume = Path.of(target)
+            val destinationFile = destinationVolume.resolve(firmwareFile.fileName.toString())
 
-            copyWithProgress(reporter, firmwareFile, destinationVolume)
+            copyWithProgress(reporter, firmwareFile, destinationFile)
 
             reporter.text("Waiting for the device to restart...")
 
@@ -82,19 +80,58 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
         val totalBytes = Files.size(source)
         var copiedBytes = 0L
 
-        Files.newInputStream(source).use { input ->
-            Files.newOutputStream(dest).use { output ->
-                val buffer = ByteArray(65536) // 64KB chunks
-                var bytesRead: Int
-                while (input.read(buffer).also { bytesRead = it } != -1) {
-                    output.write(buffer, 0, bytesRead)
+        reporter.text("Copying firmware file...")
+        
+        // Timeout on opening the channels, sometimes the volume might present itself but not be writable
+        val (input, output) = try {
+            withTimeout(TIMEOUT) {
+                runInterruptible(Dispatchers.IO) {
+                    Pair(
+                        FileChannel.open(source, StandardOpenOption.READ),
+                        FileChannel.open(dest, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+                    )
+                }
+            }
+        } catch (_: TimeoutCancellationException) {
+            throw RuntimeException("The volume isn't writable, please reconnect it and start over.")
+        }
+
+        input.use { inputChannel ->
+            output.use { outputChannel ->
+                val buffer = ByteBuffer.allocate(65536)
+
+                while (true) {
+                    buffer.clear()
+
+                    val bytesRead = try {
+                        withTimeout(TIMEOUT) {
+                            runInterruptible(Dispatchers.IO) {
+                                inputChannel.read(buffer)
+                            }
+                        }
+                    } catch (_: TimeoutCancellationException) {
+                        throw RuntimeException("Timed out while reading a UF2 firmware chunk")
+                    }
+
+                    if (bytesRead == -1) break
+
+                    // Prepare for writing
+                    buffer.flip()
+
+                    try {
+                        withTimeout(TIMEOUT) {
+                            runInterruptible(Dispatchers.IO) {
+                                outputChannel.write(buffer)
+                            }
+                        }
+                    } catch (_: TimeoutCancellationException) {
+                        throw RuntimeException("Timed out while writing a UF2 firmware chunk")
+                    }
+
                     copiedBytes += bytesRead
 
-                    reporter.text("Copying firmware file...")
-                    reporter.fraction(copiedBytes.toDouble() / totalBytes)
-
                     val percentage = (copiedBytes * 100 / totalBytes).toInt()
-
+                    reporter.fraction(copiedBytes.toDouble() / totalBytes)
                     reporter.details("Copied ${formatSize(copiedBytes)} of ${formatSize(totalBytes)} ($percentage%)")
 
                     checkCanceled()
@@ -102,20 +139,22 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
             }
         }
 
-        // Clear the details
+
         reporter.details(null)
     }
 
     override suspend fun validate(target: String): ValidationResult {
         val compatibleVolumes = findCompatibleUf2Volumes()
 
-        return if (compatibleVolumes.distinct().size < compatibleVolumes.size) {
-            ValidationResult(
+        return when {
+            target == EMPTY_VOLUME_TEXT -> ValidationResult("No volume selected")
+
+            compatibleVolumes.distinct().size < compatibleVolumes.size -> ValidationResult(
                 "There are several devices with identical UF2 volumes connected. " +
                         "Please make sure only the one device is connected and try again."
             )
-        } else {
-            ValidationResult.OK
+
+            else -> ValidationResult.OK
         }
     }
 
