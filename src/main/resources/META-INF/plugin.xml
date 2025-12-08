@@ -9,7 +9,7 @@
     <change-notes><![CDATA[
         <h3>2025.3.3 - 8.12.2025</h3>
         <ul>
-            <li>Added an option to Flash MicroPython firmware directly from the IDE with real-time progress output, automatic esptool management, and support for erase flash option. This option currently only supports ESP devices, but support for RP2, SAMD and STM32 devices is planned in future updates</li>
+            <li>Added an option to Flash MicroPython firmware directly from the IDE with real-time progress output, automatic esptool management, and support for erase flash option. Supports ESP, RP2 and SAMD devices.</li>
             <li>Added MicroPython detection when connecting to prevent confusing timeout errors on boards without MicroPython installed</li>
             <li>Centralized Python dependency handling with automatic esptool/mpy-cross installation and unified inspections</li>
             <li>Updated type hints terminology in stub package dialogs to clarify what stubs provide</li>
@@ -32,7 +32,7 @@
           <li>Type Hint/Stub package manager for <a href="https://github.com/Josverl/micropython-stubs">MicroPython stubs</a></li>
           <li>On-device file editing</li>
           <li>REPL integration with reset, interrupt, and clear actions</li>
-          <li>Firmware flashing, automatically download MicroPython and flash ESP devices</li>
+          <li>Firmware flashing, automatically download MicroPython and flash ESP, RP2 and SAMD devices</li>
           <li>Run configurations for Project, Selected Sources Roots, and Custom Paths</li>
           <li>Mounted volume support (e.g. SD cards)</li>
         </ul>

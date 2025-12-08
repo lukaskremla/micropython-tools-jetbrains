@@ -4,9 +4,8 @@ The Changelog
 2025.3.3 - 8.12.2025
 ------------------
 
-* Added an option to Flash MicroPython firmware directly from the IDE with real-time
-  progress output, automatic esptool management, and support for erase flash option. This option currently only supports
-  ESP devices, but support for RP2, SAMD and STM32 devices is planned in future updates
+* Added an option to Flash MicroPython firmware directly from the IDE with real-time progress output, automatic esptool
+  management, and support for erase flash option. Supports ESP, RP2 and SAMD devices.
 * Added MicroPython detection when connecting to prevent confusing timeout errors on boards without MicroPython
   installed
 * Centralized Python dependency handling with automatic esptool/mpy-cross installation and unified inspections

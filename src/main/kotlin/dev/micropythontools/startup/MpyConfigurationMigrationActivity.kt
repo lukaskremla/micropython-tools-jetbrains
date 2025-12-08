@@ -63,7 +63,7 @@ internal class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
         The dialog is accessible when not connected to any devices through the 
         File System widget empty text or the plugin settings and available <b>for FREE to everyone</b>.<br><br>
         
-        Currently supports <b>ESP devices</b>. Support for <b>RP2, STM32, and SAMD</b> coming soon!<br><br>
+        Supports ESP, RP2 and SAMD devices.<br><br>
         
         <b>Pro features</b><br><br>
         
