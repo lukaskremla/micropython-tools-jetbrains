@@ -16,15 +16,17 @@
 
 package dev.micropythontools.firmware
 
+import com.intellij.facet.ui.ValidationResult
 import com.intellij.platform.util.progress.RawProgressReporter
 
 internal interface MpyFlasherInterface {
     suspend fun flash(
         reporter: RawProgressReporter,
-        port: String,
+        target: String,
         pathToFirmware: String,
-        mcu: String,
-        offset: String,
-        eraseFlash: Boolean
+        eraseFlash: Boolean,
+        board: Board
     )
+
+    suspend fun validate(target: String): ValidationResult
 }

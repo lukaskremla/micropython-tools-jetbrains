@@ -16,137 +16,115 @@
 
 package dev.micropythontools.firmware
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.facet.ui.ValidationResult
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.ui.dsl.builder.panel
-import dev.micropythontools.i18n.MpyBundle
-import jssc.SerialPort
-import kotlinx.coroutines.Dispatchers
+import dev.micropythontools.communication.SHORT_DELAY
+import dev.micropythontools.communication.TIMEOUT
+import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
-import javax.swing.JComponent
+import kotlin.io.path.exists
+
+enum class Uf2BoardFamily(val boardIdPrefix: String) {
+    RP2("RP2"),
+    SAMD("SAMD");
+
+    companion object {
+        fun fromIdPrefix(boardIdPrefix: String): Uf2BoardFamily? =
+            entries.find { it.boardIdPrefix.equals(boardIdPrefix, ignoreCase = true) }
+    }
+}
 
 /**
  * Abstract base class for UF2-based firmware flashing (RP2, SAMD).
  * Handles bootloader entry via 1200 baud touch and cross-platform volume detection.
  */
-internal abstract class MpyUf2Flasher(private val project: Project) : MpyFlasherInterface {
-    // TODO: The intention is right but needs adjustments
-    // In an unflashed state, the device might not present a serial port, a different approach than solely relying on
-    // A serial port always being present must be taken, the STM32 supports awaits similar trouble
-    // In future iterations, the dialog will have to be reworked to not be port centric.
-
-    /**
-     * Board ID prefix to match in INFO_UF2.TXT (e.g., "RP2", "SAMD").
-     * The Board-ID line might contain values like "RPI-RP2", "SAMD21", "SAMD51", etc.
-     */
-    abstract val boardIdPrefix: String
-
+internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlasherInterface {
     companion object {
         private const val INFO_UF2_FILENAME = "INFO_UF2.TXT"
         private const val BOARD_ID_PREFIX = "Board-ID:"
-        private const val BOOTLOADER_WAIT_SECONDS = 10
-        private const val MANUAL_BOOTLOADER_POLL_SECONDS = 30
-        private const val REBOOT_WAIT_SECONDS = 5
     }
 
     override suspend fun flash(
         reporter: RawProgressReporter,
-        port: String,
+        target: String,
         pathToFirmware: String,
-        mcu: String,
-        offset: String,
-        eraseFlash: Boolean
+        eraseFlash: Boolean,
+        board: Board
     ) {
-        // Step 1: Check if UF2 volume is already mounted - error if so
-        reporter.text(MpyBundle.message("flash.uf2.checking.existing.volume"))
-        val existingVolume = findUf2Volume()
-        if (existingVolume != null) {
-            throw RuntimeException(
-                MpyBundle.message(
-                    "flash.uf2.error.volume.already.mounted",
-                    existingVolume.toString()
-                )
-            )
+        try {
+            // Re-validate right before flashing just in case
+            validate(target)
+
+            val firmwareFile = Path.of(target)
+            val destinationVolume = firmwareFile.resolve(firmwareFile.fileName.toString())
+
+            copyWithProgress(reporter, firmwareFile, destinationVolume)
+
+            reporter.text("Waiting for the device to restart...")
+
+            withTimeout(TIMEOUT) {
+                while (destinationVolume.exists()) {
+                    delay(SHORT_DELAY)
+                }
+            }
+        } catch (_: TimeoutCancellationException) {
+            throw RuntimeException("Device didn't reboot in time")
         }
-
-        // Step 2: Enter bootloader via 1200 baud touch
-        reporter.text(MpyBundle.message("flash.uf2.entering.bootloader"))
-        enter1200BaudBootloader(port)
-
-        // Step 3: Wait for UF2 volume (10 seconds)
-        reporter.text(MpyBundle.message("flash.uf2.waiting.for.volume"))
-        var uf2Volume = waitForUf2Volume(BOOTLOADER_WAIT_SECONDS, reporter)
-
-        // Step 4: If not found, show manual bootloader dialog and continue polling
-        if (uf2Volume == null) {
-            uf2Volume = showManualBootloaderDialogAndWait(reporter)
-        }
-
-        if (uf2Volume == null) {
-            throw RuntimeException(MpyBundle.message("flash.uf2.error.volume.not.found"))
-        }
-
-        // Step 5: Verify Board-ID matches expected prefix
-        val boardId = readBoardId(uf2Volume)
-        if (boardId == null || !boardId.uppercase().contains(boardIdPrefix.uppercase())) {
-            throw RuntimeException(
-                MpyBundle.message(
-                    "flash.uf2.error.wrong.board",
-                    boardIdPrefix,
-                    boardId ?: "Unknown"
-                )
-            )
-        }
-
-        reporter.details(MpyBundle.message("flash.uf2.board.id.found", boardId))
-
-        // Step 6: Copy firmware file to volume
-        reporter.text(MpyBundle.message("flash.uf2.copying.firmware"))
-        val firmwareFile = Path.of(pathToFirmware)
-        val destinationFile = uf2Volume.resolve(firmwareFile.fileName.toString())
-
-        withContext(Dispatchers.IO) {
-            Files.copy(firmwareFile, destinationFile, StandardCopyOption.REPLACE_EXISTING)
-        }
-
-        // Step 7: Wait for device to reboot (volume disappears)
-        reporter.text(MpyBundle.message("flash.uf2.waiting.for.reboot"))
-        waitForVolumeToDisappear(uf2Volume, REBOOT_WAIT_SECONDS)
-
-        reporter.text(MpyBundle.message("flash.uf2.complete"))
-        reporter.fraction(1.0)
     }
 
-    /**
-     * Enters bootloader mode using the 1200 baud touch method.
-     * Opens serial port at 1200 baud, sets RTS/DTR to false, waits, then closes.
-     */
-    private fun enter1200BaudBootloader(port: String) {
-        val serialPort = SerialPort(port)
-        try {
-            serialPort.openPort()
-            serialPort.setParams(
-                1200,
-                SerialPort.DATABITS_8,
-                SerialPort.STOPBITS_1,
-                SerialPort.PARITY_NONE
-            )
-            serialPort.setRTS(false)
-            serialPort.setDTR(false)
-            Thread.sleep(200)
-        } finally {
-            try {
-                serialPort.closePort()
-            } catch (_: Exception) {
-                // Ignore close errors
+    private suspend fun copyWithProgress(reporter: RawProgressReporter, source: Path, dest: Path) {
+        val totalBytes = Files.size(source)
+        var copiedBytes = 0L
+
+        Files.newInputStream(source).use { input ->
+            Files.newOutputStream(dest).use { output ->
+                val buffer = ByteArray(65536) // 64KB chunks
+                var bytesRead: Int
+                while (input.read(buffer).also { bytesRead = it } != -1) {
+                    output.write(buffer, 0, bytesRead)
+                    copiedBytes += bytesRead
+
+                    reporter.text("Copying firmware file...")
+                    reporter.fraction(copiedBytes.toDouble() / totalBytes)
+
+                    val percentage = (copiedBytes * 100 / totalBytes).toInt()
+
+                    reporter.details("Copied ${formatSize(copiedBytes)} of ${formatSize(totalBytes)} ($percentage%)")
+
+                    checkCanceled()
+                }
             }
+        }
+
+        // Clear the details
+        reporter.details(null)
+    }
+
+    override suspend fun validate(target: String): ValidationResult {
+        val compatibleVolumes = findCompatibleUf2Volumes()
+
+        return if (compatibleVolumes.distinct().size < compatibleVolumes.size) {
+            ValidationResult(
+                "There are several devices with identical UF2 volumes connected. " +
+                        "Please make sure only the one device is connected and try again."
+            )
+        } else {
+            ValidationResult.OK
+        }
+    }
+
+    fun findCompatibleUf2Volumes(): List<Path> {
+        val uf2Volumes = findUf2Volumes()
+
+        return uf2Volumes.filter {
+            val boardId = readBoardId(it)
+            boardId != null && boardId.uppercase().contains(boardFamily.boardIdPrefix)
         }
     }
 
@@ -154,43 +132,47 @@ internal abstract class MpyUf2Flasher(private val project: Project) : MpyFlasher
      * Finds a mounted UF2 volume by looking for INFO_UF2.TXT file.
      * Cross-platform implementation for macOS, Windows, and Linux.
      */
-    private fun findUf2Volume(): Path? {
+    private fun findUf2Volumes(): List<Path> {
         val os = System.getProperty("os.name").lowercase()
 
         return when {
-            os.contains("mac") -> findUf2VolumeMacOS()
-            os.contains("win") -> findUf2VolumeWindows()
-            os.contains("linux") -> findUf2VolumeLinux()
-            else -> null
+            os.contains("mac") -> findUf2VolumesMacOS()
+            os.contains("win") -> findUf2VolumesWindows()
+            os.contains("linux") -> findUf2VolumesLinux()
+            else -> emptyList()
         }
     }
 
     /**
      * Finds UF2 volume on macOS by checking /Volumes/
      */
-    private fun findUf2VolumeMacOS(): Path? {
+    private fun findUf2VolumesMacOS(): List<Path> {
         val volumesDir = File("/Volumes")
-        if (!volumesDir.exists() || !volumesDir.isDirectory) return null
+        if (!volumesDir.exists() || !volumesDir.isDirectory) return emptyList()
 
-        return volumesDir.listFiles()
+        val uf2Volumes = volumesDir.listFiles()
             ?.filter { it.isDirectory }
             ?.map { it.toPath() }
-            ?.firstOrNull { isUf2Volume(it) }
+            ?.filter { isUf2Volume(it) }
+
+        return uf2Volumes ?: emptyList()
     }
 
     /**
      * Finds UF2 volume on Windows by checking all drive roots
      */
-    private fun findUf2VolumeWindows(): Path? {
-        return File.listRoots()
-            .map { it.toPath() }
-            .firstOrNull { isUf2Volume(it) }
+    private fun findUf2VolumesWindows(): List<Path> {
+        val uf2Volumes = File.listRoots()
+            ?.map { it.toPath() }
+            ?.filter { isUf2Volume(it) }
+
+        return uf2Volumes ?: emptyList()
     }
 
     /**
      * Finds UF2 volume on Linux by checking common mount points
      */
-    private fun findUf2VolumeLinux(): Path? {
+    private fun findUf2VolumesLinux(): List<Path> {
         val username = System.getProperty("user.name")
         val mountPoints = listOf(
             "/media/$username",
@@ -198,19 +180,23 @@ internal abstract class MpyUf2Flasher(private val project: Project) : MpyFlasher
             "/media"
         )
 
-        for (mountPoint in mountPoints) {
-            val dir = File(mountPoint)
-            if (!dir.exists() || !dir.isDirectory) continue
+        val uf2Volumes = mutableListOf<Path>()
 
-            val found = dir.listFiles()
+        mountPoints.forEach { mountPoint ->
+            val mountPointFile = File(mountPoint)
+
+            if (!mountPointFile.exists() || !mountPointFile.isDirectory) return@forEach
+
+            val newUf2Volumes = mountPointFile.listFiles()
                 ?.filter { it.isDirectory }
                 ?.map { it.toPath() }
-                ?.firstOrNull { isUf2Volume(it) }
+                ?.filter { isUf2Volume(it) }
+                ?: emptyList()
 
-            if (found != null) return found
+            uf2Volumes.addAll(newUf2Volumes)
         }
 
-        return null
+        return uf2Volumes
     }
 
     /**
@@ -237,103 +223,6 @@ internal abstract class MpyUf2Flasher(private val project: Project) : MpyFlasher
                 ?.trim()
         } catch (_: Exception) {
             null
-        }
-    }
-
-    /**
-     * Waits for a UF2 volume to appear, polling every second
-     */
-    private suspend fun waitForUf2Volume(seconds: Int, reporter: RawProgressReporter): Path? {
-        repeat(seconds) { i ->
-            reporter.fraction(i.toDouble() / seconds)
-            val volume = findUf2Volume()
-            if (volume != null) return volume
-            delay(1000)
-        }
-        return null
-    }
-
-    /**
-     * Waits for the UF2 volume to disappear (indicating device has rebooted)
-     */
-    private suspend fun waitForVolumeToDisappear(volumePath: Path, seconds: Int) {
-        repeat(seconds) {
-            if (!Files.exists(volumePath)) return
-            delay(1000)
-        }
-    }
-
-    /**
-     * Shows a modeless dialog asking user to enter bootloader manually,
-     * while continuing to poll for the UF2 volume in the background.
-     * Dialog auto-closes when volume is detected.
-     */
-    private suspend fun showManualBootloaderDialogAndWait(reporter: RawProgressReporter): Path? {
-        var dialog: ManualBootloaderDialog? = null
-        var foundVolume: Path? = null
-
-        // Show dialog on EDT
-        withContext(Dispatchers.EDT) {
-            dialog = ManualBootloaderDialog(project)
-            dialog.show()
-        }
-
-        // Poll for volume while dialog is open
-        reporter.text(MpyBundle.message("flash.uf2.waiting.manual.bootloader"))
-
-        repeat(MANUAL_BOOTLOADER_POLL_SECONDS) { i ->
-            reporter.fraction(i.toDouble() / MANUAL_BOOTLOADER_POLL_SECONDS)
-
-            val volume = findUf2Volume()
-            if (volume != null) {
-                foundVolume = volume
-                // Close dialog on EDT
-                withContext(Dispatchers.EDT) {
-                    dialog?.close(DialogWrapper.OK_EXIT_CODE)
-                }
-                return@repeat
-            }
-
-            // Check if dialog was closed by user
-            val dialogClosed = withContext(Dispatchers.EDT) {
-                dialog?.isDisposed == true || dialog?.isVisible == false
-            }
-
-            if (dialogClosed && foundVolume == null) {
-                // User closed dialog without volume being found - give up
-                return null
-            }
-
-            delay(1000)
-        }
-
-        // Final cleanup - close dialog if still open
-        withContext(Dispatchers.EDT) {
-            if (dialog?.isShowing == true) {
-                dialog.close(DialogWrapper.CANCEL_EXIT_CODE)
-            }
-        }
-
-        return foundVolume
-    }
-
-    /**
-     * Modeless dialog asking user to enter bootloader mode manually
-     */
-    private class ManualBootloaderDialog(project: Project) : DialogWrapper(project, false) {
-        init {
-            title = MpyBundle.message("flash.uf2.manual.bootloader.dialog.title")
-            setOKButtonText(MpyBundle.message("flash.uf2.manual.bootloader.dialog.ok"))
-            setCancelButtonText(MpyBundle.message("flash.uf2.manual.bootloader.dialog.cancel"))
-            init()
-        }
-
-        override fun createCenterPanel(): JComponent {
-            return panel {
-                row {
-                    text(MpyBundle.message("flash.uf2.manual.bootloader.dialog.message"))
-                }
-            }
         }
     }
 }

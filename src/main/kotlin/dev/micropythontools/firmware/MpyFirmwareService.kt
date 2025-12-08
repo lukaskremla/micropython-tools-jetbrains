@@ -17,6 +17,7 @@
 package dev.micropythontools.firmware
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.core.MpyPaths
@@ -25,6 +26,7 @@ import io.ktor.util.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -88,7 +90,7 @@ internal class MpyFirmwareService(private val project: Project) {
         loadFromDisk()
     }
 
-    fun downloadFirmwareToTemp(
+    suspend fun downloadFirmwareToTemp(
         reporter: RawProgressReporter,
         board: Board,
         variantName: String,
@@ -156,6 +158,8 @@ internal class MpyFirmwareService(private val project: Project) {
                             "Downloaded ${formatSize(totalBytesRead)} of ${formatSize(contentLength)} ($percentage%)"
                         )
                         reporter.fraction(totalBytesRead.toDouble() / contentLength)
+
+                        checkCanceled()
                     }
 
                     outputStream.toByteArray()
@@ -191,26 +195,51 @@ internal class MpyFirmwareService(private val project: Project) {
         return tempFile.absolutePathString()
     }
 
-    suspend fun flashFirmware(
+    fun getMpyFlasherFromMcu(mcu: String): MpyFlasherInterface {
+        return with(mcu.toLowerCasePreservingASCIIRules()) {
+            when {
+                startsWith("esp") -> MpyEspFlasher(project)
+                startsWith("samd") -> MpyUf2Flasher(Uf2BoardFamily.SAMD)
+                startsWith("rp2") -> MpyUf2Flasher(Uf2BoardFamily.RP2)
+                else -> throw RuntimeException("MCU \"${mcu}\" not supported by flasher")
+            }
+        }
+    }
+
+    suspend fun getFirmwareAndFlash(
         reporter: RawProgressReporter,
-        port: String,
-        pathToFirmware: String,
-        mcu: String,
-        offset: String,
-        eraseFlash: Boolean
+        board: Board,
+        firmwareVariant: String,
+        version: String,
+        target: String,
+        eraseFlash: Boolean,
+        localFirmwarePath: String? = null  // If provided, download is skipped
     ) {
-        val mcuLower = mcu.lowercase()
+        val flasher = getMpyFlasherFromMcu(board.mcu)
 
-        when {
-            mcuLower.startsWith("esp") -> MpyEspFlasher(project)
-            mcuLower.startsWith("stm") -> MpyStmFlasher()
-            mcuLower.startsWith("samd") -> MpySamdFlasher(project)
-            mcuLower.startsWith("rp2") -> MpyRp2Flasher(project)
-            else -> throw RuntimeException("MCU \"$mcu\" not supported by flasher")
-        }.flash(reporter, port, pathToFirmware, mcu, offset, eraseFlash)
+        var pathToFirmware: String? = null
 
-        // Ensure details are cleaned and don't linger for the following operations
-        reporter.details(null)
+        try {
+            pathToFirmware = localFirmwarePath ?: downloadFirmwareToTemp(reporter, board, firmwareVariant, version)
+
+            flasher.flash(
+                reporter,
+                target,
+                pathToFirmware,
+                eraseFlash,
+                board
+            )
+
+            // Ensure details are cleaned and don't linger for the following operations
+            reporter.details(null)
+        } finally {
+            // Clean up temp file if we downloaded it
+            if (localFirmwarePath == null) {
+                pathToFirmware?.let {
+                    File(it).delete()
+                }
+            }
+        }
     }
 
     fun getCachedBoards(): List<Board> = cachedBoards
@@ -234,7 +263,7 @@ internal class MpyFirmwareService(private val project: Project) {
         .map { it.port }
         .filter {
             it.toLowerCasePreservingASCIIRules().startsWith("esp")
-        } //TODO: Remove once more devices are implemented
+        }
         .distinct()
 
     /**

@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.MutableCollectionComboBoxModel
@@ -48,12 +47,9 @@ import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.EMPTY_PORT_NAME_TEXT
 import dev.micropythontools.settings.MpySettingsService
 import io.ktor.util.*
-import jssc.SerialPort
-import jssc.SerialPortException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Dimension
-import java.io.File
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -69,6 +65,11 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
     private val deviceService = project.service<dev.micropythontools.communication.MpyDeviceService>()
     private val firmwareService = project.service<MpyFirmwareService>()
     private val interpreterService = project.service<MpyPythonInterpreterService>()
+
+    fun Cell<ComboBox<String>>.getSafely(nameToShow: String): String {
+        return component.selectedItem as? String
+            ?: throw RuntimeException("Failed to retrieve the value of \"$nameToShow\" combobox")
+    }
 
     // Current board data
     private var currentBoards: List<Board> = emptyList()
@@ -96,13 +97,9 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
     private lateinit var localFileTextFieldWithBrowseButton: Cell<TextFieldWithBrowseButton>
 
-    private lateinit var eraseFlashRow: Row
-    private lateinit var connectAfterRow: Row
-    private lateinit var eraseFileSystemAfterRow: Row
-
     private lateinit var eraseFlashCheckBox: Cell<JBCheckBox>
     private lateinit var connectAfterCheckBox: Cell<JBCheckBox>
-    private lateinit var eraseFileSystemAfter: Cell<JBCheckBox>
+    //private lateinit var eraseFileSystemAfter: Cell<JBCheckBox>
 
     // Selected board for tracking
     private var selectedBoard: Board? = null
@@ -194,6 +191,8 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                     portSelectComboBox = comboBox(portSelectModel)
                         .columns(20)
                         .applyToComponent {
+                            isEditable = enableManualEditingCheckbox.component.isSelected
+
                             addPopupMenuListener(object : PopupMenuListener {
                                 override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
                                     updatePortList()
@@ -202,17 +201,6 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                 override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {}
                                 override fun popupMenuCanceled(e: PopupMenuEvent?) {}
                             })
-                        }
-                        .validationOnApply {
-                            try {
-                                val portToConnectTo = (portSelectComboBox.component.selectedItem ?: "").toString()
-                                val port = SerialPort(portToConnectTo)
-                                port.openPort()
-                                port.closePort()
-                                return@validationOnApply null
-                            } catch (e: SerialPortException) {
-                                return@validationOnApply error(e.exceptionType)
-                            }
                         }
                 }.layout(RowLayout.LABEL_ALIGNED)
             }.bottomGap(BottomGap.NONE).enabled(!deviceService.isConnected)
@@ -244,23 +232,6 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                 row("Device type:") {
                     deviceTypeComboBox = comboBox(deviceTypeModel)
                         .columns(10)
-                        .applyToComponent {
-                            addActionListener {
-                                onDeviceTypeSelected()
-
-                                selectedItem?.let {
-                                    val selectedDeviceType = it.toString().toLowerCasePreservingASCIIRules()
-
-                                    val supportsEraseFlash =
-                                        selectedDeviceType.contains("esp") || selectedDeviceType.contains("stm")
-
-                                    // Erase file system is a fallback if flash erase isn't supported
-                                    eraseFlashRow.visible(supportsEraseFlash)
-                                    eraseFileSystemAfterRow.visible(!supportsEraseFlash)
-                                }
-                            }
-                        }
-                        .comment("STM32, RP2 and SAMD coming soon!")
                 }.layout(RowLayout.LABEL_ALIGNED)
 
                 row("MCU:") {
@@ -374,21 +345,21 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
             }
 
             group("Flashing Options") {
-                eraseFlashRow = row {
+                row {
                     eraseFlashCheckBox = checkBox("Erase flash first")
                         .gap(RightGap.SMALL)
 
                     contextHelp("Only ESP32, ESP8266 and STM32 devices support flash erase")
                 }
 
-                connectAfterRow = row {
+                row {
                     connectAfterCheckBox = checkBox("Connect to the device after flashing")
                         .applyToComponent {
                             isSelected = true
                         }
                 }
 
-                eraseFileSystemAfterRow = row {
+                /*row {
                     eraseFileSystemAfter = checkBox("Erase MicroPython filesystem after flashing")
                         .enabledIf(connectAfterCheckBox.selected)
                         .gap(RightGap.SMALL)
@@ -397,7 +368,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                         }
 
                     contextHelp("RP2 and SAMD devices don't support flash erase. The file system may survive a firmware flash, this option makes sure it is erased.")
-                }
+                }*/
             }
         }.also {
             // Initialize cascading dropdowns with current board data
@@ -638,55 +609,55 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
         runWithModalProgressBlocking(project, "Flashing Firmware...") {
             reportRawProgress { reporter ->
-                var firmwareFile: VirtualFile? = null
-
                 try {
                     val board = firmwareService.getCachedBoards().find {
                         it.name == boardVariantComboBox.component.selectedItem
                     } ?: throw RuntimeException("Failed to find selected board")
 
-                    // If using micropython.org
-                    val firmwarePath = if (microPythonOrgRadioButton.component.isSelected) {
-                        firmwareService.downloadFirmwareToTemp(
-                            reporter,
-                            board,
-                            (firmwareVariantComboBox.component.selectedItem
-                                ?: throw RuntimeException("Failed to find selected firmware variant")).toString(),
-                            (versionComboBox.component.selectedItem
-                                ?: throw RuntimeException("Failed to find selected version")).toString()
-                        )
-                    } else { // If using the custom path
+                    val flasherForBoard = firmwareService.getMpyFlasherFromMcu(board.mcu)
+
+                    val firmwareVariant = firmwareVariantComboBox.getSafely("Firmware variant")
+                    val version = versionComboBox.getSafely("Version")
+                    val target = portSelectComboBox.getSafely("Port")
+                    val eraseFlash = eraseFlashCheckBox.component.isSelected
+                    val connectAfter = connectAfterCheckBox.component.isSelected
+
+                    val localFirmwarePath = if (microPythonOrgRadioButton.component.isSelected) {
                         localFileTextFieldWithBrowseButton.component.text
+                    } else null
+
+                    // Validate the flasher parameters
+                    val flasherValidation = flasherForBoard.validate(target)
+
+                    // Throw error if flasher parameters aren't valid
+                    if (!flasherValidation.isOk) {
+                        withContext(Dispatchers.EDT) {
+                            Messages.showErrorDialog(
+                                project,
+                                flasherValidation.errorMessage,
+                                "Flashing Parameters Invalid"
+                            )
+                        }
+                        // Return to the original dialog without closing it abruptly
+                        return@runWithModalProgressBlocking
                     }
 
-                    // Ensure the file exists now
-                    firmwareFile = LocalFileSystem.getInstance().findFileByPath(firmwarePath)
-                        ?: throw RuntimeException("Firmware file doesn't exist")
-
-                    // Hand off to the firmware flashing service
-                    firmwareService.flashFirmware(
+                    // Perform the flashing operation, download firmware if needed
+                    firmwareService.getFirmwareAndFlash(
                         reporter,
-                        (portSelectComboBox.component.selectedItem
-                            ?: throw RuntimeException("Failed to get selected port ")).toString(),
-                        firmwareFile.path,
-                        (mcuComboBox.component.selectedItem
-                            ?: throw RuntimeException("Failed to get selected MCU")).toString(),
-                        board.offset,
-                        eraseFlashCheckBox.component.isSelected
+                        board,
+                        firmwareVariant,
+                        version,
+                        target,
+                        eraseFlash,
+                        localFirmwarePath
                     )
 
-                    if (connectAfterCheckBox.component.isSelected) {
+                    // Handle after tasks
+                    if (connectAfter) {
                         deviceService.doConnect(reporter, forceLegacyVolumeSupport = true)
 
-                        val selectedDeviceType = deviceTypeComboBox.component.selectedItem
-                            ?.toString()
-                            ?.toLowerCasePreservingASCIIRules()
-                            ?: ""
-
-                        val supportsEraseFlash =
-                            selectedDeviceType.contains("esp") || selectedDeviceType.contains("stm")
-
-                        if (eraseFileSystemAfter.component.isSelected && !supportsEraseFlash) {
+                        /*if (eraseFileSystemAfter.component.isSelected && !supportsEraseFlash) {
                             val flashFilesToDelete = deviceService.fileSystemWidget
                                 ?.allNodes()
                                 ?.filter { it is VolumeRootNode && it.isFileSystemRoot }
@@ -696,7 +667,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                             flashFilesToDelete?.let {
                                 deviceService.recursivelySafeDeletePaths(it)
                             }
-                        }
+                        }*/
                     }
 
                     // If flashing succeeded show confirmation dialog and close the firmware flashing dialog
@@ -713,11 +684,6 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                 } catch (e: Throwable) {
                     withContext(Dispatchers.EDT) {
                         showFlashingErrorDialog(project, e.localizedMessage)
-                    }
-                } finally {
-                    // Make sure to delete if a temporary file was used
-                    if (microPythonOrgRadioButton.component.isSelected && firmwareFile != null) {
-                        File(firmwareFile.path).delete()
                     }
                 }
             }

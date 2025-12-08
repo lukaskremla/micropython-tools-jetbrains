@@ -17,23 +17,25 @@
 package dev.micropythontools.firmware
 
 import com.intellij.execution.ExecutionException
+import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.core.MpyPaths
 import dev.micropythontools.core.MpyPythonInterpreterService
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
+import jssc.SerialPort
+import jssc.SerialPortException
 
-class MpyEspFlasher(project: Project) : MpyFlasherInterface {
+internal class MpyEspFlasher(project: Project) : MpyFlasherInterface {
     private val interpreterService = project.service<MpyPythonInterpreterService>()
 
     override suspend fun flash(
         reporter: RawProgressReporter,
-        port: String,
+        target: String,
         pathToFirmware: String,
-        mcu: String,
-        offset: String,
-        eraseFlash: Boolean
+        eraseFlash: Boolean,
+        board: Board
     ) {
         // Set up environment to find esptool in isolated package directory
         val esptoolPath = interpreterService.getPackagePythonPath(
@@ -46,8 +48,8 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
         if (eraseFlash) {
             val eraseArgs = mutableListOf(
                 "-m", "esptool",
-                "--chip", mcu,
-                "--port", port,
+                "--chip", board.mcu,
+                "--port", target,
                 "erase-flash"
             )
 
@@ -73,10 +75,10 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
         // Build write command
         val flashArgs = mutableListOf(
             "-m", "esptool",
-            "--chip", mcu,
-            "--port", port,
+            "--chip", board.mcu,
+            "--port", target,
             "write-flash",
-            offset,
+            board.offset,
             pathToFirmware
         )
 
@@ -134,6 +136,19 @@ class MpyEspFlasher(project: Project) : MpyFlasherInterface {
                         "You can do so by holding down the boot button while plugging the device in.\n" +
                         "You might also need to manually re-plug the device after flashing completes.\n"
             )
+        }
+
+        reporter.details(null)
+    }
+
+    override suspend fun validate(target: String): ValidationResult {
+        return try {
+            val port = SerialPort(target)
+            port.openPort()
+            port.closePort()
+            ValidationResult.OK
+        } catch (e: SerialPortException) {
+            ValidationResult(e.exceptionType)
         }
     }
 }
