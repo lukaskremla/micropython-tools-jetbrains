@@ -46,6 +46,7 @@ internal object MpyPaths {
     const val STUB_PACKAGE_JSON_FILE_NAME = "micropython-stubs.json"
     const val STDLIB_STUB_PACKAGE_NAME = "micropython-stdlib-stubs"
     const val MICROPYTHON_BOARD_JSON_FILE_NAME = "micropython_boards.json"
+    const val RP2_UNIVERSAL_FLASH_NUKE_FILE_NAME = "universal_flash_nuke.uf2"
     const val ESPTOOL_PACKAGE_NAME = "esptool"
     const val ESPTOOL_VERSION = "5.1.0"
 

@@ -19,20 +19,19 @@ package dev.micropythontools.firmware
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.util.progress.RawProgressReporter
+import dev.micropythontools.communication.LONG_LONG_TIMEOUT
 import dev.micropythontools.communication.SHORT_DELAY
 import dev.micropythontools.communication.TIMEOUT
+import dev.micropythontools.core.MpyPaths
 import dev.micropythontools.settings.EMPTY_VOLUME_TEXT
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 import kotlinx.coroutines.*
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.*
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.exists
+import kotlin.io.path.deleteIfExists
 
 enum class Uf2BoardFamily(val boardIdPrefix: String) {
     RP2("RP2"),
@@ -56,33 +55,72 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
         eraseFlash: Boolean,
         board: Board
     ) {
-        try {
-            // Re-validate right before flashing just in case
-            validate(target)
+        val firmwareFile = Path.of(pathToFirmware)
+        val destinationVolume = Path.of(target)
 
-            val firmwareFile = Path.of(pathToFirmware)
-            val destinationVolume = Path.of(target)
-            val destinationFile = destinationVolume.resolve(firmwareFile.fileName.toString())
-
-            copyWithProgress(reporter, firmwareFile, destinationFile)
-
-            reporter.text("Waiting for the device to restart...")
-
-            withTimeout(TIMEOUT) {
-                while (destinationVolume.exists()) {
-                    delay(SHORT_DELAY)
+        if (eraseFlash && boardFamily == Uf2BoardFamily.RP2) {
+            val nukeFile = Files.createTempFile("flash_nuke", ".uf2")
+            try {
+                javaClass.getResourceAsStream("/data/${MpyPaths.RP2_UNIVERSAL_FLASH_NUKE_FILE_NAME}")!!.use { input ->
+                    Files.copy(input, nukeFile, StandardCopyOption.REPLACE_EXISTING)
                 }
+
+                // Copy flash nuke file
+                copyWithProgress(
+                    reporter,
+                    "Copying flash erase utility...",
+                    nukeFile,
+                    destinationVolume
+                )
+
+                reporter.text("Waiting for the device to restart...")
+                try {
+                    // First wait for the device to disappear
+                    reporter.details("Waiting for the volume to disappear")
+                    withTimeout(TIMEOUT) {
+                        while (destinationVolume in findCompatibleUf2Volumes()) {
+                            delay(SHORT_DELAY)
+                        }
+                    }
+
+                    // Then wait for the device to reappear
+                    reporter.details("Waiting for the volume to reappear (This can take a while)")
+                    withTimeout(LONG_LONG_TIMEOUT) {
+                        while (destinationVolume !in findCompatibleUf2Volumes()) {
+                            delay(SHORT_DELAY)
+                        }
+                    }
+
+                    reporter.details(null)
+                } catch (_: TimeoutCancellationException) {
+                    throw RuntimeException("Device didn't restart in time")
+                }
+            } finally {
+                nukeFile.deleteIfExists()
             }
-        } catch (_: TimeoutCancellationException) {
-            throw RuntimeException("Device didn't reboot in time")
         }
+
+        // Copy firmware file
+        copyWithProgress(
+            reporter,
+            "Copying firmware file...",
+            firmwareFile,
+            destinationVolume
+        )
     }
 
-    private suspend fun copyWithProgress(reporter: RawProgressReporter, source: Path, dest: Path) {
+    private suspend fun copyWithProgress(
+        reporter: RawProgressReporter,
+        progressText: String,
+        source: Path,
+        volume: Path
+    ) {
         val totalBytes = Files.size(source)
         var copiedBytes = 0L
 
-        reporter.text("Copying firmware file...")
+        reporter.text(progressText)
+
+        val dest = volume.resolve(source.fileName.toString())
 
         // Timeout on opening the channels, sometimes the volume might present itself but not be writable
         val (input, output) = try {
@@ -149,7 +187,6 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
                 }
             }
         }
-
 
         reporter.details(null)
     }

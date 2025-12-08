@@ -108,6 +108,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
     private lateinit var localFileTextFieldWithBrowseButton: Cell<TextFieldWithBrowseButton>
 
     private lateinit var flashingOptionsGroup: Row
+    private lateinit var connectAfterRow: Row
 
     private lateinit var eraseFlashCheckBox: Cell<JBCheckBox>
     private lateinit var connectAfterCheckBox: Cell<JBCheckBox>
@@ -193,7 +194,12 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
                                 mcuComboBoxRow.visible(isEsp || microPythonOrgRadioButton.component.isSelected)
 
-                                flashingOptionsGroup.visible(isEsp)
+                                val isSamd = deviceTypeComboBox
+                                    .getSafely("Device type")
+                                    .startsWith("samd", ignoreCase = true)
+
+                                flashingOptionsGroup.visible(!isSamd)
+                                connectAfterRow.visible(isEsp)
                             }
                         }
                 }.layout(RowLayout.LABEL_ALIGNED)
@@ -251,6 +257,9 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                 override fun popupMenuCanceled(e: PopupMenuEvent?) {}
                             })
                         }
+                        .gap(RightGap.SMALL)
+
+                    contextHelp("Hold BOOTSEL while plugging the board in to enter bootloader mode")
                 }
             }.bottomGap(BottomGap.NONE).enabled(!deviceService.isConnected)
 
@@ -397,11 +406,9 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                 row {
                     eraseFlashCheckBox = checkBox("Erase flash first")
                         .gap(RightGap.SMALL)
-
-                    contextHelp("Only ESP32, ESP8266 and STM32 devices support flash erase")
                 }
 
-                row {
+                connectAfterRow = row {
                     connectAfterCheckBox = checkBox("Connect to the device after flashing")
                         .applyToComponent {
                             isSelected = true
