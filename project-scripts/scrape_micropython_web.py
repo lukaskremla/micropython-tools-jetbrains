@@ -17,6 +17,27 @@ port_to_extension = {
     "samd": "uf2"
 }
 
+esp_mcu_to_offset = {
+    # ESP8266
+    "esp8266": 0x0,
+
+    # ESP32
+    "esp32": 0x1000,
+
+    # ESP32-S series
+    "esp32s2": 0x1000,
+    "esp32s3": 0x0,
+
+    # ESP32-C series
+    "esp32c2": 0x0,
+    "esp32c3": 0x0,
+    "esp32c5": 0x0,
+    "esp32c6": 0x0,
+
+    # ESP32-P series
+    "esp32p4": 0x2000,
+}
+
 session = requests.Session()
 session.headers.update({
     'User-Agent': 'MicroPython-Tools-Plugin-Firmware-Index-Scraper/1.0 (jetbrains-ide-plugin)'
@@ -65,27 +86,6 @@ def retrieve_page_headings(url: str) -> list:
     return headings
 
 
-def retrieve_offset_from_beautiful_soup(beautiful_soup: BeautifulSoup) -> str:
-    # Collect all "p" tags
-    p_tags = beautiful_soup.find_all('p')
-
-    # Collect text of the "p" tags
-    texts = [p_tag.text for p_tag in p_tags]
-
-    # This is the first part of the text in the p tag which contains the offset
-    address_tag_text = "Then deploy the firmware to the board, starting at address "
-
-    # Iterate over text of all "p" tags
-    for text in texts:
-        # Look for the offset text
-        if text.startswith(address_tag_text):
-            # Remove the trailing ":" and return the offset that now remains
-            return text.removeprefix(address_tag_text).removesuffix(":")
-
-    # If no offset is found return an empty string
-    return ""
-
-
 def get_port_from_mcu(mcu_name: str) -> str | None:
     # Find the port this mcu belongs to
     for port in supported_ports:
@@ -102,6 +102,7 @@ def main():
         "timestamp": "",  # Filled out at the end
         "skimmedPorts": list(supported_ports),
         "portToExtension": port_to_extension,
+        "espMcuToOffset": esp_mcu_to_offset,
         "boards": []
     }
 
@@ -116,6 +117,9 @@ def main():
         if download_page_link.startswith(MCU_PARAM):
             # Retrieve mcu name from the page link
             mcu_name = download_page_link.removeprefix(MCU_PARAM)
+
+            if mcu_name.startswith("esp") and mcu_name not in esp_mcu_to_offset:
+                raise RuntimeError(f"Mcu \"{mcu_name}\" has no mapped offset")
 
             # Determine the port from the mcu name
             port = get_port_from_mcu(mcu_name)
@@ -219,7 +223,6 @@ def main():
                             "vendor": vendor,
                             "port": port,
                             "mcu": mcu_name,
-                            "offset": retrieve_offset_from_beautiful_soup(board_page_beautiful_soup),
                             "firmwareNameToLinkParts": firmware_name_to_link_parts,
                             "sortPriority": sort_priority
                         }

@@ -138,8 +138,8 @@ tasks {
             include("**/*")
         }
 
-        from("data") {
-            into("data")
+        from("bundled") {
+            into("bundled")
             include("**/*")
         }
 

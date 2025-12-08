@@ -61,9 +61,10 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
         if (eraseFlash && boardFamily == Uf2BoardFamily.RP2) {
             val nukeFile = Files.createTempFile("flash_nuke", ".uf2")
             try {
-                javaClass.getResourceAsStream("/data/${MpyPaths.RP2_UNIVERSAL_FLASH_NUKE_FILE_NAME}")!!.use { input ->
-                    Files.copy(input, nukeFile, StandardCopyOption.REPLACE_EXISTING)
-                }
+                javaClass.getResourceAsStream("/bundled/${MpyPaths.RP2_UNIVERSAL_FLASH_NUKE_FILE_NAME}")!!
+                    .use { input ->
+                        Files.copy(input, nukeFile, StandardCopyOption.REPLACE_EXISTING)
+                    }
 
                 // Copy flash nuke file
                 copyWithProgress(

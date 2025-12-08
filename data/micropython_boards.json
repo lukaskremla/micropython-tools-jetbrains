@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2025-12-08T17:18:38.669947",
+  "timestamp": "2025-12-08T19:26:31.013076",
   "skimmedPorts": [
     "esp32",
     "esp8266",
@@ -13,6 +13,17 @@
     "rp2": ".uf2",
     "samd": "uf2"
   },
+  "espMcuToOffset": {
+    "esp8266": 0,
+    "esp32": 4096,
+    "esp32s2": 4096,
+    "esp32s3": 0,
+    "esp32c2": 0,
+    "esp32c3": 0,
+    "esp32c5": 0,
+    "esp32c6": 0,
+    "esp32p4": 8192
+  },
   "boards": [
     {
       "id": "ESP32_GENERIC",
@@ -20,7 +31,6 @@
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -135,7 +145,6 @@
       "vendor": "LILYGO",
       "port": "esp32",
       "mcu": "esp32",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -163,7 +172,6 @@
       "vendor": "M5Stack",
       "port": "esp32",
       "mcu": "esp32",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -192,7 +200,6 @@
       "vendor": "Olimex",
       "port": "esp32",
       "mcu": "esp32",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -213,7 +220,6 @@
       "vendor": "Olimex",
       "port": "esp32",
       "mcu": "esp32",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -240,7 +246,6 @@
       "vendor": "Silicognition",
       "port": "esp32",
       "mcu": "esp32",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -270,7 +275,6 @@
       "vendor": "Silicognition LLC",
       "port": "esp32",
       "mcu": "esp32",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
@@ -286,7 +290,6 @@
       "vendor": "SparkFun",
       "port": "esp32",
       "mcu": "esp32",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -304,7 +307,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -339,7 +341,6 @@
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c2",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -363,7 +364,6 @@
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -393,7 +393,6 @@
       "vendor": "McHobby",
       "port": "esp32",
       "mcu": "esp32c3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -411,7 +410,6 @@
       "vendor": "Wemos",
       "port": "esp32",
       "mcu": "esp32c3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -439,7 +437,6 @@
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c5",
-      "offset": "0x2000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
@@ -455,7 +452,6 @@
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c6",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -476,7 +472,6 @@
       "vendor": "M5Stack",
       "port": "esp32",
       "mcu": "esp32c6",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -497,7 +492,6 @@
       "vendor": "Soldered Electronics",
       "port": "esp32",
       "mcu": "esp32c6",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
@@ -513,7 +507,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32c6",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -534,7 +527,6 @@
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32p4",
-      "offset": "0x2000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
@@ -560,7 +552,6 @@
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32s2",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -589,7 +580,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s2",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -619,7 +609,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s2",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -648,7 +637,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s2",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -678,7 +666,6 @@
       "vendor": "Wemos",
       "port": "esp32",
       "mcu": "esp32s2",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -707,7 +694,6 @@
       "vendor": "Wemos",
       "port": "esp32",
       "mcu": "esp32s2",
-      "offset": "0x1000",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -736,7 +722,6 @@
       "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -782,7 +767,6 @@
       "vendor": "Arduino",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -808,7 +792,6 @@
       "vendor": "M5Stack",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -829,7 +812,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -857,7 +839,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -878,7 +859,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -904,7 +884,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -925,7 +904,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -953,7 +931,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -974,7 +951,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -1002,7 +978,6 @@
       "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "offset": "0",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -1027,7 +1002,6 @@
       "vendor": "Espressif",
       "port": "esp8266",
       "mcu": "esp8266",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.bin",
@@ -1164,7 +1138,6 @@
       "vendor": "Raspberry Pi",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1197,7 +1170,6 @@
       "vendor": "Raspberry Pi",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1224,7 +1196,6 @@
       "vendor": "Adafruit",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1253,7 +1224,6 @@
       "vendor": "Adafruit",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1282,7 +1252,6 @@
       "vendor": "Adafruit",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1311,7 +1280,6 @@
       "vendor": "Arduino",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1340,7 +1308,6 @@
       "vendor": "Machdyne",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1359,7 +1326,6 @@
       "vendor": "McHobby",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1388,7 +1354,6 @@
       "vendor": "Pimoroni",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1420,7 +1385,6 @@
       "vendor": "Pimoroni",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1460,7 +1424,6 @@
       "vendor": "Pololu",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1485,7 +1448,6 @@
       "vendor": "Pololu",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1510,7 +1472,6 @@
       "vendor": "Silicognition LLC",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1535,7 +1496,6 @@
       "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1564,7 +1524,6 @@
       "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1593,7 +1552,6 @@
       "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1612,7 +1570,6 @@
       "vendor": "WIZnet",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1640,7 +1597,6 @@
       "vendor": "WIZnet",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1667,7 +1623,6 @@
       "vendor": "WeAct",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1727,7 +1682,6 @@
       "vendor": "nullbits",
       "port": "rp2",
       "mcu": "rp2040",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1754,7 +1708,6 @@
       "vendor": "Raspberry Pi",
       "port": "rp2",
       "mcu": "rp2350",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1786,7 +1739,6 @@
       "vendor": "Raspberry Pi",
       "port": "rp2",
       "mcu": "rp2350",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1811,7 +1763,6 @@
       "vendor": "Seeed Studio",
       "port": "rp2",
       "mcu": "rp2350",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1839,7 +1790,6 @@
       "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2350",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1864,7 +1814,6 @@
       "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2350",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1889,7 +1838,6 @@
       "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2350",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1914,7 +1862,6 @@
       "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2350",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1939,7 +1886,6 @@
       "vendor": "SparkFun",
       "port": "rp2",
       "mcu": "rp2350",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1964,7 +1910,6 @@
       "vendor": "WeAct Studio",
       "port": "rp2",
       "mcu": "rp2350",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -1992,7 +1937,6 @@
       "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd21",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2021,7 +1965,6 @@
       "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd21",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2048,7 +1991,6 @@
       "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd21",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2067,7 +2009,6 @@
       "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd21",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2095,7 +2036,6 @@
       "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd21",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2124,7 +2064,6 @@
       "vendor": "Microchip",
       "port": "samd",
       "mcu": "samd21",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2143,7 +2082,6 @@
       "vendor": "Microchip",
       "port": "samd",
       "mcu": "samd21",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2172,7 +2110,6 @@
       "vendor": "Seeed Studio",
       "port": "samd",
       "mcu": "samd21",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2199,7 +2136,6 @@
       "vendor": "SparkFun",
       "port": "samd",
       "mcu": "samd21",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2217,7 +2153,6 @@
       "vendor": "SparkFun",
       "port": "samd",
       "mcu": "samd21",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2235,7 +2170,6 @@
       "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd51",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2262,7 +2196,6 @@
       "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd51",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2291,7 +2224,6 @@
       "vendor": "Adafruit",
       "port": "samd",
       "mcu": "samd51",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2317,7 +2249,6 @@
       "vendor": "Microchip",
       "port": "samd",
       "mcu": "samd51",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2336,7 +2267,6 @@
       "vendor": "Microchip",
       "port": "samd",
       "mcu": "samd51",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2355,7 +2285,6 @@
       "vendor": "MiniFig Boards",
       "port": "samd",
       "mcu": "samd51",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2384,7 +2313,6 @@
       "vendor": "Seeed Studio",
       "port": "samd",
       "mcu": "samd51",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
@@ -2413,7 +2341,6 @@
       "vendor": "SparkFun",
       "port": "samd",
       "mcu": "samd51",
-      "offset": "",
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20250911-v1.26.1.uf2",
