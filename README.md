@@ -206,8 +206,8 @@ This plugin includes the following third-party components:
 
 - **MicroPython Stubs** - Copyright 2020-2024 Jos Verlinde, MIT License  
   https://github.com/Josverl/micropython-stubs  
-  See [licenses/micropythonStubs](licenses/stubs/LICENSE.md) for the full license.
+  See [licenses/stubs/LICENSE.md](licenses/stubs/LICENSE.md) for the full license.
 
 - **Pico Universal Flash Nuke** - Copyright 2024 Phil Howard, BSD 3-Clause License  
   https://github.com/Gadgetoid/pico-universal-flash-nuke  
-  See [licenses/rp2UniversalFlashNuke](licenses/rp2UniversalFlashNuke/LICENSE.txt) for the full license.
+  See [licenses/rp2UniversalFlashNuke/LICENSE.txt](licenses/rp2UniversalFlashNuke/LICENSE.txt) for the full license.
