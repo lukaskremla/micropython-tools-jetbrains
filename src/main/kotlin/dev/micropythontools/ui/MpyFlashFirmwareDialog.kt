@@ -17,10 +17,7 @@
 package dev.micropythontools.ui
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
@@ -32,6 +29,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
@@ -47,6 +45,7 @@ import dev.micropythontools.settings.MpySettingsService
 import io.ktor.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import java.awt.Dimension
 import java.time.Instant
 import java.time.LocalDateTime
@@ -76,7 +75,8 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
             .startsWith("esp", ignoreCase = true)
 
     // Current board data
-    private var currentBoards: List<Board> = emptyList()
+    private val mpyBoardsJson: MpyBoardsJson?
+    private val boards: List<Board>
 
     // UI components
     private lateinit var statusComment: Cell<JEditorPane>
@@ -121,43 +121,45 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
     private val portSelectModel = MutableCollectionComboBoxModel<String>()
     private val volumeSelectModel = MutableCollectionComboBoxModel<String>()
 
+    private val statusMessage: String
+
     init {
         title = "Flash Firmware/MicroPython"
         setOKButtonText("Flash")
 
-        // Load cached boards immediately (instant)
-        currentBoards = firmwareService.getCachedBoards()
+        var capturedStatusMessage = ""
 
-        init() // Make the dialog appear
+        mpyBoardsJson = runWithModalProgressBlocking(project, "Opening firmware flashing dialog...") {
+            withProgressText("Fetching MicroPython.org board info...") {
+                return@withProgressText try {
+                    val boardsJson = firmwareService.getMpyBoardsJson()
 
-        // Capture dialog's modality AFTER init()
-        val dialogModality = ModalityState.stateForComponent(rootPane)
+                    val formattedDate = formatReadableDateTime(boardsJson.timestamp)
+                    capturedStatusMessage = MpyBundle.message("flash.status.up.to.date", formattedDate)
 
-        ApplicationManager.getApplication().executeOnPooledThread {
-            try {
-                // Update the caches
-                firmwareService.updateCachedBoards()
-
-                invokeLater(dialogModality) {
-                    // Retrieve cached boards
-                    val newBoards = firmwareService.getCachedBoards()
-
-                    if (newBoards != currentBoards && newBoards.isNotEmpty()) {
-                        updateBoardsInUI(newBoards)
-                    }
-
-                    setStatus("flash.status.up.to.date")
-                }
-            } catch (_: IncompatibleBoardsJsonVersionException) {
-                invokeLater(dialogModality) {
-                    setStatus("flash.status.incompatible")
-                }
-            } catch (_: Throwable) {
-                invokeLater(dialogModality) {
-                    setStatus("flash.status.failed")
+                    boardsJson
+                } catch (_: IncompatibleBoardsJsonVersionException) {
+                    capturedStatusMessage = MpyBundle.message("flash.status.incompatible")
+                    null
+                } catch (_: SerializationException) {
+                    capturedStatusMessage = MpyBundle.message("flash.status.incompatible")
+                    null
+                } catch (_: Throwable) {
+                    capturedStatusMessage = MpyBundle.message("flash.status.failed")
+                    null
                 }
             }
         }
+
+        statusMessage = capturedStatusMessage
+
+        title = "Flash Firmware/MicroPython"
+        setOKButtonText("Flash")
+
+        // Load cached boards immediately (instant)
+        boards = mpyBoardsJson?.boards ?: emptyList()
+
+        init() // Make the dialog appear
     }
 
     override fun createCenterPanel(): JComponent {
@@ -178,7 +180,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
         return panel {
             row {
-                statusComment = comment("Checking for firmware updates...")
+                statusComment = comment(statusMessage)
             }
 
             deviceGroup = group("Device") {
@@ -301,17 +303,19 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                     row("Firmware source:") {
                         microPythonOrgRadioButton = radioButton("MicroPython.org")
                             .applyToComponent {
-                                isSelected = true // This is the default option
+                                isSelected = mpyBoardsJson != null
 
                                 addActionListener { mcuComboBoxRow.visible(true) }
                             }
 
                         localFileRadioButton = radioButton("Local file")
                             .applyToComponent {
+                                isSelected = mpyBoardsJson == null
+
                                 addActionListener { mcuComboBoxRow.visible(isEsp) }
                             }
                     }
-                }
+                }.enabled(mpyBoardsJson != null)
 
                 indent {
                     row("Board variant:") {
@@ -323,7 +327,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                 }
                             }
                             .comment("<a>View on MicroPython.org</a>", action = {
-                                val boardId = firmwareService.getCachedBoards()
+                                val boardId = boards
                                     .find { it.name == boardVariantComboBox.component.selectedItem }?.id ?: "UNKNOWN"
 
                                 BrowserUtil.open("https://micropython.org/download/$boardId")
@@ -389,7 +393,9 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                                     ?: return@validationOnApply error("Please select a device type first")
 
                                 val expectedExtension =
-                                    firmwareService.getExtensionForPort(selectedDeviceType).removePrefix(".")
+                                    firmwareService.portToExtension[selectedDeviceType.toLowerCasePreservingASCIIRules()]?.removePrefix(
+                                        "."
+                                    )
 
                                 when {
                                     localFilePath.isBlank() -> error("Please select a firmware file")
@@ -432,13 +438,8 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
         }
     }
 
-    private fun setStatus(messageKey: String) {
-        val formattedDate = formatReadableDateTime(firmwareService.getCachedBoardsTimestamp())
-        statusComment.component.text = MpyBundle.message(messageKey, formattedDate)
-    }
-
     private fun updateDeviceTypeComboBox() {
-        val deviceTypes = firmwareService.getDeviceTypes()
+        val deviceTypes = firmwareService.supportedPorts
         val model = deviceTypeComboBox.component.model as MutableCollectionComboBoxModel<String>
 
         model.removeAll()
@@ -452,7 +453,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
     private fun onDeviceTypeSelected() {
         val selectedDeviceType = deviceTypeComboBox.component.selectedItem as? String ?: return
-        val mcus = firmwareService.getMcusForPort(selectedDeviceType)
+        val mcus = firmwareService.getMcusForPort(selectedDeviceType, boards)
 
         val model = mcuComboBox.component.model as MutableCollectionComboBoxModel<String>
         model.removeAll()
@@ -468,13 +469,13 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
     private fun onMcuSelected() {
         val selectedMcu = mcuComboBox.component.selectedItem as? String ?: return
-        val boards = firmwareService.getBoardsForMcu(selectedMcu)
+        val mcuBoards = firmwareService.getBoardsForMcu(selectedMcu, boards)
 
         val model = boardVariantComboBox.component.model as MutableCollectionComboBoxModel<String>
         model.removeAll()
-        boards.forEach { model.add(it.name) }
+        mcuBoards.forEach { model.add(it.name) }
 
-        if (boards.isNotEmpty()) {
+        if (mcuBoards.isNotEmpty()) {
             boardVariantComboBox.component.selectedIndex = 0
             onBoardVariantSelected()
         } else {
@@ -487,7 +488,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
         val selectedBoardName = boardVariantComboBox.component.selectedItem as? String ?: return
 
         // Find the selected board
-        selectedBoard = firmwareService.getBoardsForMcu(selectedMcu)
+        selectedBoard = firmwareService.getBoardsForMcu(selectedMcu, boards)
             .find { it.name == selectedBoardName }
 
         selectedBoard?.let { board ->
@@ -558,38 +559,6 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
             firmwareVariantComboBox -> {
                 (versionComboBox.component.model as MutableCollectionComboBoxModel<String>).removeAll()
-            }
-        }
-    }
-
-    private fun updateBoardsInUI(newBoards: List<Board>) {
-        // Save current selections
-        val savedDeviceType = deviceTypeComboBox.component.selectedItem as? String
-        val savedMcu = mcuComboBox.component.selectedItem as? String
-        val savedBoardVariant = boardVariantComboBox.component.selectedItem as? String
-        val savedFirmwareVariant = firmwareVariantComboBox.component.selectedItem as? String
-        val savedVersion = versionComboBox.component.selectedItem as? String
-
-        // Update underlying data
-        currentBoards = newBoards
-
-        // Rebuild device type dropdown
-        updateDeviceTypeComboBox()
-
-        // Try to restore selections
-        if (savedDeviceType != null) {
-            deviceTypeComboBox.component.selectedItem = savedDeviceType
-            if (savedMcu != null) {
-                mcuComboBox.component.selectedItem = savedMcu
-                if (savedBoardVariant != null) {
-                    boardVariantComboBox.component.selectedItem = savedBoardVariant
-                    if (savedFirmwareVariant != null) {
-                        firmwareVariantComboBox.component.selectedItem = savedFirmwareVariant
-                        if (savedVersion != null) {
-                            versionComboBox.component.selectedItem = savedVersion
-                        }
-                    }
-                }
             }
         }
     }
@@ -687,7 +656,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
         runWithModalProgressBlocking(project, "Flashing Firmware...") {
             reportRawProgress { reporter ->
                 try {
-                    val board = firmwareService.getCachedBoards().find {
+                    val board = boards.find {
                         it.name == boardVariantComboBox.component.selectedItem
                     } ?: throw RuntimeException("Failed to find selected board")
 
@@ -703,7 +672,7 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                     val eraseFlash = eraseFlashCheckBox.component.isSelected
                     val connectAfter = connectAfterCheckBox.component.isSelected
 
-                    val localFirmwarePath = if (microPythonOrgRadioButton.component.isSelected) {
+                    val localFirmwarePath = if (localFileRadioButton.component.isSelected) {
                         localFileTextFieldWithBrowseButton.component.text
                     } else null
 
@@ -722,6 +691,11 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
                         // Return to the original dialog without closing it abruptly
                         return@runWithModalProgressBlocking
                     }
+
+                    val offsetMapTouse = mpyBoardsJson?.espMcuToOffset ?: firmwareService.espMcuToOffset
+
+                    // Set the board's offset for ESP
+                    board.offset = offsetMapTouse[board.mcu.toLowerCasePreservingASCIIRules()]
 
                     // Perform the flashing operation, download firmware if needed
                     firmwareService.getFirmwareAndFlash(

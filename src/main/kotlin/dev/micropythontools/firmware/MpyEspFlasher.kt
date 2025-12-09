@@ -72,13 +72,17 @@ internal class MpyEspFlasher(project: Project) : MpyFlasherInterface {
             }
         }
 
+        if (board.offset == null) {
+            throw RuntimeException("No known offset for mcu \"${board.mcu}\"")
+        }
+
         // Build write command
         val flashArgs = mutableListOf(
             "-m", "esptool",
             "--chip", board.mcu,
             "--port", target,
             "write-flash",
-            board.offset,
+            board.offset!!.toString(),
             pathToFirmware
         )
 
