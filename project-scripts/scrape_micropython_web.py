@@ -100,7 +100,7 @@ def main():
     micropython_board_map: dict[str, Any] = {
         "version": "1.0.0",
         "timestamp": "",  # Filled out at the end
-        "skimmedPorts": list(supported_ports),
+        "supportedPorts": list(supported_ports),
         "portToExtension": port_to_extension,
         "espMcuToOffset": esp_mcu_to_offset,
         "boards": []
