@@ -14,11 +14,10 @@
 * limitations under the License.
 """
 
-import shutil
-
 import os
 import python_minifier
 import re
+import shutil
 
 path = os.path.abspath(__file__)
 current_dir = os.path.dirname(path)
@@ -37,6 +36,8 @@ except FileNotFoundError:
 
 os.mkdir(scripts_dir)
 os.mkdir(target_dir)
+
+print(__file__)
 
 
 def do_minification(source_directory, target_directory):

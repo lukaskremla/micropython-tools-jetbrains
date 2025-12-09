@@ -132,7 +132,22 @@ tasks {
             apiVersion = KotlinVersion.KOTLIN_2_2
         }
     }
+
+    register<Exec>("runPythonBuildScripts") {
+        description = "Run Python build scripts to prepare bundled resources"
+        group = "build"
+
+        executable = "python3"
+        args = listOf(
+            "project-scripts/process_bundled.py",
+            "project-scripts/minify_scripts.py",
+        )
+        workingDir = projectDir
+    }
+
     named<ProcessResources>("processResources") {
+        dependsOn("runPythonBuildScripts")
+
         from("scripts") {
             into("scripts")
             include("**/*")
