@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from typing import Any, Dict
 
@@ -6,7 +7,12 @@ import requests
 from bs4 import BeautifulSoup
 
 MCU_PARAM = "?mcu="
-PATH_TO_BOARDS_JSON = "../data/micropython_boards.json"
+
+path = os.path.abspath(__file__)
+current_dir = os.path.dirname(path)
+project_dir = os.path.dirname(current_dir)
+
+board_json_path = os.path.join(project_dir, "data/micropython_boards.json")
 
 supported_ports = ("esp32", "esp8266", "rp2", "samd")
 
@@ -246,7 +252,7 @@ def main():
     new_board_ids = [board["id"] for board in micropython_board_map["boards"]]
 
     try:
-        with open(PATH_TO_BOARDS_JSON, "r") as f:
+        with open(board_json_path, "r") as f:
             print("Testing for regression...")
 
             old_json_map = json.loads(f.read())
@@ -263,7 +269,7 @@ def main():
         pass
 
     print("Saving the newly scraped data...")
-    with open(PATH_TO_BOARDS_JSON, "w") as f:
+    with open(board_json_path, "w") as f:
         json.dump(micropython_board_map, f, indent=2, ensure_ascii=False)
 
 
