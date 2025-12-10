@@ -160,7 +160,7 @@ def main():
                         # Build the url of the board's page
                         board_page_url = download_url + mcu_page_link
 
-                        # Retrieve the html response of this page
+                        # Retrieve the HTML response of this page
                         board_page_response = session.get(board_page_url)
 
                         # Parse the board page HTML
@@ -173,7 +173,7 @@ def main():
                         board_name = None
                         vendor = None
 
-                        # Iterate over all html tags on the page
+                        # Iterate over all HTML tags on the page
                         for html_element in board_page_beautiful_soup.descendants:
                             # Ensure a valid tag that can be parsed
                             if hasattr(html_element, "name"):
@@ -257,7 +257,7 @@ def main():
     # Sort the boards to ensure generic ESP32 boards come first
     micropython_board_map["boards"].sort(key=lambda b: (b["mcu"], b["sortPriority"]))
 
-    # Remove the "sortPriority" param to avoid cluttering the final json
+    # Remove the "sortPriority" param to avoid cluttering the final JSON
     for board in micropython_board_map["boards"]:
         board.pop("sortPriority", None)
 
