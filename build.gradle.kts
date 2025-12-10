@@ -138,10 +138,7 @@ tasks {
         group = "build"
 
         executable = "python3"
-        args = listOf(
-            "project-scripts/process_bundled.py",
-            "project-scripts/minify_scripts.py",
-        )
+        args = listOf("project-scripts/run_build_python_scripts.py")
         workingDir = projectDir
     }
 
