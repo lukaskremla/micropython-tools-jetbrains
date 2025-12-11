@@ -75,6 +75,20 @@ Usage tips, setup guide and documentation are available [here](DOCUMENTATION.md)
 ![Upload Preview](media/upload_preview.png)
 </details>
 
+#### Firmware Flashing
+
+- Flash MicroPython firmware directly from the IDE with real-time progress output
+- Supports ESP, RP2 and SAMD devices
+- Automatic firmware download from micropython.org or use local firmware files
+- Configurable erase flash option (with universal flash nuke support for RP2 boards)
+- Accessible through the plugin settings or file system widget when no device is connected
+
+<details>
+<summary>View Firmware Flashing Dialog screenshot</summary>
+
+![Firmware Flashing](media/flash_firmware_dialog.png)
+</details>
+
 #### Run Configurations
 
 Multiple run configuration types for different workflows:

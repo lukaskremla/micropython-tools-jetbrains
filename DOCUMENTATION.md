@@ -17,6 +17,7 @@
     - [Volume/SD card Support](#volume-support)
     - [File System Context Menu](#file-system-context-menu)
     - [Opening And Editing on-device files](#opening-and-editing-on-device-files)
+- [Firmware Flashing](#firmware-flashing)
 - [REPL Widget](#repl-widget)
 - [Uploads](#uploads)
     - [Run Configurations](#run-configurations)
@@ -214,6 +215,45 @@ support" checkbox in the settings.
 NOTE: Legacy support will slow down refresh operations anytime you connect a device with MicroPython version below 1.25,
 because the check is more comprehensive and demanding.
 
+## Firmware Flashing
+
+The firmware flashing dialog is accessible through the plugin settings or through the File System widget when no device
+is connected. It currently supports all ESP8266, ESP32, RP2 and SAMD devices.
+
+The dialog requires an active network connection to enable automatic downloads of compiled firmware binaries from
+micropython.org, with no internet connection you will be restricted to only flashing local firmware binaries.
+
+The dialog lets you select from the supported MicroPython ports/device types and al of their MCUs, and all the
+variants of the MCUs listed on micropython.org. The data is indexed once a day at midnight GMT and stored in the
+plugin's GitHub repo, where plugin installations retrieve it from.
+
+By default, the latest MicroPython version is selected. You can enable viewing of older releases and preview releases
+with the checkboxes.
+
+For ESP devices, the serial port combobox matches the one from MpyConfigurable, allowing you to select from detected
+serial ports, filter out those with unknown manufacturers, and allowing manual editing for custom/edge use cases.
+
+NOTE: Some ESP devices might require manual bootloader mode entry. This can be achieved by holding down the boot button
+while plugging the device in.
+
+If you constantly get "Device not configured" or similar pyserial errors, this might be the problem
+
+If your ESP device doesn't expose a UART serial port, but only a USB one, this might concern you as well, however, some
+modern boards which expose a USB interface can still work just fine.
+
+FOR RP2 and SAMD DEVICES: All UF2 based devices must be first put into the bootloader mode, this is usually done so by
+holding down the bootsel button while plugging the board in, or via a manufacturer-specified sequence of reset button
+presses.
+
+Once the device is in bootloader mode, you will be able to see it listed in the dialog as a volume.
+
+RP2 devices erase flash feature is facilitated by first uploading the UNIVERSAL_RP2_FLASH_NUKE.uf2 file by Phil Howard.
+
+SAMD devices unfortunately have no universal way to erase the flash, only the MicroPython file system can be erased.
+This must be done manually after flashing and connecting to the device.
+
+The connect after option is not available for UF2 based boards, as the port can't be tracked from the bootloader volume.
+
 ## REPL Widget
 
 The REPL Widget of this plugin lets you directly access REPL as it is. This means that all MicroPython REPL keyboard
@@ -336,48 +376,64 @@ The following features require an active Pro license.
 
 ### Background Uploads and Downloads
 
-Upload and download operations run in the background without blocking the IDE. Progress is shown in the IDE's background tasks manager (bottom-right corner). You can continue coding while transfers are in progress.
+Upload and download operations run in the background without blocking the IDE. Progress is shown in the IDE's background
+tasks manager (bottom-right corner). You can continue coding while transfers are in progress.
 
-Enable in `Settings → Languages & Frameworks → MicroPython Tools` with the "Enable background uploads/downloads" checkbox.
+Enable in `Settings → Languages & Frameworks → MicroPython Tools` with the "Enable background uploads/downloads"
+checkbox.
 
 ### Automatic File Compression
 
-Files are automatically compressed before upload and decompressed on the device. Compression is applied to files larger than 4KB that achieve at least 12% size reduction. Already-compressed files (images, archives, `.mpy`) are skipped. The upload preview dialog shows compression savings.
+Files are automatically compressed before upload and decompressed on the device. Compression is applied to files larger
+than 4KB that achieve at least 12% size reduction. Already-compressed files (images, archives, `.mpy`) are skipped. The
+upload preview dialog shows compression savings.
 
 Enable in `Settings → Languages & Frameworks → MicroPython Tools` with the "Enable upload compression" checkbox.
 
 ### mpy-cross Compilation
 
-Compile Python files to MicroPython bytecode (`.mpy`) directly from the IDE. Bytecode files load faster and use less memory on the device.
+Compile Python files to MicroPython bytecode (`.mpy`) directly from the IDE. Bytecode files load faster and use less
+memory on the device.
 
-Create a new `MicroPython Tools → mpy-cross Compilation` run configuration. Select what to compile (Project, Selected Sources Roots, or Custom Path), choose output location, and configure compilation options.
+Create a new `MicroPython Tools → mpy-cross Compilation` run configuration. Select what to compile (Project, Selected
+Sources Roots, or Custom Path), choose output location, and configure compilation options.
 
-The Project/Selected/Custom path source selecting logic is the same for this run configuration is it is for the [upload run configuration](#run-configurations).
+The Project/Selected/Custom path source selecting logic is the same for this run configuration is it is for
+the [upload run configuration](#run-configurations).
 
-**Auto-Detection:** Click the Auto-Detect button to automatically detect your device's bytecode version and architecture.
+**Auto-Detection:** Click the Auto-Detect button to automatically detect your device's bytecode version and
+architecture.
 
 **Emitter options:**
-- Bytecode: Standard bytecode, compatible with all devices (Choose this unless you know the implications of Native/Viper and how to use them)
-- Native/Viper: Faster machine code, architecture-specific (Strict requirements, Viper requires strict typing of variables, Native doesn't work well with exception handlers)
+
+- Bytecode: Standard bytecode, compatible with all devices (Choose this unless you know the implications of Native/Viper
+  and how to use them)
+- Native/Viper: Faster machine code, architecture-specific (Strict requirements, Viper requires strict typing of
+  variables, Native doesn't work well with exception handlers)
 
 **Optimization levels:** O0 (no optimization) through O3 (maximum optimization)
 
 **Embed modes:**
+
 - Filename only: Shortest (Slight obfuscation)
 - Relative to project root: Full paths in stack traces (best for debugging
 - Mapping file: Custom shortened paths (Allows manually setting up obfuscation of source files for stack traces
 
 **Special handling:**
+
 - `boot.py` and `main.py` are always copied as `.py` (not compiled)
 - Non-Python files can optionally be copied alongside `.mpy` files
 
-More information on mpy-cross compilation can be found on the [official micropython.org website](https://docs.micropython.org/en/latest/reference/mpyfiles.html).
+More information on mpy-cross compilation can be found on
+the [official micropython.org website](https://docs.micropython.org/en/latest/reference/mpyfiles.html).
 
 #### Mapping Files
 
-Mapping files customize the paths embedded in `.mpy` files. Format: one line per file with source path and embedded path separated by space.
+Mapping files customize the paths embedded in `.mpy` files. Format: one line per file with source path and embedded path
+separated by space.
 
 Example:
+
 ```
 src/network/wifi.py wifi
 src/utils/helpers.py utils/hlp
@@ -387,28 +443,41 @@ Click the "Generate" link in the run configuration to auto-generate a mapping fi
 
 #### Bytecode version to used mpy-cross binary mapping
 
-The plugin's selection of mpy-cross binaries deviates from what the mpy-cross python wrapper does. The official mpy-cross python library's compat parameter uses the earliest available mpy-cross binary of a give Bytecode/MicroPython version. 
+The plugin's selection of mpy-cross binaries deviates from what the mpy-cross python wrapper does. The official
+mpy-cross python library's compat parameter uses the earliest available mpy-cross binary of a give Bytecode/MicroPython
+version.
 
-This means that if you use --compat 1.26.1, it won't use the mpy-cross version 1.26.1, but the earliest available mpy-cross version compatible with the 1.26.1 MicroPython bytecode is mpy-cross of version 1.23.0.
+This means that if you use --compat 1.26.1, it won't use the mpy-cross version 1.26.1, but the earliest available
+mpy-cross version compatible with the 1.26.1 MicroPython bytecode is mpy-cross of version 1.23.0.
 
-This means you'll be missing out on several improvements and optimizations. For example multi line f strings (which mpy-cross 1.26.1 can handle) might not compile at all with mpy-cross 1.23.0.
+This means you'll be missing out on several improvements and optimizations. For example multi line f strings (which
+mpy-cross 1.26.1 can handle) might not compile at all with mpy-cross 1.23.0.
 
-This plugin solves this issue by internally using the latest available mpy-cross binary for a given version. So if you select -compat 1.23.0, 1.24.0 etc. it will default to the latest available mpy-cross binary for this version (at the time of writing this documentation it is 1.26.1) meaning you get the latest available mpy-cross optimizations and bug fixes.
+This plugin solves this issue by internally using the latest available mpy-cross binary for a given version. So if you
+select -compat 1.23.0, 1.24.0 etc. it will default to the latest available mpy-cross binary for this version (at the
+time of writing this documentation it is 1.26.1) meaning you get the latest available mpy-cross optimizations and bug
+fixes.
 
-NOTE: This should not affect backwards compatibility (bytecode from mpy-cross 1.26.1 should be perfectly compatible with MPY version 1.23.0), if you suspect you've ran into some compatibility issue caused by this plugin's mpy-cross version selection behavior, pleae open an issue.
+NOTE: This should not affect backwards compatibility (bytecode from mpy-cross 1.26.1 should be perfectly compatible with
+MPY version 1.23.0), if you suspect you've ran into some compatibility issue caused by this plugin's mpy-cross version
+selection behavior, pleae open an issue.
 
-The mapping of BytecodeVersions to used mpy-cross binaries differes on Windows/macOS due to the availability of pre-compiled binaries. To see what MicroPython version range a given MicroPython Bytecode version corresponds to, visit the official [micropython.org website](https://docs.micropython.org/en/latest/reference/mpyfiles.html). Below is the mapping of Bytecode version to used mpy-cross binary of this plugin for specific os Versions:
+The mapping of BytecodeVersions to used mpy-cross binaries differes on Windows/macOS due to the availability of
+pre-compiled binaries. To see what MicroPython version range a given MicroPython Bytecode version corresponds to, visit
+the official [micropython.org website](https://docs.micropython.org/en/latest/reference/mpyfiles.html). Below is the
+mapping of Bytecode version to used mpy-cross binary of this plugin for specific os Versions:
 
-| Bytecode Version | Windows/Linux/macOS x64 | macOS ARM         |
-|------------------|-------------------------|-------------------|
-| 6.3 (≥ 1.26)     | mpy-cross 1.26.1        | mpy-cross 1.26.1  |
-| 6.2 (≥ 1.22)     | mpy-cross 1.22.2        | mpy-cross 1.22.0  |
-| 6.1 (≥ 1.20)     | mpy-cross 1.21.0        | mpy-cross 1.20.0  |
-| 6.0 (≥ 1.19)     | mpy-cross 1.19.1        | mpy-cross 1.19.1  |
+| Bytecode Version | Windows/Linux/macOS x64 | macOS ARM        |
+|------------------|-------------------------|------------------|
+| 6.3 (≥ 1.26)     | mpy-cross 1.26.1        | mpy-cross 1.26.1 |
+| 6.2 (≥ 1.22)     | mpy-cross 1.22.2        | mpy-cross 1.22.0 |
+| 6.1 (≥ 1.20)     | mpy-cross 1.21.0        | mpy-cross 1.20.0 |
+| 6.0 (≥ 1.19)     | mpy-cross 1.19.1        | mpy-cross 1.19.1 |
 
 ### .mpy File Analyzer
 
 When you open a `.mpy` file in the IDE, a metadata panel displays:
+
 - File size
 - Embedded path
 - Emitter type (Bytecode/Native/Viper)
