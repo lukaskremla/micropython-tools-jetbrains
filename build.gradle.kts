@@ -137,7 +137,14 @@ tasks {
         description = "Run Python build scripts to prepare bundled resources"
         group = "build"
 
-        executable = "python3"
+        // Use the virtual environment's Python
+        val pythonExecutable = if (System.getProperty("os.name").lowercase().contains("win")) {
+            ".venv/Scripts/python.exe"
+        } else {
+            ".venv/bin/python3"
+        }
+
+        executable = file("$ossDir/$pythonExecutable").absolutePath
         args = listOf("project-scripts/run_build_python_scripts.py")
         workingDir = projectDir
     }
