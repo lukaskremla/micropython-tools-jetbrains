@@ -412,14 +412,6 @@ internal class MpyStubPackageService(private val project: Project) {
         val isUpToDate = exactPackageVersion == remoteStubPackage.exactPackageVersion &&
                 exactStdlibVersion == remoteStubPackage.exactStdlibVersion
 
-        if (!isUpToDate && name.contains("esp32")) {
-            println("$name $mpyVersion")
-            println(exactPackageVersion)
-            println(exactStdlibVersion)
-            println(remoteStubPackage.exactPackageVersion)
-            println(remoteStubPackage.exactStdlibVersion)
-        }
-
         return isUpToDate
     }
 
