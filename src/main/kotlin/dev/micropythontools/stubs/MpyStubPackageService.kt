@@ -310,9 +310,12 @@ internal class MpyStubPackageService(private val project: Project) {
     private fun extractVersionFromDistInfo(stubPackagePath: Path, packageName: String): String {
         val stubPackageDirChildren = stubPackagePath.toFile().listFiles()
 
+        // Dist info uses "_" characters instead of "-"
+        val packageNameToCheck = packageName.replace("-", "_")
+
         // Find the dist info dir
         val packageDistInfoDir = stubPackageDirChildren
-            .find { it.name.startsWith(packageName) && it.name.endsWith(PYTHON_PACKAGE_DIST_INFO_SUFFIX) }
+            .find { it.name.startsWith(packageNameToCheck) && it.name.endsWith(PYTHON_PACKAGE_DIST_INFO_SUFFIX) }
 
         // Get the actual version from the directory's name
         return packageDistInfoDir!!.name
