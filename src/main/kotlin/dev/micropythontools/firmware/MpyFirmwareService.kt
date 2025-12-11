@@ -94,9 +94,9 @@ internal class MpyFirmwareService(private val project: Project) {
     private val client: HttpClient = HttpClient.newHttpClient()
 
     private val compatibleIndexVersion: String
-    private val supportedPorts: List<String>
-    private val portToExtension: Map<String, String>
-    private val espMcuToOffset: Map<String, Int>
+    val supportedPorts: List<String>
+    val portToExtension: Map<String, String>
+    val espMcuToOffset: Map<String, Int>
 
     init {
         val bundledJsonString =
