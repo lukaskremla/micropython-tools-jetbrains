@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.core.MpyPaths
 import dev.micropythontools.core.MpyPythonInterpreterService
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 import jssc.SerialPort
 import jssc.SerialPortException
@@ -55,7 +56,7 @@ internal class MpyEspFlasher(project: Project) : MpyFlasherInterface {
 
             try {
                 interpreterService.runPythonCodeWithCallback(eraseArgs, env) { outputLine ->
-                    reporter.text("Erasing flash...")
+                    reporter.text(MpyBundle.message("flash.esp.progress.erasing"))
 
                     // esptool sometimes prints a single dot, this is a hack to avoid displaying it
                     if (outputLine != ".") {
@@ -65,15 +66,13 @@ internal class MpyEspFlasher(project: Project) : MpyFlasherInterface {
             } catch (e: Throwable) {
                 throw ExecutionException(
                     e.localizedMessage + "\n\n" +
-                            "You might have to manually enter bootloader mode first if the above issue persists.\n" +
-                            "You can do so by holding down the boot button while plugging the device in.\n" +
-                            "You might also need to manually re-plug the device after flashing completes.\n"
+                            MpyBundle.message("flash.esp.error.instructions")
                 )
             }
         }
 
         if (board.offset == null) {
-            throw RuntimeException("No known offset for mcu \"${board.mcu}\"")
+            throw RuntimeException(MpyBundle.message("flash.esp.error.no.offset", board.mcu))
         }
 
         // Build write command
@@ -116,20 +115,20 @@ internal class MpyEspFlasher(project: Project) : MpyFlasherInterface {
                         val bytesWritten = byteStringParts[0].toLong()
                         val totalBytesToWrite = byteStringParts[1].toLong()
 
-                        val progressText = if (percentage < 100) "Flashing firmware..." else "Flashing complete..."
+                        val progressText = if (percentage < 100) MpyBundle.message("flash.esp.progress.flashing") else MpyBundle.message("flash.esp.progress.flashing.complete")
                         reporter.text(progressText)
-                        reporter.details("Flashed ${formatSize(bytesWritten)} of ${formatSize(totalBytesToWrite)} ($percentage%)")
+                        reporter.details(MpyBundle.message("flash.esp.progress.flashed", formatSize(bytesWritten), formatSize(totalBytesToWrite), percentage.toInt()))
                         reporter.fraction(percentage / 100.0)
                     }
 
                     outputLine.startsWith("Hard resetting") -> {
-                        reporter.text("Hard resetting...")
+                        reporter.text(MpyBundle.message("flash.esp.progress.hard.resetting"))
                         reporter.details(outputLine)
                         reporter.fraction(1.0)
                     }
 
                     else -> {
-                        reporter.text("Flashing firmware...")
+                        reporter.text(MpyBundle.message("flash.esp.progress.flashing"))
                         // Show other output lines in details for additional context
                         if (outputLine.isNotBlank()) {
                             reporter.details(outputLine)
@@ -140,9 +139,7 @@ internal class MpyEspFlasher(project: Project) : MpyFlasherInterface {
         } catch (e: Throwable) {
             throw ExecutionException(
                 e.localizedMessage + "\n\n" +
-                        "You might have to manually enter bootloader mode first if the above issue persists.\n" +
-                        "You can do so by holding down the boot button while plugging the device in.\n" +
-                        "You might also need to manually re-plug the device after flashing completes.\n"
+                        MpyBundle.message("flash.esp.error.instructions")
             )
         }
 

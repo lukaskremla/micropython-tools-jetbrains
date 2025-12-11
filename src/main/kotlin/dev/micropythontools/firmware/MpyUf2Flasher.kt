@@ -23,6 +23,7 @@ import dev.micropythontools.communication.LONG_LONG_TIMEOUT
 import dev.micropythontools.communication.SHORT_DELAY
 import dev.micropythontools.communication.TIMEOUT
 import dev.micropythontools.core.MpyPaths
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.EMPTY_VOLUME_TEXT
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 import kotlinx.coroutines.*
@@ -71,15 +72,15 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
                 // Copy flash nuke file
                 copyWithProgress(
                     reporter,
-                    "Copying flash erase utility...",
+                    MpyBundle.message("flash.uf2.progress.copying.flash.erase"),
                     nukeFile,
                     destinationVolume
                 )
 
-                reporter.text("Waiting for the device to restart...")
+                reporter.text(MpyBundle.message("flash.uf2.progress.waiting.restart"))
                 try {
                     // First wait for the device to disappear
-                    reporter.details("Waiting for the volume to disappear")
+                    reporter.details(MpyBundle.message("flash.uf2.progress.waiting.volume.disappear"))
                     withTimeout(TIMEOUT) {
                         while (destinationVolume in findCompatibleUf2Volumes()) {
                             delay(SHORT_DELAY)
@@ -87,7 +88,7 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
                     }
 
                     // Then wait for the device to reappear
-                    reporter.details("Waiting for the volume to reappear (This can take a while)")
+                    reporter.details(MpyBundle.message("flash.uf2.progress.waiting.volume.reappear"))
                     withTimeout(LONG_LONG_TIMEOUT) {
                         while (destinationVolume !in findCompatibleUf2Volumes()) {
                             delay(SHORT_DELAY)
@@ -96,7 +97,7 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
 
                     reporter.details(null)
                 } catch (_: TimeoutCancellationException) {
-                    throw RuntimeException("Device didn't restart in time")
+                    throw RuntimeException(MpyBundle.message("flash.uf2.error.device.restart.timeout"))
                 }
             } finally {
                 nukeFile.deleteIfExists()
@@ -106,7 +107,7 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
         // Copy firmware file
         copyWithProgress(
             reporter,
-            "Copying firmware file...",
+            MpyBundle.message("flash.uf2.progress.copying.firmware"),
             firmwareFile,
             destinationVolume
         )
@@ -138,13 +139,13 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
                 }
             }
         } catch (_: TimeoutCancellationException) {
-            throw RuntimeException("The volume isn't writable, please reconnect it and start over.")
+            throw RuntimeException(MpyBundle.message("flash.uf2.error.volume.not.writable"))
         } catch (e: NoSuchFileException) {
             // Only handle the output directory missing error explicitly, the dest missing error might be encountered commonly
             // and doesn't signify a bug in the plugin.
             // Missing source file suggests a bug in the plugin and doesn't need a separate message
             if (e.message == dest.absolutePathString()) {
-                throw RuntimeException("Failed to find selected volume, please re-enter bootloader mode and try again.")
+                throw RuntimeException(MpyBundle.message("flash.uf2.error.volume.not.found"))
             } else {
                 throw e
             }
@@ -164,7 +165,7 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
                             }
                         }
                     } catch (_: TimeoutCancellationException) {
-                        throw RuntimeException("Timed out while reading a UF2 firmware chunk")
+                        throw RuntimeException(MpyBundle.message("flash.uf2.error.read.chunk.timeout"))
                     }
 
                     if (bytesRead == -1) break
@@ -179,14 +180,14 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
                             }
                         }
                     } catch (_: TimeoutCancellationException) {
-                        throw RuntimeException("Timed out while writing a UF2 firmware chunk")
+                        throw RuntimeException(MpyBundle.message("flash.uf2.error.write.chunk.timeout"))
                     }
 
                     copiedBytes += bytesRead
 
                     val percentage = (copiedBytes * 100 / totalBytes).toInt()
                     reporter.fraction(copiedBytes.toDouble() / totalBytes)
-                    reporter.details("Copied ${formatSize(copiedBytes)} of ${formatSize(totalBytes)} ($percentage%)")
+                    reporter.details(MpyBundle.message("flash.uf2.progress.copied", formatSize(copiedBytes), formatSize(totalBytes), percentage))
 
                     checkCanceled()
                 }
@@ -200,11 +201,10 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
         val compatibleVolumes = findCompatibleUf2Volumes()
 
         return when {
-            target == EMPTY_VOLUME_TEXT -> ValidationResult("No volume selected")
+            target == EMPTY_VOLUME_TEXT -> ValidationResult(MpyBundle.message("flash.uf2.validation.no.volume.selected"))
 
             compatibleVolumes.distinct().size < compatibleVolumes.size -> ValidationResult(
-                "There are several devices with identical UF2 volumes connected. " +
-                        "Please make sure only the one device is connected and try again."
+                MpyBundle.message("flash.uf2.validation.multiple.volumes")
             )
 
             else -> ValidationResult.OK

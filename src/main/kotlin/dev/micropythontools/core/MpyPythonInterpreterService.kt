@@ -74,14 +74,14 @@ internal class MpyPythonInterpreterService(private val project: Project) {
 
         return if (numberOfMissingProDependencies != 0 || missingPythonPackages.isNotEmpty()) {
             ValidationResult(
-                "Some of the plugin's dependencies are missing or require updates",
+                MpyBundle.message("python.service.validation.missing.dependencies.title"),
                 object :
-                    FacetConfigurationQuickFix("Install/Update Dependencies") {
+                    FacetConfigurationQuickFix(MpyBundle.message("python.service.validation.install.update.button")) {
                     override fun run(place: JComponent?) {
                         ApplicationManager.getApplication().invokeLater {
                             runWithModalProgressBlocking(
                                 project,
-                                "Installing/Updating MicroPython Tools dependencies..."
+                                MpyBundle.message("python.service.progress.installing.dependencies")
                             ) {
                                 reportSequentialProgress(
                                     numberOfMissingProDependencies + missingPythonPackages.size
@@ -142,7 +142,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         installDependencies: Boolean = true,
         cleanTargetDir: Boolean = true
     ) {
-        reporter?.itemStep("Installing \"$toInstall\"")
+        reporter?.itemStep(MpyBundle.message("python.service.progress.installing.package", toInstall))
 
         // Ensure the directory is clean first
         val targetDir = File(targetPath)
@@ -176,7 +176,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         }
 
         if (distInfoDir?.exists() != true) {
-            throw RuntimeException("Error installing package \"$toInstall\": Failed to verify installation succeeded")
+            throw RuntimeException(MpyBundle.message("python.service.error.install.failed", toInstall))
         }
     }
 
@@ -200,7 +200,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         env: Map<String, String> = emptyMap(),
         onOutput: (String) -> Unit
     ): OSProcessHandler {
-        val sdk = findPythonSdk() ?: throw ExecutionException("No Python SDK found")
+        val sdk = findPythonSdk() ?: throw ExecutionException(MpyBundle.message("python.service.error.no.sdk"))
         val command = if (args.first().contains("uv")) {
             args
         } else {

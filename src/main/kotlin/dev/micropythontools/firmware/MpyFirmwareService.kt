@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.core.MpyPaths
+import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 import io.ktor.util.*
 import kotlinx.coroutines.Dispatchers
@@ -127,14 +128,14 @@ internal class MpyFirmwareService(private val project: Project) {
             null
         }
 
-        remoteBoardsJsonContent ?: throw RuntimeException("Failed to fetch latest JSON data")
+        remoteBoardsJsonContent ?: throw RuntimeException(MpyBundle.message("firmware.service.error.failed.fetch.json"))
 
         // Convert to a JSON object
         val mpyBoardsJson = MpyBoardsJson.fromJson(remoteBoardsJsonContent)
 
         // Ensure the versions match
         if (mpyBoardsJson.version != compatibleIndexVersion) {
-            throw IncompatibleBoardsJsonVersionException("Newest board JSON's structure is incompatible with this plugin version. A plugin update is required to restore functionality.")
+            throw IncompatibleBoardsJsonVersionException(MpyBundle.message("firmware.service.error.incompatible.json"))
         }
 
         return mpyBoardsJson
@@ -212,21 +213,21 @@ internal class MpyFirmwareService(private val project: Project) {
         variantName: String,
         version: String
     ): String {
-        reporter.text("Downloading MicroPython firmware...")
+        reporter.text(MpyBundle.message("firmware.service.progress.downloading"))
 
         // Get the link part for this variant and version
         val linkParts = board.firmwareNameToLinkParts[variantName]
-            ?: throw IllegalArgumentException("Firmware variant '$variantName' not found for board '${board.name}'")
+            ?: throw IllegalArgumentException(MpyBundle.message("firmware.service.error.firmware.variant.not.found", variantName, board.name))
 
         val linkPart = linkParts.find { it.contains(version) }
-            ?: throw IllegalArgumentException("Version '$version' not found for variant '$variantName'")
+            ?: throw IllegalArgumentException(MpyBundle.message("firmware.service.error.version.not.found", version, variantName))
 
         val downloadLinkPart = board.id + linkPart
 
         // Construct the full download URL
         val downloadUrl = "https://micropython.org/resources/firmware/$downloadLinkPart"
 
-        reporter.details("Connecting to micropython.org...")
+        reporter.details(MpyBundle.message("firmware.service.progress.connecting"))
 
         // First, get the content length with a HEAD request
         val headRequest = HttpRequest.newBuilder()
@@ -259,7 +260,7 @@ internal class MpyFirmwareService(private val project: Project) {
                         .await()
                 }.let { response ->
                     if (response.statusCode() != 200) {
-                        throw RuntimeException("Failed to download firmware: HTTP ${response.statusCode()}")
+                        throw RuntimeException(MpyBundle.message("firmware.service.error.download.failed", response.statusCode()))
                     }
 
                     val inputStream = response.body()
@@ -268,7 +269,7 @@ internal class MpyFirmwareService(private val project: Project) {
                     var bytesRead: Int
                     var totalBytesRead = 0L
 
-                    reporter.details("Starting download... (${formatSize(contentLength)})")
+                    reporter.details(MpyBundle.message("firmware.service.progress.starting.download", formatSize(contentLength)))
 
                     while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                         outputStream.write(buffer, 0, bytesRead)
@@ -277,7 +278,7 @@ internal class MpyFirmwareService(private val project: Project) {
                         // Update progress
                         val percentage = (totalBytesRead * 100 / contentLength).toInt()
                         reporter.details(
-                            "Downloaded ${formatSize(totalBytesRead)} of ${formatSize(contentLength)} ($percentage%)"
+                            MpyBundle.message("firmware.service.progress.downloaded", formatSize(totalBytesRead), formatSize(contentLength), percentage)
                         )
                         reporter.fraction(totalBytesRead.toDouble() / contentLength)
 
@@ -288,22 +289,22 @@ internal class MpyFirmwareService(private val project: Project) {
                 }
             } else {
                 // Unknown size - just download without progress
-                reporter.details("Downloading firmware...")
+                reporter.details(MpyBundle.message("firmware.service.progress.downloading.detail"))
                 withContext(Dispatchers.IO) {
                     client.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
                         .await()
                 }.let { response ->
                     if (response.statusCode() != 200) {
-                        throw RuntimeException("Failed to download firmware: HTTP ${response.statusCode()}")
+                        throw RuntimeException(MpyBundle.message("firmware.service.error.download.failed", response.statusCode()))
                     }
                     response.body()
                 }
             }
         } catch (e: Exception) {
-            throw RuntimeException("Failed to download firmware from $downloadUrl", e)
+            throw RuntimeException(MpyBundle.message("firmware.service.error.download.exception", downloadUrl), e)
         }
 
-        reporter.details("Download complete. Saving to temporary file...")
+        reporter.details(MpyBundle.message("firmware.service.progress.complete.saving"))
 
         // Create a temp file with the correct extension
         val extension = portToExtension[board.port.toLowerCasePreservingASCIIRules()]
@@ -326,7 +327,7 @@ internal class MpyFirmwareService(private val project: Project) {
                 startsWith("esp") -> MpyEspFlasher(project)
                 startsWith("samd") -> MpyUf2Flasher(Uf2BoardFamily.SAMD)
                 startsWith("rp2") -> MpyUf2Flasher(Uf2BoardFamily.RP2)
-                else -> throw RuntimeException("MCU \"${deviceType}\" not supported by flasher")
+                else -> throw RuntimeException(MpyBundle.message("firmware.service.error.mcu.not.supported", deviceType))
             }
         }
     }
