@@ -26,9 +26,11 @@ to_bundle_dir = os.path.join(project_dir, "toBundle")
 bundled_dir = os.path.join(project_dir, "bundled")
 
 boards_json_path = os.path.join(project_dir, "data/micropython_boards.json")
+stubs_json_path = os.path.join(project_dir, "data/micropython_stubs.json")
 
 MCU_JSON_NAME = "bundled_flashing_info.json"
 RP2_NUKE_NAME = "universal_flash_nuke.uf2"
+STUBS_JSON_INFO = "bundled_stubs_index_info.json"
 
 print(__file__)
 
@@ -51,6 +53,17 @@ with open(boards_json_path, "r") as bf:
     with open(os.path.join(bundled_dir, MCU_JSON_NAME), "w") as mf:
         json.dump(bundled_info, mf, indent=2, ensure_ascii=False)
 
-with open(os.path.join(to_bundle_dir, RP2_NUKE_NAME), "rb") as sf:
-    with open(os.path.join(bundled_dir, RP2_NUKE_NAME), "wb") as tf:
-        tf.write(sf.read())
+shutil.copyfile(
+    os.path.join(to_bundle_dir, RP2_NUKE_NAME),
+    os.path.join(bundled_dir, RP2_NUKE_NAME)
+)
+
+with open(stubs_json_path, "r") as sf:
+    parsed_stubs_json = json.loads(sf.read())
+
+    bundled_info = {
+        "version": parsed_stubs_json["version"]
+    }
+
+    with open(os.path.join(bundled_dir, STUBS_JSON_INFO), "w") as tf:
+        json.dump(bundled_info, tf, indent=2, ensure_ascii=False)

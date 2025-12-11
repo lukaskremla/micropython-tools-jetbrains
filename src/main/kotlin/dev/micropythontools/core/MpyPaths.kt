@@ -42,11 +42,12 @@ internal object MpyPaths {
         dir
     }
 
-    const val STUB_PACKAGE_MACHINE_NAME = "machine.pyi"
-    const val STUB_PACKAGE_JSON_FILE_NAME = "micropython-stubs.json"
+    const val STUB_PACKAGE_METADATA_FILE_NAME = "micropython-tools-stub-metadata.json"
     const val STDLIB_STUB_PACKAGE_NAME = "micropython-stdlib-stubs"
     const val BUNDLED_FLASHING_INFO_JSON_FILE_NAME = "bundled_flashing_info.json"
+    const val BUNDLED_STUB_PACKAGE_INFO_JSON_FILE_NAME = "bundled_stubs_index_info.json"
     const val RP2_UNIVERSAL_FLASH_NUKE_FILE_NAME = "universal_flash_nuke.uf2"
+    const val PYTHON_PACKAGE_DIST_INFO_SUFFIX = ".dist-info"
     const val ESPTOOL_PACKAGE_NAME = "esptool"
     const val ESPTOOL_VERSION = "5.1.0"
 

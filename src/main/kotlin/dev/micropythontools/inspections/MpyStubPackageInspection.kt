@@ -15,7 +15,7 @@ internal class MpyStubPackageInspection : LocalInspectionTool() {
             return null
         }
 
-        val result = file.project.service<MpyStubPackageService>().checkStubPackageValidity()
+        val result = file.project.service<MpyStubPackageService>().checkStubPackageValid()
 
         if (result.isOk) return null
 

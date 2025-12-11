@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.ui.JBColor
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SearchTextField
@@ -712,23 +712,9 @@ internal class MpyConfigurable(private val project: Project) :
                                         project,
                                         MpyBundle.message("configurable.progress.installing.stub.packages.title")
                                     ) {
-                                        reportRawProgress { reporter ->
-                                            var i = 1
+                                        reportSequentialProgress(selected.size) { reporter ->
                                             selected.forEach {
-                                                reporter.text(
-                                                    MpyBundle.message(
-                                                        "configurable.progress.installing.stub.packages.text",
-                                                        i,
-                                                        selected.size
-                                                    )
-                                                )
-                                                reporter.fraction(
-                                                    (i.toDouble() / selected.size.toDouble())
-                                                        .coerceIn(0.0, 1.0)
-                                                )
-                                                reporter.details("${it.name}_${it.mpyVersion}")
-                                                stubPackageService.install(it)
-                                                i++
+                                                stubPackageService.installStubPackage(reporter, it)
                                             }
                                         }
                                     }

@@ -40,6 +40,7 @@ import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.statistics.version
 import dev.micropythontools.core.MpyPaths.ESPTOOL_PACKAGE_NAME
 import dev.micropythontools.core.MpyPaths.ESPTOOL_VERSION
+import dev.micropythontools.core.MpyPaths.PYTHON_PACKAGE_DIST_INFO_SUFFIX
 import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
 import kotlinx.coroutines.CancellationException
@@ -138,13 +139,14 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         reporter: SequentialProgressReporter? = null,
         toInstall: String,
         targetPath: String,
-        installDependencies: Boolean = true
+        installDependencies: Boolean = true,
+        cleanTargetDir: Boolean = true
     ) {
         reporter?.itemStep("Installing \"$toInstall\"")
 
         // Ensure the directory is clean first
         val targetDir = File(targetPath)
-        if (targetDir.exists()) {
+        if (targetDir.exists() && cleanTargetDir) {
             targetDir.deleteRecursively()
         }
 
@@ -170,7 +172,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
             .replace("~=", "-")
 
         val distInfoDir = targetDir.listFiles().find {
-            it.name.startsWith(distInfoPart) && it.name.endsWith(".dist-info")
+            it.name.startsWith(distInfoPart) && it.name.endsWith(PYTHON_PACKAGE_DIST_INFO_SUFFIX)
         }
 
         if (distInfoDir?.exists() != true) {

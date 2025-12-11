@@ -22,12 +22,10 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -36,70 +34,98 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.readText
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.SequentialProgressReporter
+import com.intellij.platform.util.progress.reportSequentialProgress
+import com.intellij.util.io.delete
 import com.jetbrains.python.library.PythonLibraryType
 import dev.micropythontools.core.MpyPaths
+import dev.micropythontools.core.MpyPaths.PYTHON_PACKAGE_DIST_INFO_SUFFIX
+import dev.micropythontools.core.MpyPaths.STUB_PACKAGE_METADATA_FILE_NAME
 import dev.micropythontools.core.MpyPythonInterpreterService
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpyConfigurable
 import dev.micropythontools.settings.MpySettingsService
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import org.json.JSONObject
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.JComponent
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.pathString
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 internal data class StubPackage(
     val name: String,
     val mpyVersion: String,
-    val family: String,
+    val port: String,
     val board: String,
     val variant: String,
     val isInstalled: Boolean,
     val isUpToDate: Boolean,
-    val boardStubVersion: String,
-    val stdlibStubVersion: String
+    val exactPackageVersion: String,
+    val exactStdlibVersion: String
 )
 
 private data class CachedStubPackageUpToDateInfo(
     val name: String,
     val mpyVersion: String,
     val isUpToDate: Boolean,
-    val boardStubVersion: String,
-    val stdlibStubVersion: String,
+    val exactPackageVersion: String,
+    val exactStdlibVersion: String,
     val timeStamp: Long
 )
 
+@Serializable
 private data class RemoteStubPackage(
     val name: String,
     val mpyVersion: String,
-    val family: String,
+    val port: String,
     val board: String,
-    val variant: String
+    val variant: String,
+    val exactPackageVersion: String,
+    val exactStdlibVersion: String
 )
 
 @Serializable
-private data class StubPackageJson(
-    val family: String,
+private data class StubPackageMetadata(
+    val port: String,
     val board: String,
-    val variant: String,
-    val boardStubVersion: String,
-    val stdlibStubVersion: String
-)
+    val variant: String
+) {
+    companion object {
+        fun fromJson(jsonString: String): StubPackageMetadata {
+            return Json.decodeFromString<StubPackageMetadata>(jsonString)
+        }
+    }
+}
+
+@Serializable
+private data class MpyStubsJson(
+    val version: String,
+    val packages: List<RemoteStubPackage>
+) {
+    companion object {
+        fun fromJson(jsonString: String): MpyStubsJson {
+            return Json.decodeFromString<MpyStubsJson>(jsonString)
+        }
+    }
+}
+
+@Serializable
+private data class BundledFlashingInfo(
+    val compatibleIndexVersion: String
+) {
+    companion object {
+        fun fromJson(jsonString: String): BundledFlashingInfo {
+            return Json.decodeFromString<BundledFlashingInfo>(jsonString)
+        }
+    }
+}
 
 @Service(Service.Level.PROJECT)
 internal class MpyStubPackageService(private val project: Project) {
@@ -113,9 +139,402 @@ internal class MpyStubPackageService(private val project: Project) {
         )
     }
 
-    private var cachedStubPackageUpToDateInfo: CachedStubPackageUpToDateInfo? = null
+    private val pythonService = project.service<MpyPythonInterpreterService>()
     private val settings = project.service<MpySettingsService>()
     private val client: HttpClient = HttpClient.newHttpClient()
+
+    private val compatibleIndexVersion: String
+
+    init {
+        val bundledJsonString =
+            javaClass.getResourceAsStream("/bundled/${MpyPaths.BUNDLED_STUB_PACKAGE_INFO_JSON_FILE_NAME}")!!
+                .bufferedReader()
+                .readText()
+
+        val bundledFlashingInfo = BundledFlashingInfo.fromJson(bundledJsonString)
+
+        compatibleIndexVersion = bundledFlashingInfo.compatibleIndexVersion
+    }
+
+    private var cachedStubPackageUpToDateInfo: CachedStubPackageUpToDateInfo? = null
+
+    /**
+     * Returns a pair: (sorted list of stub packages, fetchedRemoteOk)
+     * Sorted so that installed first, then by mpyVersion desc, then name A→Z, then variant A→Z.
+     */
+    fun getStubPackages(): Pair<List<StubPackage>, Boolean> {
+        val remoteStubPackages = getRemoteStubPackages()
+
+        val stubPackages = mutableListOf<StubPackage>()
+        val installedStubPackages = getInstalledStubPackages(remoteStubPackages)
+        stubPackages.addAll(installedStubPackages)
+
+        remoteStubPackages.forEach { remotePackage ->
+            val remoteFullName = "${remotePackage.name}_${remotePackage.mpyVersion}"
+            val isAlreadyInstalled = installedStubPackages.any { installed ->
+                "${installed.name}_${installed.mpyVersion}" == remoteFullName
+            }
+            if (!isAlreadyInstalled) {
+                stubPackages.add(
+                    StubPackage(
+                        remotePackage.name,
+                        remotePackage.mpyVersion,
+                        remotePackage.port,
+                        remotePackage.board,
+                        remotePackage.variant,
+                        isInstalled = false,
+                        isUpToDate = false,
+                        remotePackage.exactPackageVersion,
+                        remotePackage.exactStdlibVersion
+                    )
+                )
+            }
+        }
+
+        val sorted = sortStubPackages(stubPackages)
+        return Pair(sorted, remoteStubPackages.isNotEmpty())
+    }
+
+    private fun getRemoteStubPackages(): List<RemoteStubPackage> {
+        val url =
+            "https://raw.githubusercontent.com/lukaskremla/micropython-tools-jetbrains/refs/heads/main/data/micropython_stubs.json"
+        val request = HttpRequest.newBuilder().uri(URI.create(url)).build()
+
+        val remoteStubsJsonContent = try {
+            client.send(request, HttpResponse.BodyHandlers.ofString())
+                .body()
+        } catch (_: Throwable) {
+            return emptyList()
+        }
+
+        // Convert to a JSON object
+        val mpyStubsJson = MpyStubsJson.fromJson(remoteStubsJsonContent)
+
+        // Ensure the versions match
+        if (mpyStubsJson.version != compatibleIndexVersion) {
+            Notifications.Bus.notify(
+                Notification(
+                    MpyBundle.message("notification.group.name"),
+                    MpyBundle.message("stub.service.error.remote.packages.incompatible"),
+                    NotificationType.ERROR
+                ), project
+            )
+
+            return emptyList()
+        }
+
+        return mpyStubsJson.packages
+    }
+
+    /**
+     * Gets installed stub packages and possibly checks if they're up to date.
+     *
+     *
+     * @param remoteStubPackages Optional parameter, a list of remote stub packages,
+     * if passed it also checks if the stub packages are up to date
+     *
+     * @return A list of installed stub packages
+     */
+    private fun getInstalledStubPackages(remoteStubPackages: List<RemoteStubPackage>?): List<StubPackage> {
+        val localStubPackagePaths = MpyPaths.stubBaseDir.toFile().listFiles()
+            ?.filter { it.isDirectory }
+            ?.sortedByDescending { it }
+            ?.map { it.name }
+            ?.map {
+                val index = it.lastIndexOf('_') // The last underscore separates package name and mpy version
+                if (index != -1) it.substring(0, index) to it.substring(index + 1)
+                else it to ""  // fallback if there's no underscore
+            }
+            ?: emptyList()
+
+        return localStubPackagePaths.mapNotNull { (name, mpyVersion) ->
+            val (stubPackageMetadata, exactPackageVersion, exactStdlibVersion) = try {
+                // Get stub package path
+                val stubPackagePath = MpyPaths.stubBaseDir.resolve("${name}_$mpyVersion")
+
+                // Get metadata json content
+                val metadataContent = stubPackagePath.resolve(STUB_PACKAGE_METADATA_FILE_NAME).readText()
+
+                // Format the stub package metadata json
+                val stubPackageMetadata = StubPackageMetadata.fromJson(metadataContent)
+
+                // Get exact package version
+                val exactPackageVersion = extractVersionFromDistInfo(stubPackagePath, name)
+
+                // Get exact stdlib version
+                val exactStdlibVersion = extractVersionFromDistInfo(stubPackagePath, "micropython_stdlib_stubs")
+
+                Triple(stubPackageMetadata, exactPackageVersion, exactStdlibVersion)
+            } catch (_: Throwable) {
+                return@mapNotNull null
+            }
+
+            val isUpToDate = if (remoteStubPackages != null) {
+                isUpToDate(
+                    name,
+                    mpyVersion,
+                    exactPackageVersion,
+                    exactStdlibVersion,
+                    remoteStubPackages
+                )
+            } else {
+                // Fallback to true
+                true
+            }
+
+            StubPackage(
+                name,
+                mpyVersion,
+                stubPackageMetadata.port,
+                stubPackageMetadata.board,
+                stubPackageMetadata.variant,
+                isInstalled = true,
+                isUpToDate = isUpToDate,
+                exactPackageVersion = exactPackageVersion,
+                exactStdlibVersion = exactStdlibVersion
+            )
+        }
+    }
+
+    /**
+     * Extracts the package version from a Python package's .dist-info directory name.
+     *
+     * Searches for a directory matching the pattern `{packageName}-{version}.dist-info`
+     * within the stub package path and extracts the version string.
+     *
+     * @param stubPackagePath The path to the stub package directory containing the .dist-info folder
+     * @param packageName The name of the Python package to look for (e.g., "micropython_rp2_stubs")
+     * @return The extracted version string (e.g., "1.23.0.post1")
+     * @throws NullPointerException if no matching .dist-info directory is found
+     */
+    private fun extractVersionFromDistInfo(stubPackagePath: Path, packageName: String): String {
+        val stubPackageDirChildren = stubPackagePath.toFile().listFiles()
+
+        // Find the dist info dir
+        val packageDistInfoDir = stubPackageDirChildren
+            .find { it.name.startsWith(packageName) && it.name.endsWith(PYTHON_PACKAGE_DIST_INFO_SUFFIX) }
+
+        // Get the actual version from the directory's name
+        return packageDistInfoDir!!.name
+            .substringAfter("-")
+            .removeSuffix(PYTHON_PACKAGE_DIST_INFO_SUFFIX)
+    }
+
+    fun installStubPackage(reporter: SequentialProgressReporter, stubPackage: StubPackage) {
+        // Validate the python interpreter
+        val interpreterValidationResult = pythonService.checkInterpreterValid()
+
+        if (interpreterValidationResult != ValidationResult.OK) {
+            throw RuntimeException(interpreterValidationResult.errorMessage)
+        }
+
+        // Generate the target path of the stub package's folder
+        val targetPath = MpyPaths.stubBaseDir.resolve("${stubPackage.name}_${stubPackage.mpyVersion}")
+
+        // Install the package stubs, clean the directory, dependencies (stdlib) are handled separately
+        pythonService.installPackage(
+            reporter,
+            "${stubPackage.name}==${stubPackage.exactPackageVersion}",
+            targetPath.absolutePathString(),
+            false,
+            cleanTargetDir = true
+        )
+
+        // Install the stdlib stubs, the directory was already cleand before, avoid cleaning it
+        // If any deps exist, there's no harm in downloading them
+        pythonService.installPackage(
+            reporter,
+            "${MpyPaths.STDLIB_STUB_PACKAGE_NAME}==${stubPackage.exactStdlibVersion}",
+            targetPath.absolutePathString(),
+            true,
+            cleanTargetDir = false
+        )
+
+        // Create metadata payload
+        val json = Json { prettyPrint = true }
+        val payload = StubPackageMetadata(
+            port = stubPackage.port,
+            board = stubPackage.board,
+            variant = stubPackage.variant
+        )
+
+        // Prep the content and file path
+        val fileContent = json.encodeToString(payload)
+        val targetFile = targetPath.resolve(STUB_PACKAGE_METADATA_FILE_NAME)
+
+        // Write the metadata file
+        targetFile.writeText(fileContent)
+    }
+
+    fun delete(stubPackage: StubPackage) =
+        MpyPaths.stubBaseDir.resolve("${stubPackage.name}_${stubPackage.mpyVersion}").delete(true)
+
+    /**
+     * Method for checking if a selected stub package is up to date.
+     *
+     * @return Returns true if the remote stub package can't be retrieved (for example due to no network connection)
+     */
+    private fun isUpToDate(
+        name: String,
+        mpyVersion: String,
+        exactPackageVersion: String,
+        exactStdlibVersion: String,
+        remoteStubPackages: List<RemoteStubPackage>
+    ): Boolean {
+        val remoteStubPackage = remoteStubPackages
+            .find { it.name == name && it.mpyVersion == mpyVersion } ?: return true // Fallback to true
+
+        return exactPackageVersion == remoteStubPackage.exactPackageVersion &&
+                exactStdlibVersion == remoteStubPackage.exactStdlibVersion
+    }
+
+    private fun sortStubPackages(pkgs: List<StubPackage>): List<StubPackage> {
+        return pkgs.sortedWith(
+            compareBy<StubPackage> { !it.isInstalled } // installed first
+                .thenComparator { a, b -> compareVersionsDesc(a.mpyVersion, b.mpyVersion) } // newest version first
+                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name } // name A→Z
+                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.variant } // variant A→Z
+        )
+    }
+
+    private fun versionKey(v: String): IntArray {
+        val base = v.substringBefore(".post")
+        val post = v.substringAfter(".post", "").toIntOrNull()
+        val nums = base.split('.').map { it.toIntOrNull() ?: 0 }
+        val major = nums.getOrNull(0) ?: 0
+        val minor = nums.getOrNull(1) ?: 0
+        val patch = nums.getOrNull(2) ?: 0
+        return intArrayOf(major, minor, patch, if (post != null) 1 else 0, post ?: 0)
+    }
+
+    private fun compareVersions(a: String, b: String): Int {
+        val ka = versionKey(a)
+        val kb = versionKey(b)
+        for (i in 0 until maxOf(ka.size, kb.size)) {
+            val x = ka.getOrNull(i) ?: 0
+            val y = kb.getOrNull(i) ?: 0
+            if (x != y) return x.compareTo(y)
+        }
+        return 0
+    }
+
+    private fun compareVersionsDesc(a: String, b: String): Int = -compareVersions(a, b)
+
+    fun checkStubPackageValid(): ValidationResult {
+        // Only perform the check if stubs are enabled
+        if (!settings.state.areStubsEnabled) return ValidationResult.OK
+
+        // Get the active stub package's name and version string
+        val activeStubsPackageName = getSelectedStubPackageName()
+
+        // Try to find the stub package
+        val stubPackage = getInstalledStubPackages(null)
+            .find { "${it.name}_${it.mpyVersion}" == activeStubsPackageName }
+
+        // Retrieve the cached to a local variable
+        var cachedStubPackageUpToDateInfo = this.cachedStubPackageUpToDateInfo
+
+        // Ensure the cache info is valid
+        val isCachedInfoValid = stubPackage != null &&
+                cachedStubPackageUpToDateInfo != null &&
+                cachedStubPackageUpToDateInfo.name == stubPackage.name &&
+                cachedStubPackageUpToDateInfo.mpyVersion == stubPackage.mpyVersion &&
+                cachedStubPackageUpToDateInfo.exactPackageVersion == stubPackage.exactPackageVersion &&
+                cachedStubPackageUpToDateInfo.exactStdlibVersion == stubPackage.exactStdlibVersion &&
+                cachedStubPackageUpToDateInfo.timeStamp + 3600L > System.currentTimeMillis() / 1000
+
+        val isUpToDate = when {
+            // Default state is up-to-date if verification fails
+            stubPackage == null -> true
+
+            // Re-do cache
+            !isCachedInfoValid -> {
+                // Get the latest index of remote stub packages
+                val remoteStubPackages = getRemoteStubPackages()
+
+                // Check if the stub package is valid
+                val newIsUpToDate = isUpToDate(
+                    stubPackage.name,
+                    stubPackage.mpyVersion,
+                    stubPackage.exactPackageVersion,
+                    stubPackage.exactStdlibVersion,
+                    remoteStubPackages
+                )
+
+                // Create a new cache
+                cachedStubPackageUpToDateInfo = CachedStubPackageUpToDateInfo(
+                    stubPackage.name,
+                    stubPackage.mpyVersion,
+                    newIsUpToDate,
+                    stubPackage.exactPackageVersion,
+                    stubPackage.exactStdlibVersion,
+                    System.currentTimeMillis() / 1000
+                )
+
+                // Save cached info
+                this.cachedStubPackageUpToDateInfo = cachedStubPackageUpToDateInfo
+
+                // Return actual isUpToDate state
+                newIsUpToDate
+            }
+
+            // If package was found and cache is valid, use it
+            else -> cachedStubPackageUpToDateInfo.isUpToDate
+        }
+
+        val stubValidationText = when {
+            activeStubsPackageName.isBlank() -> MpyBundle.message("stub.service.validation.no.package")
+
+            stubPackage == null -> MpyBundle.message("stub.service.validation.invalid.package")
+
+            !isUpToDate -> MpyBundle.message("stub.service.validation.pending.update")
+
+            // Nothing is invalid, no problem to report to the user
+            else -> return ValidationResult.OK
+        }
+
+        val fix = if (!isUpToDate && stubPackage != null) {
+            object :
+                FacetConfigurationQuickFix(MpyBundle.message("stub.service.validation.install.update")) {
+                override fun run(place: JComponent?) {
+                    ApplicationManager.getApplication().invokeLater {
+                        runWithModalProgressBlocking(
+                            project,
+                            MpyBundle.message("configurable.progress.installing.stub.packages.title")
+                        ) {
+                            reportSequentialProgress(1) { reporter ->
+                                try {
+                                    installStubPackage(reporter, stubPackage)
+                                } catch (e: Throwable) {
+                                    Notifications.Bus.notify(
+                                        Notification(
+                                            MpyBundle.message("notification.group.name"),
+                                            MpyBundle.message(
+                                                "stub.service.error.update.failed.notification",
+                                                e.localizedMessage
+                                            ),
+                                            NotificationType.ERROR
+                                        ), project
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            object :
+                FacetConfigurationQuickFix(MpyBundle.message("stub.service.validation.change.button.settings")) {
+                override fun run(place: JComponent?) {
+                    ApplicationManager.getApplication().invokeLater {
+                        ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
+                    }
+                }
+            }
+        }
+
+        return ValidationResult(stubValidationText, fix)
+    }
 
     fun getSelectedStubPackageName(): String {
         val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
@@ -130,113 +549,6 @@ internal class MpyStubPackageService(private val project: Project) {
         removeAllMpyLibraries()
 
         if (!newStubPackage.isNullOrBlank()) addMpyLibrary(newStubPackage)
-    }
-
-    fun checkStubPackageValidity(): ValidationResult {
-        val activeStubsPackageName = getSelectedStubPackageName()
-
-        var stubValidationText: String? = null
-
-        // Try to find the stub package
-        val stubPackage =
-            getInstalledStubPackages(false).find { "${it.name}_${it.mpyVersion}" == activeStubsPackageName }
-
-        var cachedStubPackageUpToDateInfo = this.cachedStubPackageUpToDateInfo
-
-        val isCachedInfoValid = stubPackage != null &&
-                cachedStubPackageUpToDateInfo != null &&
-                cachedStubPackageUpToDateInfo.name == stubPackage.name &&
-                cachedStubPackageUpToDateInfo.mpyVersion == stubPackage.mpyVersion &&
-                cachedStubPackageUpToDateInfo.boardStubVersion == stubPackage.boardStubVersion &&
-                cachedStubPackageUpToDateInfo.stdlibStubVersion == stubPackage.stdlibStubVersion &&
-                cachedStubPackageUpToDateInfo.timeStamp + 3600L > System.currentTimeMillis() / 1000
-
-        val isUpToDate =
-            if (stubPackage == null) {
-                true // Default state is up-to-date if verification fails
-            } else if (!isCachedInfoValid) {
-                val newIsUpToDate = isUpToDate(
-                    stubPackage.name,
-                    stubPackage.mpyVersion,
-                    stubPackage.boardStubVersion,
-                    stubPackage.stdlibStubVersion
-                )
-
-                cachedStubPackageUpToDateInfo = CachedStubPackageUpToDateInfo(
-                    stubPackage.name,
-                    stubPackage.mpyVersion,
-                    newIsUpToDate,
-                    stubPackage.boardStubVersion,
-                    stubPackage.stdlibStubVersion,
-                    System.currentTimeMillis() / 1000
-                )
-
-                this.cachedStubPackageUpToDateInfo = cachedStubPackageUpToDateInfo
-                newIsUpToDate
-            } else {
-                cachedStubPackageUpToDateInfo.isUpToDate
-            }
-
-        var isUpdateFix = false
-
-        if (settings.state.areStubsEnabled) {
-            if (activeStubsPackageName.isBlank()) {
-                stubValidationText = MpyBundle.message("stub.service.validation.no.package")
-            } else if (stubPackage == null) {
-                stubValidationText = MpyBundle.message("stub.service.validation.invalid.package")
-            } else if (!isUpToDate) {
-                stubValidationText = MpyBundle.message("stub.service.validation.pending.update")
-                isUpdateFix = true
-            }
-        }
-
-        return if (stubValidationText != null) {
-            val fix = if (isUpdateFix) {
-                object :
-                    FacetConfigurationQuickFix(MpyBundle.message("stub.service.validation.install.update")) {
-                    override fun run(place: JComponent?) {
-                        ApplicationManager.getApplication().invokeLater {
-                            runWithModalProgressBlocking(
-                                project,
-                                MpyBundle.message("configurable.progress.installing.stub.packages.title")
-                            ) {
-                                reportRawProgress { reporter ->
-                                    reporter.text(MpyBundle.message("stub.service.progress.text"))
-                                    reporter.details("${stubPackage!!.name}_${stubPackage.mpyVersion}")
-                                    try {
-                                        install(stubPackage)
-                                    } catch (e: Throwable) {
-                                        Notifications.Bus.notify(
-                                            Notification(
-                                                MpyBundle.message("notification.group.name"),
-                                                MpyBundle.message(
-                                                    "stub.service.error.update.failed.notification",
-                                                    e.localizedMessage
-                                                ),
-                                                NotificationType.ERROR
-                                            ), project
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                object :
-                    FacetConfigurationQuickFix(MpyBundle.message("stub.service.validation.change.button.settings")) {
-                    override fun run(place: JComponent?) {
-                        ApplicationManager.getApplication().invokeLater {
-                            ShowSettingsUtil.getInstance().showSettingsDialog(project, MpyConfigurable::class.java)
-                        }
-                    }
-                }
-            }
-
-            return ValidationResult(stubValidationText, fix)
-        } else {
-            ValidationResult.OK
-        }
     }
 
     private fun addMpyLibrary(newStubPackageName: String) {
@@ -326,322 +638,4 @@ internal class MpyStubPackageService(private val project: Project) {
             }
         }
     }
-
-    /**
-     * Returns a pair: (sorted list of stub packages, fetchedRemoteOk)
-     * Sorted so that installed first, then by mpyVersion desc, then name A→Z, then variant A→Z.
-     */
-    fun getStubPackages(): Pair<List<StubPackage>, Boolean> {
-        val remoteStubPackages = getRemoteStubPackages()
-
-        val stubPackages = mutableListOf<StubPackage>()
-        val installedStubPackages = getInstalledStubPackages()
-        stubPackages.addAll(installedStubPackages)
-
-        remoteStubPackages.forEach { remotePackage ->
-            val remoteFullName = "${remotePackage.name}_${remotePackage.mpyVersion}"
-            val isAlreadyInstalled = installedStubPackages.any { installed ->
-                "${installed.name}_${installed.mpyVersion}" == remoteFullName
-            }
-            if (!isAlreadyInstalled) {
-                stubPackages.add(
-                    StubPackage(
-                        remotePackage.name,
-                        remotePackage.mpyVersion,
-                        remotePackage.family,
-                        remotePackage.board,
-                        remotePackage.variant,
-                        isInstalled = false,
-                        isUpToDate = false,
-                        boardStubVersion = "",
-                        stdlibStubVersion = ""
-                    )
-                )
-            }
-        }
-
-        val sorted = sortStubPackages(stubPackages)
-        return Pair(sorted, remoteStubPackages.isNotEmpty())
-    }
-
-    private fun getLocalStubPackage(
-        packageName: String,
-        mpyVersion: String,
-        checkUpToDate: Boolean = false
-    ): StubPackage? {
-        val stubPackage = MpyPaths.stubBaseDir.resolve("${packageName}_$mpyVersion")
-
-        // Ensure the stub package is valid by searching for machine.pyi in it
-        val machinePyi = stubPackage.resolve(MpyPaths.STUB_PACKAGE_MACHINE_NAME)
-        LocalFileSystem.getInstance().findFileByPath(machinePyi.pathString) ?: return null
-
-        val jsonPath = stubPackage.resolve(MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
-
-        val jsonFile = LocalFileSystem.getInstance().findFileByPath(jsonPath.pathString) ?: return null
-        val jsonString = jsonFile.readText()
-
-        val jsonElement = try {
-            Json.parseToJsonElement(jsonString)
-        } catch (_: SerializationException) {
-            return null
-        }
-
-        val jsonObject = jsonElement.jsonObject
-
-        val boardStubVersion = jsonObject["boardStubVersion"]?.jsonPrimitive?.content ?: return null
-        val stdlibStubVersion = jsonObject["stdlibStubVersion"]?.jsonPrimitive?.content ?: return null
-
-        val isUpToDate =
-            if (checkUpToDate) isUpToDate(packageName, mpyVersion, boardStubVersion, stdlibStubVersion) else true
-
-        return StubPackage(
-            packageName,
-            mpyVersion,
-            jsonObject["family"]?.jsonPrimitive?.content ?: return null,
-            jsonObject["board"]?.jsonPrimitive?.content ?: return null,
-            jsonObject["variant"]?.jsonPrimitive?.content ?: return null,
-            true,
-            isUpToDate,
-            boardStubVersion,
-            stdlibStubVersion
-        )
-    }
-
-    private fun getInstalledStubPackages(checkUpToDate: Boolean = false): List<StubPackage> {
-        val localStubPackagePaths = MpyPaths.stubBaseDir.toFile().listFiles()
-            ?.filter { it.isDirectory }
-            ?.sortedByDescending { it }
-            ?.map { it.name }
-            ?.map {
-                val index = it.lastIndexOf('_')
-                if (index != -1) it.substring(0, index) to it.substring(index + 1)
-                else it to ""  // fallback if there's no underscore
-            }
-            ?: emptyList()
-
-        return localStubPackagePaths.mapNotNull {
-            getLocalStubPackage(it.first, it.second, checkUpToDate)
-        }
-    }
-
-    private fun getRemoteStubPackages(): List<RemoteStubPackage> {
-        val url = "https://raw.githubusercontent.com/Josverl/micropython-stubs/main/data/stub-packages.json"
-        val request = HttpRequest.newBuilder().uri(URI.create(url)).build()
-
-        val response = try {
-            client.send(request, HttpResponse.BodyHandlers.ofString())
-        } catch (_: Throwable) {
-            return emptyList()
-        }
-
-        val result = mutableListOf<RemoteStubPackage>()
-        val root = JSONObject(response.body())
-        val packages = root.optJSONArray("packages") ?: return emptyList()
-
-        for (i in 0 until packages.length()) {
-            val entry = packages.getJSONArray(i)
-
-            val remoteStubPackage = RemoteStubPackage(
-                entry.getString(0),
-                entry.getString(1),
-                entry.getString(2),
-                entry.getString(3),
-                entry.getString(4),
-            )
-
-            result.add(remoteStubPackage)
-        }
-        return result
-    }
-
-    /**
-     * Method for installing or updating stub packages
-     */
-    fun install(stubPackage: StubPackage) {
-        val (resolvedBoardVersion, _) =
-            getExactVersionAndUrl(stubPackage.name, stubPackage.mpyVersion) ?: return
-        val (resolvedStdlibVersion, _) = if (isAtLeast123(stubPackage.mpyVersion)) {
-            getExactVersionAndUrl(MpyPaths.STDLIB_STUB_PACKAGE_NAME, stubPackage.mpyVersion) ?: return
-        } else {
-            "" to ""
-        }
-
-        val app = ApplicationManager.getApplication()
-
-        val targetDir = MpyPaths.stubBaseDir.resolve("${stubPackage.name}_${stubPackage.mpyVersion}")
-
-        // Ensure target dir is clean
-        try {
-            app.invokeAndWait {
-                runWriteAction {
-                    LocalFileSystem.getInstance().findFileByPath(targetDir.pathString)?.delete(this)
-                }
-            }
-        } catch (e: ProcessCanceledException) {
-            throw e
-        } catch (_: Throwable) {
-            // pass
-        }
-
-        ensureDirs(MpyPaths.stubBaseDir, targetDir)
-
-        val pythonService = project.service<MpyPythonInterpreterService>()
-
-        val interpreterValidationResult = pythonService.checkInterpreterValid()
-
-        if (interpreterValidationResult != ValidationResult.OK) {
-            throw RuntimeException(interpreterValidationResult.errorMessage)
-        }
-
-        pythonService.installPackage(
-            null,
-            "${stubPackage.name}~=$resolvedBoardVersion",
-            targetDir.absolutePathString(),
-            !isAtLeast123(stubPackage.mpyVersion)
-        )
-
-        if (isAtLeast123(stubPackage.mpyVersion)) {
-            pythonService.installPackage(
-                null,
-                "${MpyPaths.STDLIB_STUB_PACKAGE_NAME}~=$resolvedStdlibVersion",
-                targetDir.absolutePathString(),
-                false
-            )
-        }
-
-        // metadata
-        val json = Json { prettyPrint = true }
-        val payload = StubPackageJson(
-            family = stubPackage.family,
-            board = stubPackage.board,
-            variant = stubPackage.variant,
-            boardStubVersion = resolvedBoardVersion,
-            stdlibStubVersion = resolvedStdlibVersion
-        )
-
-        val lfs = LocalFileSystem.getInstance()
-        val dirVf = lfs.refreshAndFindFileByPath(targetDir.pathString) ?: return
-
-        val text = json.encodeToString(payload)
-
-        app.invokeAndWait {
-            runWriteAction {
-                val fileVf = dirVf.findChild(MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
-                    ?: dirVf.createChildData(this, MpyPaths.STUB_PACKAGE_JSON_FILE_NAME)
-
-                com.intellij.openapi.vfs.VfsUtil.saveText(fileVf, text)
-                fileVf.refresh(false, false)
-            }
-        }
-
-        LocalFileSystem.getInstance()
-            .refreshAndFindFileByIoFile(targetDir.toFile())
-            ?.refresh(true, true)
-
-        return
-    }
-
-    fun delete(stubPackage: StubPackage) {
-        val targetDir = MpyPaths.stubBaseDir.resolve("${stubPackage.name}_${stubPackage.mpyVersion}")
-        runWriteAction {
-            StandardFileSystems.local().findFileByPath(targetDir.absolutePathString())
-                ?.delete(MpyStubPackageService)
-        }
-    }
-
-    /**
-     * Method for checking if a selected stub package is up to date.
-     *
-     * @return Returns true if the remote stub package can't be retrieved (for example due to no network connection)
-     */
-    fun isUpToDate(name: String, mpyVersion: String, boardStubVersion: String, stdlibStubVersion: String): Boolean {
-        val (resolvedBoardVersion, _) =
-            getExactVersionAndUrl(name, mpyVersion) ?: return true
-        val (resolvedStdlibVersion, _) =
-            getExactVersionAndUrl(MpyPaths.STDLIB_STUB_PACKAGE_NAME, mpyVersion) ?: return true
-
-        return boardStubVersion == resolvedBoardVersion && stdlibStubVersion == resolvedStdlibVersion
-    }
-
-    private fun ensureDirs(vararg paths: Path) {
-        paths.forEach { Files.createDirectories(it) }
-    }
-
-    private fun getExactVersionAndUrl(packageName: String, baseVersion: String): Pair<String, String>? {
-        // Query all releases for the package
-        val metaUrl = "https://pypi.org/pypi/$packageName/json"
-        val response = client.send(
-            HttpRequest.newBuilder().uri(URI.create(metaUrl)).build(),
-            HttpResponse.BodyHandlers.ofString()
-        )
-
-        val root = JSONObject(response.body())
-        val releases = root.getJSONObject("releases")
-
-        // Collect candidates that are exactly baseVersion OR baseVersion.postN
-        val candidates = mutableListOf<String>()
-        val keys = releases.keys()
-        while (keys.hasNext()) {
-            val version = keys.next()
-            if (version == baseVersion || version.startsWith("$baseVersion.post")) {
-                candidates.add(version)
-            }
-        }
-        if (candidates.isEmpty()) return null
-
-        // Pick the highest post if present; otherwise the plain baseVersion
-        fun postNum(version: String): Int = if (version.startsWith("$baseVersion.post")) {
-            version.substringAfter("$baseVersion.post").toIntOrNull() ?: 0
-        } else -1 // plain baseVersion ranks below any .postN
-
-        val chosenVersion = candidates.maxWith(compareBy<String> { postNum(it) }.thenBy { it })
-
-        // Choose a file URL from that version (wheel preferred, else sdist)
-        val files = releases.optJSONArray(chosenVersion) ?: return null
-        var url: String? = null
-        for (i in 0 until files.length()) {
-            val f = files.getJSONObject(i)
-            val type = f.getString("packagetype")
-            val u = f.getString("url")
-            if (type == "bdist_wheel") {
-                url = u; break
-            }
-            if (type == "sdist" && url == null) url = u
-        }
-        return if (url != null) chosenVersion to url else null
-    }
-
-    private fun sortStubPackages(pkgs: List<StubPackage>): List<StubPackage> {
-        return pkgs.sortedWith(
-            compareBy<StubPackage> { !it.isInstalled } // installed first
-                .thenComparator { a, b -> compareVersionsDesc(a.mpyVersion, b.mpyVersion) } // newest version first
-                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name } // name A→Z
-                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.variant } // variant A→Z
-        )
-    }
-
-    private fun versionKey(v: String): IntArray {
-        val base = v.substringBefore(".post")
-        val post = v.substringAfter(".post", "").toIntOrNull()
-        val nums = base.split('.').map { it.toIntOrNull() ?: 0 }
-        val major = nums.getOrNull(0) ?: 0
-        val minor = nums.getOrNull(1) ?: 0
-        val patch = nums.getOrNull(2) ?: 0
-        return intArrayOf(major, minor, patch, if (post != null) 1 else 0, post ?: 0)
-    }
-
-    fun compareVersions(a: String, b: String): Int {
-        val ka = versionKey(a)
-        val kb = versionKey(b)
-        for (i in 0 until maxOf(ka.size, kb.size)) {
-            val x = ka.getOrNull(i) ?: 0
-            val y = kb.getOrNull(i) ?: 0
-            if (x != y) return x.compareTo(y)
-        }
-        return 0
-    }
-
-    fun compareVersionsDesc(a: String, b: String): Int = -compareVersions(a, b)
-
-    fun isAtLeast123(version: String): Boolean = compareVersions(version, "1.23.0") >= 0
 }

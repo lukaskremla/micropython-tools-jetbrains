@@ -93,10 +93,10 @@ private data class BundledFlashingInfo(
 internal class MpyFirmwareService(private val project: Project) {
     private val client: HttpClient = HttpClient.newHttpClient()
 
-    val compatibleIndexVersion: String
-    val supportedPorts: List<String>
-    val portToExtension: Map<String, String>
-    val espMcuToOffset: Map<String, Int>
+    private val compatibleIndexVersion: String
+    private val supportedPorts: List<String>
+    private val portToExtension: Map<String, String>
+    private val espMcuToOffset: Map<String, Int>
 
     init {
         val bundledJsonString =
@@ -129,7 +129,7 @@ internal class MpyFirmwareService(private val project: Project) {
 
         remoteBoardsJsonContent ?: throw RuntimeException("Failed to fetch latest JSON data")
 
-        // Verify and validate the new JSON
+        // Convert to a JSON object
         val mpyBoardsJson = MpyBoardsJson.fromJson(remoteBoardsJsonContent)
 
         // Ensure the versions match
