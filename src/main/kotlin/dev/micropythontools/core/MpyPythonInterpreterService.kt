@@ -210,28 +210,25 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         val projectDir = project.basePath ?: "/"
         val commandLine = GeneralCommandLine(command)
             .withWorkDirectory(projectDir)
-            .withEnvironment(env)
+            .withEnvironment(
+                env + mapOf(
+                    "PYTHONUNBUFFERED" to "1",
+                    "PYTHONIOENCODING" to "utf-8"
+                )
+            )
 
-        val processHandler = OSProcessHandler(commandLine)
+        val processHandler = ColoredProcessHandler(commandLine)
 
-        val errorOutput = StringBuilder()
+        val fullOutput = StringBuilder()
         var hasError = false
 
         processHandler.addProcessListener(object : ProcessAdapter() {
             override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                val text = event.text?.trim() ?: return
-                if (text.isBlank()) return
+                val text = (event.text ?: return).trim()
 
-                when (outputType) {
-                    ProcessOutputTypes.STDOUT -> {
-                        onOutput(text)
-                    }
+                onOutput(text)
 
-                    ProcessOutputTypes.STDERR -> {
-                        errorOutput.append(text).append("\n")
-                        onOutput(text) // Also report stderr to callback
-                    }
-                }
+                fullOutput.append(text)
             }
 
             override fun processTerminated(event: ProcessEvent) {
@@ -258,8 +255,8 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         if (hasError) {
             val errorMsg = buildString {
                 append(MpyBundle.message("python.service.code.execution.failed"))
-                if (errorOutput.isNotBlank()) {
-                    append("\n").append(errorOutput.toString())
+                if (fullOutput.isNotBlank()) {
+                    append("\n").append(fullOutput.toString())
                 }
             }
             throw ExecutionException(errorMsg)
