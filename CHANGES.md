@@ -1,7 +1,7 @@
 The Changelog
 =============
 
-2025.3.3 - 8.12.2025
+2025.3.3 - 11.12.2025
 ------------------
 
 * Added an option to Flash MicroPython firmware directly from the IDE with real-time progress output. Supports ESP, RP2
@@ -9,6 +9,8 @@ The Changelog
 * Added MicroPython detection when connecting to prevent confusing timeout errors on boards without MicroPython
   installed
 * Centralized Python dependency handling with automatic esptool/mpy-cross installation and unified inspections
+* Reworked the stub package management backend resulting in less http calls, better performance and ensured
+  compatibility with all available stub packages
 * Updated type hints terminology in stub package dialogs to clarify what stubs provide
 * Improved settings "device already connected" dialog to only update after successful disconnection
 * Improved upload run configuration layout - moved "Force blocking upload" checkbox after "Exclude paths" for better UX

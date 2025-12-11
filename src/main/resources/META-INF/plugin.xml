@@ -13,6 +13,8 @@
             <li>Added MicroPython detection when connecting to prevent confusing timeout errors on boards without MicroPython installed</li>
             <li>Centralized Python dependency handling with automatic esptool/mpy-cross installation and unified inspections</li>
             <li>Updated type hints terminology in stub package dialogs to clarify what stubs provide</li>
+            <li>Reworked the stub package management backend resulting in less http calls, better performance and ensured
+            compatibility with all available stub packages</li>
             <li>Improved settings "device already connected" dialog to only update after successful disconnection</li>
             <li>Improved upload run configuration layout - moved "Force blocking upload" checkbox after "Exclude paths" for better UX</li>
             <li>Adjusted File System volume size formatting</li>
