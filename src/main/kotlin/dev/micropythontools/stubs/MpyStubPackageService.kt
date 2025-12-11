@@ -117,12 +117,12 @@ private data class MpyStubsJson(
 }
 
 @Serializable
-private data class BundledFlashingInfo(
+private data class BundledStubsInfo(
     val compatibleIndexVersion: String
 ) {
     companion object {
-        fun fromJson(jsonString: String): BundledFlashingInfo {
-            return Json.decodeFromString<BundledFlashingInfo>(jsonString)
+        fun fromJson(jsonString: String): BundledStubsInfo {
+            return Json.decodeFromString<BundledStubsInfo>(jsonString)
         }
     }
 }
@@ -151,9 +151,9 @@ internal class MpyStubPackageService(private val project: Project) {
                 .bufferedReader()
                 .readText()
 
-        val bundledFlashingInfo = BundledFlashingInfo.fromJson(bundledJsonString)
+        val bundledStubsInfo = BundledStubsInfo.fromJson(bundledJsonString)
 
-        compatibleIndexVersion = bundledFlashingInfo.compatibleIndexVersion
+        compatibleIndexVersion = bundledStubsInfo.compatibleIndexVersion
     }
 
     private var cachedStubPackageUpToDateInfo: CachedStubPackageUpToDateInfo? = null
