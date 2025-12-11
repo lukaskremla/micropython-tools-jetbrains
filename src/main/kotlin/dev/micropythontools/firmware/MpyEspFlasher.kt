@@ -93,6 +93,10 @@ internal class MpyEspFlasher(project: Project) : MpyFlasherInterface {
                     // esptool sometimes prints a single dot, this is a hack to avoid displaying it
                     outputLine == "." -> Unit
 
+                    // The "Wrote x bytes (y compressed at ...)" is too long for displaying in the dialog
+                    // Ignore it for UX
+                    outputLine.startsWith("Wrote") -> Unit
+
                     outputLine.startsWith("Writing at") -> {
                         val progressString = outputLine
                             .substringAfterLast("]")
