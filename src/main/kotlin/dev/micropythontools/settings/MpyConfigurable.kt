@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.ui.JBColor
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SearchTextField
@@ -696,15 +695,16 @@ internal class MpyConfigurable(private val project: Project) :
                             override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
                             override fun update(e: AnActionEvent) {
-                                val selected = table.selectedObject
+                                val selected = table.selectedObjects
 
                                 e.presentation.isEnabled = stubsAndPluginEnabled &&
-                                        selected != null &&
-                                        (!selected.isUpToDate || !selected.isInstalled)
+                                        selected.isNotEmpty() &&
+                                        (selected.any { !it.isUpToDate } || selected.any { !it.isInstalled })
                             }
 
                             override fun actionPerformed(e: AnActionEvent) {
                                 val selected: List<StubPackage> = table.selectedObjects
+                                    .filter { !it.isUpToDate || !it.isInstalled }
                                 val app = ApplicationManager.getApplication()
 
                                 try {
@@ -712,11 +712,7 @@ internal class MpyConfigurable(private val project: Project) :
                                         project,
                                         MpyBundle.message("configurable.progress.installing.stub.packages.title")
                                     ) {
-                                        reportSequentialProgress(selected.size) { reporter ->
-                                            selected.forEach {
-                                                stubPackageService.installStubPackage(reporter, it)
-                                            }
-                                        }
+                                        stubPackageService.installStubPackages(selected)
                                     }
 
                                     refreshTable(e)

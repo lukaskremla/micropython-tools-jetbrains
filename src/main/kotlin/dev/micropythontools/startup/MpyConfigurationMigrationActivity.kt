@@ -94,7 +94,7 @@ internal class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
                     targetFile.writeText(newFileContent)
 
                     // Delete the old metadata file
-                    it.delete()
+                    oldMetadataFile.delete()
                 }
             } catch (_: Throwable) {
                 // Ignore, if migration fails for whatever reason, the user will have to reinstall

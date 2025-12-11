@@ -323,7 +323,24 @@ internal class MpyStubPackageService(private val project: Project) {
             .removeSuffix(PYTHON_PACKAGE_DIST_INFO_SUFFIX)
     }
 
-    fun installStubPackage(reporter: SequentialProgressReporter, stubPackage: StubPackage) {
+    suspend fun installStubPackages(selected: List<StubPackage>) {
+        val remoteStubPackages = getRemoteStubPackages()
+
+        // Every package has board + stdlib variants
+        val progressSize = selected.size * 2
+
+        reportSequentialProgress(progressSize) { reporter ->
+            selected.forEach {
+                installStubPackage(reporter, it, remoteStubPackages)
+            }
+        }
+    }
+
+    private fun installStubPackage(
+        reporter: SequentialProgressReporter,
+        stubPackage: StubPackage,
+        remoteStubPackages: List<RemoteStubPackage>
+    ) {
         // Validate the python interpreter
         val interpreterValidationResult = pythonService.checkInterpreterValid()
 
@@ -331,13 +348,18 @@ internal class MpyStubPackageService(private val project: Project) {
             throw RuntimeException(interpreterValidationResult.errorMessage)
         }
 
+        // Find the matching remote stub package
+        val remoteStubPackage = remoteStubPackages
+            .find { it.name == stubPackage.name && it.mpyVersion == stubPackage.mpyVersion }
+            ?: throw RuntimeException("Found no matching remote package for: \"${stubPackage.name}_${stubPackage.mpyVersion}\"")
+
         // Generate the target path of the stub package's folder
         val targetPath = MpyPaths.stubBaseDir.resolve("${stubPackage.name}_${stubPackage.mpyVersion}")
 
         // Install the package stubs, clean the directory, dependencies (stdlib) are handled separately
         pythonService.installPackage(
             reporter,
-            "${stubPackage.name}==${stubPackage.exactPackageVersion}",
+            "${stubPackage.name}==${remoteStubPackage.exactPackageVersion}",
             targetPath.absolutePathString(),
             false,
             cleanTargetDir = true
@@ -347,7 +369,7 @@ internal class MpyStubPackageService(private val project: Project) {
         // If any deps exist, there's no harm in downloading them
         pythonService.installPackage(
             reporter,
-            "${MpyPaths.STDLIB_STUB_PACKAGE_NAME}==${stubPackage.exactStdlibVersion}",
+            "${MpyPaths.STDLIB_STUB_PACKAGE_NAME}==${remoteStubPackage.exactStdlibVersion}",
             targetPath.absolutePathString(),
             true,
             cleanTargetDir = false
@@ -387,8 +409,18 @@ internal class MpyStubPackageService(private val project: Project) {
         val remoteStubPackage = remoteStubPackages
             .find { it.name == name && it.mpyVersion == mpyVersion } ?: return true // Fallback to true
 
-        return exactPackageVersion == remoteStubPackage.exactPackageVersion &&
+        val isUpToDate = exactPackageVersion == remoteStubPackage.exactPackageVersion &&
                 exactStdlibVersion == remoteStubPackage.exactStdlibVersion
+
+        if (!isUpToDate && name.contains("esp32")) {
+            println("$name $mpyVersion")
+            println(exactPackageVersion)
+            println(exactStdlibVersion)
+            println(remoteStubPackage.exactPackageVersion)
+            println(remoteStubPackage.exactStdlibVersion)
+        }
+
+        return isUpToDate
     }
 
     private fun sortStubPackages(pkgs: List<StubPackage>): List<StubPackage> {
@@ -446,6 +478,8 @@ internal class MpyStubPackageService(private val project: Project) {
                 cachedStubPackageUpToDateInfo.exactStdlibVersion == stubPackage.exactStdlibVersion &&
                 cachedStubPackageUpToDateInfo.timeStamp + 3600L > System.currentTimeMillis() / 1000
 
+        var remoteStubPackages = emptyList<RemoteStubPackage>()
+
         val isUpToDate = when {
             // Default state is up-to-date if verification fails
             stubPackage == null -> true
@@ -453,7 +487,7 @@ internal class MpyStubPackageService(private val project: Project) {
             // Re-do cache
             !isCachedInfoValid -> {
                 // Get the latest index of remote stub packages
-                val remoteStubPackages = getRemoteStubPackages()
+                remoteStubPackages = getRemoteStubPackages()
 
                 // Check if the stub package is valid
                 val newIsUpToDate = isUpToDate(
@@ -507,7 +541,7 @@ internal class MpyStubPackageService(private val project: Project) {
                         ) {
                             reportSequentialProgress(1) { reporter ->
                                 try {
-                                    installStubPackage(reporter, stubPackage)
+                                    installStubPackage(reporter, stubPackage, remoteStubPackages)
                                 } catch (e: Throwable) {
                                     Notifications.Bus.notify(
                                         Notification(
