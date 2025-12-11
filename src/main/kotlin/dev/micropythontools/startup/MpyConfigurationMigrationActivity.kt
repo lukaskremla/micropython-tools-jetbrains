@@ -25,9 +25,37 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import dev.micropythontools.core.MpyPaths
+import dev.micropythontools.core.MpyPaths.STUB_PACKAGE_METADATA_FILE_NAME
 import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.MpySettingsService
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlin.io.path.writeText
+
+@Serializable
+private data class NewStubPackageMetadata(
+    val port: String,
+    val board: String,
+    val variant: String
+)
+
+@Serializable
+private data class OldStubPackageMetadata(
+    val port: String,
+    val board: String,
+    val variant: String,
+    val boardStubVersion: String,
+    val stdlibSubVersion: String
+) {
+    companion object {
+        fun fromJson(jsonString: String): OldStubPackageMetadata {
+            return Json.decodeFromString<OldStubPackageMetadata>(jsonString)
+        }
+    }
+}
 
 internal class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
     companion object {
@@ -35,6 +63,42 @@ internal class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
     }
 
     override suspend fun execute(project: Project) {
+        val stubsDir = MpyPaths.stubBaseDir
+
+        // Check all stub packages
+        stubsDir.toFile().listFiles().forEach {
+            try {
+                if (!it.isDirectory) return@forEach
+
+                // Resolve the old metadata file
+                val oldMetadataFile = it.resolve("micropython-stubs.json")
+
+                // Process only if the package actually has a metadata file
+                if (oldMetadataFile.exists()) {
+                    val oldFileContent = oldMetadataFile.readText()
+
+                    // Retrieve the old metadata file
+                    val oldStubPackageMetadata = OldStubPackageMetadata.fromJson(oldFileContent)
+
+                    val json = Json { prettyPrint = true }
+                    val payload = NewStubPackageMetadata(
+                        port = oldStubPackageMetadata.port,
+                        board = oldStubPackageMetadata.board,
+                        variant = oldStubPackageMetadata.variant
+                    )
+
+                    // Prep the content and file path
+                    val newFileContent = json.encodeToString(payload)
+                    val targetFile = stubsDir.resolve(STUB_PACKAGE_METADATA_FILE_NAME)
+
+                    // Write the metadata file
+                    targetFile.writeText(newFileContent)
+                }
+            } catch (_: Throwable) {
+                // Ignore, if migration fails for whatever reason, the user will have to reinstall
+            }
+        }
+
         val settings = project.service<MpySettingsService>()
 
         // Check if plugin is enabled

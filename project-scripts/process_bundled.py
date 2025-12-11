@@ -62,7 +62,7 @@ with open(stubs_json_path, "r") as sf:
     parsed_stubs_json = json.loads(sf.read())
 
     bundled_info = {
-        "version": parsed_stubs_json["version"]
+        "compatibleIndexVersion": parsed_stubs_json["version"]
     }
 
     with open(os.path.join(bundled_dir, STUBS_JSON_INFO), "w") as tf:
