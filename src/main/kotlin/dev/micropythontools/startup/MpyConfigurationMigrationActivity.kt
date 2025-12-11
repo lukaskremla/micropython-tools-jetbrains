@@ -33,7 +33,6 @@ import dev.micropythontools.settings.MpySettingsService
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlin.io.path.writeText
 
 @Serializable
 private data class NewStubPackageMetadata(
@@ -44,11 +43,11 @@ private data class NewStubPackageMetadata(
 
 @Serializable
 private data class OldStubPackageMetadata(
-    val port: String,
+    val family: String,
     val board: String,
     val variant: String,
     val boardStubVersion: String,
-    val stdlibSubVersion: String
+    val stdlibStubVersion: String
 ) {
     companion object {
         fun fromJson(jsonString: String): OldStubPackageMetadata {
@@ -82,17 +81,20 @@ internal class MpyConfigurationMigrationActivity : ProjectActivity, DumbAware {
 
                     val json = Json { prettyPrint = true }
                     val payload = NewStubPackageMetadata(
-                        port = oldStubPackageMetadata.port,
+                        port = oldStubPackageMetadata.family, // Renamed from family to port (more accurate)
                         board = oldStubPackageMetadata.board,
                         variant = oldStubPackageMetadata.variant
                     )
 
                     // Prep the content and file path
                     val newFileContent = json.encodeToString(payload)
-                    val targetFile = stubsDir.resolve(STUB_PACKAGE_METADATA_FILE_NAME)
+                    val targetFile = it.resolve(STUB_PACKAGE_METADATA_FILE_NAME)
 
-                    // Write the metadata file
+                    // Write the new metadata file
                     targetFile.writeText(newFileContent)
+
+                    // Delete the old metadata file
+                    it.delete()
                 }
             } catch (_: Throwable) {
                 // Ignore, if migration fails for whatever reason, the user will have to reinstall
