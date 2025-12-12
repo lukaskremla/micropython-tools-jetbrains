@@ -15,9 +15,16 @@ repositories {
 }
 
 plugins {
-    kotlin("jvm") version "2.2.20"
-    kotlin("plugin.serialization") version "2.2.20"
-    id("org.jetbrains.intellij.platform") version "2.10.3"
+    kotlin("jvm") version "2.2.21"
+    kotlin("plugin.serialization") version "2.2.21"
+    id("org.jetbrains.intellij.platform") version "2.10.5"
+}
+
+configurations {
+    implementation {
+        // Exclude dependencies already bundled by the IDE
+        exclude(group = "org.jetbrains", module = "annotations")
+    }
 }
 
 dependencies {
@@ -41,12 +48,13 @@ dependencies {
         }
     }
 
-    implementation("org.json:json:20250517")
-    implementation("io.github.java-native:jssc:2.10.2") {
-        exclude("org.slf4j", "slf4j-api")
-    }
-    implementation("com.fazecast:jSerialComm:2.11.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    // Ensure the code completion sees this library, but don't bundle it, the IDE will have it
+    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+
+    // JSerialComm for serial communication
+    implementation("com.fazecast:jSerialComm:2.11.4")
+    // JZlib for ZLIB compression with configurable window size
+    implementation("com.jcraft:jzlib:1.1.3")
     // Relies on a custom fork of the Java-Websocket library made for this plugin
     // https://github.com/lukaskremla/Java-WebSocket
     implementation(files("libs/Java-WebSocket-1.6.1-CUSTOM_FIX_ver2.jar"))
@@ -105,13 +113,8 @@ intellijPlatform {
 intellijPlatformTesting {
     val testPlatformVersion = providers.gradleProperty("testPlatformVersion")
 
-    val runPyCharmProfessional by runIde.registering {
-        type = IntelliJPlatformType.PyCharmProfessional
-        version = testPlatformVersion
-    }
-
     val runPyCharmCommunity by runIde.registering {
-        type = IntelliJPlatformType.PyCharmCommunity
+        type = IntelliJPlatformType.PyCharm
         version = testPlatformVersion
     }
 
