@@ -64,10 +64,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
+import java.awt.Rectangle
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
+import java.awt.image.BufferedImage
 import java.io.IOException
 import javax.swing.DropMode
 import javax.swing.JComponent
@@ -75,6 +77,7 @@ import javax.swing.JTree
 import javax.swing.TransferHandler
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
 
 private enum class ClipOp { COPY, CUT }
 private data class FsClipboard(val op: ClipOp, val paths: List<String>) : java.io.Serializable
@@ -104,7 +107,61 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
         }
     }
 
-    val tree: Tree = Tree(newTreeModel())
+    val tree: Tree = object : Tree(newTreeModel()) {
+        private var lastDropRow = -1
+
+        init {
+            // Listen for drop location changes to properly repaint and clear ghost highlights
+            addPropertyChangeListener("dropLocation") { evt ->
+                // Repaint the old drop location to clear ghost highlights
+                if (lastDropRow != -1) {
+                    val oldBounds = getRowBounds(lastDropRow)
+                    if (oldBounds != null) {
+                        repaint(oldBounds)
+                    }
+                }
+
+                // Update and repaint new drop location
+                val newLocation = evt.newValue as? DropLocation
+                if (newLocation != null) {
+                    lastDropRow = getRowForPath(newLocation.path)
+                    if (lastDropRow != -1) {
+                        val newBounds = getRowBounds(lastDropRow)
+                        if (newBounds != null) {
+                            repaint(newBounds)
+                        }
+                    }
+                } else {
+                    lastDropRow = -1
+                    // Repaint entire tree to clear any remaining highlights
+                    repaint()
+                }
+            }
+        }
+
+        // Override to make full row width clickable for context menu
+        override fun getRowBounds(row: Int): Rectangle? {
+            val bounds = super.getRowBounds(row) ?: return null
+            // Extend bounds to full width
+            bounds.x = 0
+            bounds.width = width
+            return bounds
+        }
+
+        // Override to handle clicks across full row width
+        override fun getPathForLocation(x: Int, y: Int): TreePath? {
+            // Get the row at this Y coordinate
+            val row = getClosestRowForLocation(x, y)
+            if (row == -1) return null
+
+            val bounds = getRowBounds(row) ?: return null
+            // Check if click is within the row height
+            if (y >= bounds.y && y < bounds.y + bounds.height) {
+                return getPathForRow(row)
+            }
+            return null
+        }
+    }
 
     private val settings = project.service<MpySettingsService>()
     private val deviceService = project.service<MpyDeviceService>()
@@ -209,6 +266,37 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
 
                 val filteredNodes = filterOutChildSelections(nodes)
 
+                // Create drag image from the first selected node
+                tree.selectionPath?.let { path ->
+                    val node = path.lastPathComponent as? FileSystemNode
+                    if (node != null) {
+                        val row = tree.getRowForPath(path)
+                        val bounds = tree.getRowBounds(row)
+                        if (bounds != null) {
+                            // Get the renderer component
+                            val renderer = tree.cellRenderer.getTreeCellRendererComponent(
+                                tree, node, true, tree.isExpanded(row), node is FileNode, row, true
+                            )
+
+                            // Set size to match the tree width for full-width rendering
+                            renderer.setSize(tree.width, bounds.height)
+
+                            // Create image
+                            val image = BufferedImage(
+                                renderer.width.coerceAtLeast(1),
+                                renderer.height.coerceAtLeast(1),
+                                BufferedImage.TYPE_INT_ARGB
+                            )
+                            val g = image.createGraphics()
+                            renderer.paint(g)
+                            g.dispose()
+
+                            dragImage = image
+                            dragImageOffset = java.awt.Point(bounds.x, bounds.height / 2)
+                        }
+                    }
+                }
+
                 return object : Transferable {
                     override fun getTransferDataFlavors() = arrayOf(nodesFlavor)
                     override fun isDataFlavorSupported(flavor: DataFlavor) = nodesFlavor == flavor
@@ -231,7 +319,12 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
                     return support.isDataFlavorSupported(virtualFileFlavor)
                 }
 
-                val targetNode = dropLocation.path.lastPathComponent as? DirNode ?: return false
+                // Accept both directories and files - if file, use its parent directory as target
+                val dropNode = dropLocation.path.lastPathComponent as? FileSystemNode ?: return false
+                val targetNode = when (dropNode) {
+                    is DirNode -> dropNode
+                    is FileNode -> dropNode.parent as? DirNode ?: return false
+                }
 
                 if (support.isDataFlavorSupported(nodesFlavor)) {
                     val nodes = try {
@@ -243,6 +336,10 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
 
                     if (nodes.any { it is VolumeRootNode }) return false
 
+                    // Don't allow dropping a node on itself
+                    if (nodes.any { it.fullName == dropNode.fullName }) return false
+
+                    // Don't allow dropping into a child of itself
                     return !nodes.any { node ->
                         targetNode.fullName.startsWith(node.fullName)
                     }
@@ -269,7 +366,13 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
                 if (!canImport(support)) return false
 
                 val dropLocation = support.dropLocation as? JTree.DropLocation ?: return false
-                val targetNode = dropLocation.path.lastPathComponent as? DirNode ?: return false
+
+                // Accept both directories and files - if file, use its parent directory as target
+                val dropNode = dropLocation.path.lastPathComponent as? FileSystemNode ?: return false
+                val targetNode = when (dropNode) {
+                    is DirNode -> dropNode
+                    is FileNode -> dropNode.parent as? DirNode ?: return false
+                }
 
                 when {
                     support.isDataFlavorSupported(nodesFlavor) -> {
@@ -278,6 +381,14 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
                             support.transferable.getTransferData(nodesFlavor) as Array<FileSystemNode>
                         } catch (_: Exception) {
                             return false
+                        }
+
+                        // Check if all nodes are already in the target directory - if so, do nothing
+                        val allAlreadyInTarget = nodes.all { node ->
+                            (node.parent as? FileSystemNode)?.fullName == targetNode.fullName
+                        }
+                        if (allAlreadyInTarget) {
+                            return true  // Return true to indicate successful handling (just nothing to do)
                         }
 
                         val result = moveNodesToTarget(nodes, targetNode, false)
@@ -715,16 +826,44 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
     }
 
     suspend fun refresh(reporter: RawProgressReporter, forceLegacyVolumeSupport: Boolean = false) =
-        doRefresh(reporter, hash = false, disconnectOnCancel = true, isInitialRefresh = false, useReporter = true, forceLegacyVolumeSupport = forceLegacyVolumeSupport)
+        doRefresh(
+            reporter,
+            hash = false,
+            disconnectOnCancel = true,
+            isInitialRefresh = false,
+            useReporter = true,
+            forceLegacyVolumeSupport = forceLegacyVolumeSupport
+        )
 
     suspend fun quietRefresh(reporter: RawProgressReporter, forceLegacyVolumeSupport: Boolean = false) =
-        doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = false, useReporter = false, forceLegacyVolumeSupport = forceLegacyVolumeSupport)
+        doRefresh(
+            reporter,
+            hash = false,
+            disconnectOnCancel = false,
+            isInitialRefresh = false,
+            useReporter = false,
+            forceLegacyVolumeSupport = forceLegacyVolumeSupport
+        )
 
     suspend fun quietHashingRefresh(reporter: RawProgressReporter, forceLegacyVolumeSupport: Boolean = false) =
-        doRefresh(reporter, hash = true, disconnectOnCancel = false, isInitialRefresh = false, useReporter = false, forceLegacyVolumeSupport = forceLegacyVolumeSupport)
+        doRefresh(
+            reporter,
+            hash = true,
+            disconnectOnCancel = false,
+            isInitialRefresh = false,
+            useReporter = false,
+            forceLegacyVolumeSupport = forceLegacyVolumeSupport
+        )
 
     suspend fun initialRefresh(reporter: RawProgressReporter, forceLegacyVolumeSupport: Boolean = false) =
-        doRefresh(reporter, hash = false, disconnectOnCancel = false, isInitialRefresh = true, useReporter = true, forceLegacyVolumeSupport = forceLegacyVolumeSupport)
+        doRefresh(
+            reporter,
+            hash = false,
+            disconnectOnCancel = false,
+            isInitialRefresh = true,
+            useReporter = true,
+            forceLegacyVolumeSupport = forceLegacyVolumeSupport
+        )
 
     private fun newTreeModel() = DefaultTreeModel(InvisibleRootNode(), true)
 
@@ -772,7 +911,7 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
                 deviceService.disconnect(reporter)
             }
             // If this is the initial refresh the cancellation exception should be passed on as is, the user should
-            // only be informed about the connection being cancelled. However, if this is not the initial refresh, the
+            // only be informed about the connection being canceled. However, if this is not the initial refresh, the
             // cancellation exception should instead raise a more severe exception to be shown to the user as an error.
             // If the user cancels a non-initial refresh then, even if the user voluntarily chose to do so,
             // it puts the plugin into a situation where the file system listing can go out of sync with the actual
