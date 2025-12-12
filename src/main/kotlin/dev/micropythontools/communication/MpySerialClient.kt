@@ -16,14 +16,12 @@
 
 package dev.micropythontools.communication
 
-import com.intellij.openapi.diagnostic.thisLogger
+import com.fazecast.jSerialComm.SerialPort
+import com.fazecast.jSerialComm.SerialPortDataListener
+import com.fazecast.jSerialComm.SerialPortEvent
 import com.intellij.openapi.progress.checkCanceled
 import dev.micropythontools.communication.MpyComm.Companion.retry
 import dev.micropythontools.i18n.MpyBundle
-import jssc.SerialPort
-import jssc.SerialPort.FLOWCONTROL_NONE
-import jssc.SerialPortEventListener
-import jssc.SerialPortException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
@@ -31,41 +29,86 @@ import java.nio.charset.StandardCharsets
 
 private const val SERIAL_PROBE_STRING = "__MPY_TOOLS_SERIAL_PROBE_9x7k13A1ds56Sd__"
 
+internal fun SerialPort.openPortOrThrow() {
+    if (!this.openPort()) {
+        val errorCode = this.lastErrorCode
+        val errorLocation = this.lastErrorLocation
+        val portName = this.systemPortName
+
+        val errorMessage = when (errorCode) {
+            // Permission denied (Linux/macOS: EACCES, Windows: ERROR_ACCESS_DENIED)
+            5, 13 -> "Access denied to $portName. Try running with elevated permissions or check device permissions"
+
+            // Device busy/in use (Linux: EBUSY, macOS: similar)
+            16 -> "Port $portName is busy or in use by another application"
+
+            // Sharing violation (Windows: port in use by another process)
+            32 -> "Port $portName is busy or in use by another application"
+
+            // Port not found (Linux/macOS: ENOENT)
+            2 -> "Port $portName not found or device disconnected"
+
+            // Invalid handle (Windows: ERROR_INVALID_HANDLE)
+            6 -> "Port $portName not found or device disconnected"
+
+            // Additional permission issue (Linux: EPERM)
+            1 -> "Access denied to $portName. Try running with elevated permissions"
+
+            // Unknown but non-zero error
+            in 1..Int.MAX_VALUE -> "Failed to open port $portName: Error code $errorCode (location: $errorLocation)"
+
+            // Zero or negative (shouldn't happen, but defensive)
+            else -> "Failed to open port $portName: Unknown error (error code: $errorCode, location: $errorLocation)"
+        }
+
+        throw IOException(errorMessage)
+    }
+}
+
 internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
     // Subtract the part between delimiters
     private fun String.countOccurrencesOf(sub: String) = split(sub).size - 1
 
-    val port = SerialPort(comm.connectionParameters.portName)
+    val port: SerialPort = SerialPort.getCommPort(comm.connectionParameters.portName)
 
     override val isConnected: Boolean
         get() = try {
-            port.getLinesStatus()
-            port.isOpened && port.getInputBufferBytesCount() >= 0
-        } catch (_: SerialPortException) {
+            port.isOpen && port.bytesAvailable() >= 0
+        } catch (_: Exception) {
             false
         }
 
-    private val listener = SerialPortEventListener { event ->
-        if (event.eventType and SerialPort.MASK_RXCHAR != 0) {
-            val count = event.eventValue
-            val bytes = port.readBytes(count)
-            comm.dataReceived(bytes)
-            this@MpySerialClient.thisLogger().debug("> ${bytes.toString(StandardCharsets.UTF_8)}")
+    private val listener = object : SerialPortDataListener {
+        override fun getListeningEvents() = SerialPort.LISTENING_EVENT_DATA_AVAILABLE
+
+        override fun serialEvent(event: SerialPortEvent) {
+            val available = port.bytesAvailable()
+            if (available > 0) {
+                val bytes = ByteArray(available)
+                val numRead = port.readBytes(bytes, bytes.size)
+                if (numRead > 0) {
+                    val actualBytes = if (numRead < bytes.size) bytes.copyOf(numRead) else bytes
+                    comm.dataReceived(actualBytes)
+                }
+            }
         }
     }
 
     @Throws(IOException::class)
     override suspend fun connect(progressIndicatorText: String): MpySerialClient {
         try {
-            port.openPort()
-            port.addEventListener(listener, SerialPort.MASK_RXCHAR)
-            port.setParams(
-                SerialPort.BAUDRATE_115200,
-                SerialPort.DATABITS_8,
-                SerialPort.STOPBITS_1,
-                SerialPort.PARITY_NONE
+            port.openPortOrThrow()
+
+            port.setComPortParameters(
+                115200,
+                8,
+                SerialPort.ONE_STOP_BIT,
+                SerialPort.NO_PARITY
             )
-            port.flowControlMode = FLOWCONTROL_NONE
+            port.setFlowControl(SerialPort.FLOW_CONTROL_DISABLED)
+
+            // Add event listener before setting timeouts (listener will override timeout behavior)
+            port.addDataListener(listener)
 
             try {
                 retry(3, listOf(0L, 1000L, 3000L)) {
@@ -107,24 +150,26 @@ internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
 
             comm.state = State.CONNECTED
             return this
-        } catch (e: SerialPortException) {
-            throw IOException("${e.port.portName}: ${e.exceptionType}")
+        } catch (e: Exception) {
+            throw IOException("${port.systemPortName}: ${e.message}")
         }
     }
 
     override fun send(string: String) {
-        port.writeString(string)
+        val bytes = string.toByteArray(StandardCharsets.UTF_8)
+        port.writeBytes(bytes, bytes.size)
     }
 
     override fun send(bytes: ByteArray) {
-        port.writeBytes(bytes)
+        port.writeBytes(bytes, bytes.size)
     }
 
-    override fun hasPendingData(): Boolean = port.inputBufferBytesCount > 0
+    override fun hasPendingData(): Boolean = port.bytesAvailable() > 0
 
     override fun close() = closeBlocking()
 
     override fun closeBlocking() {
+        port.removeDataListener()
         port.closePort()
     }
 }

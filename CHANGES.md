@@ -1,6 +1,14 @@
 The Changelog
 =============
 
+2025.3.4 - XX.12.2025
+------------------
+
+* Fix File System widget drag and drop handling to match the look and functionality of the project file tree
+* Switch from JSSC to JSerialComm for serial communication, achieving up to over 20% upload speed improvements when not
+  using compression
+* Halved the distributed plugin archive size by optimizing the build process
+
 2025.3.3 - 11.12.2025
 ------------------
 

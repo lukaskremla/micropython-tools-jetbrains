@@ -37,12 +37,12 @@ except FileNotFoundError:
 os.mkdir(scripts_dir)
 os.mkdir(target_dir)
 
-print(__file__)
+print("Running MicroPython script minifier...")
 
 
 def do_minification(source_directory, target_directory):
     for file in os.listdir(source_directory):
-        print(f"Processing {file}")
+        print(f"Minifying {file}")
 
         source_path = os.path.join(source_directory, file)
         target_path = os.path.join(target_directory, file)

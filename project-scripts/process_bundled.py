@@ -32,7 +32,7 @@ MCU_JSON_NAME = "bundled_flashing_info.json"
 RP2_NUKE_NAME = "universal_flash_nuke.uf2"
 STUBS_JSON_INFO = "bundled_stubs_index_info.json"
 
-print(__file__)
+print("Processing bundled resources...")
 
 try:
     shutil.rmtree(bundled_dir)
@@ -40,6 +40,8 @@ except FileNotFoundError:
     pass
 
 os.mkdir(bundled_dir)
+
+print("Bundling flashing info")
 
 with open(boards_json_path, "r") as bf:
     parsed_boards_json = json.loads(bf.read())
@@ -53,10 +55,14 @@ with open(boards_json_path, "r") as bf:
     with open(os.path.join(bundled_dir, MCU_JSON_NAME), "w") as mf:
         json.dump(bundled_info, mf, indent=2, ensure_ascii=False)
 
+print("Bundling UF2 flash nuke")
+
 shutil.copyfile(
     os.path.join(to_bundle_dir, RP2_NUKE_NAME),
     os.path.join(bundled_dir, RP2_NUKE_NAME)
 )
+
+print("Bundling stub info")
 
 with open(stubs_json_path, "r") as sf:
     parsed_stubs_json = json.loads(sf.read())

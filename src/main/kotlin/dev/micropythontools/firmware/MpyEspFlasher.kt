@@ -16,17 +16,18 @@
 
 package dev.micropythontools.firmware
 
+import com.fazecast.jSerialComm.SerialPort
 import com.intellij.execution.ExecutionException
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.RawProgressReporter
+import dev.micropythontools.communication.openPortOrThrow
 import dev.micropythontools.core.MpyPaths
 import dev.micropythontools.core.MpyPythonInterpreterService
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
-import jssc.SerialPort
-import jssc.SerialPortException
+import java.io.IOException
 
 internal class MpyEspFlasher(project: Project) : MpyFlasherInterface {
     private val interpreterService = project.service<MpyPythonInterpreterService>()
@@ -115,9 +116,19 @@ internal class MpyEspFlasher(project: Project) : MpyFlasherInterface {
                         val bytesWritten = byteStringParts[0].toLong()
                         val totalBytesToWrite = byteStringParts[1].toLong()
 
-                        val progressText = if (percentage < 100) MpyBundle.message("flash.esp.progress.flashing") else MpyBundle.message("flash.esp.progress.flashing.complete")
+                        val progressText =
+                            if (percentage < 100) MpyBundle.message("flash.esp.progress.flashing") else MpyBundle.message(
+                                "flash.esp.progress.flashing.complete"
+                            )
                         reporter.text(progressText)
-                        reporter.details(MpyBundle.message("flash.esp.progress.flashed", formatSize(bytesWritten), formatSize(totalBytesToWrite), percentage.toInt()))
+                        reporter.details(
+                            MpyBundle.message(
+                                "flash.esp.progress.flashed",
+                                formatSize(bytesWritten),
+                                formatSize(totalBytesToWrite),
+                                percentage.toInt()
+                            )
+                        )
                         reporter.fraction(percentage / 100.0)
                     }
 
@@ -148,12 +159,12 @@ internal class MpyEspFlasher(project: Project) : MpyFlasherInterface {
 
     override suspend fun validate(target: String): ValidationResult {
         return try {
-            val port = SerialPort(target)
-            port.openPort()
+            val port = SerialPort.getCommPort(target)
+            port.openPortOrThrow()
             port.closePort()
             ValidationResult.OK
-        } catch (e: SerialPortException) {
-            ValidationResult(e.exceptionType)
+        } catch (e: IOException) {
+            ValidationResult(e.localizedMessage)
         }
     }
 }

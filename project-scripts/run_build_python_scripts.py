@@ -16,6 +16,10 @@
 
 # The scripts run on import
 import minify_scripts
+
+# Print newline to split script output
+print("")
+
 import process_bundled
 
 # Ensure the imports don't get optimized out
