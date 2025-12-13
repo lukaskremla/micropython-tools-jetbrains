@@ -33,7 +33,6 @@ import com.jediterm.terminal.TtyConnector
 import dev.micropythontools.core.MpyScripts
 import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
-import dev.micropythontools.settings.DEFAULT_WEBREPL_URL
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -96,8 +95,6 @@ internal open class MpyComm(
     var state: State by Delegates.observable(State.DISCONNECTED) { _, _, newValue ->
         deviceService.stateListeners.forEach { it(newValue) }
     }
-
-    internal var connectionParameters: ConnectionParameters = ConnectionParameters(DEFAULT_WEBREPL_URL, "")
 
     @Volatile
     private var mpyClient: MpyClient? = null
@@ -299,7 +296,7 @@ internal open class MpyComm(
         state = State.DISCONNECTED
     }
 
-    internal suspend fun connect() {
+    internal suspend fun connect(connectionParameters: ConnectionParameters) {
         val name = with(connectionParameters) {
             if (usingUart) portName else webReplUrl
         }
@@ -307,7 +304,8 @@ internal open class MpyComm(
         offTtyByteBuffer.reset()
         commMutex.withLock {
             try {
-                mpyClient = createClient().connect(MpyBundle.message("comm.progress.connecting", name))
+                mpyClient =
+                    createClient(connectionParameters).connect(MpyBundle.message("comm.progress.connecting", name))
             } catch (e: Exception) {
                 state = State.DISCONNECTED
                 throw e
@@ -322,10 +320,6 @@ internal open class MpyComm(
             mpyClient = null
             state = State.DISCONNECTED
         }
-    }
-
-    internal fun setConnectionParams(parameters: ConnectionParameters) {
-        this.connectionParameters = parameters
     }
 
     internal fun dataReceived(bytes: ByteArray) {
@@ -562,8 +556,12 @@ internal open class MpyComm(
         }
     }
 
-    protected open fun createClient(): MpyClient {
-        return if (connectionParameters.usingUart) MpySerialClient(this) else MpyWebSocketClient(this)
+    protected open fun createClient(connectionParameters: ConnectionParameters): MpyClient {
+        return if (connectionParameters.usingUart) {
+            MpySerialClient(this, connectionParameters)
+        } else {
+            MpyWebSocketClient(this, connectionParameters)
+        }
     }
 
     private fun txtUpload(
@@ -930,7 +928,7 @@ internal open class MpyComm(
     }
 
     private inner class MpyTtyConnector : TtyConnector {
-        override fun getName(): String = connectionParameters.webReplUrl
+        override fun getName(): String = mpyClient?.name ?: ""
         override fun close() = Disposer.dispose(this@MpyComm)
         override fun isConnected(): Boolean = true
         override fun ready(): Boolean {

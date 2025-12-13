@@ -65,11 +65,12 @@ internal fun SerialPort.openPortOrThrow() {
     }
 }
 
-internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
+internal class MpySerialClient(private val comm: MpyComm, private val connectionParameters: ConnectionParameters) :
+    MpyClient {
     // Subtract the part between delimiters
     private fun String.countOccurrencesOf(sub: String) = split(sub).size - 1
 
-    val port: SerialPort = SerialPort.getCommPort(comm.connectionParameters.portName)
+    val port: SerialPort = SerialPort.getCommPort(connectionParameters.portName)
 
     override val isConnected: Boolean
         get() = try {
@@ -77,6 +78,9 @@ internal class MpySerialClient(private val comm: MpyComm) : MpyClient {
         } catch (_: Exception) {
             false
         }
+
+    override val name: String
+        get() = connectionParameters.portName
 
     private val listener = object : SerialPortDataListener {
         override fun getListeningEvents() = SerialPort.LISTENING_EVENT_DATA_AVAILABLE

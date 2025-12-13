@@ -421,8 +421,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                 }
             } else {
                 if (connectionParameters != null) {
-                    setConnectionParams(connectionParameters)
-                    connect()
+                    connect(connectionParameters)
                     try {
                         if (state == State.CONNECTED) {
                             initializeDevice()
@@ -569,10 +568,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
 
     private suspend fun initializeDevice() = proService.initializeDevice(project)
 
-    private suspend fun connect() = comm.connect()
-
-    private fun setConnectionParams(connectionParameters: ConnectionParameters) =
-        comm.setConnectionParams(connectionParameters)
+    private suspend fun connect(connectionParameters: ConnectionParameters) = comm.connect(connectionParameters)
 
     private fun startSerialConnectionMonitoring() {
         connectionChecker = Executors.newSingleThreadScheduledExecutor { r ->

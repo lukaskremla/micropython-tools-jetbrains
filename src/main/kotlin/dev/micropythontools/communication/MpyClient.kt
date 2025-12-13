@@ -18,6 +18,7 @@ package dev.micropythontools.communication
 
 internal interface MpyClient {
     val isConnected: Boolean
+    val name: String
     suspend fun connect(progressIndicatorText: String): MpyClient
     fun send(string: String)
     fun send(bytes: ByteArray)

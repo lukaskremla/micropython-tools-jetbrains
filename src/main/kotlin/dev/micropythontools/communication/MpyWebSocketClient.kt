@@ -41,10 +41,16 @@ private const val PASSWORD_PROMPT = "Password:"
 private const val LOGIN_SUCCESS = "WebREPL connected"
 private const val LOGIN_FAIL = "Access denied"
 
-internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
+internal open class MpyWebSocketClient(
+    private val comm: MpyComm,
+    private val connectionParameters: ConnectionParameters
+) : MpyClient {
     // Properties
     override val isConnected: Boolean
         get() = webSocketClient?.isOpen ?: false
+
+    override val name: String
+        get() = connectionParameters.portName
 
     @Volatile
     var resetInProgress = false
@@ -118,7 +124,7 @@ internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
                                     }
                                 }
                                 loginBuffer.setLength(0)
-                                send("${comm.connectionParameters.webReplPassword}\n")
+                                send("${connectionParameters.webReplPassword}\n")
                                 while (connectInProgress && isConnected) {
                                     checkCanceled()
                                     when {
@@ -185,7 +191,7 @@ internal open class MpyWebSocketClient(private val comm: MpyComm) : MpyClient {
 
     // Private methods
     private fun createWebSocketClient(): WebSocketClient {
-        return object : WebSocketClient(URI(comm.connectionParameters.webReplUrl)) {
+        return object : WebSocketClient(URI(connectionParameters.webReplUrl)) {
             override fun onOpen(handshakedata: ServerHandshake) = open() //Nothing to do
 
             // The custom Java-Websocket modification never uses the onMessage with string param

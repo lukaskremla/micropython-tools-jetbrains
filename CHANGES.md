@@ -8,6 +8,8 @@ The Changelog
 * Switch from JSSC to JSerialComm for serial communication, achieving up to over 20% upload speed improvements when not
   using compression
 * Halved the distributed plugin archive size by optimizing the build process
+* Ensured Install/Update dependency logic has exceptions checked and logged
+* Improved cancellability of dependency/stub packages
 
 2025.3.3 - 11.12.2025
 ------------------
