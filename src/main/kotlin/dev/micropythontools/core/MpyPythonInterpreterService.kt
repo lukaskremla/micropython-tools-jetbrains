@@ -23,6 +23,9 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.*
 import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.facet.ui.ValidationResult
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -79,15 +82,25 @@ internal class MpyPythonInterpreterService(private val project: Project) {
                     FacetConfigurationQuickFix(MpyBundle.message("python.service.validation.install.update.button")) {
                     override fun run(place: JComponent?) {
                         ApplicationManager.getApplication().invokeLater {
-                            runWithModalProgressBlocking(
-                                project,
-                                MpyBundle.message("python.service.progress.installing.dependencies")
-                            ) {
-                                reportSequentialProgress(
-                                    numberOfMissingProDependencies + missingPythonPackages.size
-                                ) { reporter ->
-                                    ensureDependenciesInstalled(reporter)
+                            try {
+                                runWithModalProgressBlocking(
+                                    project,
+                                    MpyBundle.message("python.service.progress.installing.dependencies")
+                                ) {
+                                    reportSequentialProgress(
+                                        numberOfMissingProDependencies + missingPythonPackages.size
+                                    ) { reporter ->
+                                        ensureDependenciesInstalled(reporter)
+                                    }
                                 }
+                            } catch (e: Throwable) {
+                                Notifications.Bus.notify(
+                                    Notification(
+                                        MpyBundle.message("notification.group.name"),
+                                        MpyBundle.message("python.service.notification.install.dependencies.failed", e.javaClass.name, e.localizedMessage),
+                                        NotificationType.ERROR
+                                    ), project
+                                )
                             }
                         }
                     }
@@ -292,10 +305,10 @@ internal class MpyPythonInterpreterService(private val project: Project) {
                 val errorMsg = buildString {
                     append(MpyBundle.message("python.service.code.execution.failed"))
                     if (output.stderr.isNotBlank()) {
-                        append("\nError: ${output.stderr}")
+                        append("\n").append(MpyBundle.message("python.service.code.execution.error.label", output.stderr))
                     }
                     if (output.stdout.isNotBlank()) {
-                        append("\nOutput: ${output.stdout}")
+                        append("\n").append(MpyBundle.message("python.service.code.execution.output.label", output.stdout))
                     }
                 }
                 throw ExecutionException(errorMsg)
