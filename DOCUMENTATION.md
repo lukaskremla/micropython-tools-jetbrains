@@ -34,6 +34,10 @@
     - [Automatic File Compression](#automatic-file-compression)
     - [mpy-cross Compilation](#mpy-cross-compilation)
     - [.mpy File Analyzer](#mpy-file-analyzer)
+- [Requirements](#requirements)
+    - [System Requirements](#system-requirements)
+    - [MicroPython Device Requirements](#micropython-device-requirements)
+    - [Compatibility Notice](#compatibility-notice)
 
 ## Getting Started
 
@@ -486,3 +490,29 @@ When you open a `.mpy` file in the IDE, a metadata panel displays:
 - Small int bits
 
 Useful for verifying compilation settings and checking bytecode version compatibility before uploading.
+
+## Requirements
+
+#### System Requirements
+
+* A valid Python interpreter 3.10+
+* Python Community plugin (for non-PyCharm IDEs)
+
+#### MicroPython Device Requirements
+
+* Official MicroPython firmware version 1.20.0 or newer from micropython.org/download
+* Device must support standard MicroPython REPL features (REPL, Raw REPL and Raw Paste Mode)
+* Some features require additional libraries (e.g., `binascii.crc32` for skipping already uploaded files). The plugin
+  will warn if these are unavailable.
+
+#### Compatibility Notice:
+
+This plugin requires standard MicroPython REPL features (REPL, Raw REPL and Raw Paste Mode). Custom or
+manufacturer-modified ports (such as micro:bit) that do not include these features are **not compatible** and will not
+work and **no support** will be provided for such devices.
+
+If you're using a custom port that preserves standard REPL functionality, the plugin should work. However, if you
+encounter issues, please open an issue with firmware details - we'll investigate, but cannot guarantee support for
+non-standard configurations.
+
+MicroPython versions older than 1.20.0 are not officially supported but may work.

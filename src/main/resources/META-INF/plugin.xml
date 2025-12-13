@@ -47,6 +47,9 @@
           <li>.mpy file analyzer</li>
         </ul>
         <br>
+        <p>System and MicroPython device requirements available
+        <a href="https://github.com/lukaskremla/micropython-tools-jetbrains?tab=readme-ov-file#requirements">here</a>.</p>
+        <br>
         <p>Documentation, usage tips, and issue tracker are available on
         <a href="https://github.com/lukaskremla/micropython-tools-jetbrains">GitHub</a>.</p>
 ]]></description>
