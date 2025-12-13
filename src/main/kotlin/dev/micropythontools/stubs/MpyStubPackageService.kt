@@ -336,7 +336,7 @@ internal class MpyStubPackageService(private val project: Project) {
         }
     }
 
-    private fun installStubPackage(
+    private suspend fun installStubPackage(
         reporter: SequentialProgressReporter,
         stubPackage: StubPackage,
         remoteStubPackages: List<RemoteStubPackage>
@@ -351,7 +351,13 @@ internal class MpyStubPackageService(private val project: Project) {
         // Find the matching remote stub package
         val remoteStubPackage = remoteStubPackages
             .find { it.name == stubPackage.name && it.mpyVersion == stubPackage.mpyVersion }
-            ?: throw RuntimeException(MpyBundle.message("stub.service.error.no.matching.remote", stubPackage.name, stubPackage.mpyVersion))
+            ?: throw RuntimeException(
+                MpyBundle.message(
+                    "stub.service.error.no.matching.remote",
+                    stubPackage.name,
+                    stubPackage.mpyVersion
+                )
+            )
 
         // Generate the target path of the stub package's folder
         val targetPath = MpyPaths.stubBaseDir.resolve("${stubPackage.name}_${stubPackage.mpyVersion}")

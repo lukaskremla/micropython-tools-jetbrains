@@ -137,5 +137,5 @@ internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
 
     override fun checkNumberOfMissingProDependencies(project: Project): Int = 0
 
-    override fun ensureProDependenciesInstalled(project: Project, reporter: SequentialProgressReporter) = Unit
+    override suspend fun ensureProDependenciesInstalled(project: Project, reporter: SequentialProgressReporter) = Unit
 }

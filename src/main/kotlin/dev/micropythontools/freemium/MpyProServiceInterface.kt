@@ -83,5 +83,5 @@ internal interface MpyProServiceInterface {
 
     fun checkNumberOfMissingProDependencies(project: Project): Int
 
-    fun ensureProDependenciesInstalled(project: Project, reporter: SequentialProgressReporter)
+    suspend fun ensureProDependenciesInstalled(project: Project, reporter: SequentialProgressReporter)
 }

@@ -20,7 +20,10 @@ package dev.micropythontools.core
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.*
+import com.intellij.execution.process.ColoredProcessHandler
+import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.notification.Notification
@@ -97,7 +100,11 @@ internal class MpyPythonInterpreterService(private val project: Project) {
                                 Notifications.Bus.notify(
                                     Notification(
                                         MpyBundle.message("notification.group.name"),
-                                        MpyBundle.message("python.service.notification.install.dependencies.failed", e.javaClass.name, e.localizedMessage),
+                                        MpyBundle.message(
+                                            "python.service.notification.install.dependencies.failed",
+                                            e.javaClass.name,
+                                            e.localizedMessage
+                                        ),
                                         NotificationType.ERROR
                                     ), project
                                 )
@@ -109,7 +116,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         } else ValidationResult.OK
     }
 
-    fun ensureDependenciesInstalled(reporter: SequentialProgressReporter) {
+    suspend fun ensureDependenciesInstalled(reporter: SequentialProgressReporter) {
         val missingPythonPackages = checkMissingPythonPackages()
 
         missingPythonPackages.forEach { (name, version) ->
@@ -148,7 +155,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
         return packagesToInstall
     }
 
-    fun installPackage(
+    suspend fun installPackage(
         reporter: SequentialProgressReporter? = null,
         toInstall: String,
         targetPath: String,
@@ -176,7 +183,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
 
         if (!installDependencies) command.add("--no-deps")
 
-        runPythonCode(command)
+        runPythonCodeWithCallback(command)
 
         // Replace version specifiers internally to allow requiring simpler parameters
         val distInfoPart = toInstall
@@ -199,19 +206,19 @@ internal class MpyPythonInterpreterService(private val project: Project) {
 
     /**
      * Runs Python code with real-time line-by-line output callback.
-     * Supports cancellation - the process will be killed if the coroutine is cancelled.
+     * Supports cancellation - the process will be killed if the coroutine is canceled.
      *
      * @param args Command line arguments
      * @param env Environment variables
      * @param onOutput Callback invoked for each line of output (both stdout and stderr)
      * @return The OSProcessHandler for the running process
      * @throws ExecutionException if the process fails or exits with non-zero code
-     * @throws CancellationException if the operation is cancelled (process will be killed)
+     * @throws CancellationException if the operation is canceled (process will be killed)
      */
     suspend fun runPythonCodeWithCallback(
         args: List<String>,
         env: Map<String, String> = emptyMap(),
-        onOutput: (String) -> Unit
+        onOutput: ((String) -> Unit)? = null
     ): OSProcessHandler {
         val sdk = findPythonSdk() ?: throw ExecutionException(MpyBundle.message("python.service.error.no.sdk"))
         val command = if (args.first().contains("uv")) {
@@ -239,7 +246,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
             override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                 val text = (event.text ?: return).trim()
 
-                onOutput(text)
+                onOutput?.invoke(text)
 
                 fullOutput.append(text)
             }
@@ -284,40 +291,4 @@ internal class MpyPythonInterpreterService(private val project: Project) {
             .mapNotNull { PythonSdkUtil.findPythonSdk(it) }
             .firstOrNull { it.version.isAtLeast(LanguageLevel.PYTHON310) }
     }
-
-    private fun runPythonCode(args: List<String>): String {
-        val sdk = findPythonSdk() ?: return ""
-        val command = if (args.first().contains("uv")) {
-            args
-        } else {
-            listOf(sdk.homePath) + args
-        }
-
-        val projectDir = project.basePath ?: "/"
-        val commandLine = GeneralCommandLine(command).withWorkDirectory(projectDir)
-
-        val process = CapturingProcessHandler(commandLine)
-        val output = process.runProcess(10_000)
-        return when {
-            output.isCancelled -> throw ExecutionException(MpyBundle.message("python.service.code.execution.cancelled"))
-            output.isTimeout -> throw ExecutionException(MpyBundle.message("python.service.code.execution.timed_out"))
-            output.exitCode != 0 -> {
-                val errorMsg = buildString {
-                    append(MpyBundle.message("python.service.code.execution.failed"))
-                    if (output.stderr.isNotBlank()) {
-                        append("\n").append(MpyBundle.message("python.service.code.execution.error.label", output.stderr))
-                    }
-                    if (output.stdout.isNotBlank()) {
-                        append("\n").append(MpyBundle.message("python.service.code.execution.output.label", output.stdout))
-                    }
-                }
-                throw ExecutionException(errorMsg)
-            }
-
-            else -> {
-                output.toString()
-            }
-        }
-    }
-
 }
