@@ -38,10 +38,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
@@ -266,36 +263,55 @@ internal class MpyFileSystemWidget(private val project: Project) : JBPanel<MpyFi
 
                 val filteredNodes = filterOutChildSelections(nodes)
 
-                // Create drag image from the first selected node
-                tree.selectionPath?.let { path ->
-                    val node = path.lastPathComponent as? FileSystemNode
-                    if (node != null) {
-                        val row = tree.getRowForPath(path)
-                        val bounds = tree.getRowBounds(row)
-                        if (bounds != null) {
-                            // Get the renderer component
-                            val renderer = tree.cellRenderer.getTreeCellRendererComponent(
-                                tree, node, true, tree.isExpanded(row), node is FileNode, row, true
-                            )
+                // Create composite drag image from ALL selected nodes
+                val paths = tree.selectionPaths ?: return null
+                val maxItemsToShow = 5  // Limit visual clutter
+                val pathsToRender = paths.take(maxItemsToShow)
 
-                            // Set size to match the tree width for full-width rendering
-                            renderer.setSize(tree.width, bounds.height)
+                // Calculate total height needed
+                val rowHeight = tree.rowHeight.coerceAtLeast(20)
+                val totalHeight = pathsToRender.size * rowHeight
+                val imageWidth = tree.width.coerceAtLeast(200)
 
-                            // Create image
-                            val image = BufferedImage(
-                                renderer.width.coerceAtLeast(1),
-                                renderer.height.coerceAtLeast(1),
-                                BufferedImage.TYPE_INT_ARGB
-                            )
-                            val g = image.createGraphics()
-                            renderer.paint(g)
-                            g.dispose()
+                // Create composite image
+                @Suppress("UndesirableClassUsage") val image = BufferedImage(
+                    imageWidth,
+                    totalHeight,
+                    BufferedImage.TYPE_INT_ARGB
+                )
+                val g = image.createGraphics()
 
-                            dragImage = image
-                            dragImageOffset = java.awt.Point(bounds.x, bounds.height / 2)
-                        }
-                    }
+                // Render each selected item
+                pathsToRender.forEachIndexed { index, path ->
+                    val node = path.lastPathComponent as? FileSystemNode ?: return@forEachIndexed
+                    val row = tree.getRowForPath(path)
+
+                    val renderer = tree.cellRenderer.getTreeCellRendererComponent(
+                        tree, node, true, tree.isExpanded(row), node is FileNode, row, true
+                    )
+
+                    renderer.setSize(imageWidth, rowHeight)
+
+                    // Translate graphics context for each row
+                    g.translate(0, index * rowHeight)
+                    renderer.paint(g)
+                    g.translate(0, -(index * rowHeight))
                 }
+
+                // If more items than shown, add indicator
+                if (paths.size > maxItemsToShow) {
+                    g.color = JBColor.GRAY
+                    g.drawString(
+                        "+${paths.size - maxItemsToShow} more...",
+                        10,
+                        totalHeight - 5
+                    )
+                }
+
+                g.dispose()
+
+                dragImage = image
+                dragImageOffset = java.awt.Point(0, rowHeight / 2)
 
                 return object : Transferable {
                     override fun getTransferDataFlavors() = arrayOf(nodesFlavor)
