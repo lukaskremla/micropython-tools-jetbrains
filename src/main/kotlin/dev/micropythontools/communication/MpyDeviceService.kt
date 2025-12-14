@@ -68,29 +68,20 @@ internal data class ConnectionParameters(
     var usingUart: Boolean = true,
     var portName: String,
     var webReplUrl: String,
-    var webReplPassword: String,
-    var ssid: String,
-    var wifiPassword: String,
-    var activeStubsPackage: String? = null
+    var webReplPassword: String
 ) {
     constructor(portName: String) : this(
         usingUart = true,
         portName = portName,
         webReplUrl = DEFAULT_WEBREPL_URL,
-        webReplPassword = "",
-        ssid = "",
-        wifiPassword = "",
-        activeStubsPackage = ""
+        webReplPassword = ""
     )
 
     constructor(webReplUrl: String, webReplPassword: String) : this(
         usingUart = false,
         portName = "",
         webReplUrl = webReplUrl,
-        webReplPassword = webReplPassword,
-        ssid = "",
-        wifiPassword = "",
-        activeStubsPackage = null
+        webReplPassword = webReplPassword
     )
 }
 
