@@ -36,29 +36,20 @@ internal fun SerialPort.openPortOrThrow() {
         val portName = this.systemPortName
 
         val errorMessage = when (errorCode) {
-            // Permission denied (Linux/macOS: EACCES, Windows: ERROR_ACCESS_DENIED)
-            5, 13 -> "Access denied to $portName. Try running with elevated permissions or check device permissions"
+            // 1 Additional permission issue (Linux: EPERM)
+            // 5, 13 Permission denied (Linux/macOS: EACCES, Windows: ERROR_ACCESS_DENIED)
+            1, 5, 13 -> MpyBundle.message("comm.error.serial.access.denied", portName)
 
-            // Device busy/in use (Linux: EBUSY, macOS: similar)
-            16 -> "Port $portName is busy or in use by another application"
+            // 16  Device busy/in use (Linux: EBUSY, macOS: similar)
+            // 32 Sharing violation (Windows: port in use by another process)
+            16, 32 -> MpyBundle.message("comm.error.serial.port.busy", portName)
 
-            // Sharing violation (Windows: port in use by another process)
-            32 -> "Port $portName is busy or in use by another application"
-
-            // Port not found (Linux/macOS: ENOENT)
-            2 -> "Port $portName not found or device disconnected"
-
-            // Invalid handle (Windows: ERROR_INVALID_HANDLE)
-            6 -> "Port $portName not found or device disconnected"
-
-            // Additional permission issue (Linux: EPERM)
-            1 -> "Access denied to $portName. Try running with elevated permissions"
-
-            // Unknown but non-zero error
-            in 1..Int.MAX_VALUE -> "Failed to open port $portName: Error code $errorCode (location: $errorLocation)"
+            // 2 Port not found (Linux/macOS: ENOENT)
+            // 6 Invalid handle (Windows: ERROR_INVALID_HANDLE)
+            2, 6 -> MpyBundle.message("comm.error.serial.port.not.found", portName)
 
             // Zero or negative (shouldn't happen, but defensive)
-            else -> "Failed to open port $portName: Unknown error (error code: $errorCode, location: $errorLocation)"
+            else -> MpyBundle.message("comm.error.serial.unknown", portName, errorCode, errorLocation)
         }
 
         throw IOException(errorMessage)
@@ -70,7 +61,9 @@ internal class MpySerialClient(private val comm: MpyComm, private val connection
     // Subtract the part between delimiters
     private fun String.countOccurrencesOf(sub: String) = split(sub).size - 1
 
-    val port: SerialPort = SerialPort.getCommPort(connectionParameters.portName)
+    val port: SerialPort = SerialPort.getCommPort(connectionParameters.portName).also {
+        it.allowElevatedPermissionsRequest()
+    }
 
     override val isConnected: Boolean
         get() = try {
@@ -155,7 +148,13 @@ internal class MpySerialClient(private val comm: MpyComm, private val connection
             comm.state = State.CONNECTED
             return this
         } catch (e: Exception) {
-            throw IOException("${port.systemPortName}: ${e.message}")
+            throw IOException(
+                MpyBundle.message(
+                    "comm.error.serial.connection.failed",
+                    port.systemPortName,
+                    e.localizedMessage
+                )
+            )
         }
     }
 
