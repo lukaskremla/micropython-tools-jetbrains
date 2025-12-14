@@ -26,6 +26,8 @@ repositories {
     }
 }
 
+val projectDir = rootProject.layout.projectDirectory.asFile
+
 @Suppress("unused")
 sourceSets {
     val main by getting {
@@ -158,16 +160,16 @@ tasks {
 
         executable = file(pythonExecutable).absolutePath
         args = listOf("project-scripts/minify_scripts.py")
-        workingDir = rootProject
+        workingDir = projectDir
     }
 
     register<DefaultTask>("processBundledResources") {
         description = "Process bundled resources from data directory"
         group = "build"
 
-        val boardsJson = file("$rootProject/data/micropython_boards.json")
-        val stubsJson = file("$rootProject/data/micropython_stubs.json")
-        val bundledDir = file("$rootProject/src/main/resources/bundledInfo")
+        val boardsJson = file("$projectDir/data/micropython_boards.json")
+        val stubsJson = file("$projectDir/data/micropython_stubs.json")
+        val bundledDir = file("$projectDir/src/main/resources/bundledInfo")
 
         val flashingInfoFile = bundledDir.resolve("bundled_flashing_info.json")
         val stubsInfoFile = bundledDir.resolve("bundled_stubs_index_info.json")
@@ -224,7 +226,7 @@ tasks {
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
         // Include EULA.txt in the archive
-        from(rootProject.toString()) {
+        from(projectDir) {
             into("license")
             include("EULA.txt")
         }
