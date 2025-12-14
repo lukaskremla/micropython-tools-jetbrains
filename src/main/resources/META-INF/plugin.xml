@@ -7,6 +7,15 @@
     <product-descriptor code="PMPYTOOLS" release-date="20251105" release-version="20253" optional="true"/>
 
     <change-notes><![CDATA[
+        <h3>2025.3.4 - 14.12.2025</h3>
+        <ul>
+            <li>Fix File System widget drag and drop handling to match the look and functionality of the project file tree</li>
+            <li>Switch from JSSC to JSerialComm for serial communication, achieving up to over 20% upload speed improvements when not using compression</li>
+            <li>Halved the distributed plugin archive size by optimizing the build process</li>
+            <li>Ensured Install/Update dependency logic has exceptions checked and logged</li>
+            <li>Improved cancellability of dependency/stub package installation, fixed Windows related problems</li>
+        </ul>
+
         <h3>2025.3.3 - 8.12.2025</h3>
         <ul>
             <li>Added an option to Flash MicroPython firmware directly from the IDE with real-time progress output. Supports ESP, RP2 and SAMD devices</li>
