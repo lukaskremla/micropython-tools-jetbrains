@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2025-12-10T18:43:13.657758",
+  "timestamp": "2025-12-14T11:25:47.282296",
   "supportedPorts": [
     "esp32",
     "esp8266",
@@ -34,6 +34,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -58,8 +59,70 @@
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
           "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
+        "Support for OTA": [
+          "-OTA-20251209-v1.27.0.bin",
+          "-OTA-20251212-v1.27.0.bin",
+          "-OTA-20250911-v1.26.1.bin",
+          "-OTA-20250809-v1.26.0.bin",
+          "-OTA-20250415-v1.25.0.bin",
+          "-OTA-20241129-v1.24.1.bin",
+          "-OTA-20241025-v1.24.0.bin",
+          "-OTA-20240602-v1.23.0.bin",
+          "-OTA-20240222-v1.22.2.bin",
+          "-OTA-20240105-v1.22.1.bin",
+          "-OTA-20231227-v1.22.0.bin",
+          "-OTA-20231005-v1.21.0.bin",
+          "-OTA-20230426-v1.20.0.bin",
+          "-OTA-20220618-v1.19.1.bin",
+          "-OTA-20220117-v1.18.bin",
+          "-OTA-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-OTA-20251203-v1.27.0-preview.491.g3f796b687b.bin",
+          "-OTA-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
+          "-OTA-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
+        ],
+        "ESP32 D2WD": [
+          "-D2WD-20251209-v1.27.0.bin",
+          "-D2WD-20251212-v1.27.0.bin",
+          "-D2WD-20250911-v1.26.1.bin",
+          "-D2WD-20250809-v1.26.0.bin",
+          "-D2WD-20250415-v1.25.0.bin",
+          "-D2WD-20241129-v1.24.1.bin",
+          "-D2WD-20241025-v1.24.0.bin",
+          "-D2WD-20240602-v1.23.0.bin",
+          "-D2WD-20240222-v1.22.2.bin",
+          "-D2WD-20240105-v1.22.1.bin",
+          "-D2WD-20231227-v1.22.0.bin",
+          "-D2WD-20231005-v1.21.0.bin",
+          "-D2WD-20230426-v1.20.0.bin",
+          "-D2WD-20220618-v1.19.1.bin",
+          "-D2WD-20220117-v1.18.bin",
+          "-D2WD-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-D2WD-20251203-v1.27.0-preview.491.g3f796b687b.bin",
+          "-D2WD-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
+          "-D2WD-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
+        ],
+        "ESP32 Unicore": [
+          "-UNICORE-20251209-v1.27.0.bin",
+          "-UNICORE-20251212-v1.27.0.bin",
+          "-UNICORE-20250911-v1.26.1.bin",
+          "-UNICORE-20250809-v1.26.0.bin",
+          "-UNICORE-20250415-v1.25.0.bin",
+          "-UNICORE-20241129-v1.24.1.bin",
+          "-UNICORE-20241025-v1.24.0.bin",
+          "-UNICORE-20240602-v1.23.0.bin",
+          "-UNICORE-20240222-v1.22.2.bin",
+          "-UNICORE-20240105-v1.22.1.bin",
+          "-UNICORE-20231227-v1.22.0.bin",
+          "-UNICORE-20231005-v1.21.0.bin",
+          "-UNICORE-20230426-v1.20.0.bin",
+          "-UNICORE-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-UNICORE-20251203-v1.27.0-preview.491.g3f796b687b.bin",
+          "-UNICORE-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
+          "-UNICORE-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
+        ],
         "Support for SPIRAM / WROVER": [
           "-SPIRAM-20251209-v1.27.0.bin",
+          "-SPIRAM-20251212-v1.27.0.bin",
           "-SPIRAM-20250911-v1.26.1.bin",
           "-SPIRAM-20250809-v1.26.0.bin",
           "-SPIRAM-20250415-v1.25.0.bin",
@@ -83,64 +146,6 @@
           "-SPIRAM-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-SPIRAM-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
           "-SPIRAM-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
-        ],
-        "ESP32 D2WD": [
-          "-D2WD-20251209-v1.27.0.bin",
-          "-D2WD-20250911-v1.26.1.bin",
-          "-D2WD-20250809-v1.26.0.bin",
-          "-D2WD-20250415-v1.25.0.bin",
-          "-D2WD-20241129-v1.24.1.bin",
-          "-D2WD-20241025-v1.24.0.bin",
-          "-D2WD-20240602-v1.23.0.bin",
-          "-D2WD-20240222-v1.22.2.bin",
-          "-D2WD-20240105-v1.22.1.bin",
-          "-D2WD-20231227-v1.22.0.bin",
-          "-D2WD-20231005-v1.21.0.bin",
-          "-D2WD-20230426-v1.20.0.bin",
-          "-D2WD-20220618-v1.19.1.bin",
-          "-D2WD-20220117-v1.18.bin",
-          "-D2WD-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
-          "-D2WD-20251203-v1.27.0-preview.491.g3f796b687b.bin",
-          "-D2WD-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-D2WD-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
-        ],
-        "Support for OTA": [
-          "-OTA-20251209-v1.27.0.bin",
-          "-OTA-20250911-v1.26.1.bin",
-          "-OTA-20250809-v1.26.0.bin",
-          "-OTA-20250415-v1.25.0.bin",
-          "-OTA-20241129-v1.24.1.bin",
-          "-OTA-20241025-v1.24.0.bin",
-          "-OTA-20240602-v1.23.0.bin",
-          "-OTA-20240222-v1.22.2.bin",
-          "-OTA-20240105-v1.22.1.bin",
-          "-OTA-20231227-v1.22.0.bin",
-          "-OTA-20231005-v1.21.0.bin",
-          "-OTA-20230426-v1.20.0.bin",
-          "-OTA-20220618-v1.19.1.bin",
-          "-OTA-20220117-v1.18.bin",
-          "-OTA-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
-          "-OTA-20251203-v1.27.0-preview.491.g3f796b687b.bin",
-          "-OTA-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-OTA-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
-        ],
-        "ESP32 Unicore": [
-          "-UNICORE-20251209-v1.27.0.bin",
-          "-UNICORE-20250911-v1.26.1.bin",
-          "-UNICORE-20250809-v1.26.0.bin",
-          "-UNICORE-20250415-v1.25.0.bin",
-          "-UNICORE-20241129-v1.24.1.bin",
-          "-UNICORE-20241025-v1.24.0.bin",
-          "-UNICORE-20240602-v1.23.0.bin",
-          "-UNICORE-20240222-v1.22.2.bin",
-          "-UNICORE-20240105-v1.22.1.bin",
-          "-UNICORE-20231227-v1.22.0.bin",
-          "-UNICORE-20231005-v1.21.0.bin",
-          "-UNICORE-20230426-v1.20.0.bin",
-          "-UNICORE-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
-          "-UNICORE-20251203-v1.27.0-preview.491.g3f796b687b.bin",
-          "-UNICORE-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-UNICORE-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ]
       }
     },
@@ -153,6 +158,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -181,6 +187,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -210,6 +217,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -231,6 +239,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -258,6 +267,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -288,6 +298,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
@@ -304,6 +315,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
@@ -322,6 +334,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -357,6 +370,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
@@ -366,6 +380,7 @@
         ],
         "2MiB flash": [
           "-FLASH_2M-20251209-v1.27.0.bin",
+          "-FLASH_2M-20251212-v1.27.0.bin",
           "-FLASH_2M-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-FLASH_2M-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-FLASH_2M-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
@@ -382,6 +397,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -412,6 +428,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
@@ -430,6 +447,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -458,6 +476,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
@@ -474,6 +493,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -495,6 +515,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -516,6 +537,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
@@ -532,6 +554,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -553,6 +576,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
@@ -560,12 +584,14 @@
         ],
         "Support for external C5 WiFi/BLE": [
           "-C5_WIFI-20251209-v1.27.0.bin",
+          "-C5_WIFI-20251212-v1.27.0.bin",
           "-C5_WIFI-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-C5_WIFI-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-C5_WIFI-20251203-v1.27.0-preview.490.g0b1a6bebae.bin"
         ],
         "Support for external C6 WiFi/BLE": [
           "-C6_WIFI-20251209-v1.27.0.bin",
+          "-C6_WIFI-20251212-v1.27.0.bin",
           "-C6_WIFI-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
           "-C6_WIFI-20251203-v1.27.0-preview.491.g3f796b687b.bin",
           "-C6_WIFI-20251203-v1.27.0-preview.490.g0b1a6bebae.bin"
@@ -581,6 +607,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -610,6 +637,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -640,6 +668,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -669,6 +698,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -699,6 +729,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -728,6 +759,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -757,6 +789,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -777,6 +810,7 @@
         ],
         "Support for Octal-SPIRAM": [
           "-SPIRAM_OCT-20251209-v1.27.0.bin",
+          "-SPIRAM_OCT-20251212-v1.27.0.bin",
           "-SPIRAM_OCT-20250911-v1.26.1.bin",
           "-SPIRAM_OCT-20250809-v1.26.0.bin",
           "-SPIRAM_OCT-20250415-v1.25.0.bin",
@@ -810,6 +844,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -836,6 +871,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -857,6 +893,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -885,6 +922,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -906,6 +944,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -932,6 +971,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -953,6 +993,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -981,6 +1022,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -1002,6 +1044,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -1030,6 +1073,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -1055,6 +1099,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
+          "-20251212-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
           "-20250415-v1.25.0.bin",
@@ -1087,18 +1132,9 @@
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
           "-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
-        "2MiB flash with ROMFS": [
-          "-FLASH_2M_ROMFS-20251209-v1.27.0.bin",
-          "-FLASH_2M_ROMFS-20250911-v1.26.1.bin",
-          "-FLASH_2M_ROMFS-20250809-v1.26.0.bin",
-          "-FLASH_2M_ROMFS-20250415-v1.25.0.bin",
-          "-FLASH_2M_ROMFS-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
-          "-FLASH_2M_ROMFS-20251203-v1.27.0-preview.491.g3f796b687b.bin",
-          "-FLASH_2M_ROMFS-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
-          "-FLASH_2M_ROMFS-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
-        ],
         "512kiB flash": [
           "-FLASH_512K-20251209-v1.27.0.bin",
+          "-FLASH_512K-20251212-v1.27.0.bin",
           "-FLASH_512K-20250911-v1.26.1.bin",
           "-FLASH_512K-20250809-v1.26.0.bin",
           "-FLASH_512K-20250415-v1.25.0.bin",
@@ -1131,8 +1167,20 @@
           "-FLASH_512K-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
           "-FLASH_512K-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
         ],
+        "2MiB flash with ROMFS": [
+          "-FLASH_2M_ROMFS-20251209-v1.27.0.bin",
+          "-FLASH_2M_ROMFS-20251212-v1.27.0.bin",
+          "-FLASH_2M_ROMFS-20250911-v1.26.1.bin",
+          "-FLASH_2M_ROMFS-20250809-v1.26.0.bin",
+          "-FLASH_2M_ROMFS-20250415-v1.25.0.bin",
+          "-FLASH_2M_ROMFS-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-FLASH_2M_ROMFS-20251203-v1.27.0-preview.491.g3f796b687b.bin",
+          "-FLASH_2M_ROMFS-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
+          "-FLASH_2M_ROMFS-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
+        ],
         "1MiB flash": [
           "-FLASH_1M-20251209-v1.27.0.bin",
+          "-FLASH_1M-20251212-v1.27.0.bin",
           "-FLASH_1M-20250911-v1.26.1.bin",
           "-FLASH_1M-20250809-v1.26.0.bin",
           "-FLASH_1M-20250415-v1.25.0.bin",
@@ -1158,6 +1206,7 @@
         ],
         "OTA compatible": [
           "-OTA-20251209-v1.27.0.bin",
+          "-OTA-20251212-v1.27.0.bin",
           "-OTA-20250911-v1.26.1.bin",
           "-OTA-20250809-v1.26.0.bin",
           "-OTA-20250415-v1.25.0.bin",
@@ -1196,6 +1245,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1229,6 +1279,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1256,6 +1307,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1285,6 +1337,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1314,6 +1367,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1343,6 +1397,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1372,6 +1427,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1391,6 +1447,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1420,6 +1477,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1432,6 +1490,7 @@
         ],
         "16 MiB Flash": [
           "-FLASH_16M-20251209-v1.27.0.uf2",
+          "-FLASH_16M-20251212-v1.27.0.uf2",
           "-FLASH_16M-20250911-v1.26.1.uf2",
           "-FLASH_16M-20250809-v1.26.0.uf2",
           "-FLASH_16M-20250415-v1.25.0.uf2",
@@ -1453,6 +1512,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1473,6 +1533,7 @@
         ],
         "8 MiB Flash": [
           "-FLASH_8M-20251209-v1.27.0.uf2",
+          "-FLASH_8M-20251212-v1.27.0.uf2",
           "-FLASH_8M-20250911-v1.26.1.uf2",
           "-FLASH_8M-20250809-v1.26.0.uf2",
           "-FLASH_8M-20250415-v1.25.0.uf2",
@@ -1494,6 +1555,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1519,6 +1581,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1544,6 +1607,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1569,6 +1633,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1598,6 +1663,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1627,6 +1693,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1646,6 +1713,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1674,6 +1742,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1701,6 +1770,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1717,20 +1787,22 @@
           "-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
           "-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
-        "4 MiB Flash": [
-          "-FLASH_4M-20251209-v1.27.0.uf2",
-          "-FLASH_4M-20250911-v1.26.1.uf2",
-          "-FLASH_4M-20250809-v1.26.0.uf2",
-          "-FLASH_4M-20250415-v1.25.0.uf2",
-          "-FLASH_4M-20241129-v1.24.1.uf2",
-          "-FLASH_4M-20241025-v1.24.0.uf2",
-          "-FLASH_4M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
-          "-FLASH_4M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-FLASH_4M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-FLASH_4M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        "8 MiB Flash": [
+          "-FLASH_8M-20251209-v1.27.0.uf2",
+          "-FLASH_8M-20251212-v1.27.0.uf2",
+          "-FLASH_8M-20250911-v1.26.1.uf2",
+          "-FLASH_8M-20250809-v1.26.0.uf2",
+          "-FLASH_8M-20250415-v1.25.0.uf2",
+          "-FLASH_8M-20241129-v1.24.1.uf2",
+          "-FLASH_8M-20241025-v1.24.0.uf2",
+          "-FLASH_8M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-FLASH_8M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-FLASH_8M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-FLASH_8M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
         "2 MiB Flash": [
           "-FLASH_2M-20251209-v1.27.0.uf2",
+          "-FLASH_2M-20251212-v1.27.0.uf2",
           "-FLASH_2M-20250911-v1.26.1.uf2",
           "-FLASH_2M-20250809-v1.26.0.uf2",
           "-FLASH_2M-20250415-v1.25.0.uf2",
@@ -1741,17 +1813,18 @@
           "-FLASH_2M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
           "-FLASH_2M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ],
-        "8 MiB Flash": [
-          "-FLASH_8M-20251209-v1.27.0.uf2",
-          "-FLASH_8M-20250911-v1.26.1.uf2",
-          "-FLASH_8M-20250809-v1.26.0.uf2",
-          "-FLASH_8M-20250415-v1.25.0.uf2",
-          "-FLASH_8M-20241129-v1.24.1.uf2",
-          "-FLASH_8M-20241025-v1.24.0.uf2",
-          "-FLASH_8M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
-          "-FLASH_8M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
-          "-FLASH_8M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
-          "-FLASH_8M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
+        "4 MiB Flash": [
+          "-FLASH_4M-20251209-v1.27.0.uf2",
+          "-FLASH_4M-20251212-v1.27.0.uf2",
+          "-FLASH_4M-20250911-v1.26.1.uf2",
+          "-FLASH_4M-20250809-v1.26.0.uf2",
+          "-FLASH_4M-20250415-v1.25.0.uf2",
+          "-FLASH_4M-20241129-v1.24.1.uf2",
+          "-FLASH_4M-20241025-v1.24.0.uf2",
+          "-FLASH_4M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-FLASH_4M-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
+          "-FLASH_4M-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
+          "-FLASH_4M-20251201-v1.27.0-preview.486.ge6a7dc1114.uf2"
         ]
       }
     },
@@ -1764,6 +1837,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1791,6 +1865,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1803,6 +1878,7 @@
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
+          "-RISCV-20251212-v1.27.0.uf2",
           "-RISCV-20250911-v1.26.1.uf2",
           "-RISCV-20250809-v1.26.0.uf2",
           "-RISCV-20250415-v1.25.0.uf2",
@@ -1824,6 +1900,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1834,6 +1911,7 @@
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
+          "-RISCV-20251212-v1.27.0.uf2",
           "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
@@ -1850,6 +1928,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1860,6 +1939,7 @@
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
+          "-RISCV-20251212-v1.27.0.uf2",
           "-RISCV-20250911-v1.26.1.uf2",
           "-RISCV-20250809-v1.26.0.uf2",
           "-RISCV-20250415-v1.25.0.uf2",
@@ -1879,6 +1959,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1889,6 +1970,7 @@
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
+          "-RISCV-20251212-v1.27.0.uf2",
           "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
@@ -1905,6 +1987,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1915,6 +1998,7 @@
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
+          "-RISCV-20251212-v1.27.0.uf2",
           "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
@@ -1931,6 +2015,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1941,6 +2026,7 @@
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
+          "-RISCV-20251212-v1.27.0.uf2",
           "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
@@ -1957,6 +2043,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1967,6 +2054,7 @@
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
+          "-RISCV-20251212-v1.27.0.uf2",
           "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
@@ -1983,6 +2071,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -1993,6 +2082,7 @@
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
+          "-RISCV-20251212-v1.27.0.uf2",
           "-RISCV-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-RISCV-20251203-v1.27.0-preview.491.g3f796b687b.uf2",
           "-RISCV-20251203-v1.27.0-preview.490.g0b1a6bebae.uf2",
@@ -2009,6 +2099,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2019,6 +2110,7 @@
         ],
         "RISC V": [
           "-RISCV-20251209-v1.27.0.uf2",
+          "-RISCV-20251212-v1.27.0.uf2",
           "-RISCV-20250911-v1.26.1.uf2",
           "-RISCV-20250809-v1.26.0.uf2",
           "-RISCV-20250415-v1.25.0.uf2",
@@ -2038,6 +2130,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2067,6 +2160,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2094,6 +2188,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2113,6 +2208,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2123,6 +2219,7 @@
         ],
         "Support for an external Flash chip": [
           "-SPIFLASH-20251209-v1.27.0.uf2",
+          "-SPIFLASH-20251212-v1.27.0.uf2",
           "-SPIFLASH-20250911-v1.26.1.uf2",
           "-SPIFLASH-20250809-v1.26.0.uf2",
           "-SPIFLASH-20250415-v1.25.0.uf2",
@@ -2142,6 +2239,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2171,6 +2269,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2190,6 +2289,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2219,6 +2319,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2246,6 +2347,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
@@ -2264,6 +2366,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
@@ -2282,6 +2385,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2309,6 +2413,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2338,6 +2443,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2364,6 +2470,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2383,6 +2490,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2402,6 +2510,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2431,6 +2540,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
@@ -2460,6 +2570,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.uf2",
+          "-20251212-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
