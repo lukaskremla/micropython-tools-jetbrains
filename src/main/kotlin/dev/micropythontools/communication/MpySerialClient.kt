@@ -42,7 +42,7 @@ internal fun SerialPort.openPortOrThrow() {
 
             // 16  Device busy/in use (Linux: EBUSY, macOS: similar)
             // 32 Sharing violation (Windows: port in use by another process)
-            16, 32 -> MpyBundle.message("comm.error.serial.port.busy", portName)
+            16, 32, 35 -> MpyBundle.message("comm.error.serial.port.busy", portName)
 
             // 2 Port not found (Linux/macOS: ENOENT)
             // 6 Invalid handle (Windows: ERROR_INVALID_HANDLE)
