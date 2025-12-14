@@ -176,7 +176,6 @@ internal class MpyPythonInterpreterService(private val project: Project) {
             prefix, "pip", "install",
             toInstall,
             "--disable-pip-version-check",
-            "--quiet",
             "--target",
             targetPath
         )
@@ -248,7 +247,7 @@ internal class MpyPythonInterpreterService(private val project: Project) {
 
                 onOutput?.invoke(text)
 
-                fullOutput.append(text)
+                fullOutput.append("$text\n")
             }
 
             override fun processTerminated(event: ProcessEvent) {
