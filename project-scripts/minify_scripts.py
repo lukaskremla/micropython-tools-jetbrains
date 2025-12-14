@@ -24,17 +24,15 @@ current_dir = os.path.dirname(path)
 project_dir = os.path.dirname(current_dir)
 pro_project_dir = os.path.dirname(project_dir)
 
-pro_source_dir = os.path.join(pro_project_dir, "proScripts")
+pro_source_dir = os.path.join(pro_project_dir, "proScripts/MicroPythonSource")
 mpy_source_dir = os.path.join(project_dir, "project-scripts/MicroPythonSource")
-scripts_dir = os.path.join(project_dir, "scripts")
-target_dir = os.path.join(scripts_dir, "MicroPythonMinified")
+target_dir = os.path.join(project_dir, "src/main/resources/scripts")
 
 try:
-    shutil.rmtree(scripts_dir)
+    shutil.rmtree(target_dir)
 except FileNotFoundError:
     pass
 
-os.mkdir(scripts_dir)
 os.mkdir(target_dir)
 
 print("Running MicroPython script minifier...")

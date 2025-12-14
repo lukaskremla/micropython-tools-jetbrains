@@ -20,7 +20,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.RawProgressReporter
-import dev.micropythontools.core.MpyPaths
+import dev.micropythontools.core.MpyPaths.BUNDLED_FIRMWARE_FLASHING_INFO_PATH
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
 import io.ktor.util.*
@@ -101,7 +101,7 @@ internal class MpyFirmwareService(private val project: Project) {
 
     init {
         val bundledJsonString =
-            javaClass.getResourceAsStream("/bundled/${MpyPaths.BUNDLED_FLASHING_INFO_JSON_FILE_NAME}")!!
+            javaClass.getResourceAsStream(BUNDLED_FIRMWARE_FLASHING_INFO_PATH)!!
                 .bufferedReader()
                 .readText()
 
@@ -217,10 +217,22 @@ internal class MpyFirmwareService(private val project: Project) {
 
         // Get the link part for this variant and version
         val linkParts = board.firmwareNameToLinkParts[variantName]
-            ?: throw IllegalArgumentException(MpyBundle.message("firmware.service.error.firmware.variant.not.found", variantName, board.name))
+            ?: throw IllegalArgumentException(
+                MpyBundle.message(
+                    "firmware.service.error.firmware.variant.not.found",
+                    variantName,
+                    board.name
+                )
+            )
 
         val linkPart = linkParts.find { it.contains(version) }
-            ?: throw IllegalArgumentException(MpyBundle.message("firmware.service.error.version.not.found", version, variantName))
+            ?: throw IllegalArgumentException(
+                MpyBundle.message(
+                    "firmware.service.error.version.not.found",
+                    version,
+                    variantName
+                )
+            )
 
         val downloadLinkPart = board.id + linkPart
 
@@ -260,7 +272,12 @@ internal class MpyFirmwareService(private val project: Project) {
                         .await()
                 }.let { response ->
                     if (response.statusCode() != 200) {
-                        throw RuntimeException(MpyBundle.message("firmware.service.error.download.failed", response.statusCode()))
+                        throw RuntimeException(
+                            MpyBundle.message(
+                                "firmware.service.error.download.failed",
+                                response.statusCode()
+                            )
+                        )
                     }
 
                     val inputStream = response.body()
@@ -269,7 +286,12 @@ internal class MpyFirmwareService(private val project: Project) {
                     var bytesRead: Int
                     var totalBytesRead = 0L
 
-                    reporter.details(MpyBundle.message("firmware.service.progress.starting.download", formatSize(contentLength)))
+                    reporter.details(
+                        MpyBundle.message(
+                            "firmware.service.progress.starting.download",
+                            formatSize(contentLength)
+                        )
+                    )
 
                     while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                         outputStream.write(buffer, 0, bytesRead)
@@ -278,7 +300,12 @@ internal class MpyFirmwareService(private val project: Project) {
                         // Update progress
                         val percentage = (totalBytesRead * 100 / contentLength).toInt()
                         reporter.details(
-                            MpyBundle.message("firmware.service.progress.downloaded", formatSize(totalBytesRead), formatSize(contentLength), percentage)
+                            MpyBundle.message(
+                                "firmware.service.progress.downloaded",
+                                formatSize(totalBytesRead),
+                                formatSize(contentLength),
+                                percentage
+                            )
                         )
                         reporter.fraction(totalBytesRead.toDouble() / contentLength)
 
@@ -295,7 +322,12 @@ internal class MpyFirmwareService(private val project: Project) {
                         .await()
                 }.let { response ->
                     if (response.statusCode() != 200) {
-                        throw RuntimeException(MpyBundle.message("firmware.service.error.download.failed", response.statusCode()))
+                        throw RuntimeException(
+                            MpyBundle.message(
+                                "firmware.service.error.download.failed",
+                                response.statusCode()
+                            )
+                        )
                     }
                     response.body()
                 }
@@ -327,7 +359,12 @@ internal class MpyFirmwareService(private val project: Project) {
                 startsWith("esp") -> MpyEspFlasher(project)
                 startsWith("samd") -> MpyUf2Flasher(Uf2BoardFamily.SAMD)
                 startsWith("rp2") -> MpyUf2Flasher(Uf2BoardFamily.RP2)
-                else -> throw RuntimeException(MpyBundle.message("firmware.service.error.mcu.not.supported", deviceType))
+                else -> throw RuntimeException(
+                    MpyBundle.message(
+                        "firmware.service.error.mcu.not.supported",
+                        deviceType
+                    )
+                )
             }
         }
     }

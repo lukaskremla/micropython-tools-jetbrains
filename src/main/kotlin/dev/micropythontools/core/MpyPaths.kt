@@ -42,11 +42,16 @@ internal object MpyPaths {
         dir
     }
 
+    // Bundled resource paths
+    const val BUNDLED_STUB_PACKAGE_INFO_PATH = "bundledInfo/bundled_stubs_index_info.json"
+    const val BUNDLED_FIRMWARE_FLASHING_INFO_PATH = "bundledInfo/bundled_flashing_info.json"
+    const val BUNDLED_RP2_NUKE_PATH = "RP2Nuke/universal_flash_nuke.uf2"
+
+    // Stub package management constants
     const val STUB_PACKAGE_METADATA_FILE_NAME = "micropython-tools-stub-metadata.json"
     const val STDLIB_STUB_PACKAGE_NAME = "micropython-stdlib-stubs"
-    const val BUNDLED_FLASHING_INFO_JSON_FILE_NAME = "bundled_flashing_info.json"
-    const val BUNDLED_STUB_PACKAGE_INFO_JSON_FILE_NAME = "bundled_stubs_index_info.json"
-    const val RP2_UNIVERSAL_FLASH_NUKE_FILE_NAME = "universal_flash_nuke.uf2"
+
+    // Package management constants
     const val PYTHON_PACKAGE_DIST_INFO_SUFFIX = ".dist-info"
     const val ESPTOOL_PACKAGE_NAME = "esptool"
     const val ESPTOOL_VERSION = "5.1.0"

@@ -40,6 +40,7 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.io.delete
 import com.jetbrains.python.library.PythonLibraryType
 import dev.micropythontools.core.MpyPaths
+import dev.micropythontools.core.MpyPaths.BUNDLED_STUB_PACKAGE_INFO_PATH
 import dev.micropythontools.core.MpyPaths.PYTHON_PACKAGE_DIST_INFO_SUFFIX
 import dev.micropythontools.core.MpyPaths.STUB_PACKAGE_METADATA_FILE_NAME
 import dev.micropythontools.core.MpyPythonInterpreterService
@@ -147,7 +148,7 @@ internal class MpyStubPackageService(private val project: Project) {
 
     init {
         val bundledJsonString =
-            javaClass.getResourceAsStream("/bundled/${MpyPaths.BUNDLED_STUB_PACKAGE_INFO_JSON_FILE_NAME}")!!
+            javaClass.getResourceAsStream(BUNDLED_STUB_PACKAGE_INFO_PATH)!!
                 .bufferedReader()
                 .readText()
 

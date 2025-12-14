@@ -9,7 +9,7 @@ The Changelog
   using compression
 * Halved the distributed plugin archive size by optimizing the build process
 * Ensured Install/Update dependency logic has exceptions checked and logged
-* Improved cancellability of dependency/stub packages
+* Improved cancellability of dependency/stub package installation, increased timeout to fix Windows related problems
 
 2025.3.3 - 11.12.2025
 ------------------

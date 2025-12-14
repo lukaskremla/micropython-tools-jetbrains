@@ -20,7 +20,7 @@ import dev.micropythontools.i18n.MpyBundle
 
 internal object MpyScripts {
     fun retrieveMpyScriptAsString(scriptFileName: String): String {
-        val resourcePath = "/scripts/MicroPythonMinified/$scriptFileName"
+        val resourcePath = "/scripts/$scriptFileName"
         val stream = MpyScripts::class.java.getResourceAsStream(resourcePath)
             ?: error(MpyBundle.message("script.not.found.error", resourcePath))
         val lines = stream.bufferedReader(Charsets.UTF_8).use { it.readLines() }.toMutableList()

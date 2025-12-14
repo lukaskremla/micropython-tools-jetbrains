@@ -22,7 +22,7 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import dev.micropythontools.communication.LONG_LONG_TIMEOUT
 import dev.micropythontools.communication.SHORT_DELAY
 import dev.micropythontools.communication.TIMEOUT
-import dev.micropythontools.core.MpyPaths
+import dev.micropythontools.core.MpyPaths.BUNDLED_RP2_NUKE_PATH
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.settings.EMPTY_VOLUME_TEXT
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
@@ -64,7 +64,7 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
                 Files.createTempFile("flash_nuke", ".uf2")
             }
             try {
-                javaClass.getResourceAsStream("/bundled/${MpyPaths.RP2_UNIVERSAL_FLASH_NUKE_FILE_NAME}")!!
+                javaClass.getResourceAsStream(BUNDLED_RP2_NUKE_PATH)!!
                     .use { input ->
                         Files.copy(input, nukeFile, StandardCopyOption.REPLACE_EXISTING)
                     }
@@ -187,7 +187,14 @@ internal class MpyUf2Flasher(private val boardFamily: Uf2BoardFamily) : MpyFlash
 
                     val percentage = (copiedBytes * 100 / totalBytes).toInt()
                     reporter.fraction(copiedBytes.toDouble() / totalBytes)
-                    reporter.details(MpyBundle.message("flash.uf2.progress.copied", formatSize(copiedBytes), formatSize(totalBytes), percentage))
+                    reporter.details(
+                        MpyBundle.message(
+                            "flash.uf2.progress.copied",
+                            formatSize(copiedBytes),
+                            formatSize(totalBytes),
+                            percentage
+                        )
+                    )
 
                     checkCanceled()
                 }

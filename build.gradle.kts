@@ -4,6 +4,18 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+plugins {
+    kotlin("jvm") version "2.2.21"
+    kotlin("plugin.serialization") version "2.2.21"
+    id("org.jetbrains.intellij.platform") version "2.10.5"
+}
+
 repositories {
     maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     maven("https://cache-redirector.jetbrains.com/maven-central")
@@ -14,10 +26,12 @@ repositories {
     }
 }
 
-plugins {
-    kotlin("jvm") version "2.2.21"
-    kotlin("plugin.serialization") version "2.2.21"
-    id("org.jetbrains.intellij.platform") version "2.10.5"
+@Suppress("unused")
+sourceSets {
+    val main by getting {
+        kotlin.srcDir("src/main/kotlin")
+        resources.srcDir("src/main/resources")
+    }
 }
 
 configurations {
@@ -80,18 +94,7 @@ intellijPlatform {
     }
 
     instrumentCode = false
-
-    publishing {
-        val tokenFile = file("publish-token.txt")
-
-        if (tokenFile.exists()) {
-            val tokenFileContents = tokenFile.readText()
-
-            if (tokenFileContents.isNotBlank()) {
-                token = tokenFileContents
-            }
-        }
-    }
+    buildSearchableOptions = false
 
     pluginVerification {
         ides {
@@ -113,9 +116,16 @@ intellijPlatform {
 intellijPlatformTesting {
     val testPlatformVersion = providers.gradleProperty("testPlatformVersion")
 
-    val runPyCharmCommunity by runIde.registering {
+    val runPyCharm by runIde.registering {
         type = IntelliJPlatformType.PyCharm
         version = testPlatformVersion
+
+        val testProjectPath = file("$rootProject/test-projects/TestFileSet").absolutePath
+
+        task {
+            args = listOf(testProjectPath)
+            systemProperty("idea.trust.all.projects", "true")
+        }
     }
 
     val runCLion by runIde.registering {
@@ -136,41 +146,90 @@ tasks {
         }
     }
 
-    register<Exec>("runPythonBuildScripts") {
-        description = "Run Python build scripts to prepare bundled resources"
+    register<Exec>("runMpyScriptMinification") {
+        description = "Minify MicroPython scripts and put them in the resources directory"
         group = "build"
 
-        // Use the virtual environment's Python
         val pythonExecutable = if (System.getProperty("os.name").lowercase().contains("win")) {
             ".venv/Scripts/python.exe"
         } else {
             ".venv/bin/python3"
         }
 
-        executable = file("$ossDir/$pythonExecutable").absolutePath
-        args = listOf("project-scripts/run_build_python_scripts.py")
-        workingDir = projectDir
+        executable = file(pythonExecutable).absolutePath
+        args = listOf("project-scripts/minify_scripts.py")
+        workingDir = rootProject
+    }
+
+    register<DefaultTask>("processBundledResources") {
+        description = "Process bundled resources from data directory"
+        group = "build"
+
+        val boardsJson = file("$rootProject/data/micropython_boards.json")
+        val stubsJson = file("$rootProject/data/micropython_stubs.json")
+        val bundledDir = file("$rootProject/src/main/resources/bundledInfo")
+
+        val flashingInfoFile = bundledDir.resolve("bundled_flashing_info.json")
+        val stubsInfoFile = bundledDir.resolve("bundled_stubs_index_info.json")
+
+        inputs.files(boardsJson, stubsJson)
+        outputs.files(flashingInfoFile, stubsInfoFile)
+
+        doLast {
+            println("Processing bundled resources...")
+
+            // Clean and recreate bundled directory
+            bundledDir.deleteRecursively()
+            bundledDir.mkdirs()
+
+            println("Bundling flashing info")
+
+            // Process boards JSON
+            val boardsContent = boardsJson.readText()
+            val boardsData = groovy.json.JsonSlurper().parseText(boardsContent) as Map<*, *>
+
+            val flashingInfo = mapOf(
+                "compatibleIndexVersion" to boardsData["version"],
+                "supportedPorts" to boardsData["supportedPorts"],
+                "portToExtension" to boardsData["portToExtension"],
+                "espMcuToOffset" to boardsData["espMcuToOffset"]
+            )
+
+            flashingInfoFile.writeText(
+                groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(flashingInfo))
+            )
+
+            println("Bundling stub info")
+
+            // Process stubs JSON
+            val stubsContent = stubsJson.readText()
+            val stubsData = groovy.json.JsonSlurper().parseText(stubsContent) as Map<*, *>
+
+            val stubsInfo = mapOf(
+                "compatibleIndexVersion" to stubsData["version"]
+            )
+
+            stubsInfoFile.writeText(
+                groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(stubsInfo))
+            )
+
+            println("Bundled resources processed successfully")
+        }
     }
 
     named<ProcessResources>("processResources") {
-        dependsOn("runPythonBuildScripts")
+        dependsOn("runMpyScriptMinification")
+        dependsOn("processBundledResources")
 
-        from("scripts") {
-            into("scripts")
-            include("**/*")
-        }
-
-        from("bundled") {
-            into("bundled")
-            include("**/*")
-        }
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
         // Include EULA.txt in the archive
-        from(".") {
+        from(rootProject.toString()) {
             into("license")
             include("EULA.txt")
         }
     }
+
     test {
         testLogging.showExceptions = true
         useJUnitPlatform()

@@ -76,6 +76,8 @@
         <!-- JPS plugin for MpyJpsModelSerializerExtension -->
         <jps.plugin/>
 
+        <!-- File handling -->
+
         <!-- Inspections -->
         <!--suppress PluginXmlCapitalization -->
         <localInspection language="Python"
