@@ -734,6 +734,9 @@ internal class MpyFlashFirmwareDialog(private val project: Project) : DialogWrap
 
                     // Handle after tasks
                     if (isEsp && connectAfter) {
+                        settings.state.usingUart = true
+                        settings.state.portName = target
+
                         deviceService.doConnect(reporter, forceLegacyVolumeSupport = true)
 
                         /*if (eraseFileSystemAfter.component.isSelected && !supportsEraseFlash) {
