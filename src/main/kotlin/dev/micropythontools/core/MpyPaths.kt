@@ -43,9 +43,9 @@ internal object MpyPaths {
     }
 
     // Bundled resource paths
-    const val BUNDLED_STUB_PACKAGE_INFO_PATH = "bundledInfo/bundled_stubs_index_info.json"
-    const val BUNDLED_FIRMWARE_FLASHING_INFO_PATH = "bundledInfo/bundled_flashing_info.json"
-    const val BUNDLED_RP2_NUKE_PATH = "RP2Nuke/universal_flash_nuke.uf2"
+    const val BUNDLED_STUB_PACKAGE_INFO_PATH = "/bundledInfo/bundled_stubs_index_info.json"
+    const val BUNDLED_FIRMWARE_FLASHING_INFO_PATH = "/bundledInfo/bundled_flashing_info.json"
+    const val BUNDLED_RP2_NUKE_PATH = "/RP2Nuke/universal_flash_nuke.uf2"
 
     // Stub package management constants
     const val STUB_PACKAGE_METADATA_FILE_NAME = "micropython-tools-stub-metadata.json"
