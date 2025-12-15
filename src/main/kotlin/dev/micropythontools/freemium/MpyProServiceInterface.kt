@@ -47,8 +47,11 @@ internal interface MpyProServiceInterface {
         timedOutMessage: String,
         action: suspend (RawProgressReporter) -> T,
         cleanUpAction: (suspend (RawProgressReporter) -> Unit)? = null,
-        finalCheckAction: (() -> Unit)? = null
+        finalCheckAction: (() -> Unit)? = null,
+        onFinished: (() -> Unit)? = null
     ): T?
+
+    suspend fun ensureBackgroundReplJobCancelled()
 
     fun getCompressUploadTotalSize(fileToTargetPath: MutableMap<VirtualFile, String>): Double
 

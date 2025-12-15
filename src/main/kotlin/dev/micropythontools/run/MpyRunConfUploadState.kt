@@ -21,50 +21,68 @@ import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.filters.TextConsoleBuilderFactory
-import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
+import dev.micropythontools.communication.MpyDeviceService
 import dev.micropythontools.communication.MpyFileTransferService
-import dev.micropythontools.i18n.MpyBundle
-import dev.micropythontools.settings.MpySettingsService
-import io.ktor.utils.io.*
+import dev.micropythontools.freemium.MpyProServiceInterface
+import kotlinx.coroutines.*
+
+internal class RunConfigurationUploadContext(val consoleView: ConsoleView) {
+    private val completionDeferred = CompletableDeferred<Boolean>()
+
+    val isComplete: Boolean
+        get() = completionDeferred.isCompleted
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val result: Boolean?
+        get() = if (completionDeferred.isCompleted) {
+            completionDeferred.getCompleted()
+        } else {
+            null
+        }
+
+    fun markComplete(success: Boolean) {
+        completionDeferred.complete(success)
+    }
+}
 
 internal class MpyRunConfUploadState(
     private val project: Project,
     private val options: MpyRunConfUploadOptions
 ) : RunProfileState {
 
-    private val settings = project.service<MpySettingsService>()
+    private val proService = project.service<MpyProServiceInterface>()
+    private val deviceService = project.service<MpyDeviceService>()
     private val fileTransferService = project.service<MpyFileTransferService>()
 
-    override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult? {
+    override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult {
         // Create console view
         val consoleView = TextConsoleBuilderFactory.getInstance()
             .createBuilder(project)
             .console
 
         // Create and attach process handler
-        val processHandler = NopProcessHandler()
+        val processHandler = MpyRunConfProcessHandler()
         consoleView.attachToProcess(processHandler)
         processHandler.startNotify()
 
-        var success = false
+        val runConfigurationUploadContext = RunConfigurationUploadContext(consoleView)
 
         try {
             with(options) {
                 when (options.uploadMode) {
                     0 -> {
-                        success = fileTransferService.uploadProject(
-                            consoleView,
+                        fileTransferService.uploadProject(
+                            runConfigurationUploadContext,
                             excludedPaths.toSet(),
                             synchronize,
                             excludePaths,
                             resetOnSuccess,
-                            switchToReplOnSuccess,
-                            forceBlocking
+                            switchToReplOnSuccess
                         )
                     }
 
@@ -73,15 +91,14 @@ internal class MpyRunConfUploadState(
                             StandardFileSystems.local().findFileByPath(path)
                         }.toSet()
 
-                        success = fileTransferService.uploadItems(
-                            consoleView,
+                        fileTransferService.uploadItems(
+                            runConfigurationUploadContext,
                             toUpload,
                             excludedPaths.toSet(),
                             synchronize,
                             excludePaths,
                             resetOnSuccess,
-                            switchToReplOnSuccess,
-                            forceBlocking
+                            switchToReplOnSuccess
                         )
                     }
 
@@ -105,8 +122,8 @@ internal class MpyRunConfUploadState(
                                 acc
                             }?.toSet()
 
-                        success = fileTransferService.performUpload(
-                            consoleView = consoleView,
+                        fileTransferService.performUpload(
+                            runConfigurationUploadContext = runConfigurationUploadContext,
                             initialFilesToUpload = toUpload,
                             relativeToFolders = setOf(relativeToFolder),
                             targetDestination = options.uploadToPath ?: "/",
@@ -115,27 +132,36 @@ internal class MpyRunConfUploadState(
                             shouldExcludePaths = excludePaths,
                             customPathFolders = customPathFolders ?: emptySet(),
                             resetOnSuccess = resetOnSuccess,
-                            switchToReplOnSuccess = switchToReplOnSuccess,
-                            forceBlocking = forceBlocking
+                            switchToReplOnSuccess = switchToReplOnSuccess
                         )
                     }
                 }
             }
-        } catch (e: CancellationException) {
+
+            deviceService.cs.launch(Dispatchers.IO) {
+                // Keep monitoring while upload is running
+                while (!runConfigurationUploadContext.isComplete) {
+                    // Check if the run configuration was terminated
+                    if (processHandler.isProcessTerminating || processHandler.isProcessTerminated) {
+                        proService.ensureBackgroundReplJobCancelled() // Cancel the coroutine first
+                        break
+                    }
+
+                    delay(200)
+                }
+
+                // Notify of the result
+                if (runConfigurationUploadContext.result ?: false) {
+                    processHandler.completeWithSuccess()
+                } else {
+                    processHandler.completeWithFailure()
+                }
+            }
+        } catch (e: Throwable) {
+            processHandler.completeWithFailure()
             throw e
-        } catch (e: Exception) {
-            consoleView.print(
-                "${MpyBundle.message("run.conf.upload.state.error.execution", e.message ?: "")}\n",
-                ConsoleViewContentType.ERROR_OUTPUT
-            )
-        } finally {
-            processHandler.destroyProcess()
         }
 
-        return if ((!settings.state.backgroundUploadsDownloads || options.forceBlocking) && !success) {
-            null
-        } else {
-            DefaultExecutionResult(consoleView, processHandler)
-        }
+        return DefaultExecutionResult(consoleView, processHandler)
     }
 }

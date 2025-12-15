@@ -28,13 +28,11 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.project.stateStore
 import com.jetbrains.python.sdk.PythonSdkUtil
 import dev.micropythontools.i18n.MpyBundle
 import dev.micropythontools.sourceroots.MpySourceRootType
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 internal class CachedSnapshot(
@@ -64,15 +62,6 @@ internal val VirtualFile.crc32: String
 @Service(Service.Level.PROJECT)
 internal class MpyProjectFileService(private val project: Project) {
     private fun VirtualFile.leadingDot() = this.name.startsWith(".")
-
-    fun updateProjectFiles(asynchronous: Boolean = false, delay: Boolean = false) {
-        runWithModalProgressBlocking(project, MpyBundle.message("upload.progress.updating.project.files")) {
-            if (delay) delay(2000)
-            withContext(Dispatchers.EDT) {
-                project.guessProjectDir()?.refresh(asynchronous, true)
-            }
-        }
-    }
 
     fun collectExcluded(): Set<VirtualFile> {
         val ideaDir = project.stateStore.directoryStorePath?.let { VfsUtil.findFile(it, false) }
@@ -149,78 +138,79 @@ internal class MpyProjectFileService(private val project: Project) {
         }
     }
 
-    fun collectFilesAndFolders(
+    suspend fun collectFilesAndFolders(
         initialFilesToCollect: Set<VirtualFile> = emptySet(),
         initialIsProjectCollection: Boolean = false,
     ): Pair<Set<VirtualFile>, Set<VirtualFile>> {
-        FileDocumentManager.getInstance().saveAllDocuments()
+        val projectDir = project.guessProjectDir()
+            ?: throw RuntimeException(MpyBundle.message("upload.error.could.not.locate.project.root"))
 
-        updateProjectFiles()
-
-        return runWithModalProgressBlocking(project, "Collecting files...") {
-            val excludedFolders = collectExcluded()
-            val sourceFolders = collectMpySourceRoots()
-            val testFolders = collectTestRoots()
-            val projectDir = project.guessProjectDir()
-                ?: throw RuntimeException(MpyBundle.message("upload.error.could.not.locate.project.root"))
-
-            var isProjectCollection = initialIsProjectCollection
-
-            var filesToCollect =
-                if (initialIsProjectCollection) collectProjectCollectibles().toMutableList() else initialFilesToCollect.toMutableList()
-            val foldersToUpload = mutableSetOf<VirtualFile>()
-
-            var i = 0
-            while (i < filesToCollect.size) {
-                val file = filesToCollect[i]
-
-                val shouldSkip = !file.isValid ||
-                        // Only skip leading dot files unless it's a project dir
-                        // or unless it's in the initial list, which means the user explicitly selected it
-                        (file.leadingDot() && file != projectDir && !initialFilesToCollect.contains(file)) ||
-                        // Skip files explicitly ignored by the IDE
-                        FileTypeRegistry.getInstance().isFileIgnored(file) ||
-                        // All excluded folders and their children are always meant to be skipped
-                        excludedFolders.any { VfsUtil.isAncestor(it, file, false) } ||
-                        // Skip test folders and their children if it's a project upload or if they weren't explicitly selected by the user
-                        (testFolders.any { VfsUtil.isAncestor(it, file, false) } &&
-                                (isProjectCollection || !initialFilesToCollect.any {
-                                    VfsUtil.isAncestor(
-                                        it,
-                                        file,
-                                        false
-                                    )
-                                })) ||
-                        // For project uploads, if at least one MicroPython Sources Root was selected
-                        // then only contents of MicroPython Sources Roots are to be uploaded
-                        (isProjectCollection && sourceFolders.isNotEmpty() &&
-                                !sourceFolders.any { VfsUtil.isAncestor(it, file, false) })
-
-                when {
-                    shouldSkip -> {
-                        filesToCollect.removeAt(i)
-                    }
-
-                    file == projectDir -> {
-                        // If a project root is found start over and treat this as a project upload
-                        i = 0
-                        filesToCollect.clear()
-                        filesToCollect = collectProjectCollectibles().toMutableList()
-                        isProjectCollection = true
-                    }
-
-                    file.isDirectory -> {
-                        filesToCollect.addAll(file.children)
-                        filesToCollect.removeAt(i)
-
-                        foldersToUpload.add(file)
-                    }
-
-                    else -> i++
-                }
-            }
-
-            Pair(filesToCollect.toSet(), foldersToUpload.toSet())
+        withContext(Dispatchers.EDT) {
+            FileDocumentManager.getInstance().saveAllDocuments()
         }
+
+        projectDir.refresh(false, true)
+
+        val excludedFolders = collectExcluded()
+        val sourceFolders = collectMpySourceRoots()
+        val testFolders = collectTestRoots()
+
+        var isProjectCollection = initialIsProjectCollection
+
+        var filesToCollect =
+            if (initialIsProjectCollection) collectProjectCollectibles().toMutableList() else initialFilesToCollect.toMutableList()
+        val foldersToUpload = mutableSetOf<VirtualFile>()
+
+        var i = 0
+        while (i < filesToCollect.size) {
+            val file = filesToCollect[i]
+
+            val shouldSkip = !file.isValid ||
+                    // Only skip leading dot files unless it's a project dir
+                    // or unless it's in the initial list, which means the user explicitly selected it
+                    (file.leadingDot() && file != projectDir && !initialFilesToCollect.contains(file)) ||
+                    // Skip files explicitly ignored by the IDE
+                    FileTypeRegistry.getInstance().isFileIgnored(file) ||
+                    // All excluded folders and their children are always meant to be skipped
+                    excludedFolders.any { VfsUtil.isAncestor(it, file, false) } ||
+                    // Skip test folders and their children if it's a project upload or if they weren't explicitly selected by the user
+                    (testFolders.any { VfsUtil.isAncestor(it, file, false) } &&
+                            (isProjectCollection || !initialFilesToCollect.any {
+                                VfsUtil.isAncestor(
+                                    it,
+                                    file,
+                                    false
+                                )
+                            })) ||
+                    // For project uploads, if at least one MicroPython Sources Root was selected
+                    // then only contents of MicroPython Sources Roots are to be uploaded
+                    (isProjectCollection && sourceFolders.isNotEmpty() &&
+                            !sourceFolders.any { VfsUtil.isAncestor(it, file, false) })
+
+            when {
+                shouldSkip -> {
+                    filesToCollect.removeAt(i)
+                }
+
+                file == projectDir -> {
+                    // If a project root is found start over and treat this as a project upload
+                    i = 0
+                    filesToCollect.clear()
+                    filesToCollect = collectProjectCollectibles().toMutableList()
+                    isProjectCollection = true
+                }
+
+                file.isDirectory -> {
+                    filesToCollect.addAll(file.children)
+                    filesToCollect.removeAt(i)
+
+                    foldersToUpload.add(file)
+                }
+
+                else -> i++
+            }
+        }
+
+        return Pair(filesToCollect.toSet(), foldersToUpload.toSet())
     }
 }

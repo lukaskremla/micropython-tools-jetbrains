@@ -93,7 +93,7 @@ internal class MpyRunConfExecute(
             return null
         }
 
-        return MpyRunConfExecuteState(project, options, name)
+        return MpyRunConfExecuteState(project, options)
     }
 
     override fun checkConfiguration() {

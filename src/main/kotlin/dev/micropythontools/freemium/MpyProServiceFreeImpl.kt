@@ -101,8 +101,11 @@ internal class MpyProServiceFreeImpl() : MpyProServiceInterface {
         timedOutMessage: String,
         action: suspend (RawProgressReporter) -> T,
         cleanUpAction: (suspend (RawProgressReporter) -> Unit)?,
-        finalCheckAction: (() -> Unit)?
+        finalCheckAction: (() -> Unit)?,
+        onFinished: (() -> Unit)?
     ): T = fail()
+
+    override suspend fun ensureBackgroundReplJobCancelled() = Unit
 
     override fun getCompressUploadTotalSize(fileToTargetPath: MutableMap<VirtualFile, String>): Double = fail()
 

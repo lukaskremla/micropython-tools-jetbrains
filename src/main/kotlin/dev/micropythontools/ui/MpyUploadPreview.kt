@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.OnePixelSplitter
@@ -53,6 +52,7 @@ import javax.swing.tree.DefaultTreeModel
 
 internal class MpyUploadPreview(
     project: Project,
+    private val allProjectFiles: List<VirtualFile>,
     private val shouldSynchronize: Boolean,
     private val shouldExcludePaths: Boolean,
     private val allItemsToUpload: Set<VirtualFile>,
@@ -87,7 +87,7 @@ internal class MpyUploadPreview(
 
     private fun createProjectTreeModel(): DefaultTreeModel {
         val previewNodes = mutableSetOf<PreviewNode>()
-        VfsUtilCore.iterateChildrenRecursively(projectDir, null) { file ->
+        allProjectFiles.forEach { file ->
             val path = VfsUtil.getRelativePath(file, projectDir, '/') ?: file.name
 
             val fileStatus = if (allItemsToUpload.contains(file)) FileStatus.NOT_CHANGED else FileStatus.IGNORED
@@ -103,7 +103,6 @@ internal class MpyUploadPreview(
             ) {
                 previewNodes.add(node)
             }
-            true
         }
 
         val root = PreviewDirNode(projectDir.name, projectDir.name, FileStatus.NOT_CHANGED, AllIcons.Nodes.Folder)

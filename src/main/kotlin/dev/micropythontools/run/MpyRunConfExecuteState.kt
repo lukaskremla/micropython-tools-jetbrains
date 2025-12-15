@@ -21,12 +21,8 @@ import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.filters.TextConsoleBuilderFactory
-import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -37,8 +33,7 @@ import dev.micropythontools.i18n.MpyBundle
 
 internal class MpyRunConfExecuteState(
     private val project: Project,
-    private val options: MpyRunConfExecuteOptions,
-    private val fileName: String
+    private val options: MpyRunConfExecuteOptions
 ) : RunProfileState {
 
     override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult {
@@ -50,7 +45,7 @@ internal class MpyRunConfExecuteState(
             .console
 
         // Create and attach process handler
-        val processHandler = NopProcessHandler()
+        val processHandler = MpyRunConfProcessHandler()
         consoleView.attachToProcess(processHandler)
         processHandler.startNotify()
 
@@ -61,7 +56,7 @@ internal class MpyRunConfExecuteState(
             FileDocumentManager.getInstance().saveAllDocuments()
             val file = StandardFileSystems.local().findFileByPath(path)!!
             val code = file.readText()
-            
+
             deviceService.performReplAction(
                 project,
                 connectionRequired = true,
@@ -72,24 +67,28 @@ internal class MpyRunConfExecuteState(
                 timedOutMessage = MpyBundle.message("action.execute.timeout"),
                 action = { _ ->
                     deviceService.instantRun(code)
-                })
+                }
+            )
 
             if (switchToReplOnSuccess) deviceService.activateRepl()
-            
-            consoleView.print("${MpyBundle.message("run.conf.execute.state.execution.completed")}\n", ConsoleViewContentType.NORMAL_OUTPUT)
-        } catch (e: Throwable) {
-            consoleView.print("${MpyBundle.message("run.conf.execute.state.error.execution", e.message ?: e.javaClass.simpleName)}\n", ConsoleViewContentType.ERROR_OUTPUT)
-            
-            Notifications.Bus.notify(
-                Notification(
-                    MpyBundle.message("notification.group.name"),
-                    MpyBundle.message("run.conf.error.failed.to.execute.title", fileName),
-                    MpyBundle.message("run.conf.error.failed.to.execute.message", e.message ?: e.javaClass.simpleName),
-                    NotificationType.ERROR
-                ), project
+
+            consoleView.print(
+                "${MpyBundle.message("run.conf.execute.state.execution.completed")}\n",
+                ConsoleViewContentType.NORMAL_OUTPUT
             )
-        } finally {
-            processHandler.destroyProcess()
+
+            processHandler.completeWithSuccess()
+        } catch (e: Throwable) {
+            consoleView.print(
+                "${
+                    MpyBundle.message(
+                        "run.conf.execute.state.error.execution",
+                        e.message ?: e.javaClass.simpleName
+                    )
+                }\n", ConsoleViewContentType.ERROR_OUTPUT
+            )
+
+            processHandler.completeWithFailure()
         }
 
         return DefaultExecutionResult(consoleView, processHandler)

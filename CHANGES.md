@@ -1,6 +1,12 @@
 The Changelog
 =============
 
+2025.3.5 - xx.12.2025
+------------------
+
+* Made background REPL tasks cancellable through the "Action running" dialog
+* Improved Upload run configurations
+
 2025.3.4 - 14.12.2025
 ------------------
 

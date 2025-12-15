@@ -91,7 +91,7 @@ internal class PerformReplActionResult<T>(
 )
 
 @Service(Service.Level.PROJECT)
-internal class MpyDeviceService(val project: Project) : Disposable {
+internal class MpyDeviceService(val project: Project, val cs: CoroutineScope) : Disposable {
     val ttyConnector: TtyConnector
         get() = comm.ttyConnector
 
@@ -155,7 +155,7 @@ internal class MpyDeviceService(val project: Project) : Disposable {
         return filteredPorts
     }
 
-    fun <T> performReplAction(
+    fun <T> runDeviceAction(
         project: Project,
         connectionRequired: Boolean,
         requiresRefreshAfter: Boolean,
@@ -166,6 +166,22 @@ internal class MpyDeviceService(val project: Project) : Disposable {
         action: suspend (RawProgressReporter) -> T,
         cleanUpAction: (suspend (RawProgressReporter) -> Unit)? = null,
         finalCheckAction: (() -> Unit)? = null
+    ): T? {
+        return TODO("Provide the return value")
+    }
+
+    fun <T> performReplAction(
+        project: Project,
+        connectionRequired: Boolean,
+        requiresRefreshAfter: Boolean,
+        canRunInBackground: Boolean,
+        @NlsContexts.DialogMessage description: String,
+        cancelledMessage: String,
+        timedOutMessage: String,
+        action: suspend (RawProgressReporter) -> T,
+        cleanUpAction: (suspend (RawProgressReporter) -> Unit)? = null,
+        finalCheckAction: (() -> Unit)? = null,
+        onFinished: (() -> Unit)? = null
     ): T? {
         val proService = project.service<MpyProServiceInterface>()
 
@@ -180,7 +196,8 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                 timedOutMessage = timedOutMessage,
                 action = action,
                 cleanUpAction = cleanUpAction,
-                finalCheckAction = finalCheckAction
+                finalCheckAction = finalCheckAction,
+                onFinished = onFinished
             )
         }
 
@@ -321,6 +338,9 @@ internal class MpyDeviceService(val project: Project) : Disposable {
                     finalCheckAction?.let { finalCheckAction() }
                 }
             }
+
+            println("In finally of device service")
+            onFinished?.invoke()
         }
 
         // At the end of performReplAction function
@@ -371,7 +391,10 @@ internal class MpyDeviceService(val project: Project) : Disposable {
             } else {
                 val url = settings.webReplUrl
                 val password = withContext(Dispatchers.EDT) {
-                    runWithModalProgressBlocking(project, MpyBundle.message("comm.progress.retrieving.credentials")) {
+                    runWithModalProgressBlocking(
+                        project,
+                        MpyBundle.message("comm.progress.retrieving.credentials")
+                    ) {
                         project.service<MpySettingsService>().retrieveWebReplPassword()
                     }
                 }

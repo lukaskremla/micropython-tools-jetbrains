@@ -17,13 +17,12 @@
 
 package dev.micropythontools.communication
 
-import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -33,12 +32,14 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import dev.micropythontools.core.*
 import dev.micropythontools.freemium.MpyProServiceInterface
 import dev.micropythontools.i18n.MpyBundle
+import dev.micropythontools.run.RunConfigurationUploadContext
 import dev.micropythontools.settings.MpySettingsService
 import dev.micropythontools.ui.*
 import dev.micropythontools.ui.MpyFileSystemWidget.Companion.formatSize
@@ -48,11 +49,12 @@ import java.io.IOException
 
 @Service(Service.Level.PROJECT)
 internal class MpyFileTransferService(private val project: Project) {
-    private val projectFileService = project.service<MpyProjectFileService>()
+    private val settings = project.service<MpySettingsService>()
     private val deviceService = project.service<MpyDeviceService>()
+    private val projectFileService = project.service<MpyProjectFileService>()
 
     fun uploadProject(
-        consoleView: ConsoleView? = null,
+        runConfigurationUploadContext: RunConfigurationUploadContext? = null,
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
         shouldExcludePaths: Boolean = false,
@@ -62,7 +64,7 @@ internal class MpyFileTransferService(private val project: Project) {
     ): Boolean {
 
         return performUpload(
-            consoleView = consoleView,
+            runConfigurationUploadContext = runConfigurationUploadContext,
             initialIsProjectUpload = true,
             excludedPaths = excludedPaths,
             shouldSynchronize = shouldSynchronize,
@@ -74,7 +76,7 @@ internal class MpyFileTransferService(private val project: Project) {
     }
 
     fun uploadItems(
-        consoleView: ConsoleView? = null,
+        runConfigurationUploadContext: RunConfigurationUploadContext? = null,
         filesToUpload: Set<VirtualFile>,
         excludedPaths: Set<String> = emptySet(),
         shouldSynchronize: Boolean = false,
@@ -85,7 +87,7 @@ internal class MpyFileTransferService(private val project: Project) {
     ): Boolean {
 
         return performUpload(
-            consoleView = consoleView,
+            runConfigurationUploadContext = runConfigurationUploadContext,
             initialFilesToUpload = filesToUpload,
             excludedPaths = excludedPaths,
             shouldSynchronize = shouldSynchronize,
@@ -97,7 +99,7 @@ internal class MpyFileTransferService(private val project: Project) {
     }
 
     fun performUpload(
-        consoleView: ConsoleView? = null,
+        runConfigurationUploadContext: RunConfigurationUploadContext? = null,
         initialFilesToUpload: Set<VirtualFile> = emptySet(),
         initialIsProjectUpload: Boolean = false,
         relativeToFolders: Set<VirtualFile> = emptySet(),
@@ -110,46 +112,13 @@ internal class MpyFileTransferService(private val project: Project) {
         switchToReplOnSuccess: Boolean = false,
         forceBlocking: Boolean = false
     ): Boolean {
-        val settings = project.service<MpySettingsService>()
-
-        val pathsToExclude = excludedPaths.toMutableSet()
+        val pathsToExclude = excludedPaths.toMutableSet() // Make excluded paths a mutable set for later filtering
 
         var startedUploading = false
         var uploadedSuccessfully = false
 
-        consoleView?.print(
-            "${MpyBundle.message("upload.console.collecting.files")}\n",
-            ConsoleViewContentType.NORMAL_OUTPUT
-        )
-
-        val (filesToUpload, foldersToUpload) = projectFileService.collectFilesAndFolders(
-            initialFilesToUpload,
-            initialIsProjectUpload
-        )
-
-        val allItemsToUpload = filesToUpload.toSet() + foldersToUpload
-
-        val fileToTargetPath = projectFileService.createVirtualFileToTargetPathMap(
-            filesToUpload.toSet(),
-            targetDestination,
-            relativeToFolders
-        )
-
-        fileToTargetPath.forEach { (file, _) ->
-            file.putSnapshot(
-                CachedSnapshot(
-                    file.contentsToByteArray(),
-                    file.length,
-                    file.crc32
-                )
-            )
-        }
-
-        val folderToTargetPath = projectFileService.createVirtualFileToTargetPathMap(
-            foldersToUpload,
-            targetDestination,
-            relativeToFolders
-        )
+        var fileToTargetPath: MutableMap<VirtualFile, String> = mutableMapOf()
+        var folderToTargetPath: MutableMap<VirtualFile, String> = mutableMapOf()
 
         deviceService.performReplAction(
             project = project,
@@ -160,341 +129,417 @@ internal class MpyFileTransferService(private val project: Project) {
             cancelledMessage = MpyBundle.message("upload.operation.cancelled"),
             timedOutMessage = MpyBundle.message("upload.operation.timeout"),
             action = { reporter ->
-                reporter.text(MpyBundle.message("upload.progress.analyzing.and.preparing"))
+                try {
+                    reporter.text(MpyBundle.message("upload.console.collecting.files"))
 
-                consoleView?.print(
-                    "${MpyBundle.message("upload.progress.analyzing.and.preparing")}\n",
-                    ConsoleViewContentType.NORMAL_OUTPUT
-                )
-
-                val freeMemBytes = if (deviceService.deviceInformation.hasCRC32) {
-                    deviceService.fileSystemWidget?.quietHashingRefresh(reporter)
-                } else {
-                    deviceService.fileSystemWidget?.quietRefresh(reporter)
-                } ?: deviceService.deviceInformation.defaultFreeMem
-
-                // Traverse and collect all file system nodes
-                val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
-
-                val volumeRootPaths = allNodes
-                    .filterIsInstance<VolumeRootNode>()
-                    .map { it.fullName }
-                    .toSet()
-
-                // Map target paths to file system nodes
-                val targetPathToNode = mutableMapOf<String, FileSystemNode>()
-                allNodes.forEach { node ->
-                    targetPathToNode[node.fullName] = node
-                }
-
-                // Map all existing target paths
-                val targetPathsToRemove = if (shouldSynchronize) {
-                    allNodes
-                        .map { it.fullName }
-                        .toMutableSet()
-                } else {
-                    mutableSetOf()
-                }
-
-                // Iterate over files that are being uploaded
-                // exempt them from synchronization
-                // and remove those that are already uploaded
-                val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
-                fileToTargetPath.keys.forEach { file ->
-                    val path = fileToTargetPath[file]
-
-                    val cachedSnapshot = file.getSnapshot()
-                    val size = cachedSnapshot.length
-                    val hash = cachedSnapshot.crc32
-
-                    val matchingNode = targetPathToNode[path]
-
-                    if (matchingNode != null) {
-                        if (matchingNode is FileNode) {
-                            if (size == matchingNode.size && hash == matchingNode.crc32) {
-                                // If binascii is missing the hash is "0"
-                                if (matchingNode.crc32 != "0") {
-                                    // Remove already uploaded files
-                                    alreadyUploadedFiles.add(file)
-                                }
-                            }
-                        }
-                        // This target path is being uploaded, it shouldn't be deleted by synchronization
-                        targetPathsToRemove.remove(matchingNode.fullName)
-                    }
-                }
-
-                // Iterate over folders that are being uploaded and exempt them from synchronization
-                val alreadyExistingFolders = mutableSetOf<VirtualFile>()
-                folderToTargetPath.keys.forEach { folder ->
-                    val path = folderToTargetPath[folder]
-
-                    val matchingNode = targetPathToNode[path]
-
-                    if (matchingNode != null) {
-                        alreadyExistingFolders.add(folder)
-                        targetPathsToRemove.remove(matchingNode.fullName)
-                    }
-                }
-
-                // Remove already existing file system entries
-                fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
-                folderToTargetPath.keys.removeAll(alreadyExistingFolders)
-
-                // Remove explicitly excluded paths
-                if (shouldSynchronize && shouldExcludePaths && pathsToExclude.isNotEmpty()) {
-                    val additionalPathsToRemove = targetPathsToRemove.filter { targetPath ->
-                        pathsToExclude.any { pathToExclude ->
-                            targetPath.startsWith(pathToExclude)
-                        }
-                    }
-
-                    pathsToExclude.addAll(additionalPathsToRemove)
-
-                    targetPathsToRemove.removeAll(pathsToExclude)
-                }
-
-                // Ensure volume root nodes won't be erased
-                targetPathsToRemove.removeAll(volumeRootPaths)
-
-                if (fileToTargetPath.isEmpty() && folderToTargetPath.isEmpty() && targetPathsToRemove.isEmpty()) {
-                    Notifications.Bus.notify(
-                        Notification(
-                            MpyBundle.message("notification.group.name"),
-                            "${MpyBundle.message("upload.notification.up.to.date")}\n",
-                            NotificationType.INFORMATION
-                        ), project
-                    )
-
-                    consoleView?.print(
-                        "${MpyBundle.message("upload.notification.up.to.date")}\n",
+                    runConfigurationUploadContext?.consoleView?.print(
+                        "${MpyBundle.message("upload.console.collecting.files")}\n",
                         ConsoleViewContentType.NORMAL_OUTPUT
                     )
 
-                    uploadedSuccessfully = true
-                    deviceService.state = State.CONNECTED
-                    deviceService.writeOffTtyBufferToTerminal()
-                    return@performReplAction PerformReplActionResult(null, false)
-                }
+                    val (filesToUpload, foldersToUpload) = projectFileService.collectFilesAndFolders(
+                        initialFilesToUpload,
+                        initialIsProjectUpload
+                    )
 
-                val proService = project.service<MpyProServiceInterface>()
+                    val allItemsToUpload = filesToUpload.toSet() + foldersToUpload
 
-                val nominalTotalSize = fileToTargetPath.keys.sumOf { it.length }.toDouble()
+                    fileToTargetPath = projectFileService.createVirtualFileToTargetPathMap(
+                        filesToUpload.toSet(),
+                        targetDestination,
+                        relativeToFolders
+                    )
 
-                val compressedTotalSize =
-                    if (proService.isActive && settings.state.compressUploads) proService.getCompressUploadTotalSize(
-                        fileToTargetPath
-                    ) else null
-
-                val totalSize = compressedTotalSize ?: nominalTotalSize
-
-                if (settings.state.showUploadPreviewDialog) {
-                    val shouldContinue = withContext(Dispatchers.EDT) {
-                        val uploadPreview = MpyUploadPreview(
-                            project,
-                            shouldSynchronize,
-                            shouldExcludePaths,
-                            allItemsToUpload,
-                            pathsToExclude,
-                            targetPathsToRemove,
-                            fileToTargetPath,
-                            folderToTargetPath,
-                            customPathFolders,
-                            nominalTotalSize,
-                            compressedTotalSize
-                        )
-
-                        return@withContext uploadPreview.showAndGet()
-                    }
-
-                    if (!shouldContinue) {
-                        deviceService.state = State.CONNECTED
-
-                        consoleView?.print(
-                            "${MpyBundle.message("upload.operation.cancelled")}\n",
-                            ConsoleViewContentType.NORMAL_OUTPUT
-                        )
-
-                        return@performReplAction PerformReplActionResult(null, false)
-                    }
-                }
-
-                // Report compressed size progress.
-                if (compressedTotalSize != null && compressedTotalSize != 0.0 && nominalTotalSize - compressedTotalSize != 0.0) {
-                    val reducedKBToShow = formatSize(compressedTotalSize, true)
-                    val nominalTotalKBToShow = formatSize(nominalTotalSize, true)
-                    val savedKBToShow = formatSize(nominalTotalSize - compressedTotalSize, true)
-
-                    consoleView?.print(
-                        "${
-                            MpyBundle.message(
-                                "upload.preview.compression.savings.tooltip",
-                                savedKBToShow,
-                                nominalTotalKBToShow,
-                                reducedKBToShow
+                    fileToTargetPath.forEach { (file, _) ->
+                        file.putSnapshot(
+                            CachedSnapshot(
+                                file.contentsToByteArray(),
+                                file.length,
+                                file.crc32
                             )
-                        }\n",
-                        ConsoleViewContentType.NORMAL_OUTPUT
-                    )
-                } else if (settings.state.compressUploads && proService.isActive) {
-                    consoleView?.print(
-                        "${MpyBundle.message("upload.console.skipping.compression")}\n",
-                        ConsoleViewContentType.NORMAL_OUTPUT
-                    )
-                }
-
-                // A file system refresh should happen on cancellation now
-                @Suppress("AssignedValueIsNeverRead") // it is used
-                startedUploading = true
-
-                // Perform synchronization
-                if (shouldSynchronize && targetPathsToRemove.isNotEmpty()) {
-                    reporter.text(MpyBundle.message("upload.progress.synchronizing"))
-
-                    consoleView?.print(
-                        "${MpyBundle.message("upload.progress.synchronizing")}\n",
-                        ConsoleViewContentType.NORMAL_OUTPUT
-                    )
-
-                    // Delete remaining existing target paths that aren't a part of the upload
-                    deviceService.recursivelySafeDeletePaths(targetPathsToRemove)
-                }
-
-                var uploadProgress = 0.0
-                var uploadedKB = 0.0
-                var uploadedFiles = 1
-
-                fun progressCallbackHandler(uploadedBytes: Double) {
-                    // Floating point arithmetic can be inaccurate,
-                    // ensures the uploaded size won't go over the actual file size
-                    uploadedKB += (uploadedBytes / 1000).coerceIn((uploadedBytes / 1000), totalSize / 1000)
-                    // Convert to double for maximal accuracy
-                    uploadProgress += (uploadedBytes / totalSize)
-                    // Ensure that uploadProgress never goes over 1.0
-                    // as floating point arithmetic can have minor inaccuracies
-                    uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
-
-                    reporter.text(
-                        MpyBundle.message(
-                            "upload.progress.uploading",
-                            uploadedFiles,
-                            fileToTargetPath.size,
-                            "%.2f".format(uploadedKB),
-                            "%.2f".format(totalSize / 1000)
                         )
-                    )
-                    reporter.fraction(uploadProgress)
-                }
-
-                fileToTargetPath.forEach { (file, path) ->
-                    reporter.details(path)
-
-                    deviceService.upload(
-                        path,
-                        file.getSnapshot().content,
-                        ::progressCallbackHandler,
-                        freeMemBytes
-                    )
-
-                    consoleView?.print(
-                        "${
-                            MpyBundle.message(
-                                "upload.console.uploading.file",
-                                path,
-                                formatSize(file.getSnapshot().content.size.toLong())
-                            )
-                        }\n",
-                        ConsoleViewContentType.NORMAL_OUTPUT
-                    )
-
-                    uploadedFiles++
-                    checkCanceled()
-                }
-
-                reporter.details(null)
-
-                // The upload methods handle creating parent files internally,
-                // however, this is necessary to ensure that empty folders get created too
-                if (folderToTargetPath.isNotEmpty()) {
-                    reporter.text(MpyBundle.message("upload.progress.creating.directories"))
-
-                    consoleView?.print(
-                        "${MpyBundle.message("upload.progress.creating.directories")}\n",
-                        ConsoleViewContentType.NORMAL_OUTPUT
-                    )
-
-                    deviceService.safeCreateDirectories(folderToTargetPath.values.toSet())
-                }
-
-                uploadedSuccessfully = true
-
-                consoleView?.print(
-                    "${MpyBundle.message("upload.console.all.files.uploaded")}\n",
-                    ConsoleViewContentType.NORMAL_OUTPUT
-                )
-            },
-            cleanUpAction = { reporter ->
-                if (startedUploading) {
-                    consoleView?.print(
-                        "${MpyBundle.message("file.system.refresh.progress")}\n",
-                        ConsoleViewContentType.NORMAL_OUTPUT
-                    )
-
-                    deviceService.fileSystemWidget?.refresh(reporter)
-                }
-
-                if (uploadedSuccessfully) {
-                    if (resetOnSuccess) {
-                        consoleView?.print(
-                            "${MpyBundle.message("upload.console.soft.resetting.device")}\n",
-                            ConsoleViewContentType.NORMAL_OUTPUT
-                        )
-
-                        deviceService.reset()
                     }
-                }
-            },
-            finalCheckAction = {
-                if (uploadedSuccessfully) {
+
+                    folderToTargetPath = projectFileService.createVirtualFileToTargetPathMap(
+                        foldersToUpload,
+                        targetDestination,
+                        relativeToFolders
+                    )
+
+                    reporter.text(MpyBundle.message("upload.progress.analyzing.and.preparing"))
+
+                    runConfigurationUploadContext?.consoleView?.print(
+                        "${MpyBundle.message("upload.progress.analyzing.and.preparing")}\n",
+                        ConsoleViewContentType.NORMAL_OUTPUT
+                    )
+
+                    val freeMemBytes = if (deviceService.deviceInformation.hasCRC32) {
+                        deviceService.fileSystemWidget?.quietHashingRefresh(reporter)
+                    } else {
+                        deviceService.fileSystemWidget?.quietRefresh(reporter)
+                    } ?: deviceService.deviceInformation.defaultFreeMem
+
+                    // Traverse and collect all file system nodes
                     val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
 
-                    for (node in allNodes) {
-                        if (node is FileNode) {
-                            val file =
-                                fileToTargetPath.entries.firstOrNull { it.value == node.fullName }?.key ?: continue
-                            if (file.getSnapshot().length != node.size) continue
+                    val volumeRootPaths = allNodes
+                        .filterIsInstance<VolumeRootNode>()
+                        .map { it.fullName }
+                        .toSet()
 
-                            fileToTargetPath.values.remove(node.fullName)
-                        }
+                    // Map target paths to file system nodes
+                    val targetPathToNode = mutableMapOf<String, FileSystemNode>()
+                    allNodes.forEach { node ->
+                        targetPathToNode[node.fullName] = node
+                    }
 
-                        if (node is DirNode) {
-                            folderToTargetPath.entries.firstOrNull { it.value == node.fullName }?.key ?: continue
+                    // Map all existing target paths
+                    val targetPathsToRemove = if (shouldSynchronize) {
+                        allNodes
+                            .map { it.fullName }
+                            .toMutableSet()
+                    } else {
+                        mutableSetOf()
+                    }
 
-                            folderToTargetPath.values.remove(node.fullName)
+                    // Iterate over files that are being uploaded
+                    // exempt them from synchronization
+                    // and remove those that are already uploaded
+                    val alreadyUploadedFiles = mutableSetOf<VirtualFile>()
+                    fileToTargetPath.keys.forEach { file ->
+                        val path = fileToTargetPath[file]
+
+                        val cachedSnapshot = file.getSnapshot()
+                        val size = cachedSnapshot.length
+                        val hash = cachedSnapshot.crc32
+
+                        val matchingNode = targetPathToNode[path]
+
+                        if (matchingNode != null) {
+                            if (matchingNode is FileNode) {
+                                if (size == matchingNode.size && hash == matchingNode.crc32) {
+                                    // If binascii is missing the hash is "0"
+                                    if (matchingNode.crc32 != "0") {
+                                        // Remove already uploaded files
+                                        alreadyUploadedFiles.add(file)
+                                    }
+                                }
+                            }
+                            // This target path is being uploaded, it shouldn't be deleted by synchronization
+                            targetPathsToRemove.remove(matchingNode.fullName)
                         }
                     }
 
-                    if (!fileToTargetPath.isEmpty() || !folderToTargetPath.isEmpty()) {
+                    // Iterate over folders that are being uploaded and exempt them from synchronization
+                    val alreadyExistingFolders = mutableSetOf<VirtualFile>()
+                    folderToTargetPath.keys.forEach { folder ->
+                        val path = folderToTargetPath[folder]
+
+                        val matchingNode = targetPathToNode[path]
+
+                        if (matchingNode != null) {
+                            alreadyExistingFolders.add(folder)
+                            targetPathsToRemove.remove(matchingNode.fullName)
+                        }
+                    }
+
+                    // Remove already existing file system entries
+                    fileToTargetPath.keys.removeAll(alreadyUploadedFiles)
+                    folderToTargetPath.keys.removeAll(alreadyExistingFolders)
+
+                    // Remove explicitly excluded paths
+                    if (shouldSynchronize && shouldExcludePaths && pathsToExclude.isNotEmpty()) {
+                        val additionalPathsToRemove = targetPathsToRemove.filter { targetPath ->
+                            pathsToExclude.any { pathToExclude ->
+                                targetPath.startsWith(pathToExclude)
+                            }
+                        }
+
+                        pathsToExclude.addAll(additionalPathsToRemove)
+
+                        targetPathsToRemove.removeAll(pathsToExclude)
+                    }
+
+                    // Ensure volume root nodes won't be erased
+                    targetPathsToRemove.removeAll(volumeRootPaths)
+
+                    if (fileToTargetPath.isEmpty() && folderToTargetPath.isEmpty() && targetPathsToRemove.isEmpty()) {
                         Notifications.Bus.notify(
                             Notification(
                                 MpyBundle.message("notification.group.name"),
-                                MpyBundle.message("upload.notification.verification.failed"),
-                                NotificationType.WARNING
+                                "${MpyBundle.message("upload.notification.up.to.date")}\n",
+                                NotificationType.INFORMATION
                             ), project
                         )
 
-                        consoleView?.print(
-                            "${MpyBundle.message("upload.notification.verification.failed")}\n",
-                            ConsoleViewContentType.ERROR_OUTPUT
+                        runConfigurationUploadContext?.consoleView?.print(
+                            "${MpyBundle.message("upload.notification.up.to.date")}\n",
+                            ConsoleViewContentType.NORMAL_OUTPUT
+                        )
+
+                        uploadedSuccessfully = true
+                        deviceService.state = State.CONNECTED
+                        deviceService.writeOffTtyBufferToTerminal()
+                        return@performReplAction PerformReplActionResult(null, false)
+                    }
+
+                    val proService = project.service<MpyProServiceInterface>()
+
+                    val nominalTotalSize = fileToTargetPath.keys.sumOf { it.length }.toDouble()
+
+                    val compressedTotalSize =
+                        if (proService.isActive && settings.state.compressUploads) proService.getCompressUploadTotalSize(
+                            fileToTargetPath
+                        ) else null
+
+                    val totalSize = compressedTotalSize ?: nominalTotalSize
+
+                    if (settings.state.showUploadPreviewDialog) {
+                        val projectDir = project.guessProjectDir()
+                            ?: throw RuntimeException(MpyBundle.message("upload.preview.error.cannot.guess.project.dir"))
+
+                        val allProjectFiles = mutableListOf<VirtualFile>()
+
+                        // Pre-build the list of project files on a background thread
+                        VfsUtilCore.iterateChildrenRecursively(projectDir, null) {
+                            allProjectFiles.add(it)
+                            true
+                        }
+
+                        // Show the dialog on the EDT thread
+                        val shouldContinue = withContext(Dispatchers.EDT) {
+                            val uploadPreview = MpyUploadPreview(
+                                project,
+                                allProjectFiles,
+                                shouldSynchronize,
+                                shouldExcludePaths,
+                                allItemsToUpload,
+                                pathsToExclude,
+                                targetPathsToRemove,
+                                fileToTargetPath,
+                                folderToTargetPath,
+                                customPathFolders,
+                                nominalTotalSize,
+                                compressedTotalSize
+                            )
+
+                            return@withContext uploadPreview.showAndGet()
+                        }
+
+                        if (!shouldContinue) {
+                            deviceService.state = State.CONNECTED
+
+                            runConfigurationUploadContext?.consoleView?.print(
+                                "${MpyBundle.message("upload.operation.cancelled")}\n",
+                                ConsoleViewContentType.NORMAL_OUTPUT
+                            )
+
+                            return@performReplAction PerformReplActionResult(null, false)
+                        }
+                    }
+
+                    // Report compressed size progress.
+                    if (compressedTotalSize != null && compressedTotalSize != 0.0 && nominalTotalSize - compressedTotalSize != 0.0) {
+                        val reducedKBToShow = formatSize(compressedTotalSize, true)
+                        val nominalTotalKBToShow = formatSize(nominalTotalSize, true)
+                        val savedKBToShow = formatSize(nominalTotalSize - compressedTotalSize, true)
+
+                        runConfigurationUploadContext?.consoleView?.print(
+                            "${
+                                MpyBundle.message(
+                                    "upload.preview.compression.savings.tooltip",
+                                    savedKBToShow,
+                                    nominalTotalKBToShow,
+                                    reducedKBToShow
+                                )
+                            }\n",
+                            ConsoleViewContentType.NORMAL_OUTPUT
+                        )
+                    } else if (settings.state.compressUploads && proService.isActive) {
+                        runConfigurationUploadContext?.consoleView?.print(
+                            "${MpyBundle.message("upload.console.skipping.compression")}\n",
+                            ConsoleViewContentType.NORMAL_OUTPUT
                         )
                     }
 
-                    if (switchToReplOnSuccess) {
-                        ApplicationManager.getApplication().invokeLater {
-                            deviceService.activateRepl()
+                    // A file system refresh should happen on cancellation now
+                    @Suppress("AssignedValueIsNeverRead") // it is used
+                    startedUploading = true
+
+                    // Perform synchronization
+                    if (shouldSynchronize && targetPathsToRemove.isNotEmpty()) {
+                        reporter.text(MpyBundle.message("upload.progress.synchronizing"))
+
+                        runConfigurationUploadContext?.consoleView?.print(
+                            "${MpyBundle.message("upload.progress.synchronizing")}\n",
+                            ConsoleViewContentType.NORMAL_OUTPUT
+                        )
+
+                        // Delete remaining existing target paths that aren't a part of the upload
+                        deviceService.recursivelySafeDeletePaths(targetPathsToRemove)
+                    }
+
+                    var uploadProgress = 0.0
+                    var uploadedKB = 0.0
+                    var uploadedFiles = 1
+
+                    fun progressCallbackHandler(uploadedBytes: Double) {
+                        // Floating point arithmetic can be inaccurate,
+                        // ensures the uploaded size won't go over the actual file size
+                        uploadedKB += (uploadedBytes / 1000).coerceIn((uploadedBytes / 1000), totalSize / 1000)
+                        // Convert to double for maximal accuracy
+                        uploadProgress += (uploadedBytes / totalSize)
+                        // Ensure that uploadProgress never goes over 1.0
+                        // as floating point arithmetic can have minor inaccuracies
+                        uploadProgress = uploadProgress.coerceIn(0.0, 1.0)
+
+                        reporter.text(
+                            MpyBundle.message(
+                                "upload.progress.uploading",
+                                uploadedFiles,
+                                fileToTargetPath.size,
+                                "%.2f".format(uploadedKB),
+                                "%.2f".format(totalSize / 1000)
+                            )
+                        )
+                        reporter.fraction(uploadProgress)
+                    }
+
+                    fileToTargetPath.forEach { (file, path) ->
+                        reporter.details(path)
+
+                        deviceService.upload(
+                            path,
+                            file.getSnapshot().content,
+                            ::progressCallbackHandler,
+                            freeMemBytes
+                        )
+
+                        runConfigurationUploadContext?.consoleView?.print(
+                            "${
+                                MpyBundle.message(
+                                    "upload.console.uploading.file",
+                                    path,
+                                    formatSize(file.getSnapshot().content.size.toLong())
+                                )
+                            }\n",
+                            ConsoleViewContentType.NORMAL_OUTPUT
+                        )
+
+                        uploadedFiles++
+                        checkCanceled()
+                    }
+
+                    reporter.details(null)
+
+                    // The upload methods handle creating parent files internally,
+                    // however, this is necessary to ensure that empty folders get created too
+                    if (folderToTargetPath.isNotEmpty()) {
+                        reporter.text(MpyBundle.message("upload.progress.creating.directories"))
+
+                        runConfigurationUploadContext?.consoleView?.print(
+                            "${MpyBundle.message("upload.progress.creating.directories")}\n",
+                            ConsoleViewContentType.NORMAL_OUTPUT
+                        )
+
+                        deviceService.safeCreateDirectories(folderToTargetPath.values.toSet())
+                    }
+
+                    uploadedSuccessfully = true
+
+                    runConfigurationUploadContext?.consoleView?.print(
+                        "${MpyBundle.message("upload.console.all.files.uploaded")}\n",
+                        ConsoleViewContentType.NORMAL_OUTPUT
+                    )
+                } catch (e: Throwable) {
+                    runConfigurationUploadContext?.consoleView?.print(
+                        "Upload error: ${e.javaClass.name} - ${e.localizedMessage}\n",
+                        ConsoleViewContentType.ERROR_OUTPUT
+                    )
+                    throw e
+                }
+            },
+            cleanUpAction = { reporter ->
+                try {
+                    if (startedUploading) {
+                        runConfigurationUploadContext?.consoleView?.print(
+                            "${MpyBundle.message("file.system.refresh.progress")}\n",
+                            ConsoleViewContentType.NORMAL_OUTPUT
+                        )
+
+                        deviceService.fileSystemWidget?.refresh(reporter)
+                    }
+
+                    if (uploadedSuccessfully) {
+                        if (resetOnSuccess) {
+                            runConfigurationUploadContext?.consoleView?.print(
+                                "${MpyBundle.message("upload.console.soft.resetting.device")}\n",
+                                ConsoleViewContentType.NORMAL_OUTPUT
+                            )
+
+                            deviceService.reset()
                         }
                     }
+                } catch (e: Throwable) {
+                    runConfigurationUploadContext?.consoleView?.print(
+                        "Upload clean-up error: ${e.javaClass.name} - ${e.localizedMessage}\n",
+                        ConsoleViewContentType.ERROR_OUTPUT
+                    )
+                    throw e
                 }
+            },
+            finalCheckAction = {
+                try {
+                    if (uploadedSuccessfully) {
+                        val allNodes = deviceService.fileSystemWidget?.allNodes() ?: emptyList()
+
+                        for (node in allNodes) {
+                            if (node is FileNode) {
+                                val file =
+                                    fileToTargetPath.entries.firstOrNull { it.value == node.fullName }?.key ?: continue
+                                if (file.getSnapshot().length != node.size) continue
+
+                                fileToTargetPath.values.remove(node.fullName)
+                            }
+
+                            if (node is DirNode) {
+                                folderToTargetPath.entries.firstOrNull { it.value == node.fullName }?.key ?: continue
+
+                                folderToTargetPath.values.remove(node.fullName)
+                            }
+                        }
+
+                        if (!fileToTargetPath.isEmpty() || !folderToTargetPath.isEmpty()) {
+                            Notifications.Bus.notify(
+                                Notification(
+                                    MpyBundle.message("notification.group.name"),
+                                    MpyBundle.message("upload.notification.verification.failed"),
+                                    NotificationType.WARNING
+                                ), project
+                            )
+
+                            runConfigurationUploadContext?.consoleView?.print(
+                                "${MpyBundle.message("upload.notification.verification.failed")}\n",
+                                ConsoleViewContentType.ERROR_OUTPUT
+                            )
+                        }
+
+                        if (switchToReplOnSuccess) {
+                            invokeLater {
+                                deviceService.activateRepl()
+                            }
+                        }
+                    }
+                } catch (e: Throwable) {
+                    runConfigurationUploadContext?.consoleView?.print(
+                        "Upload validation error: ${e.javaClass.name} - ${e.localizedMessage}\n",
+                        ConsoleViewContentType.ERROR_OUTPUT
+                    )
+                    throw e
+                }
+            },
+            onFinished = {
+                runConfigurationUploadContext?.markComplete(uploadedSuccessfully)
             }
         )
 
