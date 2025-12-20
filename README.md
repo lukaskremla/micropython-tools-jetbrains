@@ -229,10 +229,8 @@ MicroPython versions older than 1.20.0 are not officially supported but may work
 
 ## License
 
-The plugin distributed via the JetBrains Marketplace or this repository's Releases is licensed under
-the [End-User License Agreement (EULA)](EULA.txt).
-
-The open-source components of this plugin are licensed under the [Apache License 2.0](LICENSE.txt).
+This plugin is distributed via the JetBrains Marketplace or this repository's Releases and is licensed under the 
+[End-User License Agreement (EULA)](EULA.txt).
 
 ## Third-Party Notices
 
