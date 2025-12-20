@@ -647,7 +647,7 @@
       "board": "arduino_nano_rp2040_connect",
       "variant": "",
       "exactPackageVersion": "1.22.1.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-rpi_pico-stubs",
@@ -656,7 +656,7 @@
       "board": "rpi_pico",
       "variant": "",
       "exactPackageVersion": "1.22.1.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-rpi_pico_w-stubs",
@@ -665,7 +665,7 @@
       "board": "rpi_pico_w",
       "variant": "",
       "exactPackageVersion": "1.22.1.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-stubs",
@@ -674,7 +674,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.22.1.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-seeed_wio_terminal-stubs",
@@ -683,7 +683,7 @@
       "board": "seeed_wio_terminal",
       "variant": "",
       "exactPackageVersion": "1.22.1.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-stubs",
@@ -692,7 +692,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.22.1.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-esp32_generic-stubs",
@@ -701,7 +701,7 @@
       "board": "esp32_generic",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-esp32_generic_s3-stubs",
@@ -710,7 +710,7 @@
       "board": "esp32_generic_s3",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-stubs",
@@ -719,7 +719,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-arduino_nano_rp2040_connect-stubs",
@@ -728,7 +728,7 @@
       "board": "arduino_nano_rp2040_connect",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-pimoroni_picolipo_16mb-stubs",
@@ -737,7 +737,7 @@
       "board": "pimoroni_picolipo_16mb",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-rpi_pico-stubs",
@@ -746,7 +746,7 @@
       "board": "rpi_pico",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-rpi_pico_w-stubs",
@@ -755,7 +755,7 @@
       "board": "rpi_pico_w",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-stubs",
@@ -764,7 +764,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-seeed_wio_terminal-stubs",
@@ -773,7 +773,7 @@
       "board": "seeed_wio_terminal",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-stubs",
@@ -782,7 +782,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-stm32-pybv11-stubs",
@@ -791,7 +791,7 @@
       "board": "pybv11",
       "variant": "",
       "exactPackageVersion": "1.22.0.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-stm32-stubs",
@@ -800,7 +800,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.22.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-esp32_generic-stubs",
@@ -809,7 +809,7 @@
       "board": "esp32_generic",
       "variant": "",
       "exactPackageVersion": "1.21.0.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-stubs",
@@ -818,7 +818,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.21.0.post4",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-rpi_pico-stubs",
@@ -827,7 +827,7 @@
       "board": "rpi_pico",
       "variant": "",
       "exactPackageVersion": "1.21.0.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-rpi_pico_w-stubs",
@@ -836,7 +836,7 @@
       "board": "rpi_pico_w",
       "variant": "",
       "exactPackageVersion": "1.21.0.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-stubs",
@@ -845,7 +845,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.21.0.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-seeed_wio_terminal-stubs",
@@ -854,7 +854,7 @@
       "board": "seeed_wio_terminal",
       "variant": "",
       "exactPackageVersion": "1.21.0.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-stubs",
@@ -863,7 +863,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.21.0.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-stm32-pybv11-stubs",
@@ -872,7 +872,7 @@
       "board": "pybv11",
       "variant": "",
       "exactPackageVersion": "1.21.0.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-stm32-stubs",
@@ -881,7 +881,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.21.0.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-unix-stubs",
@@ -890,7 +890,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.21.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-webassembly-stubs",
@@ -899,7 +899,7 @@
       "board": "standard",
       "variant": "",
       "exactPackageVersion": "1.21.0.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-generic_ota-stubs",
@@ -908,7 +908,7 @@
       "board": "generic",
       "variant": "ota",
       "exactPackageVersion": "1.20.0.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-generic_s3-stubs",
@@ -917,7 +917,7 @@
       "board": "generic_s3",
       "variant": "",
       "exactPackageVersion": "1.20.0.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-ota-stubs",
@@ -926,7 +926,7 @@
       "board": "",
       "variant": "ota",
       "exactPackageVersion": "1.20.0.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-s3-stubs",
@@ -935,7 +935,7 @@
       "board": "s3",
       "variant": "",
       "exactPackageVersion": "1.20.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-stubs",
@@ -944,7 +944,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.20.0.post5",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-pico-stubs",
@@ -953,7 +953,7 @@
       "board": "pico",
       "variant": "",
       "exactPackageVersion": "1.20.0.post5",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-pico_w-stubs",
@@ -962,7 +962,7 @@
       "board": "pico_w",
       "variant": "",
       "exactPackageVersion": "1.20.0.post5",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-pimoroni_picolipo_16mb-stubs",
@@ -971,7 +971,7 @@
       "board": "pimoroni_picolipo",
       "variant": "16mb",
       "exactPackageVersion": "1.20.0.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-stubs",
@@ -980,7 +980,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.20.0.post5",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-adafruit_feather_m4_express-stubs",
@@ -989,7 +989,7 @@
       "board": "adafruit_feather_m4_express",
       "variant": "",
       "exactPackageVersion": "1.20.0.post4",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-adafruit_itsybitsy_m4_express-stubs",
@@ -998,7 +998,7 @@
       "board": "adafruit_itsybitsy_m4_express",
       "variant": "",
       "exactPackageVersion": "1.20.0.post4",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-minisam_m4-stubs",
@@ -1007,7 +1007,7 @@
       "board": "minisam_m4",
       "variant": "",
       "exactPackageVersion": "1.20.0.post4",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-seeed_wio_terminal-stubs",
@@ -1016,7 +1016,7 @@
       "board": "seeed_wio_terminal",
       "variant": "",
       "exactPackageVersion": "1.20.0.post5",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-samd-stubs",
@@ -1025,7 +1025,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.20.0.post2",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-stm32-pybv11-stubs",
@@ -1034,7 +1034,7 @@
       "board": "pybv11",
       "variant": "",
       "exactPackageVersion": "1.20.0.post6",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-stm32-stubs",
@@ -1043,7 +1043,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.20.0.post5",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-unix-stubs",
@@ -1052,7 +1052,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.20.0.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-generic_s3-stubs",
@@ -1061,7 +1061,7 @@
       "board": "generic_s3",
       "variant": "",
       "exactPackageVersion": "1.19.1.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-generic_spiram-stubs",
@@ -1070,7 +1070,7 @@
       "board": "generic",
       "variant": "spiram",
       "exactPackageVersion": "1.19.1.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-s3-stubs",
@@ -1079,7 +1079,7 @@
       "board": "s3",
       "variant": "",
       "exactPackageVersion": "1.19.1.post1",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-stubs",
@@ -1088,7 +1088,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.19.1.post15",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-um_tinypico-stubs",
@@ -1097,7 +1097,7 @@
       "board": "um_tinypico",
       "variant": "",
       "exactPackageVersion": "1.19.1.post8",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp8266-stubs",
@@ -1106,7 +1106,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.19.1.post12",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-stubs",
@@ -1115,7 +1115,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.19.1.post14",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-stm32-stubs",
@@ -1124,7 +1124,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.19.1.post12",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-stubs",
@@ -1133,7 +1133,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.18.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp8266-stubs",
@@ -1142,7 +1142,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.18.post4",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-stubs",
@@ -1151,7 +1151,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.18.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-stm32-stubs",
@@ -1160,7 +1160,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.18.post4",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp32-stubs",
@@ -1169,7 +1169,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.17.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-esp8266-stubs",
@@ -1178,7 +1178,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.17.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-rp2-stubs",
@@ -1187,7 +1187,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.17.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     },
     {
       "name": "micropython-stm32-stubs",
@@ -1196,7 +1196,7 @@
       "board": "",
       "variant": "",
       "exactPackageVersion": "1.17.post3",
-      "exactStdlibVersion": "1.26.0.post3"
+      "exactStdlibVersion": "1.27.0"
     }
   ]
 }

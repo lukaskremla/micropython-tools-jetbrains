@@ -1,4 +1,0 @@
-src/main/resources/inspectionDescriptions/* linguist-vendored
-src/main/resources/inspectionDescriptions/** linguist-vendored
-test-projects/* linguist-vendored
-test-projects/** linguist-vendored
