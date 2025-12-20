@@ -6,6 +6,9 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch: # Allow manual trigger
 
+permissions:
+  contents: write
+
 jobs:
   update-stubs-index:
     runs-on: ubuntu-latest
@@ -13,25 +16,25 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests packaging
-          
+
       - name: Run stubs index builder
         run: python scripts/build_stubs_index.py
-        
+
       - name: Check for changes
         id: git-check
         run: |
           git diff --exit-code data/micropython_stubs.json || echo "changed=true" >> $GITHUB_OUTPUT
-          
+
       - name: Commit and push if changed
         if: steps.git-check.outputs.changed == 'true'
         run: |
