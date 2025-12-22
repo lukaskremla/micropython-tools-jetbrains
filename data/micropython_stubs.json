@@ -2,6 +2,159 @@
   "version": "1.0.0",
   "packages": [
     {
+      "name": "micropython-esp32-esp32_generic-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "esp32",
+      "board": "ESP32_GENERIC",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-esp32-esp32_generic_c3-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "esp32",
+      "board": "ESP32_GENERIC_C3",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-esp32-esp32_generic_c6-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "esp32",
+      "board": "ESP32_GENERIC_C6",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-esp32-esp32_generic_s2-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "esp32",
+      "board": "ESP32_GENERIC_S2",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-esp32-esp32_generic_s3-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "esp32",
+      "board": "ESP32_GENERIC_S3",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-esp32-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "esp32",
+      "board": "GENERIC",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-esp8266-esp8266_generic-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "esp8266",
+      "board": "ESP8266_GENERIC",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-esp8266-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "esp8266",
+      "board": "GENERIC",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-rp2-pimoroni_picolipo-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "rp2",
+      "board": "PIMORONI_PICOLIPO",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-rp2-rpi_pico-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "rp2",
+      "board": "RPI_PICO",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-rp2-rpi_pico2-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "rp2",
+      "board": "RPI_PICO2",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-rp2-rpi_pico2_w-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "rp2",
+      "board": "RPI_PICO2_W",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-rp2-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "rp2",
+      "board": "GENERIC",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-samd-seeed_wio_terminal-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "samd",
+      "board": "SEEED_WIO_TERMINAL",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-samd-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "samd",
+      "board": "GENERIC",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-stm32-pybv11-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "stm32",
+      "board": "PYBV11",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
+      "name": "micropython-stm32-stubs",
+      "mpyVersion": "1.27.0",
+      "port": "stm32",
+      "board": "GENERIC",
+      "variant": "",
+      "exactPackageVersion": "1.27.0.post1",
+      "exactStdlibVersion": "1.27.0"
+    },
+    {
       "name": "micropython-mimxrt-mimxrt1010_evk-stubs",
       "mpyVersion": "1.26.1",
       "port": "mimxrt",
