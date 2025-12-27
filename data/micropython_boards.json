@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2025-12-26T02:03:09.214954",
+  "timestamp": "2025-12-27T02:01:02.267980",
   "supportedPorts": [
     "esp32",
     "esp8266",
@@ -27,299 +27,1167 @@
   "boards": [
     {
       "id": "ESP32_GENERIC",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32 / WROOM (Generic)",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20210902-v1.17.bin",
+          "-20210623-v1.16.bin",
+          "-20210418-v1.15.bin",
+          "-20210202-v1.14.bin",
+          "-20200902-v1.13.bin",
+          "-20191220-v1.12.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "ESP32 D2WD": [
+          "-D2WD-20251209-v1.27.0.bin",
+          "-D2WD-20250911-v1.26.1.bin",
+          "-D2WD-20250809-v1.26.0.bin",
+          "-D2WD-20250415-v1.25.0.bin",
+          "-D2WD-20241129-v1.24.1.bin",
+          "-D2WD-20241025-v1.24.0.bin",
+          "-D2WD-20240602-v1.23.0.bin",
+          "-D2WD-20240222-v1.22.2.bin",
+          "-D2WD-20240105-v1.22.1.bin",
+          "-D2WD-20231227-v1.22.0.bin",
+          "-D2WD-20231005-v1.21.0.bin",
+          "-D2WD-20230426-v1.20.0.bin",
+          "-D2WD-20220618-v1.19.1.bin",
+          "-D2WD-20220117-v1.18.bin",
+          "-D2WD-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-D2WD-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-D2WD-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-D2WD-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "ESP32 Unicore": [
+          "-UNICORE-20251209-v1.27.0.bin",
+          "-UNICORE-20250911-v1.26.1.bin",
+          "-UNICORE-20250809-v1.26.0.bin",
+          "-UNICORE-20250415-v1.25.0.bin",
+          "-UNICORE-20241129-v1.24.1.bin",
+          "-UNICORE-20241025-v1.24.0.bin",
+          "-UNICORE-20240602-v1.23.0.bin",
+          "-UNICORE-20240222-v1.22.2.bin",
+          "-UNICORE-20240105-v1.22.1.bin",
+          "-UNICORE-20231227-v1.22.0.bin",
+          "-UNICORE-20231005-v1.21.0.bin",
+          "-UNICORE-20230426-v1.20.0.bin",
+          "-UNICORE-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-UNICORE-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-UNICORE-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-UNICORE-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "Support for SPIRAM / WROVER": [
+          "-SPIRAM-20251209-v1.27.0.bin",
+          "-SPIRAM-20250911-v1.26.1.bin",
+          "-SPIRAM-20250809-v1.26.0.bin",
+          "-SPIRAM-20250415-v1.25.0.bin",
+          "-SPIRAM-20241129-v1.24.1.bin",
+          "-SPIRAM-20241025-v1.24.0.bin",
+          "-SPIRAM-20240602-v1.23.0.bin",
+          "-SPIRAM-20240222-v1.22.2.bin",
+          "-SPIRAM-20240105-v1.22.1.bin",
+          "-SPIRAM-20231227-v1.22.0.bin",
+          "-SPIRAM-20231005-v1.21.0.bin",
+          "-SPIRAM-20230426-v1.20.0.bin",
+          "-SPIRAM-20220618-v1.19.1.bin",
+          "-SPIRAM-20220117-v1.18.bin",
+          "-SPIRAM-20210902-v1.17.bin",
+          "-SPIRAM-20210623-v1.16.bin",
+          "-SPIRAM-20210418-v1.15.bin",
+          "-SPIRAM-20210202-v1.14.bin",
+          "-SPIRAM-20200902-v1.13.bin",
+          "-SPIRAM-20191220-v1.12.bin",
+          "-SPIRAM-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-SPIRAM-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-SPIRAM-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-SPIRAM-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "Support for OTA": [
+          "-OTA-20251209-v1.27.0.bin",
+          "-OTA-20250911-v1.26.1.bin",
+          "-OTA-20250809-v1.26.0.bin",
+          "-OTA-20250415-v1.25.0.bin",
+          "-OTA-20241129-v1.24.1.bin",
+          "-OTA-20241025-v1.24.0.bin",
+          "-OTA-20240602-v1.23.0.bin",
+          "-OTA-20240222-v1.22.2.bin",
+          "-OTA-20240105-v1.22.1.bin",
+          "-OTA-20231227-v1.22.0.bin",
+          "-OTA-20231005-v1.21.0.bin",
+          "-OTA-20230426-v1.20.0.bin",
+          "-OTA-20220618-v1.19.1.bin",
+          "-OTA-20220117-v1.18.bin",
+          "-OTA-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-OTA-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-OTA-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-OTA-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "LILYGO_TTGO_LORA32",
-      "name": null,
-      "vendor": null,
+      "name": "TTGO LoRa32",
+      "vendor": "LILYGO",
       "port": "esp32",
       "mcu": "esp32",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "M5STACK_ATOM",
-      "name": null,
-      "vendor": null,
+      "name": "Atom",
+      "vendor": "M5Stack",
       "port": "esp32",
       "mcu": "esp32",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "OLIMEX_ESP32_EVB",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32 EVB",
+      "vendor": "Olimex",
       "port": "esp32",
       "mcu": "esp32",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "OLIMEX_ESP32_POE",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32 POE",
+      "vendor": "Olimex",
       "port": "esp32",
       "mcu": "esp32",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "SIL_WESP32",
-      "name": null,
-      "vendor": null,
+      "name": "wESP32",
+      "vendor": "Silicognition",
       "port": "esp32",
       "mcu": "esp32",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20210902-v1.17.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "SIL_MANT1S",
-      "name": null,
-      "vendor": null,
+      "name": "ManT1S",
+      "vendor": "Silicognition LLC",
       "port": "esp32",
       "mcu": "esp32",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "SPARKFUN_IOT_REDBOARD_ESP32",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32 / WROOM (SparkFun)",
+      "vendor": "SparkFun",
       "port": "esp32",
       "mcu": "esp32",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_TINYPICO",
-      "name": null,
-      "vendor": null,
+      "name": "TinyPICO",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20210902-v1.17.bin",
+          "-20210623-v1.16.bin",
+          "-20210418-v1.15.bin",
+          "-idf4-20210202-v1.14.bin",
+          "-idf4-20200902-v1.13.bin",
+          "-idf4-20200316-v1.12.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "ESP32_GENERIC_C2",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32-C2 (Generic)",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c2",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "2MiB flash": [
+          "-FLASH_2M-20251209-v1.27.0.bin",
+          "-FLASH_2M-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-FLASH_2M-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-FLASH_2M-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-FLASH_2M-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "ESP32_GENERIC_C3",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32-C3 (Generic)",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20210902-v1.17.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "GARATRONIC_PYBSTICK26_ESP32C3",
-      "name": null,
-      "vendor": null,
+      "name": "PYBSTICK26_ESP32C3",
+      "vendor": "McHobby",
       "port": "esp32",
       "mcu": "esp32c3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "LOLIN_C3_MINI",
-      "name": null,
-      "vendor": null,
+      "name": "C3 mini",
+      "vendor": "Wemos",
       "port": "esp32",
       "mcu": "esp32c3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "ESP32_GENERIC_C5",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32-C5 (Generic)",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c5",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "ESP32_GENERIC_C6",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32-C6 (Generic)",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32c6",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "M5STACK_NANOC6",
-      "name": null,
-      "vendor": null,
+      "name": "NanoC6",
+      "vendor": "M5Stack",
       "port": "esp32",
       "mcu": "esp32c6",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "SOLDERED_NULA_MINI",
-      "name": null,
-      "vendor": null,
+      "name": "NULA Mini",
+      "vendor": "Soldered Electronics",
       "port": "esp32",
       "mcu": "esp32c6",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_TINYC6",
-      "name": null,
-      "vendor": null,
+      "name": "TinyC6",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32c6",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "ESP32_GENERIC_P4",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32-P4 (Generic)",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32p4",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "Support for external C5 WiFi/BLE": [
+          "-C5_WIFI-20251209-v1.27.0.bin",
+          "-C5_WIFI-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-C5_WIFI-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-C5_WIFI-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-C5_WIFI-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "Support for external C6 WiFi/BLE": [
+          "-C6_WIFI-20251209-v1.27.0.bin",
+          "-C6_WIFI-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-C6_WIFI-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-C6_WIFI-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-C6_WIFI-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "ESP32_GENERIC_S2",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32-S2 (Generic)",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32s2",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_FEATHERS2",
-      "name": null,
-      "vendor": null,
+      "name": "FeatherS2",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s2",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20210902-v1.17.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_FEATHERS2NEO",
-      "name": null,
-      "vendor": null,
+      "name": "FeatherS2 Neo",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s2",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_TINYS2",
-      "name": null,
-      "vendor": null,
+      "name": "TinyS2",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s2",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20210902-v1.17.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "LOLIN_S2_MINI",
-      "name": null,
-      "vendor": null,
+      "name": "S2 mini",
+      "vendor": "Wemos",
       "port": "esp32",
       "mcu": "esp32s2",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "LOLIN_S2_PICO",
-      "name": null,
-      "vendor": null,
+      "name": "S2 pico",
+      "vendor": "Wemos",
       "port": "esp32",
       "mcu": "esp32s2",
-      "firmwareNameToLinkParts": {}
-    },
-    {
-      "id": "ARDUINO_NANO_ESP32",
-      "name": null,
-      "vendor": null,
-      "port": "esp32",
-      "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "ESP32_GENERIC_S3",
-      "name": null,
-      "vendor": null,
+      "name": "ESP32-S3 (Generic)",
+      "vendor": "Espressif",
       "port": "esp32",
       "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "Support for Octal-SPIRAM": [
+          "-SPIRAM_OCT-20251209-v1.27.0.bin",
+          "-SPIRAM_OCT-20250911-v1.26.1.bin",
+          "-SPIRAM_OCT-20250809-v1.26.0.bin",
+          "-SPIRAM_OCT-20250415-v1.25.0.bin",
+          "-SPIRAM_OCT-20241129-v1.24.1.bin",
+          "-SPIRAM_OCT-20241025-v1.24.0.bin",
+          "-SPIRAM_OCT-20240602-v1.23.0.bin",
+          "-SPIRAM_OCT-20240222-v1.22.2.bin",
+          "-SPIRAM_OCT-20240105-v1.22.1.bin",
+          "-SPIRAM_OCT-20231227-v1.22.0.bin",
+          "-SPIRAM_OCT-20231005-v1.21.0.bin",
+          "-SPIRAM_OCT-20230426-v1.20.0.bin",
+          "-SPIRAM_OCT-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-SPIRAM_OCT-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-SPIRAM_OCT-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-SPIRAM_OCT-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "4MiB flash": [
+          "-FLASH_4M-20250415-v1.25.0.bin",
+          "-FLASH_4M-20241129-v1.24.1.bin",
+          "-FLASH_4M-20241025-v1.24.0.bin",
+          "-FLASH_4M-20240602-v1.23.0.bin"
+        ]
+      }
+    },
+    {
+      "id": "ARDUINO_NANO_ESP32",
+      "name": "Nano ESP32",
+      "vendor": "Arduino",
+      "port": "esp32",
+      "mcu": "esp32s3",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "M5STACK_ATOMS3_LITE",
-      "name": null,
-      "vendor": null,
+      "name": "AtomS3 Lite",
+      "vendor": "M5Stack",
       "port": "esp32",
       "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_FEATHERS3",
-      "name": null,
-      "vendor": null,
+      "name": "FeatherS3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_FEATHERS3NEO",
-      "name": null,
-      "vendor": null,
+      "name": "FeatherS3 Neo",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_NANOS3",
-      "name": null,
-      "vendor": null,
+      "name": "NanoS3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_OMGS3",
-      "name": null,
-      "vendor": null,
+      "name": "OMGS3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_PROS3",
-      "name": null,
-      "vendor": null,
+      "name": "ProS3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_RGBTOUCH_MINI",
-      "name": null,
-      "vendor": null,
+      "name": "RGB Touch Mini",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_TINYS3",
-      "name": null,
-      "vendor": null,
+      "name": "TinyS3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "UM_TINYWATCHS3",
-      "name": null,
-      "vendor": null,
+      "name": "TinyWATCH S3",
+      "vendor": "Unexpected Maker",
       "port": "esp32",
       "mcu": "esp32s3",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ]
+      }
     },
     {
       "id": "ESP8266_GENERIC",
-      "name": null,
-      "vendor": null,
+      "name": "ESP8266 (Generic)",
+      "vendor": "Espressif",
       "port": "esp8266",
       "mcu": "esp8266",
-      "firmwareNameToLinkParts": {}
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.bin",
+          "-20250911-v1.26.1.bin",
+          "-20250809-v1.26.0.bin",
+          "-20250415-v1.25.0.bin",
+          "-20241129-v1.24.1.bin",
+          "-20241025-v1.24.0.bin",
+          "-20240602-v1.23.0.bin",
+          "-20240222-v1.22.2.bin",
+          "-20240105-v1.22.1.bin",
+          "-20231227-v1.22.0.bin",
+          "-20231005-v1.21.0.bin",
+          "-20230426-v1.20.0.bin",
+          "-20220618-v1.19.1.bin",
+          "-20220117-v1.18.bin",
+          "-20210902-v1.17.bin",
+          "-20210618-v1.16.bin",
+          "-20210418-v1.15.bin",
+          "-20210202-v1.14.bin",
+          "-20200911-v1.13.bin",
+          "-20191220-v1.12.bin",
+          "-20190529-v1.11.bin",
+          "-20190125-v1.10.bin",
+          "-20180511-v1.9.4.bin",
+          "-20171101-v1.9.3.bin",
+          "-20170823-v1.9.2.bin",
+          "-20170612-v1.9.1.bin",
+          "-20170526-v1.9.bin",
+          "-20170108-v1.8.7.bin",
+          "-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "512kiB flash": [
+          "-FLASH_512K-20251209-v1.27.0.bin",
+          "-FLASH_512K-20250911-v1.26.1.bin",
+          "-FLASH_512K-20250809-v1.26.0.bin",
+          "-FLASH_512K-20250415-v1.25.0.bin",
+          "-FLASH_512K-20241129-v1.24.1.bin",
+          "-FLASH_512K-20241025-v1.24.0.bin",
+          "-FLASH_512K-20240602-v1.23.0.bin",
+          "-FLASH_512K-20240222-v1.22.2.bin",
+          "-FLASH_512K-20240105-v1.22.1.bin",
+          "-FLASH_512K-20231227-v1.22.0.bin",
+          "-FLASH_512K-20231005-v1.21.0.bin",
+          "-FLASH_512K-20230426-v1.20.0.bin",
+          "-FLASH_512K-20220618-v1.19.1.bin",
+          "-FLASH_512K-20220117-v1.18.bin",
+          "-FLASH_512K-20210902-v1.17.bin",
+          "-FLASH_512K-20210618-v1.16.bin",
+          "-FLASH_512K-20210418-v1.15.bin",
+          "-FLASH_512K-20210202-v1.14.bin",
+          "-FLASH_512K-20200902-v1.13.bin",
+          "-FLASH_512K-20191220-v1.12.bin",
+          "-FLASH_512K-20190529-v1.11.bin",
+          "-FLASH_512K-20190125-v1.10.bin",
+          "-FLASH_512K-20180511-v1.9.4.bin",
+          "-FLASH_512K-20171101-v1.9.3.bin",
+          "-FLASH_512K-20170823-v1.9.2.bin",
+          "-FLASH_512K-20170611-v1.9.1.bin",
+          "-FLASH_512K-20170526-v1.9.bin",
+          "-FLASH_512K-20170108-v1.8.7.bin",
+          "-FLASH_512K-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-FLASH_512K-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-FLASH_512K-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-FLASH_512K-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "1MiB flash": [
+          "-FLASH_1M-20251209-v1.27.0.bin",
+          "-FLASH_1M-20250911-v1.26.1.bin",
+          "-FLASH_1M-20250809-v1.26.0.bin",
+          "-FLASH_1M-20250415-v1.25.0.bin",
+          "-FLASH_1M-20241129-v1.24.1.bin",
+          "-FLASH_1M-20241025-v1.24.0.bin",
+          "-FLASH_1M-20240602-v1.23.0.bin",
+          "-FLASH_1M-20240222-v1.22.2.bin",
+          "-FLASH_1M-20240105-v1.22.1.bin",
+          "-FLASH_1M-20231227-v1.22.0.bin",
+          "-FLASH_1M-20231005-v1.21.0.bin",
+          "-FLASH_1M-20230426-v1.20.0.bin",
+          "-FLASH_1M-20220618-v1.19.1.bin",
+          "-FLASH_1M-20220117-v1.18.bin",
+          "-FLASH_1M-20210902-v1.17.bin",
+          "-FLASH_1M-20210618-v1.16.bin",
+          "-FLASH_1M-20210418-v1.15.bin",
+          "-FLASH_1M-20210202-v1.14.bin",
+          "-FLASH_1M-20200902-v1.13.bin",
+          "-FLASH_1M-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-FLASH_1M-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-FLASH_1M-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-FLASH_1M-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "2MiB flash with ROMFS": [
+          "-FLASH_2M_ROMFS-20251209-v1.27.0.bin",
+          "-FLASH_2M_ROMFS-20250911-v1.26.1.bin",
+          "-FLASH_2M_ROMFS-20250809-v1.26.0.bin",
+          "-FLASH_2M_ROMFS-20250415-v1.25.0.bin",
+          "-FLASH_2M_ROMFS-20251219-v1.28.0-preview.18.g6341258207.bin",
+          "-FLASH_2M_ROMFS-20251216-v1.28.0-preview.4.gef567dc928.bin",
+          "-FLASH_2M_ROMFS-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-FLASH_2M_ROMFS-20251203-v1.27.0-preview.491.g3f796b687b.bin"
+        ],
+        "OTA compatible": [
+          "-OTA-20251209-v1.27.0.bin",
+          "-OTA-20250911-v1.26.1.bin",
+          "-OTA-20250809-v1.26.0.bin",
+          "-OTA-20250415-v1.25.0.bin",
+          "-OTA-20241129-v1.24.1.bin",
+          "-OTA-20241025-v1.24.0.bin",
+          "-OTA-20240602-v1.23.0.bin",
+          "-OTA-20240222-v1.22.2.bin",
+          "-OTA-20240105-v1.22.1.bin",
+          "-OTA-20231227-v1.22.0.bin",
+          "-OTA-20231005-v1.21.0.bin",
+          "-OTA-20230426-v1.20.0.bin",
+          "-OTA-20220618-v1.19.1.bin",
+          "-OTA-20220117-v1.18.bin",
+          "-OTA-20200902-v1.13.bin",
+          "-OTA-20191220-v1.12.bin",
+          "-OTA-20190529-v1.11.bin",
+          "-OTA-20190125-v1.10.bin",
+          "-OTA-20180511-v1.9.4.bin",
+          "-OTA-20171101-v1.9.3.bin",
+          "-OTA-20170823-v1.9.2.bin",
+          "-OTA-20170611-v1.9.1.bin",
+          "-OTA-20170526-v1.9.bin",
+          "-OTA-20251208-v1.27.0-preview.503.g2bd337ef18.bin",
+          "-OTA-20251203-v1.27.0-preview.491.g3f796b687b.bin",
+          "-OTA-20251203-v1.27.0-preview.490.g0b1a6bebae.bin",
+          "-OTA-20251201-v1.27.0-preview.486.ge6a7dc1114.bin"
+        ]
+      }
     },
     {
       "id": "RPI_PICO",
@@ -851,18 +1719,6 @@
           "-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-20251203-v1.27.0-preview.491.g3f796b687b.uf2"
         ],
-        "8 MiB Flash": [
-          "-FLASH_8M-20251209-v1.27.0.uf2",
-          "-FLASH_8M-20250911-v1.26.1.uf2",
-          "-FLASH_8M-20250809-v1.26.0.uf2",
-          "-FLASH_8M-20250415-v1.25.0.uf2",
-          "-FLASH_8M-20241129-v1.24.1.uf2",
-          "-FLASH_8M-20241025-v1.24.0.uf2",
-          "-FLASH_8M-20251219-v1.28.0-preview.18.g6341258207.uf2",
-          "-FLASH_8M-20251216-v1.28.0-preview.4.gef567dc928.uf2",
-          "-FLASH_8M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
-          "-FLASH_8M-20251203-v1.27.0-preview.491.g3f796b687b.uf2"
-        ],
         "2 MiB Flash": [
           "-FLASH_2M-20251209-v1.27.0.uf2",
           "-FLASH_2M-20250911-v1.26.1.uf2",
@@ -874,6 +1730,18 @@
           "-FLASH_2M-20251216-v1.28.0-preview.4.gef567dc928.uf2",
           "-FLASH_2M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
           "-FLASH_2M-20251203-v1.27.0-preview.491.g3f796b687b.uf2"
+        ],
+        "8 MiB Flash": [
+          "-FLASH_8M-20251209-v1.27.0.uf2",
+          "-FLASH_8M-20250911-v1.26.1.uf2",
+          "-FLASH_8M-20250809-v1.26.0.uf2",
+          "-FLASH_8M-20250415-v1.25.0.uf2",
+          "-FLASH_8M-20241129-v1.24.1.uf2",
+          "-FLASH_8M-20241025-v1.24.0.uf2",
+          "-FLASH_8M-20251219-v1.28.0-preview.18.g6341258207.uf2",
+          "-FLASH_8M-20251216-v1.28.0-preview.4.gef567dc928.uf2",
+          "-FLASH_8M-20251208-v1.27.0-preview.503.g2bd337ef18.uf2",
+          "-FLASH_8M-20251203-v1.27.0-preview.491.g3f796b687b.uf2"
         ],
         "4 MiB Flash": [
           "-FLASH_4M-20251209-v1.27.0.uf2",
