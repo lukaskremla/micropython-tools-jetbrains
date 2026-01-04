@@ -1,11 +1,26 @@
 The Changelog
 =============
 
-2025.3.5 - xx.12.2025
+2026.1.1 - xx.1.2026
 ------------------
+
+Free:
 
 * Made background REPL tasks cancellable through the "Action running" dialog
 * Improved Upload run configurations
+* Fixed an issue where file system copy commands behaved as cut operations
+* Improved the serial port MicroPython detection to be more resilient
+* Added a hard-reset action
+* Fixed inconsistent REPL output issues, where REPL banners were duplicated or sent in parts
+* REPL is now only auto-cleared when connecting, resetting or executing code/files
+* Removed dependency handling, all are now bundled with the plugin
+* Stub packages are now downloaded from pypy.org directly, the plugin no longer depends on a python interpreter
+* Added a stub package deletion confirmation dialog
+
+Paid:
+
+* Switched to using mpy-cross 1.27.0 for bytecode version 6.3
+* Unified mpy-cross binaries used across macOS and other OSs and architectures
 
 2025.3.4 - 14.12.2025
 ------------------
