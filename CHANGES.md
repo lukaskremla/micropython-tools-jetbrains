@@ -12,7 +12,7 @@ Free:
 * Improved the serial port MicroPython detection to be more resilient
 * Added a hard-reset action
 * Fixed inconsistent REPL output issues, where REPL banners were duplicated or sent in parts
-* REPL is now only auto-cleared when connecting, resetting or executing code/files
+* Fix a bug where cancelling downloads caused file data to be output into the REPL console
 * Removed dependency handling, all are now bundled with the plugin
 * Stub packages are now downloaded from pypy.org directly, the plugin no longer depends on a python interpreter
 * Added a stub package deletion confirmation dialog
