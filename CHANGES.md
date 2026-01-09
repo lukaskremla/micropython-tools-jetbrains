@@ -17,6 +17,7 @@ Free:
 * Stub packages are now downloaded from pypy.org directly, the plugin no longer depends on a python interpreter
 * Added a stub package deletion confirmation dialog
 * Add a confirmation dialog when closing an on-device file with unsaved changes
+* Added an option to export the open on-device file as a local file
 
 Paid:
 
