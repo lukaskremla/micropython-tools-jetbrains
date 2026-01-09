@@ -13,9 +13,10 @@ Free:
 * Added a hard-reset action
 * Fixed inconsistent REPL output issues, where REPL banners were duplicated or sent in parts
 * Fix a bug where cancelling downloads caused file data to be output into the REPL console
-* Removed dependency handling, all are now bundled with the plugin
+* Removed dependency handling, all dependencies are now bundled with the plugin
 * Stub packages are now downloaded from pypy.org directly, the plugin no longer depends on a python interpreter
 * Added a stub package deletion confirmation dialog
+* Add a confirmation dialog when closing an on-device file with unsaved changes
 
 Paid:
 
