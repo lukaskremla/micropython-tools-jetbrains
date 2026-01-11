@@ -19,7 +19,7 @@ Free:
 * Add a confirmation dialog when closing an on-device file with unsaved changes
 * Added an option to export the open on-device file as a local file
 * Added an option to customize the user baudrate for firmware flashing and normal communication
-* Added an "Auto-Detect Port" feature for firmware flashing and normal communication
+* Added an "Auto-Detect Port" feature for normal communication
 
 Paid:
 
