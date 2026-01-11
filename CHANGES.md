@@ -14,10 +14,12 @@ Free:
 * Fixed inconsistent REPL output issues, where REPL banners were duplicated or sent in parts
 * Fix a bug where cancelling downloads caused file data to be output into the REPL console
 * Removed dependency handling, all dependencies are now bundled with the plugin
-* Stub packages are now downloaded from pypy.org directly, the plugin no longer depends on a python interpreter
+* Stub packages are now downloaded from pypi.org directly, the plugin no longer depends on a python interpreter
 * Added a stub package deletion confirmation dialog
 * Add a confirmation dialog when closing an on-device file with unsaved changes
 * Added an option to export the open on-device file as a local file
+* Added an option to customize the user baudrate for firmware flashing and normal communication
+* Added an "Auto-Detect Port" feature for firmware flashing and normal communication
 
 Paid:
 
