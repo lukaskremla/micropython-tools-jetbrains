@@ -22,6 +22,7 @@ Free:
 * Added an "Auto-Detect Port" feature for normal communication
 * Added an option to hard reset after successful upload run configuration execution
 * Added an option to switch to REPL on cancellation (not just success) for upload and execute in REPL run configurations
+* Run configuration UI no longer gets grayed out when the plugin is disabled or Pro license is missing
 
 Paid:
 
