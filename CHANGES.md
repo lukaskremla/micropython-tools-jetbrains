@@ -20,6 +20,8 @@ Free:
 * Added an option to export the open on-device file as a local file
 * Added an option to customize the user baudrate for firmware flashing and normal communication
 * Added an "Auto-Detect Port" feature for normal communication
+* Added an option to hard reset after successful upload run configuration execution
+* Added an option to switch to REPL on cancellation (not just success) for upload and execute in REPL run configurations
 
 Paid:
 
