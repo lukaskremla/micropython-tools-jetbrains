@@ -1,30 +1,30 @@
 The Changelog
 =============
 
-2026.1.1 - xx.1.2026
+2026.1.1 - 19.1.2026
 ------------------
 
 Free:
 
-* Made background REPL tasks cancellable through the "Action running" dialog
-* Improved Upload run configurations
-* Fixed an issue where file system copy commands behaved as cut operations
-* Improved the serial port MicroPython detection to be more resilient
-* Added a hard-reset action
-* Fixed inconsistent REPL output issues, where REPL banners were duplicated or sent in parts
-* Fix a bug where cancelling downloads caused file data to be output into the REPL console
-* Removed dependency handling, all dependencies are now bundled with the plugin
-* Stub packages are now downloaded from pypi.org directly, the plugin no longer depends on a python interpreter
-* Added a stub package deletion confirmation dialog
-* Add a confirmation dialog when closing an on-device file with unsaved changes
-* Added an option to export the open on-device file as a local file
+* Added a Hard Reset action
 * Added an option to customize the user baudrate for firmware flashing and normal communication
 * Added an "Auto-Detect Port" feature for normal communication
 * Added an option to hard reset after successful upload run configuration execution
 * Added an option to switch to MicroPython Tools tool window on cancellation (not just success) for upload and execute
-  in REPL run configurations
-* Run configuration UI no longer gets grayed out when the plugin is disabled or Pro license is missing
+  run configurations
+* Added a stub package deletion confirmation dialog
+* Added a confirmation dialog when closing an on-device file with unsaved changes
+* Added an option to export the open on-device file as a local file
+* Improved Upload run configurations
+* Improved the serial port MicroPython detection to be more resilient and reliable
 * Improved WebREPL support, improved on-reset reconnect functionality
+* Made background REPL tasks cancellable through the "Action running" dialog
+* Removed dependency handling, all dependencies are now bundled with the plugin
+* Stub packages are now downloaded from pypi.org directly, the plugin no longer depends on a python interpreter
+* Run configuration UI no longer gets grayed out when the plugin is disabled or Pro license is missing
+* Fixed inconsistent REPL behavior, all related bugs such as split or missing MicroPython banners should be fixed
+* Fixed an issue where file system copy operations behaved as cut operations
+* Fixed a bug where cancelling downloads caused file data to be output into the REPL console
 
 Paid:
 
