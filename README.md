@@ -10,11 +10,6 @@ developing both hobbyist and professional MicroPython projects.
 The Free edition covers all essential MicroPython development needs, while the Pro edition adds advanced tools like
 background transfers, compression, mpy-cross compilation, and bytecode analysis.
 
-Originally inspired by JetBrains’ MicroPython plugin, this project has since been fully reworked and expanded into a
-standalone tool. Credit to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for creating and maintaining the
-stubs used here, and to [Ilia Motornyi](https://github.com/elmot) and
-[Andrey Vlasovskikh](https://github.com/vlasovskikh) for their work on the original plugin.
-
 Usage tips, setup guide and documentation are available [here](DOCUMENTATION.md).
 
 ## Features
@@ -229,17 +224,32 @@ MicroPython versions older than 1.20.0 are not officially supported but may work
 
 ## License
 
-This plugin is distributed via the JetBrains Marketplace or this repository's Releases and is licensed under the 
+This plugin is distributed via the JetBrains Marketplace or this repository's Releases and is licensed under the
 [End-User License Agreement (EULA)](EULA.txt).
+
+## Credits
+
+Originally inspired by JetBrains’ MicroPython plugin, this project has since been fully reworked and expanded into a
+standalone tool. Credit to [Jos Verlinde](https://github.com/Josverl/micropython-stubs) for creating and maintaining the
+stubs used here, and to [Ilia Motornyi](https://github.com/elmot) and
+[Andrey Vlasovskikh](https://github.com/vlasovskikh) for their work on the original plugin.
 
 ## Third-Party Notices
 
 This plugin includes the following third-party components:
 
-- **MicroPython Stubs** - Copyright 2020-2024 Jos Verlinde, MIT License  
+- **MicroPython Stubs** - Copyright 2020-2026 Jos Verlinde, MIT License  
   https://github.com/Josverl/micropython-stubs  
   See [licenses/stubs/LICENSE.md](licenses/stubs/LICENSE.md) for the full license.
 
 - **Pico Universal Flash Nuke** - Copyright 2024 Phil Howard, BSD 3-Clause License  
   https://github.com/Gadgetoid/pico-universal-flash-nuke  
   See [licenses/rp2UniversalFlashNuke/LICENSE.txt](licenses/rp2UniversalFlashNuke/LICENSE.txt) for the full license.
+
+- **Espflash** - Copyright (c) 2022-2025 The Espflash Project Developers  
+  https://github.com/esp-rs/espflash  
+  See [licenses/espflash/LICENSE.txt](licenses/espflash/LICENSE.txt) for the full license.
+
+- **Java-WebSocket** - Copyright (c) 2010-2020 Nathan Rajlich, MIT License  
+  https://github.com/TooTallNate/Java-WebSocket  
+  See [licenses/java-WebSocket/LICENSE.txt](licenses/java-WebSocket/LICENSE.txt) for the full license.  
