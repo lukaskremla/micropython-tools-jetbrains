@@ -7,6 +7,7 @@
     - [Setting Up a Run Configuration](#setting-up-a-run-configuration)
 - [Communication Types](#communication-types)
     - [Serial](#serial)
+        - [Custom Baudrate](#baudrate-configuration)
     - [WebREPL](#webrepl)
     - [Multiple Simultaneous Connections](#multiple-simultaneous-connections)
 - [Stubs/Typehints](#stubstypehints)
@@ -89,6 +90,27 @@ these ports often aren't hardware ports, but virtual ones (such as the default m
 Some microcontrollers might not have the device manufacturer entry of their port populated and thus get filtered out
 when they shouldn't. If you can't find the port you want to connect to in the dropdown menu, but your computer does see
 it, try to disable this setting as it might be falsely filtering out this port.
+
+#### Baudrate configuration
+
+The plugin supports configuring a custom baudrate. MicroPython devices are locked to 115200 by default. Some MicroPython
+releases allow specifying a custom baudrate when compiling firmware. Alternatively, you can use the below script to
+configure the device's baudrate in `boot.py`.
+
+```Python
+import machine
+
+try:
+    machine.UART(0, baudrate=115200)
+except Exception as e:
+    print("Ignored baudrate change exception:", e)
+```
+
+NOTE: This script might produce errors about invalid serial configurations at boot. If the communication works at your
+desired baudrate, you can safely ignore them.
+
+WARNING: It's possible to brick your MicroPython installation this way, if you forget what baudrate you set, it won't be
+possible to connect and change it. However, this is reversible, you can reflash the MicroPython firmware.
 
 ### WebREPL
 
