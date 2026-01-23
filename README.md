@@ -4,8 +4,8 @@
 [![JetBrains IntelliJ Rating](https://img.shields.io/jetbrains/plugin/r/rating/26227-micropython-tools?label=Rating)](https://plugins.jetbrains.com/plugin/26227-micropython-tools)
 
 This plugin brings MicroPython support into JetBrains IDEs in Free and Pro editions.
-It provides reliable device file system integration, REPL support, stub package management, and smooth workflows for
-developing both hobbyist and professional MicroPython projects.
+It provides reliable device file system integration, REPL support, stub package management, firmware flashing, run
+configurations and smooth workflows for developing both hobbyist and professional MicroPython projects.
 
 The Free edition covers all essential MicroPython development needs, while the Pro edition adds advanced tools like
 background transfers, compression, mpy-cross compilation, and bytecode analysis.
@@ -13,6 +13,29 @@ background transfers, compression, mpy-cross compilation, and bytecode analysis.
 Usage tips, setup guide and documentation are available [here](DOCUMENTATION.md).
 
 ## Features
+
+Forever Free features:
+
+- Upload and synchronize files with MicroPython devices, automatically skipping already uploaded files (Serial and
+  WebREPL supported)
+- File System view with drag and drop, create/rename/delete, copy/cut/paste, and download
+- Type Hint/Stub package manager for MicroPython stubs
+- On-device file editing
+- REPL integration with soft reset, hard reset, interrupt, and clear actions
+- Automatically detect MicroPython device's serial port and connect
+- Firmware flashing, automatically download MicroPython and flash ESP, RP2 and SAMD devices
+- Execute files or code selections in REPL
+- Run configurations for uploading and executing files in REPL
+- Mounted volume support (e.g. SD cards)
+
+Pro (Paid) features:
+
+- Background uploads and downloads that let you continue working
+- Automatic file compression to significantly speed up uploads
+- mpy-cross run configuration with auto-detection of bytecode version and architecture
+- .mpy file analyzer
+
+## Detailed Feature Readout
 
 ### Free Features
 
@@ -48,7 +71,7 @@ Usage tips, setup guide and documentation are available [here](DOCUMENTATION.md)
 
 - Full MicroPython REPL integration in a dedicated tool window
 - All keyboard shortcuts are passed through to the device (Raw REPL, Paste mode, soft reset, interrupt)
-- Toolbar actions for common operations (reset, interrupt, clear)
+- Toolbar actions for common operations (soft/hard reset, interrupt, clear)
 - Optional auto-clear to prevent terminal clutter
 
 <details>
