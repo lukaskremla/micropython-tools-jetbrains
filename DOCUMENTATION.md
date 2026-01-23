@@ -91,6 +91,21 @@ Some microcontrollers might not have the device manufacturer entry of their port
 when they shouldn't. If you can't find the port you want to connect to in the dropdown menu, but your computer does see
 it, try to disable this setting as it might be falsely filtering out this port.
 
+#### Port auto-detection
+
+When the `Auto-Detect Port` is selected in the port combobox, the plugin will attempt to find a device with MicroPython
+firmware installed and connect to it.
+
+The plugin looks for exactly one device, if more than one is found or none is found the connection attempt fails with an
+error.
+
+The maximum amount of ports that can be tested at once is 20. If more than 20 ports are connected simultaneously, the
+plugin will throw an error as well. In that case it is necessary to manually select the port.
+
+The scan timeout parameter specifies the amount of time a serial port is given to open and be tested for MicroPython
+firmware presence. If you can connect to a device directly, but auto-detection fails with an error of not finding any
+device, increasing this timeout can help.
+
 #### Baudrate configuration
 
 The plugin supports configuring a custom baudrate. MicroPython devices are locked to 115200 by default. Some MicroPython
@@ -131,6 +146,9 @@ If you do want to use or try WebREPL even with all of its constraints, it's reco
 starting a WebREPL server on the device to ensure that debug output isn't missed while the plugin is re-establishing a
 WebREPL connection after a device reset. Some more useful information can also be found in
 [this issue](https://github.com/lukaskremla/micropython-tools-jetbrains/issues/26#issuecomment-2843503240).
+
+NOTE: Unlike with serial communication, the plugin doesn't detect WebREPL connection drops. The plugin's UI will stay in
+the connected state even if the device is turned off until an attempt to send any command is made.
 
 ### Multiple Simultaneous Connections
 
@@ -191,7 +209,7 @@ Due to the constrained nature of MicroPython, file system scans cannot occur in 
 running on the device. In order for the file information that the plugin displays to be accurate, a scan is
 automatically carried out after every file system operation (uploads, deletions, creating directories, etc.)
 
-If this automatic refresh is cancelled, the plugin will disconnect, as it can no longer trust that the data it has
+If this automatic refresh is canceled, the plugin will disconnect, as it can no longer trust that the data it has
 reflects the true state of the device's file system.
 
 You can also trigger a refresh manually via the toolbar action, this is useful for when you want to see changes your
@@ -284,10 +302,12 @@ The connect after option is not available for UF2 based boards, as the port can'
 
 The REPL Widget of this plugin lets you directly access REPL as it is. This means that all MicroPython REPL keyboard
 shortcuts (Raw REPL, Paste mode, Reset) will get passed through to the device. For your comfort the plugin also exposes
-some commonly used REPL actions (reset and interrupt) into toolbar buttons.
+some commonly used REPL actions (soft/hard reset and interrupt) into toolbar buttons.
 
 Enabling Auto Clear REPL will clear the terminal after every major action (FS refresh, upload, download, reset). This is
 useful to prevent cluttering of the terminal.
+
+NOTE: Hard resetting can drop the connection on some devices.
 
 ## Uploads
 
@@ -311,8 +331,7 @@ and synchronize) behave the same across all of them.
 #### Project
 
 This is the run configuration that is going to be the best fit for most use cases. It can work in two ways, depending
-on  
-whether at least one MicroPython Sources Root is marked.
+on whether at least one MicroPython Sources Root is marked.
 
 ##### No MicroPython Sources Roots Are Marked
 
@@ -485,20 +504,20 @@ time of writing this documentation it is 1.26.1) meaning you get the latest avai
 fixes.
 
 NOTE: This should not affect backwards compatibility (bytecode from mpy-cross 1.26.1 should be perfectly compatible with
-MPY version 1.23.0), if you suspect you've ran into some compatibility issue caused by this plugin's mpy-cross version
-selection behavior, pleae open an issue.
+MPY version 1.23.0), if you suspect you've run into some compatibility issue caused by this plugin's mpy-cross version
+selection behavior, please open an issue.
 
-The mapping of BytecodeVersions to used mpy-cross binaries differes on Windows/macOS due to the availability of
-pre-compiled binaries. To see what MicroPython version range a given MicroPython Bytecode version corresponds to, visit
-the official [micropython.org website](https://docs.micropython.org/en/latest/reference/mpyfiles.html). Below is the
-mapping of Bytecode version to used mpy-cross binary of this plugin for specific os Versions:
+To see what MicroPython version range a given MicroPython Bytecode version corresponds to, visit
+the official [micropython.org website](https://docs.micropython.org/en/latest/reference/mpyfiles.html).
 
-| Bytecode Version | Windows/Linux/macOS x64 | macOS ARM        |
-|------------------|-------------------------|------------------|
-| 6.3 (≥ 1.26)     | mpy-cross 1.26.1        | mpy-cross 1.26.1 |
-| 6.2 (≥ 1.22)     | mpy-cross 1.22.2        | mpy-cross 1.22.0 |
-| 6.1 (≥ 1.20)     | mpy-cross 1.21.0        | mpy-cross 1.20.0 |
-| 6.0 (≥ 1.19)     | mpy-cross 1.19.1        | mpy-cross 1.19.1 |
+Below is the mapping of Bytecode version to the mpy-cross binary version used by this plugin.
+
+| Bytecode Version | Binary Version   |
+|------------------|------------------|
+| 6.3 (≥ 1.26)     | mpy-cross 1.27.0 |
+| 6.2 (≥ 1.22)     | mpy-cross 1.22.2 |
+| 6.1 (≥ 1.20)     | mpy-cross 1.21.0 |
+| 6.0 (≥ 1.19)     | mpy-cross 1.19.1 |
 
 ### .mpy File Analyzer
 
