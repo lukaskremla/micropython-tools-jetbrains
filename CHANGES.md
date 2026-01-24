@@ -1,6 +1,12 @@
 The Changelog
 =============
 
+
+2026.1.2 - 24.1.2026
+------------------
+
+* Fixed threading issues affecting uploads, REPL executions and mpy-cross compilation
+
 2026.1.1 - 22.1.2026
 ------------------
 
