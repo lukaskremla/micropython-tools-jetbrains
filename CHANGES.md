@@ -5,7 +5,7 @@ The Changelog
 ------------------
 
 * Improved drag and drop confirmation dialog when upload preview is disabled
-*
+* Fixed a bug where the stub package deletion confirmation dialog was shown once per every selected stub package
 
 2026.1.2 - 24.1.2026
 ------------------
