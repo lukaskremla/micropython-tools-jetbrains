@@ -1,6 +1,11 @@
 The Changelog
 =============
 
+2026.1.3 - 26.1.2026
+------------------
+
+* Improved drag and drop confirmation dialog when upload preview is disabled
+*
 
 2026.1.2 - 24.1.2026
 ------------------
