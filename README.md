@@ -35,6 +35,10 @@ Pro (Paid) features:
 - mpy-cross run configuration with auto-detection of bytecode version and architecture
 - .mpy file analyzer
 
+#### Showcase video:
+
+[![Watch the video](https://img.youtube.com/vi/gCzkCB5NNa8/maxresdefault.jpg)](https://www.youtube.com/watch?v=gCzkCB5NNa8)
+
 ## Detailed Feature Readout
 
 ### Free Features
