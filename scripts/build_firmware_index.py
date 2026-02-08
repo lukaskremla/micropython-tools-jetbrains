@@ -237,6 +237,9 @@ def main():
                         # Pico boards are used most commonly, sort them first for convenience
                         elif board_name in ("Pico", "Pico W", "Pico 2", "Pico 2 W"):
                             sort_priority = 1
+                        # SAMD Generic boards get priority to appear first
+                        elif "Generic" in board_name and port == "samd":
+                            sort_priority = 1
 
                         # Format the board dictionary with its info
                         board = {
