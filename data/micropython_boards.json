@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-02-08T03:14:24.359038",
+  "timestamp": "2026-02-08T09:07:34.040714",
   "supportedPorts": [
     "esp32",
     "esp8266",
@@ -2032,6 +2032,25 @@
       }
     },
     {
+      "id": "SAMD_GENERIC_D21X18",
+      "name": "Generic SAMD21J18",
+      "vendor": "Microchip",
+      "port": "samd",
+      "mcu": "samd21",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.uf2",
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20260207-v1.28.0-preview.167.g9dcad25de6.uf2",
+          "-20260206-v1.28.0-preview.157.g115f4134aa.uf2",
+          "-20260204-v1.28.0-preview.136.g570744d06c.uf2",
+          "-20260203-v1.28.0-preview.121.g2b4b05a422.uf2"
+        ]
+      }
+    },
+    {
       "id": "ADAFRUIT_FEATHER_M0_EXPRESS",
       "name": "Feather M0 Express",
       "vendor": "Adafruit",
@@ -2165,25 +2184,6 @@
       }
     },
     {
-      "id": "SAMD_GENERIC_D21X18",
-      "name": "Generic SAMD21J18",
-      "vendor": "Microchip",
-      "port": "samd",
-      "mcu": "samd21",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20251209-v1.27.0.uf2",
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20260207-v1.28.0-preview.167.g9dcad25de6.uf2",
-          "-20260206-v1.28.0-preview.157.g115f4134aa.uf2",
-          "-20260204-v1.28.0-preview.136.g570744d06c.uf2",
-          "-20260203-v1.28.0-preview.121.g2b4b05a422.uf2"
-        ]
-      }
-    },
-    {
       "id": "SAMD21_XPLAINED_PRO",
       "name": "SAMD21 Xplained Pro",
       "vendor": "Microchip",
@@ -2276,6 +2276,44 @@
       }
     },
     {
+      "id": "SAMD_GENERIC_D51X19",
+      "name": "Generic SAMD51P19",
+      "vendor": "Microchip",
+      "port": "samd",
+      "mcu": "samd51",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.uf2",
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20260207-v1.28.0-preview.167.g9dcad25de6.uf2",
+          "-20260206-v1.28.0-preview.157.g115f4134aa.uf2",
+          "-20260204-v1.28.0-preview.136.g570744d06c.uf2",
+          "-20260203-v1.28.0-preview.121.g2b4b05a422.uf2"
+        ]
+      }
+    },
+    {
+      "id": "SAMD_GENERIC_D51X20",
+      "name": "Generic SAMD51P20",
+      "vendor": "Microchip",
+      "port": "samd",
+      "mcu": "samd51",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20251209-v1.27.0.uf2",
+          "-20250911-v1.26.1.uf2",
+          "-20250809-v1.26.0.uf2",
+          "-20250415-v1.25.0.uf2",
+          "-20260207-v1.28.0-preview.167.g9dcad25de6.uf2",
+          "-20260206-v1.28.0-preview.157.g115f4134aa.uf2",
+          "-20260204-v1.28.0-preview.136.g570744d06c.uf2",
+          "-20260203-v1.28.0-preview.121.g2b4b05a422.uf2"
+        ]
+      }
+    },
+    {
       "id": "ADAFRUIT_FEATHER_M4_EXPRESS",
       "name": "Feather M4 Express",
       "vendor": "Adafruit",
@@ -2350,44 +2388,6 @@
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
-          "-20260207-v1.28.0-preview.167.g9dcad25de6.uf2",
-          "-20260206-v1.28.0-preview.157.g115f4134aa.uf2",
-          "-20260204-v1.28.0-preview.136.g570744d06c.uf2",
-          "-20260203-v1.28.0-preview.121.g2b4b05a422.uf2"
-        ]
-      }
-    },
-    {
-      "id": "SAMD_GENERIC_D51X19",
-      "name": "Generic SAMD51P19",
-      "vendor": "Microchip",
-      "port": "samd",
-      "mcu": "samd51",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20251209-v1.27.0.uf2",
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
-          "-20260207-v1.28.0-preview.167.g9dcad25de6.uf2",
-          "-20260206-v1.28.0-preview.157.g115f4134aa.uf2",
-          "-20260204-v1.28.0-preview.136.g570744d06c.uf2",
-          "-20260203-v1.28.0-preview.121.g2b4b05a422.uf2"
-        ]
-      }
-    },
-    {
-      "id": "SAMD_GENERIC_D51X20",
-      "name": "Generic SAMD51P20",
-      "vendor": "Microchip",
-      "port": "samd",
-      "mcu": "samd51",
-      "firmwareNameToLinkParts": {
-        "Standard": [
-          "-20251209-v1.27.0.uf2",
-          "-20250911-v1.26.1.uf2",
-          "-20250809-v1.26.0.uf2",
-          "-20250415-v1.25.0.uf2",
           "-20260207-v1.28.0-preview.167.g9dcad25de6.uf2",
           "-20260206-v1.28.0-preview.157.g115f4134aa.uf2",
           "-20260204-v1.28.0-preview.136.g570744d06c.uf2",
