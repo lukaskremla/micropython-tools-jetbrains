@@ -17,6 +17,7 @@ Pro:
 
 * Added support for building MicroPython firmware for ESP32, ESP8266, RP2 and SAMD devices (Supports custom baudrate,
   enabling sys.settrace() and freezing bytecode)
+* Added a flash run configuration for ESP32 and ESP8266 with support for single and batch flashing operations
 
 2026.1.3 - 26.1.2026
 ------------------
