@@ -6,12 +6,13 @@ The Changelog
 
 Free:
 
-* MicroPython device port auto-detection now waits up to 5 seconds to adjust for slower ports, delays can be configured
-  as per documentation
 * Added an "Auto-Detect Port" option to the ESP flasher, also made it the default option
 * Added an "Auto-Detect" button to ESP micropython.org source UI, which can detect MCU and Variant of a device
 * Moved the MCU parameter under the source: "micropython.org" UI and removed it from the local firmware source option
 * Added "Reset before execution" functionality to the execute in REPL run configuration
+* Added type hint support for on-device file editing
+* MicroPython device port auto-detection now waits up to 5 seconds to adjust for slower ports, delays can be configured
+  as per documentation
 
 Pro:
 
