@@ -11,6 +11,7 @@ Free:
 * Moved the MCU parameter under the source: "micropython.org" UI and removed it from the local firmware source option
 * Added "Reset before execution" functionality to the execute in REPL run configuration
 * Added type hint support for on-device file editing
+* Added a no-stub parameter to the ESP flashers for compatibility
 * MicroPython device port auto-detection now waits up to 5 seconds to adjust for slower ports, delays can be configured
   as per documentation
 
