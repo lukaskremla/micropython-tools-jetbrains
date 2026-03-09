@@ -1,6 +1,25 @@
 The Changelog
 =============
 
+2026.1.4 - 9.3.2026
+------------------
+
+Free:
+
+* Added an "Auto-Detect Port" option to the ESP flasher, also made it the default option
+* Added an "Auto-Detect" button to ESP micropython.org source UI, which can detect MCU and Variant of a device
+* Moved the MCU parameter under the source: "micropython.org" UI and removed it from the local firmware source option
+* Added "Reset before execution" functionality to the execute in REPL run configuration
+* Added type hint support for on-device file editing
+* Added a no-stub parameter to the ESP flashers for compatibility
+* MicroPython device port auto-detection now waits up to the entire connection timeout to adjust for slower ports
+
+Pro:
+
+* Added support for building MicroPython firmware for ESP32, ESP8266, RP2 and SAMD devices (Supports custom baudrate and
+  freezing bytecode)
+* Added a flash run configuration for ESP32 and ESP8266 with support for single and batch flashing operations
+
 2026.1.3 - 26.1.2026
 ------------------
 
