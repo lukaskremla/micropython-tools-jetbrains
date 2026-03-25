@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-03-24T02:36:50.549576",
+  "timestamp": "2026-03-25T02:42:05.539202",
   "supportedPorts": [
     "esp32",
     "esp8266",
@@ -53,7 +53,7 @@
           "-20210202-v1.14.bin",
           "-20200902-v1.13.bin",
           "-20191220-v1.12.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -73,7 +73,7 @@
           "-D2WD-20230426-v1.20.0.bin",
           "-D2WD-20220618-v1.19.1.bin",
           "-D2WD-20220117-v1.18.bin",
-          "-D2WD-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-D2WD-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-D2WD-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-D2WD-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-D2WD-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -91,7 +91,7 @@
           "-UNICORE-20231227-v1.22.0.bin",
           "-UNICORE-20231005-v1.21.0.bin",
           "-UNICORE-20230426-v1.20.0.bin",
-          "-UNICORE-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-UNICORE-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-UNICORE-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-UNICORE-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-UNICORE-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -117,7 +117,7 @@
           "-SPIRAM-20210202-v1.14.bin",
           "-SPIRAM-20200902-v1.13.bin",
           "-SPIRAM-20191220-v1.12.bin",
-          "-SPIRAM-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-SPIRAM-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-SPIRAM-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-SPIRAM-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-SPIRAM-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -137,7 +137,7 @@
           "-OTA-20230426-v1.20.0.bin",
           "-OTA-20220618-v1.19.1.bin",
           "-OTA-20220117-v1.18.bin",
-          "-OTA-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-OTA-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-OTA-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-OTA-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-OTA-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -165,7 +165,7 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -194,7 +194,7 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -215,7 +215,7 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -242,7 +242,7 @@
           "-20231227-v1.22.0.bin",
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -272,7 +272,7 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -288,7 +288,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -306,7 +306,7 @@
           "-20251209-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -341,7 +341,7 @@
           "-idf4-20210202-v1.14.bin",
           "-idf4-20200902-v1.13.bin",
           "-idf4-20200316-v1.12.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -359,14 +359,14 @@
           "-20251209-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
         ],
         "2MiB flash": [
           "-FLASH_2M-20251209-v1.27.0.bin",
-          "-FLASH_2M-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-FLASH_2M-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-FLASH_2M-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-FLASH_2M-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-FLASH_2M-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -396,7 +396,7 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -414,7 +414,7 @@
           "-20251209-v1.27.0.bin",
           "-20250911-v1.26.1.bin",
           "-20250809-v1.26.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -442,7 +442,7 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -458,7 +458,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -479,7 +479,7 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -500,7 +500,7 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -516,7 +516,7 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -537,7 +537,7 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -553,21 +553,21 @@
       "firmwareNameToLinkParts": {
         "Standard": [
           "-20251209-v1.27.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
         ],
         "Support for external C5 WiFi/BLE": [
           "-C5_WIFI-20251209-v1.27.0.bin",
-          "-C5_WIFI-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-C5_WIFI-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-C5_WIFI-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-C5_WIFI-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-C5_WIFI-20260319-v1.28.0-preview.270.gd1c936db73.bin"
         ],
         "Support for external C6 WiFi/BLE": [
           "-C6_WIFI-20251209-v1.27.0.bin",
-          "-C6_WIFI-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-C6_WIFI-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-C6_WIFI-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-C6_WIFI-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-C6_WIFI-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -596,7 +596,7 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -626,7 +626,7 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -655,7 +655,7 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -685,7 +685,7 @@
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
           "-20210902-v1.17.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -714,7 +714,7 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -743,7 +743,7 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -772,7 +772,7 @@
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
           "-20220117-v1.18.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -790,7 +790,7 @@
           "-SPIRAM_OCT-20231227-v1.22.0.bin",
           "-SPIRAM_OCT-20231005-v1.21.0.bin",
           "-SPIRAM_OCT-20230426-v1.20.0.bin",
-          "-SPIRAM_OCT-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-SPIRAM_OCT-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-SPIRAM_OCT-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-SPIRAM_OCT-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-SPIRAM_OCT-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -822,7 +822,7 @@
           "-20240105-v1.22.1.bin",
           "-20231227-v1.22.0.bin",
           "-20231005-v1.21.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -843,7 +843,7 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -871,7 +871,7 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -892,7 +892,7 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -918,7 +918,7 @@
           "-20240105-v1.22.1.bin",
           "-20231227-v1.22.0.bin",
           "-20231005-v1.21.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -939,7 +939,7 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -967,7 +967,7 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -988,7 +988,7 @@
           "-20250415-v1.25.0.bin",
           "-20241129-v1.24.1.bin",
           "-20241025-v1.24.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -1016,7 +1016,7 @@
           "-20231005-v1.21.0.bin",
           "-20230426-v1.20.0.bin",
           "-20220618-v1.19.1.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -1041,7 +1041,7 @@
           "-20240222-v1.22.2.bin",
           "-20240105-v1.22.1.bin",
           "-20231227-v1.22.0.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -1084,7 +1084,7 @@
           "-20170612-v1.9.1.bin",
           "-20170526-v1.9.bin",
           "-20170108-v1.8.7.bin",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -1118,7 +1118,7 @@
           "-FLASH_512K-20170611-v1.9.1.bin",
           "-FLASH_512K-20170526-v1.9.bin",
           "-FLASH_512K-20170108-v1.8.7.bin",
-          "-FLASH_512K-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-FLASH_512K-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-FLASH_512K-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-FLASH_512K-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-FLASH_512K-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -1143,7 +1143,7 @@
           "-FLASH_1M-20210418-v1.15.bin",
           "-FLASH_1M-20210202-v1.14.bin",
           "-FLASH_1M-20200902-v1.13.bin",
-          "-FLASH_1M-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-FLASH_1M-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-FLASH_1M-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-FLASH_1M-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-FLASH_1M-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -1153,7 +1153,7 @@
           "-FLASH_2M_ROMFS-20250911-v1.26.1.bin",
           "-FLASH_2M_ROMFS-20250809-v1.26.0.bin",
           "-FLASH_2M_ROMFS-20250415-v1.25.0.bin",
-          "-FLASH_2M_ROMFS-20260322-v1.28.0-preview.306.g5c00edcee2.bin",
+          "-FLASH_2M_ROMFS-20260323-v1.28.0-preview.306.g5c00edcee2.bin",
           "-FLASH_2M_ROMFS-20260320-v1.28.0-preview.291.ge0beace19f.bin",
           "-FLASH_2M_ROMFS-20260319-v1.28.0-preview.276.gc802a13fb6.bin",
           "-FLASH_2M_ROMFS-20260319-v1.28.0-preview.270.gd1c936db73.bin"
@@ -1215,7 +1215,7 @@
           "-20210618-v1.16.uf2",
           "-20210418-v1.15.uf2",
           "-20210202-v1.14.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1242,7 +1242,7 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1271,7 +1271,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1300,7 +1300,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1329,7 +1329,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1358,7 +1358,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1373,7 +1373,7 @@
       "mcu": "rp2040",
       "firmwareNameToLinkParts": {
         "Standard": [
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1392,7 +1392,7 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1421,7 +1421,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1442,7 +1442,7 @@
           "-20250415-v1.25.0.uf2",
           "-20241129-v1.24.1.uf2",
           "-20241025-v1.24.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1454,7 +1454,7 @@
           "-FLASH_16M-20250415-v1.25.0.uf2",
           "-FLASH_16M-20241129-v1.24.1.uf2",
           "-FLASH_16M-20241025-v1.24.0.uf2",
-          "-FLASH_16M-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-FLASH_16M-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-FLASH_16M-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-FLASH_16M-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-FLASH_16M-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1483,7 +1483,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1495,7 +1495,7 @@
           "-FLASH_8M-20250415-v1.25.0.uf2",
           "-FLASH_8M-20241129-v1.24.1.uf2",
           "-FLASH_8M-20241025-v1.24.0.uf2",
-          "-FLASH_8M-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-FLASH_8M-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-FLASH_8M-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-FLASH_8M-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-FLASH_8M-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1520,7 +1520,7 @@
           "-20240222-v1.22.2.uf2",
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1545,7 +1545,7 @@
           "-20240222-v1.22.2.uf2",
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1570,7 +1570,7 @@
           "-20240222-v1.22.2.uf2",
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1599,7 +1599,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1628,7 +1628,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1647,7 +1647,7 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1675,7 +1675,7 @@
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1702,7 +1702,7 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1717,7 +1717,7 @@
       "mcu": "rp2040",
       "firmwareNameToLinkParts": {
         "Standard": [
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1732,13 +1732,13 @@
       "mcu": "rp2040",
       "firmwareNameToLinkParts": {
         "Standard": [
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
         ],
         "16 MiB Flash": [
-          "-FLASH_16M-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-FLASH_16M-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-FLASH_16M-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-FLASH_16M-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-FLASH_16M-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1753,7 +1753,7 @@
       "mcu": "rp2040",
       "firmwareNameToLinkParts": {
         "Standard": [
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1780,7 +1780,7 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1792,7 +1792,7 @@
           "-FLASH_2M-20250415-v1.25.0.uf2",
           "-FLASH_2M-20241129-v1.24.1.uf2",
           "-FLASH_2M-20241025-v1.24.0.uf2",
-          "-FLASH_2M-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-FLASH_2M-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-FLASH_2M-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-FLASH_2M-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-FLASH_2M-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1804,7 +1804,7 @@
           "-FLASH_8M-20250415-v1.25.0.uf2",
           "-FLASH_8M-20241129-v1.24.1.uf2",
           "-FLASH_8M-20241025-v1.24.0.uf2",
-          "-FLASH_8M-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-FLASH_8M-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-FLASH_8M-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-FLASH_8M-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-FLASH_8M-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1816,7 +1816,7 @@
           "-FLASH_4M-20250415-v1.25.0.uf2",
           "-FLASH_4M-20241129-v1.24.1.uf2",
           "-FLASH_4M-20241025-v1.24.0.uf2",
-          "-FLASH_4M-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-FLASH_4M-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-FLASH_4M-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-FLASH_4M-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-FLASH_4M-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1843,7 +1843,7 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1864,7 +1864,7 @@
           "-20250415-v1.25.0.uf2",
           "-20241129-v1.24.1.uf2",
           "-20241025-v1.24.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1876,7 +1876,7 @@
           "-RISCV-20250415-v1.25.0.uf2",
           "-RISCV-20241129-v1.24.1.uf2",
           "-RISCV-20241025-v1.24.0.uf2",
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1895,14 +1895,14 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1917,13 +1917,13 @@
       "mcu": "rp2350",
       "firmwareNameToLinkParts": {
         "Standard": [
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
         ],
         "RISC-V CPU mode": [
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1942,7 +1942,7 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1952,7 +1952,7 @@
           "-RISCV-20250911-v1.26.1.uf2",
           "-RISCV-20250809-v1.26.0.uf2",
           "-RISCV-20250415-v1.25.0.uf2",
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1971,14 +1971,14 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -1997,14 +1997,14 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2023,14 +2023,14 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2049,14 +2049,14 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2075,14 +2075,14 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
         ],
         "RISC-V CPU mode": [
           "-RISCV-20251209-v1.27.0.uf2",
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2097,13 +2097,13 @@
       "mcu": "rp2350",
       "firmwareNameToLinkParts": {
         "Standard": [
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
         ],
         "RISC V": [
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2122,7 +2122,7 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2132,7 +2132,7 @@
           "-RISCV-20250911-v1.26.1.uf2",
           "-RISCV-20250809-v1.26.0.uf2",
           "-RISCV-20250415-v1.25.0.uf2",
-          "-RISCV-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-RISCV-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-RISCV-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-RISCV-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-RISCV-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2151,7 +2151,7 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2180,7 +2180,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2207,7 +2207,7 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2226,7 +2226,7 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2245,7 +2245,7 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2255,7 +2255,7 @@
           "-SPIFLASH-20250911-v1.26.1.uf2",
           "-SPIFLASH-20250809-v1.26.0.uf2",
           "-SPIFLASH-20250415-v1.25.0.uf2",
-          "-SPIFLASH-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-SPIFLASH-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-SPIFLASH-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-SPIFLASH-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-SPIFLASH-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2284,7 +2284,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2313,7 +2313,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2340,7 +2340,7 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2358,7 +2358,7 @@
           "-20251209-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2376,7 +2376,7 @@
           "-20251209-v1.27.0.uf2",
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2395,7 +2395,7 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2414,7 +2414,7 @@
           "-20250911-v1.26.1.uf2",
           "-20250809-v1.26.0.uf2",
           "-20250415-v1.25.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2441,7 +2441,7 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2470,7 +2470,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2496,7 +2496,7 @@
           "-20240105-v1.22.1.uf2",
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2525,7 +2525,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2554,7 +2554,7 @@
           "-20230426-v1.20.0.uf2",
           "-20220618-v1.19.1.uf2",
           "-20220117-v1.18.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
@@ -2581,7 +2581,7 @@
           "-20231227-v1.22.0.uf2",
           "-20231005-v1.21.0.uf2",
           "-20230426-v1.20.0.uf2",
-          "-20260322-v1.28.0-preview.306.g5c00edcee2.uf2",
+          "-20260323-v1.28.0-preview.306.g5c00edcee2.uf2",
           "-20260320-v1.28.0-preview.291.ge0beace19f.uf2",
           "-20260319-v1.28.0-preview.276.gc802a13fb6.uf2",
           "-20260319-v1.28.0-preview.270.gd1c936db73.uf2"
