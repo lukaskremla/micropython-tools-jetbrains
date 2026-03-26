@@ -16,6 +16,7 @@
 
 import json
 import os
+import time
 from datetime import datetime
 from typing import Any, Dict
 
@@ -65,13 +66,33 @@ session.headers.update({
     'User-Agent': 'MicroPython-Tools-Plugin-Firmware-Index-Scraper/1.0 (jetbrains-ide-plugin)'
 })
 
+MAX_RETRIES = 3
+RETRY_DELAY = 1
+
+
+def fetch_page(url: str) -> str:
+    """Fetches a URL and validates the response is a complete HTML page. Retries on truncated responses."""
+    for attempt in range(MAX_RETRIES):
+        response = session.get(url, timeout=30)
+        response.raise_for_status()
+
+        text = response.text
+
+        if "</html>" in text:
+            return text
+
+        print(f"Warning: Truncated response from {url} (attempt {attempt + 1}/{MAX_RETRIES}, {len(text)} chars)")
+        time.sleep(RETRY_DELAY)
+
+    raise RuntimeError(f"Failed to get complete response from {url} after {MAX_RETRIES} attempts")
+
 
 def retrieve_page_links_from_url(url: str) -> list:
-    # Get raw response
-    response = session.get(url)
+    # Get complete response
+    text = fetch_page(url)
 
     # Parse into html
-    beautiful_soup = BeautifulSoup(response.text, 'html.parser')
+    beautiful_soup = BeautifulSoup(text, 'html.parser')
 
     # Collect all "a" tags
     a_tags = beautiful_soup.find_all("a")
@@ -160,11 +181,11 @@ def main():
                         # Build the url of the board's page
                         board_page_url = download_url + mcu_page_link
 
-                        # Retrieve the HTML response of this page
-                        board_page_response = session.get(board_page_url)
+                        # Retrieve the complete HTML response of this page
+                        board_page_text = fetch_page(board_page_url)
 
                         # Parse the board page HTML
-                        board_page_beautiful_soup = BeautifulSoup(board_page_response.text, 'html.parser')
+                        board_page_beautiful_soup = BeautifulSoup(board_page_text, 'html.parser')
 
                         # List of firmware names (tags) to the links of all available binaries for it
                         firmware_name_to_link_parts: Dict[str, list] = {}
