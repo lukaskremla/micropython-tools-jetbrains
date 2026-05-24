@@ -182,6 +182,24 @@
       "exactStdlibVersion": "1.28.0.post5"
     },
     {
+      "name": "micropython-unix-stubs",
+      "mpyVersion": "1.28.0",
+      "port": "unix",
+      "board": "GENERIC",
+      "variant": "",
+      "exactPackageVersion": "1.28.0.post1",
+      "exactStdlibVersion": "1.28.0.post5"
+    },
+    {
+      "name": "micropython-windows-stubs",
+      "mpyVersion": "1.28.0",
+      "port": "windows",
+      "board": "GENERIC",
+      "variant": "",
+      "exactPackageVersion": "1.28.0.post1",
+      "exactStdlibVersion": "1.28.0.post5"
+    },
+    {
       "name": "micropython-esp32-esp32_generic-stubs",
       "mpyVersion": "1.27.0",
       "port": "esp32",
