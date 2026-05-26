@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-05-25T04:18:18.571527",
+  "timestamp": "2026-05-26T04:03:33.314219",
   "supportedPorts": [
     "esp32",
     "esp8266",
@@ -2107,6 +2107,14 @@
           "-RISCV-20260509-v1.29.0-preview.199.ga595bbba67.uf2"
         ]
       }
+    },
+    {
+      "id": "SOLDERED_NULA_MAX_RP2350",
+      "name": "NULA RP2350",
+      "vendor": "Soldered Electronics",
+      "port": "rp2",
+      "mcu": "rp2350",
+      "firmwareNameToLinkParts": {}
     },
     {
       "id": "SPARKFUN_IOTNODE_LORAWAN_RP2350",
