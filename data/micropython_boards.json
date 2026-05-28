@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-05-27T04:17:36.638771",
+  "timestamp": "2026-05-28T04:06:29.990702",
   "supportedPorts": [
     "esp32",
     "esp8266",
@@ -2053,6 +2053,14 @@
           "-RISCV-20260509-v1.29.0-preview.199.ga595bbba67.uf2"
         ]
       }
+    },
+    {
+      "id": "ADAFRUIT_FEATHER_RP2350",
+      "name": "Feather RP2350",
+      "vendor": "Adafruit",
+      "port": "rp2",
+      "mcu": "rp2350",
+      "firmwareNameToLinkParts": {}
     },
     {
       "id": "CYTRON_MOTION_2350_PRO",
