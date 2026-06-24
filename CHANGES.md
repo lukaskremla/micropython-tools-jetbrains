@@ -1,6 +1,59 @@
 The Changelog
 =============
 
+2026.1.5 (Pre-Release state) - xx.6.2026
+------------------
+
+Free:
+
+* Reworked Upload run configurations around an explicit local-to-device path mappings table, replacing the old
+  "MicroPython Sources Roots" approach. Existing configurations are migrated automatically
+* Reworked the "Upload to MicroPython device" context menu action to use a device folder picker
+* Unified upload and synchronization exclusions into a single table in the Upload run configuration - entries are device
+  paths or glob patterns and can be excluded from uploads, protected from synchronization deletion, or both (#96).
+  Existing synchronization exclusions are migrated automatically. Note: files matching an upload exclusion that were
+  previously uploaded are removed by synchronization on the next run
+* Uploads now delete stale device copies of changed files upfront to free flash space before transferring, and boot.py
+  and main.py are uploaded first so WebREPL connectivity is restored as early as possible
+* Added WebREPL presets - save up to 3 named profiles per project and switch between them from the connection selector
+* Added a warning notification when a compressed upload has to fall back to uncompressed due to insufficient flash space
+* Updating a selected stub package now automatically reloads it
+* Upload progress now logs synchronization steps and reports compression savings at the end
+* The settings page now reacts live to device connections and disconnections while it is open
+* Made the "device already connected" disconnect option in settings and the flasher dialog more obvious
+* Flashing options now only show for ESP devices
+* Removed the upfront confirmation when pasting files; drag and drop still prompts, and overwrites are still confirmed for both
+* Removed the Upload Preview dialog
+* Fixed serial port operations occasionally blocking indefinitely on Windows, requiring a forced IDE restart
+* Fixed disconnecting on Windows resetting Espressif boards with a native USB-Serial/JTAG interface (e.g. ESP32-C3/C6/S3)
+  into the ROM bootloader, which interrupted any running code and broke the next reconnect with a "MicroPython not
+  detected" error
+* Fixed WebREPL reconnects occasionally blocking indefinitely
+* Fixed the IDE freezing when disconnecting a device through the settings dialog
+* Fixed transient MemoryError failures when uploading very large files
+* Fixed compressed uploads not falling back to uncompressed when the device ran out of flash during decompression
+* Fixed temporary compression archives not being cleaned up when an upload or on-device file save was canceled
+* Fixed copy/paste of files and folders between on-device locations failing with errors
+* Fixed pasting an item into the folder it already lives in potentially deleting it, and pasting a folder into itself
+  causing a runaway copy on the device; both are now blocked with a clear message
+* Fixed run configuration absolute path validation on Windows
+* Fixed file and folder pickers in the run configuration editors and the flasher dialog not opening at the project
+  directory when empty
+* Fixed synchronization exclusions also protecting similarly named paths (excluding "/src" no longer protects "/src2")
+* Fixed synchronization exclusions not protecting files when synchronization deleted one of their parent folders
+* General security and stability hardening across the plugin
+* Saved WebREPL passwords now persist across plugin updates. Existing passwords need to be re-entered once after this
+  upgrade
+
+Paid:
+
+* Reworked the mpy-cross run configuration to mirror the new upload behavior, including an in-editor table for the
+  "Embed mappings" mode. Existing configurations are migrated automatically
+* The mpy-cross architecture option can now be set with the "Bytecode" emitter, enabling "@micropython.viper" and
+  "@micropython.native" decorated functions (#95)
+* Source path tables in the upload and mpy-cross run configurations now show file-type-specific icons
+* Fixed manual port edit checkbox in flash run configuration state not being persisted
+
 2026.1.4 - 9.3.2026
 ------------------
 
@@ -14,7 +67,7 @@ Free:
 * Added a no-stub parameter to the ESP flashers for compatibility
 * MicroPython device port auto-detection now waits up to the entire connection timeout to adjust for slower ports
 
-Pro:
+Paid:
 
 * Added support for building MicroPython firmware for ESP32, ESP8266, RP2 and SAMD devices (Supports custom baudrate and
   freezing bytecode)
@@ -139,7 +192,7 @@ Paid:
 * Increased command execution timeout to reduce failures on large uploads
 * Fixed connection integrity monitoring on Windows
 * Reworked stub package management with on-demand installation and updating
-* Prevented file system refresh when a pre-upload scan is cancelled
+* Prevented file system refresh when a pre-upload scan is canceled
 
 0.5.12 - 28.7.2025
 ------------------
@@ -158,9 +211,9 @@ Paid:
 * Fixed a bug where warnings about unavailable features of certain boards caused EDT errors
 * Fixed a bug where cancelling an Upload Preview would leave the plugin in an unusable state
 * Fixed a bug where run configurations kept getting renamed to default names
-* Fixed duplicate "connection attempt cancelled" notifications
+* Fixed duplicate "connection attempt canceled" notifications
 * Uploads now refresh the project dir each time to ensure no changes are missed
-* Improved the upload run configuration's exclude paths checkbox and table labels
+* Improved the upload run configurations exclude paths checkbox and table labels
 
 0.5.9 - 22.6.2025
 ------------------
@@ -262,7 +315,7 @@ Paid:
 * Cleaned up port name displaying on Windows
 * Fixed several FTP related issues, overall the resiliency and efficiency of FTP uploads is now increased, they also
   support WebREPL
-* Re-enabled WebREPL, currently it will be slow and it might also be fragile, this should be further improved in future
+* Re-enabled WebREPL, currently it will be slow, and it might also be fragile, this should be further improved in future
   versions, it is recommended to use FTP uploads in combination with WebREPL to alleviate the slowness problems
 
 0.4.1 - 22-3-2025
@@ -281,13 +334,13 @@ Paid:
 * Added an icon provider for .mpy files
 * Added new stubs, they are now downloaded directly from pip during the build process, meaning they should be more
   reliable
-* Upload run configurations were heavily reworked, their UI is now more robust and they allow selecting specific
-  MicroPython Sources Roots to be upload
+* Upload run configurations were heavily reworked, their UI is now more robust, and they allow selecting specific
+  MicroPython Sources Roots to be uploaded
 * Fixed a bug where the plugin would disconnect from the board while uploading and stop working until the entire IDE is
   restarted
-* Fixed a bug where the file system would be refreshed even after a drag and drop or a delete action was cancelled
+* Fixed a bug where the file system would be refreshed even after a drag and drop or a delete action was canceled
 * Fixed a bug where the plugin wouldn't properly detect missing CRC32 binascii support
-* Added logic to make sure that the FTP wi-fi credentials don't appear in a notification when an exception occurs while
+* Added logic to make sure that the FTP Wi-Fi credentials don't appear in a notification when an exception occurs while
   connecting to the FTP server
 
 0.3.0 - 14-2-2025
@@ -307,12 +360,12 @@ Paid:
 
 * Added 1.24.1 and 1.25 preview stubs
 * Fixed download action EDT errors
-* Fixed a bug where the plugin enters the connected state even after a connection attempt was cancelled
+* Fixed a bug where the plugin enters the connected state even after a connection attempt was canceled
 
 0.2.5 - 6-2-2025
 ------------------
 
-* Downgraded gradle dependencies to increase stability and fix errors of recent versions (0.2.3, 0.2.4)
+* Downgraded Gradle dependencies to increase stability and fix errors of recent versions (0.2.3, 0.2.4)
 
 0.2.4 - 4-2-2025
 ------------------
@@ -344,7 +397,7 @@ Paid:
 ------------------
 
 * Added built-in stubs support
-* Scrapped the planned pyserial rewrite and removed the dependency on the pyserial python library
+* Scrapped the planned pyserial rewrite and removed the dependency on the pyserial Python library
 * Reworked the device connection management in the settings
 * Improved plugin's state management (the plugin features will react to the disabled/disconnected states better)
 * Icon improvements (run configurations now have a new icon and the bug with darkening tool window icon was fixed)
@@ -357,8 +410,8 @@ Paid:
 * Completely overhauled the progress reporting for all board communication actions
 * Every action now provides more detailed explanation of steps that are happening
 * Uploads now show the mount of files and KBs being uploaded alongside real-time updates as data gets transferred
-* Reworked how clean-up actions work, the progress dialog titles are now unified
-* Fixed several bugs: EDT related stack trace on start-up, improper clean-up, increased FTP wi-fi timeouts, delete
+* Reworked how cleanup actions work, the progress dialog titles are now unified
+* Fixed several bugs: EDT related stack trace on start-up, improper cleanup, increased FTP Wi-Fi timeouts, delete
   action cancellation issues
 
 0.1.4 - 1-1-2025
@@ -396,6 +449,6 @@ Initial fork release:
 * Automatically skip already uploaded files when flashing
 * Synchronize the device file system to only contain what you're uploading
 * Communication selector drop down directly in the tool window
-* FTP uploads for wifi enabled boards - these save time and provide better reliability
-* Switched to pyserial for serial port listing (removes junk ports on MacOS)
+* FTP uploads for Wi-Fi enabled boards - these save time and provide better reliability
+* Switched to pyserial for serial port listing (removes junk ports on macOS)
 * Fixed several bugs, added and modified info notifications/status messages, removed deprecated code
