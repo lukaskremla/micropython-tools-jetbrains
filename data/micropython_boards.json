@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-06-27T03:56:11.593832",
+  "timestamp": "2026-06-28T04:18:37.493710",
   "supportedPorts": [
     "esp32",
     "esp8266",
@@ -498,6 +498,19 @@
       }
     },
     {
+      "id": "SEEED_XIAO_ESP32C5",
+      "name": "XIAO ESP32C5",
+      "vendor": "Seeed Studio",
+      "port": "esp32",
+      "mcu": "esp32c5",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20260626-v1.29.0-preview.434.g57219fcb6d.bin",
+          "-20260626-v1.29.0-preview.432.g9d3881f43a.bin"
+        ]
+      }
+    },
+    {
       "id": "SPARKFUN_THINGPLUS_ESP32C5",
       "name": "Thing Plus ESP32-C5",
       "vendor": "SparkFun",
@@ -943,6 +956,19 @@
           "-20260626-v1.29.0-preview.432.g9d3881f43a.bin",
           "-20260625-v1.29.0-preview.428.gb5ca38553e.bin",
           "-20260623-v1.29.0-preview.414.g533a154c8a.bin"
+        ]
+      }
+    },
+    {
+      "id": "SEEED_XIAO_ESP32S3",
+      "name": "XIAO ESP32S3",
+      "vendor": "Seeed Studio",
+      "port": "esp32",
+      "mcu": "esp32s3",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20260626-v1.29.0-preview.434.g57219fcb6d.bin",
+          "-20260626-v1.29.0-preview.432.g9d3881f43a.bin"
         ]
       }
     },
