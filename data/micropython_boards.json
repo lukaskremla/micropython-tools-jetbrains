@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-07-07T03:53:54.247061",
+  "timestamp": "2026-07-11T09:08:19.755692",
   "supportedPorts": [
     "esp32",
     "esp8266",
@@ -22,6 +22,7 @@
     "esp32c3": 0,
     "esp32c5": 0,
     "esp32c6": 0,
+    "esp32h2": 0,
     "esp32p4": 8192
   },
   "boards": [
@@ -626,6 +627,30 @@
           "-20260703-v1.29.0-preview.467.g964803ab74.bin",
           "-20260702-v1.29.0-preview.452.g765df7400f.bin",
           "-20260702-v1.29.0-preview.451.gf452dabd41.bin"
+        ]
+      }
+    },
+    {
+      "id": "ESP32_GENERIC_H2",
+      "name": "ESP32-H2 (Generic)",
+      "vendor": "Espressif",
+      "port": "esp32",
+      "mcu": "esp32h2",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20260706-v1.29.0-preview.510.gf67ab9efe1.bin"
+        ]
+      }
+    },
+    {
+      "id": "M5STACK_NANOH2",
+      "name": "NanoH2",
+      "vendor": "M5Stack",
+      "port": "esp32",
+      "mcu": "esp32h2",
+      "firmwareNameToLinkParts": {
+        "Standard": [
+          "-20260706-v1.29.0-preview.510.gf67ab9efe1.bin"
         ]
       }
     },
