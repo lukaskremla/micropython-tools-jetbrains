@@ -57,6 +57,9 @@ esp_mcu_to_offset = {
     "esp32c5": 0x0,
     "esp32c6": 0x0,
 
+    # ESP32-H series
+    "esp32h2": 0x0,
+
     # ESP32-P series
     "esp32p4": 0x2000,
 }
