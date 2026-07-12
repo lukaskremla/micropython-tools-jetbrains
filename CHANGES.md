@@ -1,7 +1,7 @@
 The Changelog
 =============
 
-2026.1.5 (Pre-Release state) - xx.6.2026
+2026.1.5 (Pre-Release state) - xx.7.2026
 ------------------
 
 Free:
