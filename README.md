@@ -75,7 +75,7 @@ MicroPython versions older than 1.20.0 are not officially supported but may work
 This plugin is distributed via the JetBrains Marketplace or this repository's Releases and is licensed under the
 [End-User License Agreement (EULA)](EULA.txt).
 
-This repository does not contain the plugin's source code. It is a companion repository used for issue tracking,
+This repository does not currently contain the plugin's source code. It is a companion repository used for issue tracking,
 discussions, and managing public-facing text and scripts.
 
 ## Credits
