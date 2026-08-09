@@ -1,7 +1,7 @@
 The Changelog
 =============
 
-2026.1.5 (Pre-Release state) - xx.7.2026
+2026.1.5 - 9.8.2026
 ------------------
 
 Free:
@@ -22,6 +22,7 @@ Free:
 * The settings page now reacts live to device connections and disconnections while it is open
 * Made the "device already connected" disconnect option in settings and the flasher dialog more obvious
 * Flashing options now only show for ESP devices
+* Fixed Execute File in REPL run configurations reading an outdated saved version instead of the current editor contents
 * Removed the upfront confirmation when pasting files; drag and drop still prompts, and overwrites are still confirmed for both
 * Removed the Upload Preview dialog
 * Fixed serial port operations occasionally blocking indefinitely on Windows, requiring a forced IDE restart
