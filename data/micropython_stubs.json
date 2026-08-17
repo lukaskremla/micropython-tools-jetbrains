@@ -191,6 +191,15 @@
       "exactStdlibVersion": "1.28.0.post6"
     },
     {
+      "name": "micropython-webassembly-stubs",
+      "mpyVersion": "1.28.0",
+      "port": "webassembly",
+      "board": "GENERIC",
+      "variant": "",
+      "exactPackageVersion": "1.28.0.post1",
+      "exactStdlibVersion": "1.28.0.post6"
+    },
+    {
       "name": "micropython-windows-stubs",
       "mpyVersion": "1.28.0",
       "port": "windows",
