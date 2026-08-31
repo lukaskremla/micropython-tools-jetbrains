@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-08-30T04:45:44.102331",
+  "timestamp": "2026-08-31T04:48:41.100560",
   "supportedPorts": [
     "esp32",
     "esp8266",
@@ -103,6 +103,28 @@
           "-OTA-20260816-v1.29.0-preview.718.g2e3304a128.bin",
           "-OTA-20260813-v1.29.0-preview.707.g1827631282.bin"
         ],
+        "ESP32 D2WD": [
+          "-D2WD-20260824-v1.29.0.bin",
+          "-D2WD-20260406-v1.28.0.bin",
+          "-D2WD-20251209-v1.27.0.bin",
+          "-D2WD-20250911-v1.26.1.bin",
+          "-D2WD-20250809-v1.26.0.bin",
+          "-D2WD-20250415-v1.25.0.bin",
+          "-D2WD-20241129-v1.24.1.bin",
+          "-D2WD-20241025-v1.24.0.bin",
+          "-D2WD-20240602-v1.23.0.bin",
+          "-D2WD-20240222-v1.22.2.bin",
+          "-D2WD-20240105-v1.22.1.bin",
+          "-D2WD-20231227-v1.22.0.bin",
+          "-D2WD-20231005-v1.21.0.bin",
+          "-D2WD-20230426-v1.20.0.bin",
+          "-D2WD-20220618-v1.19.1.bin",
+          "-D2WD-20220117-v1.18.bin",
+          "-D2WD-20260827-v1.30.0-preview.8.gf668077be2.bin",
+          "-D2WD-20260818-v1.29.0-preview.731.g1c3c201149.bin",
+          "-D2WD-20260816-v1.29.0-preview.718.g2e3304a128.bin",
+          "-D2WD-20260813-v1.29.0-preview.707.g1827631282.bin"
+        ],
         "Support for SPIRAM / WROVER": [
           "-SPIRAM-20260824-v1.29.0.bin",
           "-SPIRAM-20260406-v1.28.0.bin",
@@ -130,28 +152,6 @@
           "-SPIRAM-20260818-v1.29.0-preview.731.g1c3c201149.bin",
           "-SPIRAM-20260816-v1.29.0-preview.718.g2e3304a128.bin",
           "-SPIRAM-20260813-v1.29.0-preview.707.g1827631282.bin"
-        ],
-        "ESP32 D2WD": [
-          "-D2WD-20260824-v1.29.0.bin",
-          "-D2WD-20260406-v1.28.0.bin",
-          "-D2WD-20251209-v1.27.0.bin",
-          "-D2WD-20250911-v1.26.1.bin",
-          "-D2WD-20250809-v1.26.0.bin",
-          "-D2WD-20250415-v1.25.0.bin",
-          "-D2WD-20241129-v1.24.1.bin",
-          "-D2WD-20241025-v1.24.0.bin",
-          "-D2WD-20240602-v1.23.0.bin",
-          "-D2WD-20240222-v1.22.2.bin",
-          "-D2WD-20240105-v1.22.1.bin",
-          "-D2WD-20231227-v1.22.0.bin",
-          "-D2WD-20231005-v1.21.0.bin",
-          "-D2WD-20230426-v1.20.0.bin",
-          "-D2WD-20220618-v1.19.1.bin",
-          "-D2WD-20220117-v1.18.bin",
-          "-D2WD-20260827-v1.30.0-preview.8.gf668077be2.bin",
-          "-D2WD-20260818-v1.29.0-preview.731.g1c3c201149.bin",
-          "-D2WD-20260816-v1.29.0-preview.718.g2e3304a128.bin",
-          "-D2WD-20260813-v1.29.0-preview.707.g1827631282.bin"
         ]
       }
     },
@@ -705,6 +705,13 @@
           "-20260816-v1.29.0-preview.718.g2e3304a128.bin",
           "-20260813-v1.29.0-preview.707.g1827631282.bin"
         ],
+        "Boards with early 0.x and 1.x chip revisions": [
+          "-PRE_REV3-20260824-v1.29.0.bin",
+          "-PRE_REV3-20260827-v1.30.0-preview.8.gf668077be2.bin",
+          "-PRE_REV3-20260818-v1.29.0-preview.731.g1c3c201149.bin",
+          "-PRE_REV3-20260816-v1.29.0-preview.718.g2e3304a128.bin",
+          "-PRE_REV3-20260813-v1.29.0-preview.707.g1827631282.bin"
+        ],
         "Support for external C6 WiFi/BLE": [
           "-C6_WIFI-20260824-v1.29.0.bin",
           "-C6_WIFI-20260406-v1.28.0.bin",
@@ -713,6 +720,13 @@
           "-C6_WIFI-20260818-v1.29.0-preview.731.g1c3c201149.bin",
           "-C6_WIFI-20260816-v1.29.0-preview.718.g2e3304a128.bin",
           "-C6_WIFI-20260813-v1.29.0-preview.707.g1827631282.bin"
+        ],
+        "0.x and 1.x chip revisions with external C6 WiFi/BLE": [
+          "-PRE_REV3_C6_WIFI-20260824-v1.29.0.bin",
+          "-PRE_REV3_C6_WIFI-20260827-v1.30.0-preview.8.gf668077be2.bin",
+          "-PRE_REV3_C6_WIFI-20260818-v1.29.0-preview.731.g1c3c201149.bin",
+          "-PRE_REV3_C6_WIFI-20260816-v1.29.0-preview.718.g2e3304a128.bin",
+          "-PRE_REV3_C6_WIFI-20260813-v1.29.0-preview.707.g1827631282.bin"
         ],
         "Support for external C5 WiFi/BLE": [
           "-C5_WIFI-20260824-v1.29.0.bin",
@@ -723,26 +737,12 @@
           "-C5_WIFI-20260816-v1.29.0-preview.718.g2e3304a128.bin",
           "-C5_WIFI-20260813-v1.29.0-preview.707.g1827631282.bin"
         ],
-        "0.x and 1.x chip revisions with external C6 WiFi/BLE": [
-          "-PRE_REV3_C6_WIFI-20260824-v1.29.0.bin",
-          "-PRE_REV3_C6_WIFI-20260827-v1.30.0-preview.8.gf668077be2.bin",
-          "-PRE_REV3_C6_WIFI-20260818-v1.29.0-preview.731.g1c3c201149.bin",
-          "-PRE_REV3_C6_WIFI-20260816-v1.29.0-preview.718.g2e3304a128.bin",
-          "-PRE_REV3_C6_WIFI-20260813-v1.29.0-preview.707.g1827631282.bin"
-        ],
         "0.x and 1.x chip revisions with external C5 WiFi/BLE": [
           "-PRE_REV3_C5_WIFI-20260824-v1.29.0.bin",
           "-PRE_REV3_C5_WIFI-20260827-v1.30.0-preview.8.gf668077be2.bin",
           "-PRE_REV3_C5_WIFI-20260818-v1.29.0-preview.731.g1c3c201149.bin",
           "-PRE_REV3_C5_WIFI-20260816-v1.29.0-preview.718.g2e3304a128.bin",
           "-PRE_REV3_C5_WIFI-20260813-v1.29.0-preview.707.g1827631282.bin"
-        ],
-        "Boards with early 0.x and 1.x chip revisions": [
-          "-PRE_REV3-20260824-v1.29.0.bin",
-          "-PRE_REV3-20260827-v1.30.0-preview.8.gf668077be2.bin",
-          "-PRE_REV3-20260818-v1.29.0-preview.731.g1c3c201149.bin",
-          "-PRE_REV3-20260816-v1.29.0-preview.718.g2e3304a128.bin",
-          "-PRE_REV3-20260813-v1.29.0-preview.707.g1827631282.bin"
         ]
       }
     },
@@ -2118,20 +2118,6 @@
           "-20260816-v1.29.0-preview.718.g2e3304a128.uf2",
           "-20260813-v1.29.0-preview.707.g1827631282.uf2"
         ],
-        "2 MiB Flash": [
-          "-FLASH_2M-20260824-v1.29.0.uf2",
-          "-FLASH_2M-20260406-v1.28.0.uf2",
-          "-FLASH_2M-20251209-v1.27.0.uf2",
-          "-FLASH_2M-20250911-v1.26.1.uf2",
-          "-FLASH_2M-20250809-v1.26.0.uf2",
-          "-FLASH_2M-20250415-v1.25.0.uf2",
-          "-FLASH_2M-20241129-v1.24.1.uf2",
-          "-FLASH_2M-20241025-v1.24.0.uf2",
-          "-FLASH_2M-20260827-v1.30.0-preview.8.gf668077be2.uf2",
-          "-FLASH_2M-20260818-v1.29.0-preview.731.g1c3c201149.uf2",
-          "-FLASH_2M-20260816-v1.29.0-preview.718.g2e3304a128.uf2",
-          "-FLASH_2M-20260813-v1.29.0-preview.707.g1827631282.uf2"
-        ],
         "4 MiB Flash": [
           "-FLASH_4M-20260824-v1.29.0.uf2",
           "-FLASH_4M-20260406-v1.28.0.uf2",
@@ -2159,6 +2145,20 @@
           "-FLASH_8M-20260818-v1.29.0-preview.731.g1c3c201149.uf2",
           "-FLASH_8M-20260816-v1.29.0-preview.718.g2e3304a128.uf2",
           "-FLASH_8M-20260813-v1.29.0-preview.707.g1827631282.uf2"
+        ],
+        "2 MiB Flash": [
+          "-FLASH_2M-20260824-v1.29.0.uf2",
+          "-FLASH_2M-20260406-v1.28.0.uf2",
+          "-FLASH_2M-20251209-v1.27.0.uf2",
+          "-FLASH_2M-20250911-v1.26.1.uf2",
+          "-FLASH_2M-20250809-v1.26.0.uf2",
+          "-FLASH_2M-20250415-v1.25.0.uf2",
+          "-FLASH_2M-20241129-v1.24.1.uf2",
+          "-FLASH_2M-20241025-v1.24.0.uf2",
+          "-FLASH_2M-20260827-v1.30.0-preview.8.gf668077be2.uf2",
+          "-FLASH_2M-20260818-v1.29.0-preview.731.g1c3c201149.uf2",
+          "-FLASH_2M-20260816-v1.29.0-preview.718.g2e3304a128.uf2",
+          "-FLASH_2M-20260813-v1.29.0-preview.707.g1827631282.uf2"
         ]
       }
     },
