@@ -110,6 +110,15 @@
       "exactStdlibVersion": "1.29.0.post2"
     },
     {
+      "name": "micropython-nrf-seeed_xiao_nrf52-stubs",
+      "mpyVersion": "1.29.0",
+      "port": "nrf",
+      "board": "SEEED_XIAO_NRF52",
+      "variant": "",
+      "exactPackageVersion": "1.29.0.post1",
+      "exactStdlibVersion": "1.29.0.post2"
+    },
+    {
       "name": "micropython-nrf-stubs",
       "mpyVersion": "1.29.0",
       "port": "nrf",
