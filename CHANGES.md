@@ -1,6 +1,13 @@
 The Changelog
 =============
 
+2026.1.6 - 8.9.2026
+------------------
+
+* Updated dependencies
+* Added explicit CircuitPython detection with a clear compatibility error
+* Fixed IDE freezes when applying settings or running code inspections
+
 2026.1.5 - 9.8.2026
 ------------------
 
