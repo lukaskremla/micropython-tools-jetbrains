@@ -1,6 +1,17 @@
 The Changelog
 =============
 
+2026.1.7 - 7.10.2026
+------------------
+
+* Instead of disconnecting on all raw paste mode aborts, the plugin now reads and reports the error while
+  staying connected when possible
+* Improved clear repl action shortcut handling
+* Fixed "What's New" exceptions that could occur while the JCEF browser plugin is unavailable
+* Fixed exceptions that could occur while loading a password for WebREPL
+* Fixed errors occurring when launching a run configuration caused by incorrect EDT handling
+* Fixed stale update prompts after installing stub package updates
+
 2026.1.6 - 9.9.2026
 ------------------
 
